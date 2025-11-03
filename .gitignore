@@ -74,3 +74,18 @@ secrets.yml
 # OS-specific
 .DS_Store
 Thumbs.db
+
+# Logs
+logs/
+
+# Docker
+.docker/
+
+# LLM models and caches (for local serving)
+models/
+.cache/huggingface/
+.cache/ollama/
+
+# Vector stores
+chroma/
+faiss_index/

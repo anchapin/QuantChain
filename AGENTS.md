@@ -6,7 +6,61 @@ Welcome to QuantChain! To ensure the reliability and robustness of this financia
 
 Our testing framework of choice is `pytest`.
 
-## 2. Workflow for New Components (Tools, Data Connectors, etc.)
+## 2. Tech Stack
+
+Based on the Product Requirements Document (PRD), the following tech stack is recommended for the QuantChain project.
+
+### Programming Language
+- **Python**: The primary language for all components.
+
+### Development Workflow & Quality Assurance
+- **Testing Framework**: `pytest` for unit, integration, and backtesting tests.
+- **Code Coverage**: `pytest-cov` with a minimum requirement of 80% coverage.
+- **Linting**: `flake8` for code quality checks.
+- **Formatting**: `black` for automatic code formatting.
+- **Type Checking**: `mypy` for static type analysis.
+- **CI/CD**: GitHub Actions for automated testing, linting, and quality checks.
+- **Development Approach**: Test-Driven Development (TDD) or Spec-Driven Development (SDD), with specifications in `/specs/` and tests in `/tests/`.
+
+### Core Frameworks & Libraries
+- **Agentic Framework**: LangGraph (within LangChain ecosystem) for stateful agent reasoning, memory, and reflection.
+- **Local LLM Serving**:
+  - `vLLM` for high-throughput, multi-agent batching.
+  - `Ollama` (with `llama.cpp`/`GGUF`) for low-latency quantized models.
+- **Backtesting Engine**: `Backtesting.py` or a custom vector-based implementation.
+- **Reinforcement Learning Integration**: `FinRL` environment for RL-based agent testing.
+- **Model Fine-Tuning**: Parameter-efficient fine-tuning (PEFT) with `QLoRA`, and post-training quantization to `GPTQ` or `GGUF` formats.
+
+### Data & Execution
+- **Data Connectors**:
+  - Equities/Forex: `Alpha Vantage`, `Polygon.io`
+  - Cryptocurrency: `Alpaca` (WebSocket), `Dexscreener`, `ccxt`
+  - Alternative Data: Custom scrapers for financial news and social media (Telegram, Discord)
+- **Execution Tools**:
+  - `Alpaca` for paper and live trading.
+  - `Interactive Brokers` via `ib_async`.
+- **Technical Analysis Tools**: Pre-built functions like `get_technical_indicator`, `get_news_sentiment`, `analyze_on_chain_data`.
+
+### Storage & Caching
+- **Vector Store (RAG)**: Local vector store for retrieval-augmented generation (e.g., `ChromaDB` or `FAISS` for market data and news sentiment caching).
+- **Caching**: Market-state-aware caching system to minimize LLM inference calls.
+
+### Web Dashboard & Visualization
+- **Web Framework**: `Streamlit` or `Plotly Dash` for the user interface.
+- **Visualization**: `Plotly` for interactive charts, equity curves, and performance metrics.
+- **Monitoring**: Live reasoning log, multi-agent visualization, and real-time P/L tracking.
+
+### Deployment & Environment
+- **Containerization**: `Docker` and `docker-compose` for reproducible deployments.
+- **GPU Support**: NVIDIA container toolkit (CUDA) for GPU-accelerated LLM serving.
+- **Environment Management**: `conda` or `venv` for virtual environments.
+- **Hardware Guidelines**: Documentation for VRAM requirements with common quantized models (e.g., 4-bit/8-bit `DeepSeek-R1-0528`, `Qwen3-235B-Instruct-2507`).
+
+### Security
+- **Secret Management**: `python-dotenv` for environment variables, with recommendations for `Vault` or cloud secret managers (AWS/GCP) in production.
+- **API Key Management**: Dedicated secure module for handling broker and data feed credentials.
+
+## 3. Workflow for New Components (Tools, Data Connectors, etc.)
 
 Components are the building blocks of our agents, as defined in the PRD (e.g., `get_technical_indicator`, `AlpacaDataConnector`).
 
@@ -57,7 +111,7 @@ Now, write the implementation code in the main source directory (e.g., `/quantch
 ### Step 4: Refactor
 With the tests passing, you can confidently refactor your code for clarity, performance, and style without breaking its functionality.
 
-## 3. Workflow for New Agents (from the Agent Zoo)
+## 4. Workflow for New Agents (from the Agent Zoo)
 
 Agents are the high-level reasoning systems that use components to make trading decisions. Testing them involves integration tests and backtesting simulations.
 
@@ -104,5 +158,47 @@ def test_memecoin_vibe_trader_identifies_and_trades_target():
 Build the agent using the core agentic framework (`LangGraph`), connecting the required tools and data feeds to make the backtest pass.
 
 ---
+
+## 5. Code Quality Standards
+
+To prevent code sprawl, duplication, and maintainability issues, all contributions must adhere to these standards:
+
+* **Modularity and Reusability:** Design components with clear interfaces and avoid duplication. Use composition over inheritance. Create shared utilities and base classes for common functionality.
+* **DRY Principle:** Do not repeat yourself. Abstract common patterns into reusable modules.
+* **Code Coverage:** Maintain at least 80% test coverage for all new code. Use `pytest-cov` to enforce this.
+* **Linting and Formatting:** Use `black` for code formatting, `flake8` for linting, and `mypy` for type checking.
+* **Documentation:** Update inline documentation and specs for any changes. Use docstrings for all public functions.
+* **Security:** Follow the Security section in the Tech Stack: Never hardcode secrets; use environment variables via `python-dotenv`, with recommendations for `Vault` or cloud secret managers in production.
+
+## 6. Project Structure
+
+To maintain organization and avoid sprawl:
+
+* `/quantchain/` - Main source code
+  * `/agents/` - Agent implementations
+  * `/tools/` - Tool and data library components
+  * `/connectors/` - Data feed connectors
+  * `/backtesting/` - Backtesting engine
+  * `/core/` - Core agent engine and shared utilities
+* `/specs/` - Specification files for components and agents
+* `/tests/` - Test suites, including unit, integration, and backtests
+* `/docs/` - Documentation, including deployment guides
+* `/examples/` - Sample agents and configurations
+
+## 7. CI/CD Integration
+
+Integrate with GitHub Actions for automated quality checks:
+
+* Run tests on every PR.
+* Check code coverage and fail if below 80%.
+* Lint and format code automatically.
+* Require PR reviews before merging.
+
+## 8. Code Review Process
+
+* All changes require a PR with detailed description.
+* At least one reviewer must approve.
+* Reviews must verify adherence to TDD/SDD, code quality standards, and PRD alignment.
+* Address any duplication or maintainability concerns raised.
 
 By following this process, we ensure that every piece of `QuantChain` is verifiable, documented by its tests, and robust enough for financial applications.
