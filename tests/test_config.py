@@ -12,19 +12,19 @@ from quantchain.core.config import QuantChainConfig, get_config, reload_config
 class TestQuantChainConfig:
     """Test QuantChainConfig class."""
 
-    def test_default_config(self):
+    def test_default_config(self) -> None:
         """Test loading default configuration."""
         config = QuantChainConfig()
         assert config.get("llm.provider") == "ollama"
         assert config.get("trading.paper_trading") is True
         assert config.get("backtesting.initial_balance") == 10000
 
-    def test_config_get_with_default(self):
+    def test_config_get_with_default(self) -> None:
         """Test getting config value with default."""
         config = QuantChainConfig()
         assert config.get("nonexistent.key", "default") == "default"
 
-    def test_config_to_dict(self):
+    def test_config_to_dict(self) -> None:
         """Test converting config to dictionary."""
         config = QuantChainConfig()
         config_dict = config.to_dict()
@@ -32,7 +32,7 @@ class TestQuantChainConfig:
         assert "llm" in config_dict
         assert "trading" in config_dict
 
-    def test_get_config_singleton(self):
+    def test_get_config_singleton(self) -> None:
         """Test that get_config returns singleton instance."""
         config1 = get_config()
         config2 = get_config()
@@ -47,7 +47,7 @@ class TestQuantChainConfig:
             "QUANTCHAIN_PAPER_TRADING": "false",
         },
     )
-    def test_load_from_env(self):
+    def test_load_from_env(self) -> None:
         """Test loading configuration from environment variables."""
         config = QuantChainConfig()
         assert config.get("llm.provider") == "vllm"
@@ -61,7 +61,7 @@ class TestQuantChainConfig:
             "QUANTCHAIN_PAPER_TRADING": "not_boolean",
         },
     )
-    def test_load_from_env_invalid_boolean(self):
+    def test_load_from_env_invalid_boolean(self) -> None:
         """Test loading invalid boolean values from environment variables."""
         config = QuantChainConfig()
         # Invalid boolean string should result in False
@@ -74,12 +74,12 @@ class TestQuantChainConfig:
             "QUANTCHAIN_PAPER_TRADING": "TRUE",
         },
     )
-    def test_load_from_env_valid_boolean_uppercase(self):
+    def test_load_from_env_valid_boolean_uppercase(self) -> None:
         """Test loading valid boolean values in uppercase from environment variables."""
         config = QuantChainConfig()
         assert config.get("trading.paper_trading") is True
 
-    def test_load_from_file_json(self):
+    def test_load_from_file_json(self) -> None:
         """Test loading configuration from JSON file."""
         config_data = {"llm": {"provider": "vllm"}, "trading": {"paper_trading": False}}
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -95,7 +95,7 @@ class TestQuantChainConfig:
         finally:
             os.unlink(config_file)
 
-    def test_load_from_file_yaml(self):
+    def test_load_from_file_yaml(self) -> None:
         """Test loading configuration from YAML file."""
         config_data = {"llm": {"model": "gpt-4"}, "data": {"cache_enabled": False}}
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
@@ -109,12 +109,12 @@ class TestQuantChainConfig:
         finally:
             os.unlink(config_file)
 
-    def test_load_from_file_not_found(self):
+    def test_load_from_file_not_found(self) -> None:
         """Test error when config file not found."""
         with pytest.raises(FileNotFoundError):
             QuantChainConfig("nonexistent.json")
 
-    def test_load_malformed_json_file(self):
+    def test_load_malformed_json_file(self) -> None:
         """Test loading malformed JSON file raises ValueError."""
         malformed_json = '{"invalid": json}'
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -127,7 +127,7 @@ class TestQuantChainConfig:
         finally:
             os.unlink(config_file)
 
-    def test_load_malformed_yaml_file(self):
+    def test_load_malformed_yaml_file(self) -> None:
         """Test loading malformed YAML file raises ValueError."""
         malformed_yaml = "invalid: yaml: content: ["
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
@@ -140,7 +140,7 @@ class TestQuantChainConfig:
         finally:
             os.unlink(config_file)
 
-    def test_deep_merge(self):
+    def test_deep_merge(self) -> None:
         """Test deep merge of configuration dictionaries."""
         base = {"a": {"b": 1}, "c": 2}
         update = {"a": {"d": 3}, "e": 4}
@@ -148,7 +148,7 @@ class TestQuantChainConfig:
         config._deep_merge(base, update)
         assert base == {"a": {"b": 1, "d": 3}, "c": 2, "e": 4}
 
-    def test_deep_merge_conflicting_types(self):
+    def test_deep_merge_conflicting_types(self) -> None:
         """Test deep merge when same key has conflicting types."""
         base = {"a": {"b": 1}, "c": 2}
         update = {"a": [1, 2, 3], "c": "string"}
@@ -157,7 +157,7 @@ class TestQuantChainConfig:
         # Should overwrite conflicting types
         assert base == {"a": [1, 2, 3], "c": "string"}
 
-    def test_get_api_key(self):
+    def test_get_api_key(self) -> None:
         """Test getting API keys for providers."""
         with patch.dict(
             os.environ,
@@ -168,7 +168,7 @@ class TestQuantChainConfig:
             assert config.get_api_key("alpha_vantage") == "test_key2"
             assert config.get_api_key("unknown") is None
 
-    def test_reload_config(self):
+    def test_reload_config(self) -> None:
         """Test reloading the global configuration instance."""
         # First, get config
         config1 = get_config()
@@ -177,7 +177,7 @@ class TestQuantChainConfig:
         # Should be a new instance
         assert config1 is not config2
 
-    def test_reload_config_with_file(self):
+    def test_reload_config_with_file(self) -> None:
         """Test reloading config with a file and verifying changes are reflected."""
         # Create initial config file
         initial_config = {"llm": {"model": "gpt-3.5"}}
@@ -203,7 +203,7 @@ class TestQuantChainConfig:
         finally:
             os.unlink(config_file)
 
-    def test_get_edge_cases(self):
+    def test_get_edge_cases(self) -> None:
         """Test edge cases for get method."""
         config = QuantChainConfig()
         # Empty key

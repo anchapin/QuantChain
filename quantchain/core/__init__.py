@@ -5,6 +5,7 @@ from .agent_engine import QuantChainAgent, AgentResponse
 from .llm_providers import LLMProvider, create_llm_provider
 from .rag_system import MarketDataRAG, MarketData
 from .reflection import ReflectionEngine, AgentAction, PerformanceMetrics
+from .retry import with_retry, RetryHandler
 
 __all__ = [
     "get_config",
@@ -19,4 +20,6 @@ __all__ = [
     "ReflectionEngine",
     "AgentAction",
     "PerformanceMetrics",
+    "with_retry",
+    "RetryHandler",
 ]

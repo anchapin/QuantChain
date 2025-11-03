@@ -17,11 +17,15 @@ pytest-cov>=4.0.0
 pytest-mock>=3.10.0
 pre-commit>=3.0.0
 
+# Type stubs for mypy
+types-requests
+types-PyYAML
+
 # Optional dependencies (uncomment as needed)
 # backtesting>=0.35.0
 # vllm>=0.3.0
 # ollama>=0.1.0
-# alpaca-py>=1.0.0
+alpaca-py>=0.43.1
 # ccxt>=4.0.0
 # streamlit>=1.20.0
 # plotly>=5.0.0

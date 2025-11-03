@@ -13,25 +13,25 @@ from quantchain.core.reflection import AgentAction
 class MockLLMProvider(LLMProvider):
     """Mock LLM provider for testing."""
 
-    def __init__(self, responses=None):
+    def __init__(self, responses=None) -> None:
         self.responses = responses or ["Final answer: test response"]
         self.call_count = 0
 
-    def generate(self, prompt, **kwargs):
+    def generate(self, prompt, **kwargs) -> None:
         response = self.responses[min(self.call_count, len(self.responses) - 1)]
         self.call_count += 1
         return LLMResponse(text=response, usage={"tokens": 10})
 
-    def get_model_name(self):
+    def get_model_name(self) -> None:
         return "mock-model"
 
 
 @pytest.fixture
-def mock_config():
+def mock_config() -> None:
     """Mock configuration for testing."""
     config = MagicMock(spec=QuantChainConfig)
 
-    def config_get(key, default=None):
+    def config_get(key, default=None) -> None:
         """Return appropriate mock values based on key."""
         mock_values = {
             "max_iterations": 5,
@@ -46,13 +46,13 @@ def mock_config():
 
 
 @pytest.fixture
-def mock_llm_provider():
+def mock_llm_provider() -> None:
     """Mock LLM provider."""
     return MockLLMProvider()
 
 
 @patch("quantchain.core.agent_engine.StateGraph")
-def test_agent_initialization(mock_state_graph, mock_config, mock_llm_provider):
+def test_agent_initialization(mock_state_graph, mock_config, mock_llm_provider) -> None:
     """Test agent initialization."""
     # Mock the graph compilation
     mock_graph = MagicMock()
@@ -66,7 +66,7 @@ def test_agent_initialization(mock_state_graph, mock_config, mock_llm_provider):
 
 
 @patch("quantchain.core.agent_engine.StateGraph")
-def test_agent_run(mock_state_graph, mock_config, mock_llm_provider):
+def test_agent_run(mock_state_graph, mock_config, mock_llm_provider) -> None:
     """Test agent execution."""
     # Setup mock graph
     mock_graph = MagicMock()
@@ -101,7 +101,7 @@ def test_agent_run(mock_state_graph, mock_config, mock_llm_provider):
 
 
 @patch("quantchain.core.agent_engine.StateGraph")
-def test_agent_reflection(mock_state_graph, mock_config, mock_llm_provider):
+def test_agent_reflection(mock_state_graph, mock_config, mock_llm_provider) -> None:
     """Test agent reflection capability."""
     mock_graph = MagicMock()
     mock_state_graph.return_value.compile.return_value = mock_graph
@@ -129,7 +129,7 @@ def test_agent_reflection(mock_state_graph, mock_config, mock_llm_provider):
 
 
 @patch("quantchain.core.agent_engine.StateGraph")
-def test_extract_final_answer(mock_state_graph, mock_config):
+def test_extract_final_answer(mock_state_graph, mock_config) -> None:
     """Test final answer extraction."""
     mock_graph = MagicMock()
     mock_state_graph.return_value.compile.return_value = mock_graph
@@ -160,10 +160,15 @@ def test_extract_final_answer(mock_state_graph, mock_config):
 
 
 @patch("quantchain.core.agent_engine.StateGraph")
-def test_calculate_confidence(mock_state_graph, mock_config):
+def test_calculate_confidence(mock_state_graph) -> None:
     """Test confidence calculation."""
     mock_graph = MagicMock()
     mock_state_graph.return_value.compile.return_value = mock_graph
+
+    # Create a config with RAG disabled to avoid SentenceTransformer issues
+    mock_config = QuantChainConfig()
+    mock_config._config["rag"] = {"enabled": False}
+
     agent = QuantChainAgent(mock_config, llm_provider=MockLLMProvider())
 
     high_confidence = "I am certain this is definitely the right approach"

@@ -16,7 +16,7 @@ from quantchain.core.llm_providers import (
 class TestLLMResponse:
     """Test LLMResponse dataclass."""
 
-    def test_llm_response_creation(self):
+    def test_llm_response_creation(self) -> None:
         """Test creating an LLMResponse."""
         response = LLMResponse(
             text="Test response", usage={"tokens": 10}, finish_reason="stop"
@@ -25,7 +25,7 @@ class TestLLMResponse:
         assert response.usage == {"tokens": 10}
         assert response.finish_reason == "stop"
 
-    def test_llm_response_defaults(self):
+    def test_llm_response_defaults(self) -> None:
         """Test LLMResponse with defaults."""
         response = LLMResponse(text="Test")
         assert response.usage is None
@@ -35,7 +35,7 @@ class TestLLMResponse:
 class TestOpenAIProvider:
     """Test OpenAI provider."""
 
-    def test_openai_provider_init_missing_package(self):
+    def test_openai_provider_init_missing_package(self) -> None:
         """Test OpenAI provider initialization when package is not installed."""
         # Temporarily set OpenAI to None to simulate missing package
         import quantchain.core.llm_providers as providers_module
@@ -51,7 +51,7 @@ class TestOpenAIProvider:
             providers_module.OpenAI = original_openai
 
     @patch("quantchain.core.llm_providers.OpenAI")
-    def test_openai_provider_init_success(self, mock_openai):
+    def test_openai_provider_init_success(self, mock_openai) -> None:
         """Test successful OpenAI provider initialization."""
         mock_client = MagicMock()
         mock_openai.return_value = mock_client
@@ -63,13 +63,13 @@ class TestOpenAIProvider:
         assert provider.model == "gpt-4"
         mock_openai.assert_called_once_with(api_key="test-key")
 
-    def test_openai_provider_init_no_key(self):
+    def test_openai_provider_init_no_key(self) -> None:
         """Test OpenAI provider initialization without API key."""
         with pytest.raises(ValueError, match="OpenAI API key required"):
             OpenAIProvider()
 
     @patch("quantchain.core.llm_providers.OpenAI")
-    def test_openai_provider_generate(self, mock_openai):
+    def test_openai_provider_generate(self, mock_openai) -> None:
         """Test OpenAI provider generate method."""
         mock_client = MagicMock()
         mock_openai.return_value = mock_client
@@ -92,7 +92,7 @@ class TestOpenAIProvider:
         assert response.usage == {"tokens": 10}
 
     @patch("quantchain.core.llm_providers.OpenAI")
-    def test_openai_provider_get_model_name(self, mock_openai):
+    def test_openai_provider_get_model_name(self, mock_openai) -> None:
         """Test OpenAI provider get_model_name."""
         with patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}):
             provider = OpenAIProvider(model="gpt-3.5-turbo")
@@ -103,7 +103,7 @@ class TestOpenAIProvider:
 class TestAnthropicProvider:
     """Test Anthropic provider."""
 
-    def test_anthropic_provider_init_missing_package(self):
+    def test_anthropic_provider_init_missing_package(self) -> None:
         """Test Anthropic provider initialization when package is not installed."""
         # Temporarily set anthropic to None to simulate missing package
         import quantchain.core.llm_providers as providers_module
@@ -119,7 +119,7 @@ class TestAnthropicProvider:
             providers_module.anthropic = original_anthropic
 
     @patch("quantchain.core.llm_providers.anthropic")
-    def test_anthropic_provider_init_success(self, mock_anthropic):
+    def test_anthropic_provider_init_success(self, mock_anthropic) -> None:
         """Test successful Anthropic provider initialization."""
         mock_client = MagicMock()
         mock_anthropic.Anthropic.return_value = mock_client
@@ -131,13 +131,13 @@ class TestAnthropicProvider:
         assert provider.model == "claude-3-sonnet-20240229"
         mock_anthropic.Anthropic.assert_called_once_with(api_key="test-key")
 
-    def test_anthropic_provider_init_no_key(self):
+    def test_anthropic_provider_init_no_key(self) -> None:
         """Test Anthropic provider initialization without API key."""
         with pytest.raises(ValueError, match="Anthropic API key required"):
             AnthropicProvider()
 
     @patch("quantchain.core.llm_providers.anthropic")
-    def test_anthropic_provider_generate(self, mock_anthropic):
+    def test_anthropic_provider_generate(self, mock_anthropic) -> None:
         """Test Anthropic provider generate method."""
         mock_client = MagicMock()
         mock_anthropic.Anthropic.return_value = mock_client
@@ -161,7 +161,7 @@ class TestAnthropicProvider:
         assert response.usage == {"input_tokens": 5, "output_tokens": 5}
 
     @patch("quantchain.core.llm_providers.anthropic")
-    def test_anthropic_provider_get_model_name(self, mock_anthropic):
+    def test_anthropic_provider_get_model_name(self, mock_anthropic) -> None:
         """Test Anthropic provider get_model_name."""
         with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"}):
             provider = AnthropicProvider(model="claude-3-haiku")
@@ -172,7 +172,7 @@ class TestAnthropicProvider:
 class TestOllamaProvider:
     """Test Ollama provider."""
 
-    def test_ollama_provider_init_missing_package(self):
+    def test_ollama_provider_init_missing_package(self) -> None:
         """Test Ollama provider initialization when package is not installed."""
         # Temporarily set ollama to None to simulate missing package
         import quantchain.core.llm_providers as providers_module
@@ -188,7 +188,7 @@ class TestOllamaProvider:
             providers_module.ollama = original_ollama
 
     @patch("quantchain.core.llm_providers.ollama")
-    def test_ollama_provider_init_success(self, mock_ollama):
+    def test_ollama_provider_init_success(self, mock_ollama) -> None:
         """Test successful Ollama provider initialization."""
         provider = OllamaProvider()
 
@@ -196,7 +196,7 @@ class TestOllamaProvider:
         assert provider.host == "http://localhost:11434"
 
     @patch("quantchain.core.llm_providers.ollama")
-    def test_ollama_provider_generate(self, mock_ollama):
+    def test_ollama_provider_generate(self, mock_ollama) -> None:
         """Test Ollama provider generate method."""
         mock_response = {
             "message": {"content": "Generated text"},
@@ -212,7 +212,7 @@ class TestOllamaProvider:
         assert response.finish_reason == "stop"
 
     @patch("quantchain.core.llm_providers.ollama")
-    def test_ollama_provider_get_model_name(self, mock_ollama):
+    def test_ollama_provider_get_model_name(self, mock_ollama) -> None:
         """Test Ollama provider get_model_name."""
         provider = OllamaProvider(model="codellama:13b")
 
@@ -222,18 +222,18 @@ class TestOllamaProvider:
 class TestVLLMProvider:
     """Test VLLM provider."""
 
-    def test_vllm_provider_init_raises(self):
+    def test_vllm_provider_init_raises(self) -> None:
         """Test VLLM provider initialization raises ImportError."""
         with pytest.raises(ImportError, match="vLLM package not installed"):
             VLLMProvider("test-model")
 
-    def test_vllm_provider_generate_raises(self):
+    def test_vllm_provider_generate_raises(self) -> None:
         """Test VLLM provider generate raises NotImplementedError."""
         provider = VLLMProvider.__new__(VLLMProvider)  # Create without __init__
         with pytest.raises(NotImplementedError):
             provider.generate("test")
 
-    def test_vllm_provider_get_model_name(self):
+    def test_vllm_provider_get_model_name(self) -> None:
         """Test VLLM provider get_model_name."""
         provider = VLLMProvider.__new__(VLLMProvider)  # Create without __init__
         provider.model_name = "test-model"
@@ -244,24 +244,24 @@ class TestCreateLLMProvider:
     """Test create_llm_provider function."""
 
     @patch("quantchain.core.llm_providers.OpenAIProvider")
-    def test_create_openai_provider(self, mock_provider):
+    def test_create_openai_provider(self, mock_provider) -> None:
         """Test creating OpenAI provider."""
         create_llm_provider("openai", api_key="test")
         mock_provider.assert_called_once_with(api_key="test")
 
     @patch("quantchain.core.llm_providers.AnthropicProvider")
-    def test_create_anthropic_provider(self, mock_provider):
+    def test_create_anthropic_provider(self, mock_provider) -> None:
         """Test creating Anthropic provider."""
         create_llm_provider("anthropic", api_key="test")
         mock_provider.assert_called_once_with(api_key="test")
 
     @patch("quantchain.core.llm_providers.OllamaProvider")
-    def test_create_ollama_provider(self, mock_provider):
+    def test_create_ollama_provider(self, mock_provider) -> None:
         """Test creating Ollama provider."""
         create_llm_provider("ollama", model="test-model")
         mock_provider.assert_called_once_with(model="test-model")
 
-    def test_create_unknown_provider(self):
+    def test_create_unknown_provider(self) -> None:
         """Test creating unknown provider raises ValueError."""
         with pytest.raises(ValueError, match="Unsupported provider"):
             create_llm_provider("unknown")

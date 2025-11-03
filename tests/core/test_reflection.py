@@ -15,7 +15,7 @@ from quantchain.core.reflection import (
 class TestAgentAction:
     """Test AgentAction dataclass."""
 
-    def test_agent_action_creation(self):
+    def test_agent_action_creation(self) -> None:
         """Test creating an AgentAction."""
         timestamp = datetime.now()
         action = AgentAction(
@@ -35,7 +35,7 @@ class TestAgentAction:
         assert action.success is True
         assert action.reward == 50.0
 
-    def test_agent_action_defaults(self):
+    def test_agent_action_defaults(self) -> None:
         """Test AgentAction with defaults."""
         timestamp = datetime.now()
         action = AgentAction(
@@ -52,7 +52,7 @@ class TestAgentAction:
 class TestPerformanceMetrics:
     """Test PerformanceMetrics dataclass."""
 
-    def test_performance_metrics_creation(self):
+    def test_performance_metrics_creation(self) -> None:
         """Test creating PerformanceMetrics."""
         metrics = PerformanceMetrics(
             total_actions=10,
@@ -72,7 +72,7 @@ class TestPerformanceMetrics:
         assert metrics.action_type_breakdown == {"trade": 8, "analyze": 2}
         assert metrics.no_data is False
 
-    def test_performance_metrics_defaults(self):
+    def test_performance_metrics_defaults(self) -> None:
         """Test PerformanceMetrics with defaults."""
         metrics = PerformanceMetrics()
         assert metrics.total_actions == 0
@@ -84,16 +84,16 @@ class TestPerformanceMetrics:
         assert metrics.action_type_breakdown == {}
         assert metrics.no_data is False
 
-    def test_performance_metrics_post_init(self):
+    def test_performance_metrics_post_init(self) -> None:
         """Test PerformanceMetrics __post_init__."""
-        metrics = PerformanceMetrics(action_type_breakdown=None)
+        metrics = PerformanceMetrics()
         assert metrics.action_type_breakdown == {}
 
 
 class TestReflectionReport:
     """Test ReflectionReport dataclass."""
 
-    def test_reflection_report_creation(self):
+    def test_reflection_report_creation(self) -> None:
         """Test creating a ReflectionReport."""
         start = datetime.now()
         end = start + timedelta(hours=1)
@@ -154,11 +154,11 @@ class TestReflectionEngine:
             ),
         ]
 
-    def test_engine_init(self, engine):
+    def test_engine_init(self, engine) -> None:
         """Test ReflectionEngine initialization."""
         assert engine.action_history == []
 
-    def test_record_action(self, engine, sample_actions):
+    def test_record_action(self, engine, sample_actions) -> None:
         """Test recording actions."""
         action = sample_actions[0]
         engine.record_action(action)
@@ -166,7 +166,7 @@ class TestReflectionEngine:
         assert len(engine.action_history) == 1
         assert engine.action_history[0] == action
 
-    def test_analyze_performance_no_actions(self, engine):
+    def test_analyze_performance_no_actions(self, engine, sample_actions) -> None:
         """Test analyzing performance with no actions."""
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -179,7 +179,7 @@ class TestReflectionEngine:
         assert metrics.total_actions == 0
         assert metrics.no_data is True
 
-    def test_analyze_performance_with_actions(self, engine, sample_actions):
+    def test_analyze_performance_with_actions(self, engine, sample_actions) -> None:
         """Test analyzing performance with actions."""
         for action in sample_actions:
             engine.record_action(action)
@@ -194,14 +194,16 @@ class TestReflectionEngine:
         assert metrics.action_type_breakdown == {"trade": 2, "analyze": 1}
         assert metrics.no_data is False
 
-    def test_analyze_performance_with_external_actions(self, engine, sample_actions):
+    def test_analyze_performance_with_external_actions(
+        self, engine, sample_actions
+    ) -> None:
         """Test analyzing performance with external actions list."""
         metrics = engine.analyze_performance(sample_actions)
 
         assert metrics.total_actions == 3
         assert metrics.successful_actions == 2
 
-    def test_analyze_performance_risk_adjusted_return(self, engine):
+    def test_analyze_performance_risk_adjusted_return(self, engine) -> None:
         """Test risk-adjusted return calculation."""
         actions = [
             AgentAction(
@@ -241,7 +243,7 @@ class TestReflectionEngine:
         expected_rar = mean_return / std_return
         assert metrics.risk_adjusted_return == pytest.approx(expected_rar, abs=0.1)
 
-    def test_generate_insights_high_win_rate(self, engine):
+    def test_generate_insights_high_win_rate(self, engine) -> None:
         """Test insights generation for high win rate."""
         metrics = PerformanceMetrics(
             total_actions=10,
@@ -258,7 +260,7 @@ class TestReflectionEngine:
         assert "High confidence" in " ".join(insights)
         assert "Positive P&L" in " ".join(insights)
 
-    def test_generate_insights_low_performance(self, engine):
+    def test_generate_insights_low_performance(self, engine) -> None:
         """Test insights generation for low performance."""
         metrics = PerformanceMetrics(
             total_actions=10,
@@ -275,7 +277,7 @@ class TestReflectionEngine:
         assert "Low confidence" in " ".join(insights)
         assert "Negative P&L" in " ".join(insights)
 
-    def test_generate_insights_action_diversity(self, engine):
+    def test_generate_insights_action_diversity(self, engine) -> None:
         """Test insights generation for action diversity."""
         # Low diversity
         metrics_low = PerformanceMetrics(action_type_breakdown={"trade": 10})
@@ -289,7 +291,7 @@ class TestReflectionEngine:
         insights_high = engine.generate_insights(metrics_high)
         assert "High action diversity" in " ".join(insights_high)
 
-    def test_update_strategy_low_win_rate(self, engine):
+    def test_update_strategy_low_win_rate(self, engine) -> None:
         """Test strategy updates for low win rate."""
         insights = ["Low win rate - consider reviewing decision logic"]
         recommendations = engine.update_strategy(insights)
@@ -297,7 +299,7 @@ class TestReflectionEngine:
         assert "conservative thresholds" in " ".join(recommendations)
         assert "validation steps" in " ".join(recommendations)
 
-    def test_update_strategy_low_confidence(self, engine):
+    def test_update_strategy_low_confidence(self, engine) -> None:
         """Test strategy updates for low confidence."""
         insights = ["Low confidence suggests uncertainty"]
         recommendations = engine.update_strategy(insights)
@@ -305,7 +307,7 @@ class TestReflectionEngine:
         assert "data gathering" in " ".join(recommendations)
         assert "ensemble decision" in " ".join(recommendations)
 
-    def test_update_strategy_negative_pnl(self, engine):
+    def test_update_strategy_negative_pnl(self, engine) -> None:
         """Test strategy updates for negative P&L."""
         insights = ["Negative P&L - investigate losses"]
         recommendations = engine.update_strategy(insights)
@@ -313,14 +315,14 @@ class TestReflectionEngine:
         assert "position sizes" in " ".join(recommendations)
         assert "stop-loss" in " ".join(recommendations)
 
-    def test_update_strategy_good_performance(self, engine):
+    def test_update_strategy_good_performance(self, engine) -> None:
         """Test strategy updates for good performance."""
         insights = ["Excellent win rate", "High confidence"]
         recommendations = engine.update_strategy(insights)
 
         assert "Continue current strategy" in " ".join(recommendations)
 
-    def test_generate_report_no_history(self, engine):
+    def test_generate_report_no_history(self, engine, sample_actions) -> None:
         """Test generating report with no action history."""
         report = engine.generate_report()
 
@@ -331,7 +333,7 @@ class TestReflectionEngine:
             "Continue current strategy - performance is satisfactory"
         ]
 
-    def test_generate_report_with_history(self, engine, sample_actions):
+    def test_generate_report_with_history(self, engine, sample_actions) -> None:
         """Test generating report with action history."""
         for action in sample_actions:
             engine.record_action(action)
@@ -343,7 +345,7 @@ class TestReflectionEngine:
         assert len(report.insights) > 0
         assert len(report.recommendations) > 0
 
-    def test_generate_report_with_period_filter(self, engine, sample_actions):
+    def test_generate_report_with_period_filter(self, engine, sample_actions) -> None:
         """Test generating report with period filtering."""
         for action in sample_actions:
             engine.record_action(action)

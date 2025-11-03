@@ -15,6 +15,6 @@ repos:
     rev: v1.18.2
     hooks:
       - id: mypy
-        additional_dependencies: [types-PyYAML]
+        additional_dependencies: [types-PyYAML, types-requests]
         args: [--python-version=3.12]
         exclude: ^tests/
