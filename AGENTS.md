@@ -199,10 +199,118 @@ Integrate with GitHub Actions for automated quality checks:
 To maintain a clean and organized repository and prevent accidental commits to the main branch:
 
 - **Branch Creation:** Always create feature branches for new work. Never commit directly to the `main` branch.
-- **Branch Verification:** Before making any commits or changes, verify the current branch is not `main` using `git branch --show-current`.
-- **Feature Branches:** If on `main`, create a new feature branch with a descriptive name (e.g., `feature/add-technical-indicators` or `issue-123-fix-bug`).
+- **MANDATORY Branch Verification:** Before performing ANY git operation that modifies code (commit, merge, reset, rebase, etc.), agents MUST:
+  1. **Always** execute: `git branch --show-current`
+  2. **Verify** the result is NOT `main`
+  3. **If** on `main`, the agent MUST:
+     - Stop the operation immediately
+     - Inform the user they are on main
+     - Ask for explicit confirmation to create a feature branch
+     - Create a feature branch with descriptive name before proceeding
+  4. **Only** proceed with the git operation after confirming on a non-main branch
+
+- **Feature Branch Naming Convention:** Use descriptive names following these patterns:
+  - `feature/description-of-feature`
+  - `issue-123-description`
+  - `bugfix/description-of-bugfix`
+  - `refactor/description-of-refactor`
+
 - **Pull Requests:** Use pull requests for all changes to ensure code review and integration.
-- **Agent Responsibility:** Agents must check the current branch before performing any git operations that modify code (commits, resets, etc.) and refuse to proceed if on `main` without explicit user confirmation.
+- **Agent Implementation Requirements:** All agents must implement the following mandatory checks:
+  ```bash
+  # Before ANY git operation that modifies code:
+  CURRENT_BRANCH=$(git branch --show-current)
+  if [ "$CURRENT_BRANCH" = "main" ]; then
+    echo "ERROR: Cannot perform git operations on main branch"
+    echo "Please create a feature branch first:"
+    echo "git checkout -b feature/your-descriptive-name"
+    exit 1
+  fi
+  ```
+
+- **Automatic Protection:** CI/CD workflows should include checks that prevent direct merges to main without PR review.
+
+## 8.1. Agent Implementation Guidelines for Git Operations
+
+### Critical Safety Protocol for All Agents
+
+**ALL agents MUST implement the following safety checks before ANY git operation that modifies code:**
+
+#### Step 1: Mandatory Branch Verification
+```bash
+# This check MUST be performed before:
+# - git commit
+# - git merge
+# - git reset --hard
+# - git rebase
+# - git push
+
+CURRENT_BRANCH=$(git branch --show-current)
+echo "Current branch: $CURRENT_BRANCH"
+
+if [ "$CURRENT_BRANCH" = "main" ]; then
+  echo "🚨 SAFETY ERROR: Cannot perform git operations on main branch"
+  echo ""
+  echo "Required actions:"
+  echo "1. Create a feature branch:"
+  echo "   git checkout -b feature/your-descriptive-name"
+  echo "2. Or switch to existing feature branch:"
+  echo "   git checkout feature/branch-name"
+  echo ""
+  echo "Operation cancelled for safety."
+  exit 1
+fi
+
+echo "✅ Safety check passed - not on main branch"
+```
+
+#### Step 2: Feature Branch Validation
+Before proceeding, validate the feature branch follows naming conventions:
+```bash
+# Check if branch name follows conventions
+if [[ ! "$CURRENT_BRANCH" =~ ^(feature|issue|bugfix|refactor)/ ]]; then
+  echo "⚠️  Warning: Branch name doesn't follow convention"
+  echo "Expected: feature/, issue/, bugfix/, refactor/"
+  echo "Consider renaming for consistency"
+  read -p "Continue anyway? (y/N): " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    exit 1
+  fi
+fi
+```
+
+#### Step 3: Pre-Commit Validation
+```bash
+# Before commit, ensure working tree is clean and on proper branch
+git status --porcelain
+if [ $? -ne 0 ]; then
+  echo "❌ Git status check failed"
+  exit 1
+fi
+
+# Verify we're not about to commit to main
+git rev-parse --abbrev-ref HEAD | grep -q main
+if [ $? -eq 0 ]; then
+  echo "🚨 SAFETY ERROR: Attempting to commit to main!"
+  exit 1
+fi
+```
+
+### Required Agent Behavior
+
+1. **Automatic Prevention**: Agents must automatically refuse git operations on main without user intervention
+2. **Clear Messaging**: Provide specific instructions for creating feature branches
+3. **Logging**: All branch checks must be logged for audit purposes
+4. **Fallback**: Always provide safe exit paths when branch checks fail
+
+### Implementation Checklist for Agent Developers
+
+- [ ] Implement mandatory branch check before all git operations
+- [ ] Use exact error messages provided above for consistency
+- [ ] Test the safety mechanism thoroughly
+- [ ] Ensure no code paths bypass the main branch check
+- [ ] Add logging for all branch verification attempts
 
 ## 9. Code Review Process
 
