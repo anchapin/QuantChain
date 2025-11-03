@@ -35,6 +35,21 @@ class TestLLMResponse:
 class TestOpenAIProvider:
     """Test OpenAI provider."""
 
+    def test_openai_provider_init_missing_package(self):
+        """Test OpenAI provider initialization when package is not installed."""
+        # Temporarily set OpenAI to None to simulate missing package
+        import quantchain.core.llm_providers as providers_module
+
+        original_openai = providers_module.OpenAI
+        providers_module.OpenAI = None
+
+        try:
+            with pytest.raises(ImportError, match="OpenAI package not installed"):
+                OpenAIProvider()
+        finally:
+            # Restore original value
+            providers_module.OpenAI = original_openai
+
     @patch("quantchain.core.llm_providers.OpenAI")
     def test_openai_provider_init_success(self, mock_openai):
         """Test successful OpenAI provider initialization."""
@@ -87,6 +102,21 @@ class TestOpenAIProvider:
 
 class TestAnthropicProvider:
     """Test Anthropic provider."""
+
+    def test_anthropic_provider_init_missing_package(self):
+        """Test Anthropic provider initialization when package is not installed."""
+        # Temporarily set anthropic to None to simulate missing package
+        import quantchain.core.llm_providers as providers_module
+
+        original_anthropic = providers_module.anthropic
+        providers_module.anthropic = None
+
+        try:
+            with pytest.raises(ImportError, match="Anthropic package not installed"):
+                AnthropicProvider()
+        finally:
+            # Restore original value
+            providers_module.anthropic = original_anthropic
 
     @patch("quantchain.core.llm_providers.anthropic")
     def test_anthropic_provider_init_success(self, mock_anthropic):
@@ -141,6 +171,21 @@ class TestAnthropicProvider:
 
 class TestOllamaProvider:
     """Test Ollama provider."""
+
+    def test_ollama_provider_init_missing_package(self):
+        """Test Ollama provider initialization when package is not installed."""
+        # Temporarily set ollama to None to simulate missing package
+        import quantchain.core.llm_providers as providers_module
+
+        original_ollama = providers_module.ollama
+        providers_module.ollama = None
+
+        try:
+            with pytest.raises(ImportError, match="Ollama package not installed"):
+                OllamaProvider()
+        finally:
+            # Restore original value
+            providers_module.ollama = original_ollama
 
     @patch("quantchain.core.llm_providers.ollama")
     def test_ollama_provider_init_success(self, mock_ollama):
