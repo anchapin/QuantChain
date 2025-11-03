@@ -17,6 +17,10 @@ pytest-cov>=4.0.0
 pytest-mock>=3.10.0
 pre-commit>=3.0.0
 
+# Type stubs for mypy
+types-requests
+types-PyYAML
+
 # Optional dependencies (uncomment as needed)
 # backtesting>=0.35.0
 # vllm>=0.3.0
