@@ -194,7 +194,17 @@ Integrate with GitHub Actions for automated quality checks:
 * Lint and format code automatically.
 * Require PR reviews before merging.
 
-## 8. Code Review Process
+## 8. Git Workflow and Branching Strategy
+
+To maintain a clean and organized repository and prevent accidental commits to the main branch:
+
+- **Branch Creation:** Always create feature branches for new work. Never commit directly to the `main` branch.
+- **Branch Verification:** Before making any commits or changes, verify the current branch is not `main` using `git branch --show-current`.
+- **Feature Branches:** If on `main`, create a new feature branch with a descriptive name (e.g., `feature/add-technical-indicators` or `issue-123-fix-bug`).
+- **Pull Requests:** Use pull requests for all changes to ensure code review and integration.
+- **Agent Responsibility:** Agents must check the current branch before performing any git operations that modify code (commits, resets, etc.) and refuse to proceed if on `main` without explicit user confirmation.
+
+## 9. Code Review Process
 
 * All changes require a PR with detailed description.
 * At least one reviewer must approve.
