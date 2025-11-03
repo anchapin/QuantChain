@@ -1,29 +1,35 @@
 """LLM Provider abstractions for QuantChain agents."""
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, TYPE_CHECKING
 import os
 from dataclasses import dataclass
 
-try:
+if TYPE_CHECKING:
     from openai import OpenAI
-except ImportError:
-    OpenAI = None
-
-try:
     import anthropic
-except ImportError:
-    anthropic = None
-
-try:
     import ollama
-except ImportError:
-    ollama = None
+    from vllm import LLM
 
 try:
-    from vllm import LLM
+    from openai import OpenAI  # noqa: F811
 except ImportError:
-    LLM = None
+    OpenAI = None  # type: ignore[assignment,misc]
+
+try:
+    import anthropic  # noqa: F811
+except ImportError:
+    anthropic = None  # type: ignore[assignment,misc]
+
+try:
+    import ollama  # noqa: F811
+except ImportError:
+    ollama = None  # type: ignore[assignment,misc]
+
+try:
+    from vllm import LLM  # noqa: F811
+except ImportError:
+    LLM = None  # type: ignore[assignment,misc]
 
 
 @dataclass

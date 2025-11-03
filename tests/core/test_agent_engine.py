@@ -30,7 +30,17 @@ class MockLLMProvider(LLMProvider):
 def mock_config():
     """Mock configuration for testing."""
     config = MagicMock(spec=QuantChainConfig)
-    config.get.return_value = 5  # max_iterations
+
+    def config_get(key, default=None):
+        """Return appropriate mock values based on key."""
+        mock_values = {
+            "max_iterations": 5,
+            "llm": {"provider": "mock", "model": "mock-model"},
+            "rag": {"enabled": False},  # Return dict for rag config
+        }
+        return mock_values.get(key, default)
+
+    config.get.side_effect = config_get
     config.get_api_key.return_value = None
     return config
 
@@ -118,9 +128,12 @@ def test_agent_reflection(mock_state_graph, mock_config, mock_llm_provider):
     assert len(report.insights) > 0
 
 
-def test_extract_final_answer():
+@patch("quantchain.core.agent_engine.StateGraph")
+def test_extract_final_answer(mock_state_graph, mock_config):
     """Test final answer extraction."""
-    agent = QuantChainAgent(MagicMock(), llm_provider=MockLLMProvider())
+    mock_graph = MagicMock()
+    mock_state_graph.return_value.compile.return_value = mock_graph
+    agent = QuantChainAgent(mock_config, llm_provider=MockLLMProvider())
 
     reasoning = "After analysis, the final answer: buy AAPL"
     answer = agent._extract_final_answer(reasoning)
@@ -146,9 +159,12 @@ def test_extract_final_answer():
     assert answer.strip().lower() == "buy goog"
 
 
-def test_calculate_confidence():
+@patch("quantchain.core.agent_engine.StateGraph")
+def test_calculate_confidence(mock_state_graph, mock_config):
     """Test confidence calculation."""
-    agent = QuantChainAgent(MagicMock(), llm_provider=MockLLMProvider())
+    mock_graph = MagicMock()
+    mock_state_graph.return_value.compile.return_value = mock_graph
+    agent = QuantChainAgent(mock_config, llm_provider=MockLLMProvider())
 
     high_confidence = "I am certain this is definitely the right approach"
     score = agent._calculate_confidence(high_confidence)

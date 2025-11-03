@@ -1,16 +1,20 @@
 """Core agent engine using LangGraph for QuantChain."""
 
-from typing import Dict, Any, List, Optional, TypedDict
+from typing import Dict, Any, List, Optional, TypedDict, TYPE_CHECKING
 from dataclasses import dataclass
 from datetime import datetime
 
-try:
+if TYPE_CHECKING:
     from langgraph.graph import StateGraph, END
     from langchain_core.tools import BaseTool
+
+try:
+    from langgraph.graph import StateGraph, END  # noqa: F811
+    from langchain_core.tools import BaseTool  # noqa: F811
 except ImportError:
-    StateGraph = None
-    END = None
-    BaseTool = None
+    StateGraph = None  # type: ignore[assignment,misc]
+    END = None  # type: ignore[assignment,misc]
+    BaseTool = None  # type: ignore[assignment,misc]
 
 from .config import QuantChainConfig
 from .llm_providers import LLMProvider, create_llm_provider
@@ -95,7 +99,7 @@ class QuantChainAgent:
         # Build the LangGraph
         self.graph = self._build_graph()
 
-    def _build_graph(self) -> StateGraph:
+    def _build_graph(self) -> Any:
         """Build the LangGraph workflow."""
 
         def reason_step(state: AgentState) -> AgentState:
@@ -204,6 +208,12 @@ class QuantChainAgent:
         """Extract final answer from reasoning text."""
         # Simple extraction - in practice, use better NLP
         if "final answer:" in reasoning.lower():
+            # Find the last occurrence of "final answer:" (case insensitive)
+            lower_reasoning = reasoning.lower()
+            last_index = lower_reasoning.rfind("final answer:")
+            if last_index != -1:
+                start = last_index + len("final answer:")
+                return reasoning[start:].strip()
             return reasoning.split("final answer:", 1)[1].strip()
         return reasoning.strip()
 

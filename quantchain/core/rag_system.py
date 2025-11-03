@@ -1,20 +1,24 @@
 """RAG system for market data caching and retrieval."""
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, TYPE_CHECKING
 from dataclasses import dataclass
 import json
 from datetime import datetime
 
-try:
+if TYPE_CHECKING:
     import chromadb
-except ImportError:
-    chromadb = None
+    from sentence_transformers import SentenceTransformer
 
 try:
-    from sentence_transformers import SentenceTransformer
+    import chromadb  # noqa: F811
 except ImportError:
-    SentenceTransformer = None
+    chromadb = None  # type: ignore[assignment,misc]
+
+try:
+    from sentence_transformers import SentenceTransformer  # noqa: F811
+except ImportError:
+    SentenceTransformer = None  # type: ignore[assignment,misc]
 
 
 @dataclass
@@ -73,32 +77,45 @@ class ChromaVectorStore(VectorStore):
             "data_type": data.data_type,
             "content": content_str,
         }
-        self.collection.add(ids=[data_id], embeddings=[embedding], metadatas=[metadata])
+        self.collection.add(  # noqa: E501
+            ids=[data_id], embeddings=[embedding], metadatas=[metadata]
+        )  # type: ignore[arg-type]
         return data_id
 
     def search(self, query_embedding: List[float], limit: int = 10) -> List[MarketData]:
-        results = self.collection.query(
+        from typing import cast
+
+        results = self.collection.query(  # noqa: E501
             query_embeddings=[query_embedding], n_results=limit
-        )
+        )  # type: ignore[arg-type]
 
         market_data: List[MarketData] = []
-        if not results["metadatas"] or not results["metadatas"][0]:
+        if (
+            not results.get("metadatas")
+            or not results["metadatas"]
+            or not results["metadatas"][0]
+        ):
             return market_data
 
-        for i, metadata in enumerate(results["metadatas"][0]):
-            content = json.loads(metadata["content"])
+        metadatas = results["metadatas"][0]
+        embeddings_result = results.get("embeddings")
+        embedding_list = (
+            embeddings_result[0] if embeddings_result and embeddings_result[0] else []
+        )
+
+        for i, metadata in enumerate(metadatas):
+            content_str = cast(str, metadata.get("content", "{}"))
+            content = json.loads(content_str)
             embedding = None
-            if (
-                results.get("embeddings")
-                and results["embeddings"][0]
-                and i < len(results["embeddings"][0])
-            ):
-                embedding = results["embeddings"][0][i]
+            if i < len(embedding_list) and embedding_list[i] is not None:
+                embedding = list(embedding_list[i])
             market_data.append(
                 MarketData(
-                    symbol=metadata["symbol"],
-                    timestamp=datetime.fromisoformat(metadata["timestamp"]),
-                    data_type=metadata["data_type"],
+                    symbol=cast(str, metadata.get("symbol", "")),
+                    timestamp=datetime.fromisoformat(
+                        cast(str, metadata.get("timestamp", ""))
+                    ),
+                    data_type=cast(str, metadata.get("data_type", "")),
                     content=content,
                     embedding=embedding,
                 )

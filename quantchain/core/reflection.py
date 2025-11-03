@@ -107,7 +107,10 @@ class ReflectionEngine:
 
     def generate_insights(self, metrics: PerformanceMetrics) -> List[str]:
         """Generate insights from performance metrics."""
-        insights = []
+        insights: List[str] = []
+
+        if metrics.no_data:
+            return insights
 
         # Win rate insights
         if metrics.win_rate > 0.7:
