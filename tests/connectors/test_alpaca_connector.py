@@ -326,7 +326,9 @@ class TestAlpacaDataConnector:
     @patch("quantchain.connectors.alpaca_connector.StockHistoricalDataClient")
     @patch("quantchain.connectors.alpaca_connector.CryptoHistoricalDataClient")
     @patch("quantchain.connectors.alpaca_connector.TradingClient")
-    def test_paper_trading_config(self, mock_trading) -> None:
+    def test_paper_trading_config(
+        self, mock_trading, mock_stock_client, mock_crypto_client
+    ) -> None:
         """Test paper trading configuration."""
         connector = AlpacaDataConnector("key", "secret", use_paper=True)
         assert connector.use_paper is True

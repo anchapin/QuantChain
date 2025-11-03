@@ -2,6 +2,7 @@
 
 import requests
 import pandas as pd
+import logging
 from typing import List, Dict, Optional, Any, cast
 from datetime import datetime, timezone
 import time
@@ -9,6 +10,7 @@ from urllib.parse import urljoin
 
 from .base_interface import DataFeedInterface
 from ..core.exceptions import DataSourceError, SymbolNotFoundError
+from ..core.retry import RetryHandler
 
 
 class DexscreenerDataConnector(DataFeedInterface):
@@ -34,6 +36,13 @@ class DexscreenerDataConnector(DataFeedInterface):
         self.timeout = kwargs.get("timeout", 30)
         self.max_retries = kwargs.get("max_retries", 3)
         self.session = requests.Session()
+        self.logger = logging.getLogger(__name__)
+        self._retry_handler = RetryHandler(
+            max_retries=self.max_retries,
+            base_delay=1.0,
+            backoff_factor=2.0,
+            logger=self.logger,
+        )
 
         # Cache for token data
         self._token_cache: Dict[str, Dict[str, Any]] = {}
@@ -46,20 +55,14 @@ class DexscreenerDataConnector(DataFeedInterface):
         """Make HTTP request to Dexscreener API with retry logic."""
         url = urljoin(self.BASE_URL, endpoint)
 
-        for attempt in range(self.max_retries):
-            try:
-                response = self.session.get(url, params=params, timeout=self.timeout)
-                response.raise_for_status()
-                return response.json()  # type: ignore[no-any-return]
-            except requests.exceptions.RequestException as e:
-                if attempt == self.max_retries - 1:
-                    raise DataSourceError(
-                        f"Failed to fetch from Dexscreener after "
-                        f"{self.max_retries} attempts: {str(e)}"
-                    )
-                time.sleep(2**attempt)  # Exponential backoff
+        def _request() -> Dict[str, Any]:
+            response = self.session.get(url, params=params, timeout=self.timeout)
+            response.raise_for_status()
+            return response.json()  # type: ignore[no-any-return]
 
-        raise DataSourceError("Unexpected error in request logic")
+        return self._retry_handler.execute(
+            _request, exceptions=(requests.exceptions.RequestException,)
+        )
 
     def _normalize_pair_address(self, symbol: str) -> str:
         """Extract pair address from symbol format like 'TOKEN/USD:ADDRESS'."""
@@ -90,7 +93,7 @@ class DexscreenerDataConnector(DataFeedInterface):
 
             except Exception as e:
                 # Don't fail completely if cache refresh fails
-                print(f"Warning: Failed to refresh token cache: {str(e)}")
+                self.logger.warning(f"Failed to refresh token cache: {str(e)}")
 
     def _find_pair_by_symbol(self, symbol: str) -> Optional[Dict[str, Any]]:
         """Find pair data by symbol or address."""

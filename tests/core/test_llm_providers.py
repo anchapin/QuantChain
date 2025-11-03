@@ -92,7 +92,7 @@ class TestOpenAIProvider:
         assert response.usage == {"tokens": 10}
 
     @patch("quantchain.core.llm_providers.OpenAI")
-    def test_openai_provider_get_model_name() -> None:
+    def test_openai_provider_get_model_name(self, mock_openai) -> None:
         """Test OpenAI provider get_model_name."""
         with patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}):
             provider = OpenAIProvider(model="gpt-3.5-turbo")
@@ -161,7 +161,7 @@ class TestAnthropicProvider:
         assert response.usage == {"input_tokens": 5, "output_tokens": 5}
 
     @patch("quantchain.core.llm_providers.anthropic")
-    def test_anthropic_provider_get_model_name() -> None:
+    def test_anthropic_provider_get_model_name(self, mock_anthropic) -> None:
         """Test Anthropic provider get_model_name."""
         with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"}):
             provider = AnthropicProvider(model="claude-3-haiku")
@@ -212,7 +212,7 @@ class TestOllamaProvider:
         assert response.finish_reason == "stop"
 
     @patch("quantchain.core.llm_providers.ollama")
-    def test_ollama_provider_get_model_name() -> None:
+    def test_ollama_provider_get_model_name(self, mock_ollama) -> None:
         """Test Ollama provider get_model_name."""
         provider = OllamaProvider(model="codellama:13b")
 

@@ -62,7 +62,7 @@ class TestChromaVectorStore:
         mock_client.get_or_create_collection.assert_called_once_with("market_data")
         assert store.collection == mock_collection
 
-    def test_chroma_store_init_import_error(self, mock_chromadb) -> None:
+    def test_chroma_store_init_import_error(self) -> None:
         """Test ChromaVectorStore initialization with import error."""
         with patch("quantchain.core.rag_system.chromadb", None):
             with pytest.raises(ImportError):
@@ -192,7 +192,6 @@ class TestSentenceTransformerProvider:
 class TestMarketDataRAG:
     """Test MarketDataRAG system."""
 
-    @pytest.fixture
     @pytest.fixture
     def mock_vector_store(self) -> None:
         """Mock vector store."""

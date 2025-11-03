@@ -160,11 +160,15 @@ def test_extract_final_answer(mock_state_graph, mock_config) -> None:
 
 
 @patch("quantchain.core.agent_engine.StateGraph")
-@patch("quantchain.core.agent_engine.StateGraph")
-def test_calculate_confidence(mock_state_graph, mock_config) -> None:
+def test_calculate_confidence(mock_state_graph) -> None:
     """Test confidence calculation."""
     mock_graph = MagicMock()
     mock_state_graph.return_value.compile.return_value = mock_graph
+
+    # Create a config with RAG disabled to avoid SentenceTransformer issues
+    mock_config = QuantChainConfig()
+    mock_config._config["rag"] = {"enabled": False}
+
     agent = QuantChainAgent(mock_config, llm_provider=MockLLMProvider())
 
     high_confidence = "I am certain this is definitely the right approach"
