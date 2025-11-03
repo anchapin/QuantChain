@@ -55,6 +55,30 @@ class TestQuantChainConfig:
         assert config.get("data.default_provider") == "alpha_vantage"
         assert config.get("trading.paper_trading") is False
 
+    @patch.dict(
+        os.environ,
+        {
+            "QUANTCHAIN_PAPER_TRADING": "not_boolean",
+        },
+    )
+    def test_load_from_env_invalid_boolean(self):
+        """Test loading invalid boolean values from environment variables."""
+        config = QuantChainConfig()
+        # Invalid boolean string should result in False
+        # (since 'not_boolean'.lower() != 'true')
+        assert config.get("trading.paper_trading") is False
+
+    @patch.dict(
+        os.environ,
+        {
+            "QUANTCHAIN_PAPER_TRADING": "TRUE",
+        },
+    )
+    def test_load_from_env_valid_boolean_uppercase(self):
+        """Test loading valid boolean values in uppercase from environment variables."""
+        config = QuantChainConfig()
+        assert config.get("trading.paper_trading") is True
+
     def test_load_from_file_json(self):
         """Test loading configuration from JSON file."""
         config_data = {"llm": {"provider": "vllm"}, "trading": {"paper_trading": False}}
@@ -90,6 +114,32 @@ class TestQuantChainConfig:
         with pytest.raises(FileNotFoundError):
             QuantChainConfig("nonexistent.json")
 
+    def test_load_malformed_json_file(self):
+        """Test loading malformed JSON file raises ValueError."""
+        malformed_json = '{"invalid": json}'
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            f.write(malformed_json)
+            config_file = f.name
+
+        try:
+            with pytest.raises(ValueError, match="Invalid JSON"):
+                QuantChainConfig(config_file)
+        finally:
+            os.unlink(config_file)
+
+    def test_load_malformed_yaml_file(self):
+        """Test loading malformed YAML file raises ValueError."""
+        malformed_yaml = "invalid: yaml: content: ["
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            f.write(malformed_yaml)
+            config_file = f.name
+
+        try:
+            with pytest.raises(ValueError, match="Invalid YAML"):
+                QuantChainConfig(config_file)
+        finally:
+            os.unlink(config_file)
+
     def test_deep_merge(self):
         """Test deep merge of configuration dictionaries."""
         base = {"a": {"b": 1}, "c": 2}
@@ -97,6 +147,15 @@ class TestQuantChainConfig:
         config = QuantChainConfig()
         config._deep_merge(base, update)
         assert base == {"a": {"b": 1, "d": 3}, "c": 2, "e": 4}
+
+    def test_deep_merge_conflicting_types(self):
+        """Test deep merge when same key has conflicting types."""
+        base = {"a": {"b": 1}, "c": 2}
+        update = {"a": [1, 2, 3], "c": "string"}
+        config = QuantChainConfig()
+        config._deep_merge(base, update)
+        # Should overwrite conflicting types
+        assert base == {"a": [1, 2, 3], "c": "string"}
 
     def test_get_api_key(self):
         """Test getting API keys for providers."""
@@ -117,6 +176,32 @@ class TestQuantChainConfig:
         config2 = reload_config()
         # Should be a new instance
         assert config1 is not config2
+
+    def test_reload_config_with_file(self):
+        """Test reloading config with a file and verifying changes are reflected."""
+        # Create initial config file
+        initial_config = {"llm": {"model": "gpt-3.5"}}
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump(initial_config, f)
+            config_file = f.name
+
+        try:
+            # Load config from file
+            config1 = reload_config(config_file)
+            assert config1.get("llm.model") == "gpt-3.5"
+
+            # Modify the file
+            updated_config = {"llm": {"model": "gpt-4"}}
+            with open(config_file, "w") as f:
+                json.dump(updated_config, f)
+
+            # Reload config
+            config2 = reload_config(config_file)
+            assert config2.get("llm.model") == "gpt-4"
+            # Should be a new instance
+            assert config1 is not config2
+        finally:
+            os.unlink(config_file)
 
     def test_get_edge_cases(self):
         """Test edge cases for get method."""

@@ -1,5 +1,6 @@
 """Configuration system for QuantChain."""
 
+import copy
 import os
 from pathlib import Path
 from typing import Dict, Any, Optional
@@ -91,10 +92,20 @@ class QuantChainConfig:
             raise FileNotFoundError(f"Configuration file not found: {config_file}")
 
         with open(config_path, "r") as f:
-            if config_path.suffix.lower() in [".yaml", ".yml"]:
-                file_config = yaml.safe_load(f)
+            if config_path.suffix.lower() in {".yaml", ".yml"}:
+                try:
+                    file_config = yaml.safe_load(f)
+                except yaml.YAMLError as e:
+                    raise ValueError(
+                        f"Invalid YAML in configuration file {config_file}: {e}"
+                    )
             else:
-                file_config = json.load(f)
+                try:
+                    file_config = json.load(f)
+                except json.JSONDecodeError as e:
+                    raise ValueError(
+                        f"Invalid JSON in configuration file {config_file}: {e}"
+                    )
 
         # Deep merge file config with default config
         self._deep_merge(self._config, file_config)
@@ -115,7 +126,7 @@ class QuantChainConfig:
             for k in keys:
                 value = value[k]
             return value
-        except KeyError:
+        except (KeyError, TypeError):
             return default
 
     def get_api_key(self, provider: str) -> Optional[str]:
@@ -124,14 +135,13 @@ class QuantChainConfig:
             "alpaca": "alpaca_key",
             "alpha_vantage": "alpha_vantage_key",
         }
-        key_name = key_map.get(provider)
-        if key_name:
+        if key_name := key_map.get(provider):
             return self._api_keys.get(key_name)
         return None
 
     def to_dict(self) -> Dict[str, Any]:
         """Return configuration as dictionary."""
-        return self._config.copy()
+        return copy.deepcopy(self._config)
 
 
 # Global configuration instance
