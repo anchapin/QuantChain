@@ -61,7 +61,7 @@ dev = [
 
 # All development dependencies combined
 all-dev = [
-    "quantchain[core,test,dev]",
+    "quantchain[core,test,dev,data]",
 ]
 
 # Backtesting dependencies
