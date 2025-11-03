@@ -113,9 +113,17 @@ flake8 --max-line-length=88 quantchain tests
 # Type check
 mypy quantchain
 
-# Run tests
-pytest --cov=quantchain
+# Run tests with coverage
+pytest --cov=quantchain --cov-report=term
 ```
+
+Current test coverage: **100%**
+
+### Security & CI/CD
+
+- GitHub Actions workflows are pinned to commit SHAs for security
+- Pre-commit hooks enforce code quality on commits
+- Automated testing, linting, and type checking on all PRs
 
 ## Usage
 

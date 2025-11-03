@@ -167,7 +167,7 @@ To prevent code sprawl, duplication, and maintainability issues, all contributio
 * **DRY Principle:** Do not repeat yourself. Abstract common patterns into reusable modules.
 * **Code Coverage:** Maintain at least 80% test coverage for all new code. Use `pytest-cov` to enforce this.
 * **Linting and Formatting:** Use `black` for code formatting, `flake8` for linting, and `mypy` for type checking.
-* **Documentation:** Update inline documentation and specs for any changes. Use docstrings for all public functions.
+* **Documentation:** Update inline documentation, specs, README.md, and other associated documentation for any changes. Ensure README.md and documentation are updated on every commit, PR creation, or merge. Use docstrings for all public functions.
 * **Security:** Follow the Security section in the Tech Stack: Never hardcode secrets; use environment variables via `python-dotenv`, with recommendations for `Vault` or cloud secret managers in production.
 
 ## 6. Project Structure
