@@ -77,7 +77,7 @@ llm = [
 
 # Data connector dependencies
 data = [
-    "alpaca-py>=1.0.0",
+    "alpaca-py>=0.43.0",
     "ccxt>=4.0.0",
 ]
 
