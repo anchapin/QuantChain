@@ -26,6 +26,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        pip install -e .
     - name: Run tests with coverage
       run: |
         pytest --cov=quantchain --cov-report=xml --cov-fail-under=80
@@ -100,6 +101,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install types-PyYAML
+        pip install -e .
     - name: Type check with mypy
       run: |
         mypy quantchain
