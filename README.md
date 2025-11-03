@@ -5,7 +5,9 @@ A financial framework for building quantitative trading agents using LangGraph a
 ## Features
 
 - **Agentic Framework**: Built on LangGraph for stateful agent reasoning and memory
-- **Multiple LLM Support**: Local LLMs via vLLM/Ollama, with GPU acceleration support
+- **Multiple LLM Support**: OpenAI, Anthropic, and local LLMs via vLLM/Ollama with GPU acceleration
+- **RAG System**: Vector-based market data caching and retrieval-augmented generation
+- **Reflective Performance Analysis**: Agent self-analysis and strategy optimization
 - **Comprehensive Data Connectors**: Alpaca, Alpha Vantage, Polygon.io, Dexscreener, CCXT
 - **Backtesting Engine**: Vector-based backtesting with FinRL integration
 - **Production Ready**: Docker deployment, GPU support, secure API key management
@@ -82,6 +84,24 @@ examples/            # Sample agents and configurations
 docs/               # Documentation
 ```
 
+## Core Components
+
+### Agent Engine (`quantchain.core.agent_engine`)
+The central agent framework using LangGraph for stateful reasoning loops, memory management, and tool integration.
+
+### LLM Providers (`quantchain.core.llm_providers`)
+Model-agnostic LLM support with providers for:
+- OpenAI GPT models
+- Anthropic Claude models
+- Local Ollama models
+- vLLM served models
+
+### RAG System (`quantchain.core.rag_system`)
+Vector-based retrieval-augmented generation for market data caching using ChromaDB and sentence transformers.
+
+### Reflection Engine (`quantchain.core.reflection`)
+Performance analysis and insights generation for continuous agent improvement.
+
 ## Development
 
 This project follows Test-Driven Development (TDD) and Specification-Driven Development (SDD):
@@ -127,18 +147,53 @@ Current test coverage: **100%**
 
 ## Usage
 
+### Basic Agent Usage
+
 ```python
-from quantchain import agents, core
+from quantchain.core import QuantChainAgent, get_config
 
 # Load configuration
-config = core.get_config('config.yaml')
+config = get_config('config.yaml')
 
 # Initialize an agent
-agent = agents.zoo.MemecoinVibeTrader(config)
+agent = QuantChainAgent(config)
 
-# Run backtest
-results = agent.backtest(start_date='2024-01-01', end_date='2024-12-31')
-print(f"Final balance: ${results.final_balance}")
+# Run agent with input
+response = agent.run({"query": "Analyze AAPL stock trends"})
+print(f"Agent response: {response.final_answer}")
+
+# Generate performance reflection
+report = agent.reflect()
+print(f"Insights: {report.insights}")
+```
+
+### Advanced Usage with RAG
+
+```python
+from quantchain.core import MarketDataRAG, ChromaVectorStore, SentenceTransformerProvider
+
+# Initialize RAG system components
+vector_store = ChromaVectorStore(persist_directory="./data/market_data")
+embedding_provider = SentenceTransformerProvider(model_name="all-MiniLM-L6-v2")
+rag = MarketDataRAG(vector_store, embedding_provider)
+
+# Store market data
+from quantchain.core import MarketData
+from datetime import datetime
+
+data = MarketData(
+    symbol="AAPL",
+    timestamp=datetime.now(),
+    data_type="price",
+    content={"price": 150.0, "volume": 1000000}
+)
+rag.store_market_data(data)
+
+# Query with RAG augmentation
+augmented_prompt = rag.generate_augmented_prompt(
+    "What are the current market conditions?",
+    "AAPL price and volume analysis"
+)
 ```
 
 ## Contributing
