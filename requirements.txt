@@ -1,0 +1,21 @@
+# Core dependencies for QuantChain
+langchain>=0.1.0
+pytest>=7.0.0
+PyYAML>=6.0.0
+
+# Development dependencies
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.0.0
+pytest-cov>=4.0.0
+pytest-mock>=3.10.0
+pre-commit>=3.0.0
+
+# Optional dependencies (uncomment as needed)
+# backtesting>=0.35.0
+# vllm>=0.3.0
+# ollama>=0.1.0
+# alpaca-py>=1.0.0
+# ccxt>=4.0.0
+# streamlit>=1.20.0
+# plotly>=5.0.0
