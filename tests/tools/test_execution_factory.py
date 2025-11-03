@@ -18,6 +18,7 @@ class TestExecutionFactory:
 
     def test_create_alpaca_paper_trading(self, mock_config):
         """Test creating Alpaca connector in paper trading mode."""
+
         def mock_get(key, default=None):
             if key == "trading.default_broker":
                 return "alpaca"
@@ -26,17 +27,20 @@ class TestExecutionFactory:
             return default
 
         mock_config.get.side_effect = mock_get
-        mock_config.get_api_key.side_effect = lambda key: "test-key" if key == "alpaca" else "test-secret"
+        mock_config.get_api_key.side_effect = lambda key: (
+            "test-key" if key == "alpaca" else "test-secret"
+        )
 
         from quantchain.tools.execution_factory import create_execution_interface
 
         executor = create_execution_interface(mock_config)
 
-        assert hasattr(executor, 'use_paper')
+        assert hasattr(executor, "use_paper")
         assert executor.use_paper is True
 
     def test_create_alpaca_live_trading(self, mock_config):
         """Test creating Alpaca connector in live trading mode."""
+
         def mock_get(key, default=None):
             if key == "trading.default_broker":
                 return "alpaca"
@@ -45,17 +49,20 @@ class TestExecutionFactory:
             return default
 
         mock_config.get.side_effect = mock_get
-        mock_config.get_api_key.side_effect = lambda key: "test-key" if key == "alpaca" else "test-secret"
+        mock_config.get_api_key.side_effect = lambda key: (
+            "test-key" if key == "alpaca" else "test-secret"
+        )
 
         from quantchain.tools.execution_factory import create_execution_interface
 
         executor = create_execution_interface(mock_config)
 
-        assert hasattr(executor, 'use_paper')
+        assert hasattr(executor, "use_paper")
         assert executor.use_paper is False
 
     def test_create_paper_trading_executor(self, mock_config):
         """Test creating standalone paper trading executor."""
+
         def mock_get(key, default=None):
             if key == "trading.default_broker":
                 return "paper"
@@ -67,11 +74,12 @@ class TestExecutionFactory:
 
         executor = create_execution_interface(mock_config)
 
-        assert hasattr(executor, 'initial_cash')
+        assert hasattr(executor, "initial_cash")
         assert executor.initial_cash == 100000.0
 
     def test_missing_api_key_for_live_trading(self, mock_config):
         """Test error when API key is missing for live trading."""
+
         def mock_get(key, default=None):
             if key == "trading.default_broker":
                 return "alpaca"
