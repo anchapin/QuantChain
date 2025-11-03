@@ -5,6 +5,7 @@ from typing import List, Dict, Any, Optional, TYPE_CHECKING
 from dataclasses import dataclass
 import json
 from datetime import datetime
+import numpy as np
 
 if TYPE_CHECKING:
     import chromadb
@@ -78,16 +79,16 @@ class ChromaVectorStore(VectorStore):
             "content": content_str,
         }
         self.collection.add(  # noqa: E501
-            ids=[data_id], embeddings=[embedding], metadatas=[metadata]
-        )  # type: ignore[arg-type]
+            ids=[data_id], embeddings=[np.array(embedding)], metadatas=[metadata]
+        )
         return data_id
 
     def search(self, query_embedding: List[float], limit: int = 10) -> List[MarketData]:
         from typing import cast
 
         results = self.collection.query(  # noqa: E501
-            query_embeddings=[query_embedding], n_results=limit
-        )  # type: ignore[arg-type]
+            query_embeddings=[np.array(query_embedding)], n_results=limit
+        )
 
         market_data: List[MarketData] = []
         if (
