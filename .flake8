@@ -1,1 +1,2 @@
 [flake8]\nignore = F811
+max-line-length = 88
