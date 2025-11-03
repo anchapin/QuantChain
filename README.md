@@ -84,6 +84,59 @@ examples/            # Sample agents and configurations
 docs/               # Documentation
 ```
 
+## Data Connectors
+
+QuantChain provides a standardized interface for connecting to various data sources for market data:
+
+### Alpaca Connector
+- **Markets**: Stocks (US equities) and Cryptocurrencies
+- **Features**: Historical data, real-time quotes, market status, symbol information
+- **Timeframes**: 1Min, 5Min, 15Min, 1H, 4H, 1D, 1W, 1M
+- **Authentication**: Requires Alpaca API key and secret
+
+```python
+from quantchain.connectors import AlpacaDataConnector
+
+connector = AlpacaDataConnector(
+    api_key="your_api_key",
+    api_secret="your_api_secret",
+    use_paper=True  # Use paper trading for testing
+)
+
+# Get historical data
+data = connector.get_historical_data("AAPL", "1D", start_date, end_date)
+
+# Get real-time quote
+quote = connector.get_quote("AAPL")
+```
+
+### Dexscreener Connector
+- **Markets**: DEX cryptocurrency pairs (Uniswap, PancakeSwap, etc.)
+- **Features**: Real-time token data, trending pairs, pair search
+- **Note**: Provides current price data, not historical data
+- **Authentication**: No API key required (public API)
+
+```python
+from quantchain.connectors import DexscreenerDataConnector
+
+connector = DexscreenerDataConnector()
+
+# Get real-time data for a token pair
+data = connector.get_real_time_data("WETH/USDC:0x123...")
+
+# Get trending pairs
+trending = connector.get_trending_pairs(limit=10)
+```
+
+### Standardized Interface
+All connectors implement the `DataFeedInterface` providing consistent methods:
+- `get_historical_data(symbol, timeframe, start_date, end_date)`
+- `get_real_time_data(symbol)`
+- `get_quote(symbol)`
+- `get_available_symbols(market=None)`
+- `get_symbol_info(symbol)`
+- `is_market_open(market=None)`
+
 ## Core Components
 
 ### Agent Engine (`quantchain.core.agent_engine`)
