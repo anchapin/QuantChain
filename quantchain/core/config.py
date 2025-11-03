@@ -50,6 +50,17 @@ class QuantChainConfig:
                 "initial_balance": 10000,
                 "commission": 0.001,  # 0.1%
             },
+            # Agent Configuration
+            "agent": {
+                "max_iterations": 5,
+                "reflection_interval": 10,  # actions
+            },
+            # RAG Configuration
+            "rag": {
+                "vector_store_type": "chromadb",
+                "embedding_model": "all-MiniLM-L6-v2",
+                "persist_directory": "./data/chroma_db",
+            },
             # Logging
             "logging": {
                 "level": "INFO",
