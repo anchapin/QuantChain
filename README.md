@@ -14,7 +14,7 @@ A financial framework for building quantitative trading agents using LangGraph a
 
 ### Prerequisites
 
-- Python 3.8+
+- Python 3.9+
 - Git
 - (Optional) CUDA-compatible GPU for LLM acceleration
 
@@ -91,6 +91,16 @@ This project follows Test-Driven Development (TDD) and Specification-Driven Deve
 3. Implement code to make tests pass
 4. Maintain 80%+ test coverage
 
+### Pre-commit Hooks
+
+Install pre-commit hooks to automatically run quality checks:
+
+```bash
+pre-commit install
+```
+
+The hooks will run black, flake8, and mypy on each commit.
+
 ### Code Quality
 
 ```bash
@@ -98,7 +108,7 @@ This project follows Test-Driven Development (TDD) and Specification-Driven Deve
 black .
 
 # Lint code
-flake8 quantchain tests
+flake8 --max-line-length=88 quantchain tests
 
 # Type check
 mypy quantchain

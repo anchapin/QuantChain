@@ -67,11 +67,15 @@ class QuantChainConfig:
 
         # Data settings
         if "QUANTCHAIN_DATA_PROVIDER" in os.environ:
-            self._config["data"]["default_provider"] = os.environ["QUANTCHAIN_DATA_PROVIDER"]
+            self._config["data"]["default_provider"] = os.environ[
+                "QUANTCHAIN_DATA_PROVIDER"
+            ]
 
         # Trading settings
         if "QUANTCHAIN_PAPER_TRADING" in os.environ:
-            self._config["trading"]["paper_trading"] = os.environ["QUANTCHAIN_PAPER_TRADING"].lower() == "true"
+            self._config["trading"]["paper_trading"] = (
+                os.environ["QUANTCHAIN_PAPER_TRADING"].lower() == "true"
+            )
 
         # API Keys (loaded but not stored in config for security)
         self._api_keys = {
@@ -86,8 +90,8 @@ class QuantChainConfig:
         if not config_path.exists():
             raise FileNotFoundError(f"Configuration file not found: {config_file}")
 
-        with open(config_path, 'r') as f:
-            if config_path.suffix.lower() in ['.yaml', '.yml']:
+        with open(config_path, "r") as f:
+            if config_path.suffix.lower() in [".yaml", ".yml"]:
                 file_config = yaml.safe_load(f)
             else:
                 file_config = json.load(f)
@@ -105,7 +109,7 @@ class QuantChainConfig:
 
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value by dot-separated key."""
-        keys = key.split('.')
+        keys = key.split(".")
         value = self._config
         try:
             for k in keys:

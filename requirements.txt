@@ -1,6 +1,7 @@
 # Core dependencies for QuantChain
 langchain>=0.1.0
 pytest>=7.0.0
+PyYAML>=6.0.0
 
 # Development dependencies
 black>=23.0.0
