@@ -193,7 +193,9 @@ class TestAlpacaDataConnector:
             mock_quote.timestamp = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
             mock_quote.bid_price = 152.0
             mock_quote.ask_price = 153.0
+            # Mock both __getitem__ and __contains__ for proper dict-like behavior
             mock_quotes.__getitem__.return_value = mock_quote
+            mock_quotes.__contains__.return_value = True
             mock_get_quote.return_value = mock_quotes
 
             data = connector.get_real_time_data("AAPL")
@@ -212,7 +214,9 @@ class TestAlpacaDataConnector:
             mock_quote.timestamp = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
             mock_quote.bid_price = 50000.0
             mock_quote.ask_price = 50100.0
+            # Mock both __getitem__ and __contains__ for proper dict-like behavior
             mock_quotes.__getitem__.return_value = mock_quote
+            mock_quotes.__contains__.return_value = True
             mock_get_quote.return_value = mock_quotes
 
             data = connector.get_real_time_data("BTC/USD")
@@ -233,7 +237,9 @@ class TestAlpacaDataConnector:
             mock_quote.ask_price = 153.0
             mock_quote.bid_size = 100
             mock_quote.ask_size = 200
+            # Mock both __getitem__ and __contains__ for proper dict-like behavior
             mock_quotes.__getitem__.return_value = mock_quote
+            mock_quotes.__contains__.return_value = True
             mock_get_quote.return_value = mock_quotes
 
             quote = connector.get_quote("AAPL")
@@ -245,6 +251,7 @@ class TestAlpacaDataConnector:
 
     def test_get_available_symbols(self, connector: AlpacaDataConnector) -> None:
         """Test getting available symbols."""
+        # Mock the refresh to avoid API calls
         with patch.object(connector, "_refresh_symbol_cache"):
             connector._symbol_cache = {
                 "AAPL": {"market": "equity"},
@@ -335,3 +342,122 @@ class TestAlpacaDataConnector:
 
         # Check that TradingClient was called with paper=True
         mock_trading.assert_called_with("key", "secret", paper=True)
+
+    def test_configurable_symbol_limit(self) -> None:
+        """Test configurable symbol limit parameter."""
+        connector = AlpacaDataConnector("test_key", "test_secret", symbol_limit=50)
+        assert connector.symbol_limit == 50
+
+    def test_get_available_symbols_with_custom_limit(
+        self, connector: AlpacaDataConnector
+    ) -> None:
+        """Test get_available_symbols with custom limit."""
+        # Mock symbol cache with multiple symbols
+        with patch.object(connector, "_refresh_symbol_cache"):
+            connector._symbol_cache = {
+                "AAPL": {"market": "equity"},
+                "GOOGL": {"market": "equity"},
+                "BTC/USD": {"market": "crypto"},
+                "ETH/USD": {"market": "crypto"},
+            }
+
+            # Test with method-level limit override
+            symbols = connector.get_available_symbols(limit=2)
+            assert len(symbols) == 2
+
+            # Test with instance-level limit
+            connector.symbol_limit = 3
+            symbols = connector.get_available_symbols()
+            assert len(symbols) == 3
+
+    def test_get_real_time_data_missing_symbol(
+        self, connector: AlpacaDataConnector
+    ) -> None:
+        """Test get_real_time_data when symbol is missing from API response."""
+        with patch.object(connector, "_is_crypto_symbol", return_value=False):
+            with patch.object(
+                connector.stock_client, "get_stock_latest_quote"
+            ) as mock_quote:
+                # Return empty dict to simulate missing symbol
+                mock_quote.return_value = {}
+
+                with pytest.raises(DataSourceError, match="Equity symbol not found"):
+                    connector.get_real_time_data("MISSING")
+
+    def test_get_quote_missing_crypto_symbol(
+        self, connector: AlpacaDataConnector
+    ) -> None:
+        """Test get_quote when crypto symbol is missing from API response."""
+        with patch.object(connector, "_is_crypto_symbol", return_value=True):
+            with patch.object(
+                connector.crypto_client, "get_crypto_latest_quote"
+            ) as mock_quote:
+                # Return empty dict to simulate missing symbol
+                mock_quote.return_value = {}
+
+                with pytest.raises(DataSourceError, match="Crypto symbol not found"):
+                    connector.get_quote("MISSING/USD")
+
+    def test_authentication_error_handling(self) -> None:
+        """Test authentication error handling during initialization."""
+        with patch("quantchain.connectors.alpaca_connector.StockHistoricalDataClient"):
+            with patch(
+                "quantchain.connectors.alpaca_connector.CryptoHistoricalDataClient"
+            ):
+                with patch(
+                    "quantchain.connectors.alpaca_connector.TradingClient"
+                ) as mock_trading:
+                    # Make TradingClient raise an exception
+                    mock_trading.side_effect = Exception("Authentication failed")
+
+                    with pytest.raises(
+                        AuthenticationError, match="Failed to authenticate with Alpaca"
+                    ):
+                        AlpacaDataConnector("invalid_key", "invalid_secret")
+
+    def test_invalid_timeframe_handling(self, connector: AlpacaDataConnector) -> None:
+        """Test handling of invalid timeframe in get_historical_data."""
+        start_date = datetime(2024, 1, 1, tzinfo=timezone.utc)
+
+        with pytest.raises(ValueError, match="Timeframe INVALID not supported"):
+            connector.get_historical_data("AAPL", "INVALID", start_date)
+
+    def test_empty_symbol_cache_handling(self, connector: AlpacaDataConnector) -> None:
+        """Test methods when symbol cache is empty."""
+        with patch.object(connector, "_refresh_symbol_cache"):
+            connector._symbol_cache = {}
+
+            # Test get_available_symbols
+            symbols = connector.get_available_symbols()
+            assert symbols == []
+
+            # Test get_symbol_info with non-existent symbol
+            with pytest.raises(SymbolNotFoundError):
+                connector.get_symbol_info("NONEXISTENT")
+
+    def test_market_specific_symbol_filtering(
+        self, connector: AlpacaDataConnector
+    ) -> None:
+        """Test market-specific symbol filtering in get_available_symbols."""
+        # Mock symbol cache with mixed markets
+        with patch.object(connector, "_refresh_symbol_cache"):
+            connector._symbol_cache = {
+                "AAPL": {"market": "equity"},
+                "GOOGL": {"market": "equity"},
+                "BTC/USD": {"market": "crypto"},
+                "ETH/USD": {"market": "crypto"},
+            }
+
+            # Test crypto filter
+            crypto_symbols = connector.get_available_symbols(market="crypto")
+            assert len(crypto_symbols) == 2
+            assert all(symbol in ["BTC/USD", "ETH/USD"] for symbol in crypto_symbols)
+
+            # Test equity filter
+            equity_symbols = connector.get_available_symbols(market="equity")
+            assert len(equity_symbols) == 2
+            assert all(symbol in ["AAPL", "GOOGL"] for symbol in equity_symbols)
+
+            # Test invalid market filter
+            invalid_symbols = connector.get_available_symbols(market="invalid")
+            assert invalid_symbols == []

@@ -309,3 +309,88 @@ class TestDexscreenerDataConnector:
 
         assert connector.timeout == 60
         assert connector.max_retries == 5
+
+    def test_configurable_symbol_limit(self) -> None:
+        """Test configurable symbol limit parameter."""
+        connector = DexscreenerDataConnector(symbol_limit=50)
+        assert connector.symbol_limit == 50
+
+    def test_get_available_symbols_with_custom_limit(
+        self, connector: DexscreenerDataConnector, sample_pair_data
+    ) -> None:
+        """Test get_available_symbols with custom limit."""
+        connector._token_cache = {"0x123": sample_pair_data}
+
+        # Test with method-level limit override
+        symbols = connector.get_available_symbols(limit=1)
+        assert len(symbols) == 1
+
+        # Test with instance-level limit
+        connector.symbol_limit = 10
+        symbols = connector.get_available_symbols()
+        assert len(symbols) <= 1  # Only 1 symbol in cache
+
+    def test_get_historical_data_with_invalid_symbol_type(
+        self, connector: DexscreenerDataConnector
+    ) -> None:
+        """Test get_historical_data with invalid symbol type."""
+        start_date = datetime(2024, 1, 1, tzinfo=timezone.utc)
+
+        with pytest.raises(Exception):  # Should raise some kind of exception
+            connector.get_historical_data(None, "1D", start_date)
+
+    def test_get_real_time_data_empty_response(
+        self, connector: DexscreenerDataConnector
+    ) -> None:
+        """Test get_real_time_data with empty response."""
+        with patch.object(connector, "_find_pair_by_symbol", return_value=None):
+            with pytest.raises(SymbolNotFoundError):
+                connector.get_real_time_data("INVALID")
+
+    def test_get_symbol_info_with_missing_fields(
+        self, connector: DexscreenerDataConnector
+    ) -> None:
+        """Test get_symbol_info with missing optional fields."""
+        incomplete_pair_data = {
+            "pairAddress": "0x123",
+            "baseToken": {"symbol": "TEST"},
+            "quoteToken": {"symbol": "USD"},
+            # Missing optional fields
+        }
+
+        with patch.object(
+            connector, "_find_pair_by_symbol", return_value=incomplete_pair_data
+        ):
+            info = connector.get_symbol_info("TEST/USD")
+
+            assert info["symbol"] == "TEST/USD"
+            assert info["market"] == "crypto"
+            assert info["currency"] == "USD"
+            # Should handle missing fields gracefully
+            assert info["liquidity_usd"] == 0.0
+            assert info["fdv"] == 0.0
+            assert info["market_cap"] == 0.0
+
+    def test_search_pairs_empty_query(
+        self, connector: DexscreenerDataConnector
+    ) -> None:
+        """Test search_pairs with empty query."""
+        with patch.object(connector, "_make_request") as mock_request:
+            mock_request.return_value = {"pairs": []}
+
+            results = connector.search_pairs("")
+
+            assert results == []
+            mock_request.assert_called_with("dex/search", {"q": ""})
+
+    def test_get_trending_pairs_zero_limit(
+        self, connector: DexscreenerDataConnector
+    ) -> None:
+        """Test get_trending_pairs with zero limit."""
+        with patch.object(connector, "_make_request") as mock_request:
+            mock_request.return_value = {"pairs": []}
+
+            trending = connector.get_trending_pairs(limit=0)
+
+            assert trending == []
+            mock_request.assert_called_with("dex/tokens")

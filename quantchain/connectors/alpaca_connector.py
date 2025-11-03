@@ -49,6 +49,8 @@ class AlpacaDataConnector(DataFeedInterface):
             **kwargs: Additional configuration
                 - use_paper: Whether to use paper trading (default: True)
                 - crypto_feed: Data feed for crypto (default: 'iex' for free tier)
+                - symbol_limit: Maximum number of symbols to return in
+                  get_available_symbols (default: None, no limit)
         """
         super().__init__(api_key, api_secret, **kwargs)
 
@@ -56,6 +58,7 @@ class AlpacaDataConnector(DataFeedInterface):
         self.api_secret = api_secret
         self.use_paper = kwargs.get("use_paper", True)
         self.crypto_feed = kwargs.get("crypto_feed", DataFeed.IEX)
+        self.symbol_limit = kwargs.get("symbol_limit", None)
 
         try:
             # Initialize clients
@@ -71,7 +74,9 @@ class AlpacaDataConnector(DataFeedInterface):
             self._cache_ttl = 3600  # 1 hour
 
         except Exception as e:
-            raise AuthenticationError(f"Failed to authenticate with Alpaca: {str(e)}")
+            raise AuthenticationError(
+                f"Failed to authenticate with Alpaca: {str(e)}"
+            ) from e
 
     def _is_crypto_symbol(self, symbol: str) -> bool:
         """Check if symbol is a crypto pair."""
@@ -79,9 +84,7 @@ class AlpacaDataConnector(DataFeedInterface):
 
     def _normalize_crypto_symbol(self, symbol: str) -> str:
         """Normalize crypto symbol to Alpaca format (e.g., 'BTC/USD' -> 'BTC/USD')."""
-        if "-" in symbol:
-            return symbol.replace("-", "/")
-        return symbol
+        return symbol.replace("-", "/") if "-" in symbol else symbol
 
     def _convert_timeframe(self, timeframe: str) -> TimeFrame:
         """Convert standard timeframe to Alpaca TimeFrame object."""
@@ -136,7 +139,9 @@ class AlpacaDataConnector(DataFeedInterface):
                 self._cache_timestamp = now
 
             except Exception as e:
-                raise DataSourceError(f"Failed to refresh symbol cache: {str(e)}")
+                raise DataSourceError(
+                    f"Failed to refresh symbol cache: {str(e)}"
+                ) from e
 
     def get_historical_data(
         self,
@@ -213,7 +218,7 @@ class AlpacaDataConnector(DataFeedInterface):
                 raise
             raise DataSourceError(
                 f"Failed to fetch historical data for {symbol}: {str(e)}"
-            )
+            ) from e
 
     def get_real_time_data(self, symbol: str) -> Dict[str, Any]:
         """Fetch real-time price data for a symbol."""
@@ -225,6 +230,10 @@ class AlpacaDataConnector(DataFeedInterface):
                     symbol_or_symbols=[normalized_symbol]
                 )
                 quotes = self.crypto_client.get_crypto_latest_quote(crypto_request)
+
+                if normalized_symbol not in quotes:
+                    raise SymbolNotFoundError(f"Crypto symbol not found: {symbol}")
+
                 quote = quotes[normalized_symbol]
                 return {
                     "timestamp": quote.timestamp,
@@ -237,6 +246,10 @@ class AlpacaDataConnector(DataFeedInterface):
                 # Equity latest quote
                 stock_request = StockLatestQuoteRequest(symbol_or_symbols=[symbol])
                 quotes = self.stock_client.get_stock_latest_quote(stock_request)
+
+                if symbol not in quotes:
+                    raise SymbolNotFoundError(f"Equity symbol not found: {symbol}")
+
                 quote = quotes[symbol]
                 return {
                     "timestamp": quote.timestamp,
@@ -249,7 +262,7 @@ class AlpacaDataConnector(DataFeedInterface):
         except Exception as e:
             raise DataSourceError(
                 f"Failed to fetch real-time data for {symbol}: {str(e)}"
-            )
+            ) from e
 
     def get_quote(self, symbol: str) -> Dict[str, Any]:
         """Get current quote for a symbol."""
@@ -261,6 +274,10 @@ class AlpacaDataConnector(DataFeedInterface):
                     symbol_or_symbols=[normalized_symbol]
                 )
                 quotes = self.crypto_client.get_crypto_latest_quote(crypto_request)
+
+                if normalized_symbol not in quotes:
+                    raise SymbolNotFoundError(f"Crypto symbol not found: {symbol}")
+
                 quote = quotes[normalized_symbol]
                 return {
                     "symbol": symbol,
@@ -278,6 +295,10 @@ class AlpacaDataConnector(DataFeedInterface):
                 # Equity quote
                 stock_request = StockLatestQuoteRequest(symbol_or_symbols=[symbol])
                 quotes = self.stock_client.get_stock_latest_quote(stock_request)
+
+                if symbol not in quotes:
+                    raise SymbolNotFoundError(f"Equity symbol not found: {symbol}")
+
                 quote = quotes[symbol]
                 return {
                     "symbol": symbol,
@@ -293,21 +314,31 @@ class AlpacaDataConnector(DataFeedInterface):
         except Exception as e:
             raise DataSourceError(f"Failed to fetch quote for {symbol}: {str(e)}")
 
-    def get_available_symbols(self, market: Optional[str] = None) -> List[str]:
-        """Get list of available symbols for trading."""
+    def get_available_symbols(
+        self, market: Optional[str] = None, limit: Optional[int] = None
+    ) -> List[str]:
+        """Get list of available symbols for trading.
+
+        Args:
+            market: Optional market filter ('crypto', 'equity', or None for all)
+            limit: Optional limit override (defaults to self.symbol_limit or no limit)
+
+        Returns:
+            List of available symbols
+        """
         try:
             self._refresh_symbol_cache()
 
             if market is None:
-                return list(self._symbol_cache.keys())
+                symbols = list(self._symbol_cache.keys())
             elif market.lower() == "crypto":
-                return [
+                symbols = [
                     s
                     for s, info in self._symbol_cache.items()
                     if info["market"] == "crypto"
                 ]
             elif market.lower() == "equity":
-                return [
+                symbols = [
                     s
                     for s, info in self._symbol_cache.items()
                     if info["market"] == "equity"
@@ -315,8 +346,16 @@ class AlpacaDataConnector(DataFeedInterface):
             else:
                 return []
 
+            # Apply limit if specified
+            if limit is not None:
+                symbols = symbols[:limit]
+            elif self.symbol_limit is not None:
+                symbols = symbols[: self.symbol_limit]
+
+            return symbols
+
         except Exception as e:
-            raise DataSourceError(f"Failed to fetch available symbols: {str(e)}")
+            raise DataSourceError(f"Failed to fetch available symbols: {str(e)}") from e
 
     def get_symbol_info(self, symbol: str) -> Dict[str, Any]:
         """Get detailed information about a symbol."""
@@ -331,7 +370,9 @@ class AlpacaDataConnector(DataFeedInterface):
         except SymbolNotFoundError:
             raise
         except Exception as e:
-            raise DataSourceError(f"Failed to fetch symbol info for {symbol}: {str(e)}")
+            raise DataSourceError(
+                f"Failed to fetch symbol info for {symbol}: {str(e)}"
+            ) from e
 
     def is_market_open(self, market: Optional[str] = None) -> bool:
         """Check if the market is currently open for trading."""
@@ -354,4 +395,4 @@ class AlpacaDataConnector(DataFeedInterface):
                 return False
 
         except Exception as e:
-            raise DataSourceError(f"Failed to check market status: {str(e)}")
+            raise DataSourceError(f"Failed to check market status: {str(e)}") from e

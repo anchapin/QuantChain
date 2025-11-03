@@ -14,7 +14,22 @@ from ..core.retry import RetryHandler
 
 
 class DexscreenerDataConnector(DataFeedInterface):
-    """Dexscreener data connector for DEX token pairs."""
+    """Dexscreener data connector for DEX token pairs.
+
+    ⚠️ **IMPORTANT**: Dexscreener API provides only current/most recent market data.
+    It does not support historical price data. For true historical analysis,
+    consider integrating with additional data sources or using alternative providers.
+
+    Features:
+    - Real-time DEX token pair prices
+    - 24-hour volume and liquidity data
+    - Trending pairs discovery
+    - Multi-chain DEX support (Uniswap, SushiSwap, etc.)
+    - Symbol search functionality
+
+    Supported timeframes are limited to: 1Min, 5Min, 15Min, 1H, 4H, 1D
+    However, all timeframes return the same current data.
+    """
 
     BASE_URL = "https://api.dexscreener.com/latest/"
 
@@ -29,12 +44,15 @@ class DexscreenerDataConnector(DataFeedInterface):
             **kwargs: Additional configuration
                 - timeout: Request timeout in seconds (default: 30)
                 - max_retries: Maximum number of retries (default: 3)
+                - symbol_limit: Maximum number of symbols to return in
+                  get_available_symbols (default: 100)
         """
         super().__init__(api_key or "", api_secret=None, **kwargs)
 
         self.api_key = api_key
         self.timeout = kwargs.get("timeout", 30)
         self.max_retries = kwargs.get("max_retries", 3)
+        self.symbol_limit = kwargs.get("symbol_limit", 100)
         self.session = requests.Session()
         self.logger = logging.getLogger(__name__)
         self._retry_handler = RetryHandler(
@@ -66,9 +84,7 @@ class DexscreenerDataConnector(DataFeedInterface):
 
     def _normalize_pair_address(self, symbol: str) -> str:
         """Extract pair address from symbol format like 'TOKEN/USD:ADDRESS'."""
-        if ":" in symbol:
-            return symbol.split(":")[-1]
-        return symbol
+        return symbol.split(":")[-1] if ":" in symbol else symbol
 
     def _refresh_token_cache(self) -> None:
         """Refresh the token cache with trending pairs."""
@@ -108,9 +124,9 @@ class DexscreenerDataConnector(DataFeedInterface):
         try:
             # type: ignore[no-any-return]
             data = self._make_request(f"dex/pairs/{pair_address}")
-            if "pairs" in data and data["pairs"]:
+            if (pairs := data.get("pairs")) and pairs:
                 # type: ignore[no-any-return]
-                pair = data["pairs"][0]
+                pair = pairs[0]
                 self._token_cache[pair_address] = pair
                 return cast(Optional[Dict[str, Any]], pair)
         except DataSourceError:
@@ -119,13 +135,14 @@ class DexscreenerDataConnector(DataFeedInterface):
         # Search by token symbols if direct lookup fails
         try:
             self._refresh_token_cache()
+            symbol_upper = symbol.upper()
             # Look for pairs containing the symbol
-            for pair_addr, pair_data in self._token_cache.items():
+            for pair_data in self._token_cache.values():
                 base_token = pair_data.get("baseToken", {}).get("symbol", "").upper()
                 quote_token = pair_data.get("quoteToken", {}).get("symbol", "").upper()
                 if (
-                    symbol.upper() in [base_token, quote_token]
-                    or symbol.upper() == f"{base_token}/{quote_token}"
+                    symbol_upper in [base_token, quote_token]
+                    or symbol_upper == f"{base_token}/{quote_token}"
                 ):
                     return pair_data
         except Exception:
@@ -143,8 +160,32 @@ class DexscreenerDataConnector(DataFeedInterface):
     ) -> pd.DataFrame:
         """Fetch historical price data for a token pair.
 
-        Note: Dexscreener doesn't provide extensive historical data.
-        This method returns current data formatted as a single-row DataFrame.
+        ⚠️ **IMPORTANT LIMITATION**: Dexscreener only provides current/most recent
+        price data, not true historical data. This method returns current data
+        formatted as a single-row DataFrame regardless of the requested time range.
+
+        For historical analysis, consider using:
+        - Time-weighted average price data from multiple snapshots
+        - Integration with other historical data sources
+        - Alternative DEX data providers with historical capabilities
+
+        Args:
+            symbol: Token pair symbol (e.g., 'WETH/USDC' or '0x123...')
+            timeframe: Time interval (ignored, only current data returned)
+            start_date: Start date for historical data (ignored)
+            end_date: End date for historical data (optional, ignored)
+            limit: Number of records to return (ignored, always returns 1)
+
+        Returns:
+            DataFrame with a single row containing current price data:
+            - timestamp: Current UTC timestamp
+            - open/high/low/close: Current price (all same value)
+            - volume: 24-hour trading volume
+
+        Raises:
+            ValueError: If timeframe is not supported
+            SymbolNotFoundError: If token pair is not found
+            DataSourceError: If API request fails
         """
         if timeframe not in self.SUPPORTED_TIMEFRAMES:
             raise ValueError(
@@ -167,16 +208,18 @@ class DexscreenerDataConnector(DataFeedInterface):
 
             # For historical requests, we can only provide current data
             # In a real implementation, integrate with another historical data source
-            record = {
-                "timestamp": timestamp,
-                "open": current_price,
-                "high": current_price,
-                "low": current_price,
-                "close": current_price,
-                "volume": volume_24h,
-            }
-
-            df = pd.DataFrame([record])
+            df = pd.DataFrame(
+                [
+                    {
+                        "timestamp": timestamp,
+                        "open": current_price,
+                        "high": current_price,
+                        "low": current_price,
+                        "close": current_price,
+                        "volume": volume_24h,
+                    }
+                ]
+            )
             return df
 
         except SymbolNotFoundError:
@@ -184,7 +227,7 @@ class DexscreenerDataConnector(DataFeedInterface):
         except Exception as e:
             raise DataSourceError(
                 f"Failed to fetch historical data for {symbol}: {str(e)}"
-            )
+            ) from e
 
     def get_real_time_data(self, symbol: str) -> Dict[str, Any]:
         """Fetch real-time price data for a token pair."""
@@ -208,7 +251,7 @@ class DexscreenerDataConnector(DataFeedInterface):
         except Exception as e:
             raise DataSourceError(
                 f"Failed to fetch real-time data for {symbol}: {str(e)}"
-            )
+            ) from e
 
     def get_quote(self, symbol: str) -> Dict[str, Any]:
         """Get current quote for a token pair."""
@@ -236,8 +279,18 @@ class DexscreenerDataConnector(DataFeedInterface):
         except Exception as e:
             raise DataSourceError(f"Failed to fetch quote for {symbol}: {str(e)}")
 
-    def get_available_symbols(self, market: Optional[str] = None) -> List[str]:
-        """Get list of available token pairs."""
+    def get_available_symbols(
+        self, market: Optional[str] = None, limit: Optional[int] = None
+    ) -> List[str]:
+        """Get list of available token pairs.
+
+        Args:
+            market: Optional market filter (ignored for Dexscreener)
+            limit: Optional limit override (defaults to self.symbol_limit)
+
+        Returns:
+            List of available token pair symbols
+        """
         try:
             self._refresh_token_cache()
 
@@ -249,10 +302,12 @@ class DexscreenerDataConnector(DataFeedInterface):
                     symbol = f"{base_symbol}/{quote_symbol}:{pair_addr}"
                     symbols.append(symbol)
 
-            return symbols[:100]  # Limit results
+            # Use provided limit or default to symbol_limit
+            result_limit = limit if limit is not None else self.symbol_limit
+            return symbols[:result_limit]
 
         except Exception as e:
-            raise DataSourceError(f"Failed to fetch available symbols: {str(e)}")
+            raise DataSourceError(f"Failed to fetch available symbols: {str(e)}") from e
 
     def get_symbol_info(self, symbol: str) -> Dict[str, Any]:
         """Get detailed information about a token pair."""
@@ -287,7 +342,9 @@ class DexscreenerDataConnector(DataFeedInterface):
         except SymbolNotFoundError:
             raise
         except Exception as e:
-            raise DataSourceError(f"Failed to fetch symbol info for {symbol}: {str(e)}")
+            raise DataSourceError(
+                f"Failed to fetch symbol info for {symbol}: {str(e)}"
+            ) from e
 
     def is_market_open(self, market: Optional[str] = None) -> bool:
         """Check if the crypto market is open (always true for DEX)."""
@@ -323,7 +380,7 @@ class DexscreenerDataConnector(DataFeedInterface):
             return trending
 
         except Exception as e:
-            raise DataSourceError(f"Failed to fetch trending pairs: {str(e)}")
+            raise DataSourceError(f"Failed to fetch trending pairs: {str(e)}") from e
 
     def search_pairs(self, query: str) -> List[Dict[str, Any]]:
         """Search for token pairs by token symbol or name."""
@@ -352,4 +409,6 @@ class DexscreenerDataConnector(DataFeedInterface):
             return results
 
         except Exception as e:
-            raise DataSourceError(f"Failed to search pairs for '{query}': {str(e)}")
+            raise DataSourceError(
+                f"Failed to search pairs for '{query}': {str(e)}"
+            ) from e
