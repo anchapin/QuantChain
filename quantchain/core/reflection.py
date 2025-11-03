@@ -30,6 +30,7 @@ class PerformanceMetrics:
     profit_loss: float = 0.0
     risk_adjusted_return: float = 0.0
     action_type_breakdown: Dict[str, int] = None  # type: ignore[assignment]
+    no_data: bool = False
 
     def __post_init__(self) -> None:
         if self.action_type_breakdown is None:
@@ -65,11 +66,18 @@ class ReflectionEngine:
             actions = self.action_history
 
         if not actions:
-            return PerformanceMetrics()
+            import warnings
+
+            warnings.warn(
+                "No actions available for performance analysis.", RuntimeWarning
+            )
+            metrics = PerformanceMetrics()
+            metrics.no_data = True
+            return metrics
 
         metrics = PerformanceMetrics()
         metrics.total_actions = len(actions)
-        metrics.successful_actions = sum(1 for a in actions if a.success)
+        metrics.successful_actions = sum(a.success for a in actions)
         metrics.average_confidence = statistics.mean(
             a.confidence_score for a in actions
         )

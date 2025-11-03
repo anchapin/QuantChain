@@ -130,6 +130,21 @@ def test_extract_final_answer():
     answer = agent._extract_final_answer(reasoning_no_final)
     assert answer == reasoning_no_final.strip()
 
+    # Test with multiple 'final answer:' instances
+    reasoning_multiple = (
+        "Step 1: Consider options. Final answer: hold TSLA. "
+        "Step 2: Re-evaluate. Final answer: sell TSLA"
+    )
+    answer = agent._extract_final_answer(reasoning_multiple)
+    # Assuming extraction gets the last 'final answer:' value
+    assert answer == "sell TSLA"
+
+    # Test with atypical formatting (extra spaces, case differences)
+    reasoning_atypical = "Analysis complete. FINAL ANSWER:   buy GOOG  "
+    answer = agent._extract_final_answer(reasoning_atypical)
+    # Depending on implementation, may be case-insensitive and strip spaces
+    assert answer.strip().lower() == "buy goog"
+
 
 def test_calculate_confidence():
     """Test confidence calculation."""
@@ -142,3 +157,10 @@ def test_calculate_confidence():
     low_confidence = "Maybe this could work"
     score = agent._calculate_confidence(low_confidence)
     assert score >= 0
+
+    # Test with all certainty words present
+    all_certainty = (
+        "I am certain, confident, sure, definitely, and clearly the right approach"
+    )
+    score = agent._calculate_confidence(all_certainty)
+    assert score == 1.0  # Should not exceed 1.0

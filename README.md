@@ -170,11 +170,12 @@ print(f"Insights: {report.insights}")
 ### Advanced Usage with RAG
 
 ```python
-from quantchain.core import MarketDataRAG, create_llm_provider
+from quantchain.core import MarketDataRAG, ChromaVectorStore, SentenceTransformerProvider
 
-# Initialize RAG system
-llm = create_llm_provider("ollama", model="llama2:7b")
-rag = MarketDataRAG(llm)  # Simplified for example
+# Initialize RAG system components
+vector_store = ChromaVectorStore(persist_directory="./data/market_data")
+embedding_provider = SentenceTransformerProvider(model_name="all-MiniLM-L6-v2")
+rag = MarketDataRAG(vector_store, embedding_provider)
 
 # Store market data
 from quantchain.core import MarketData

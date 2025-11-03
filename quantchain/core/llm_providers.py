@@ -39,7 +39,7 @@ class LLMProvider(ABC):
     """Abstract base class for LLM providers."""
 
     @abstractmethod
-    def generate(self, prompt: str, **kwargs) -> LLMResponse:
+    def generate(self, prompt: str, **kwargs: Any) -> LLMResponse:
         """Generate response from LLM."""
         pass
 
@@ -61,7 +61,7 @@ class OpenAIProvider(LLMProvider):
         self.client = OpenAI(api_key=self.api_key)
         self.model = model
 
-    def generate(self, prompt: str, **kwargs) -> LLMResponse:
+    def generate(self, prompt: str, **kwargs: Any) -> LLMResponse:
         response = self.client.chat.completions.create(
             model=self.model, messages=[{"role": "user", "content": prompt}], **kwargs
         )
@@ -89,7 +89,7 @@ class AnthropicProvider(LLMProvider):
         self.client = anthropic.Anthropic(api_key=self.api_key)
         self.model = model
 
-    def generate(self, prompt: str, **kwargs) -> LLMResponse:
+    def generate(self, prompt: str, **kwargs: Any) -> LLMResponse:
         response = self.client.messages.create(
             model=self.model,
             max_tokens=kwargs.get("max_tokens", 1000),
@@ -120,7 +120,7 @@ class OllamaProvider(LLMProvider):
         self.model = model
         self.host = host
 
-    def generate(self, prompt: str, **kwargs) -> LLMResponse:
+    def generate(self, prompt: str, **kwargs: Any) -> LLMResponse:
         response = ollama.chat(
             model=self.model, messages=[{"role": "user", "content": prompt}], **kwargs
         )
@@ -144,7 +144,7 @@ class VLLMProvider(LLMProvider):
         # In practice, might need to connect via HTTP client
         raise NotImplementedError("vLLM provider not yet implemented")
 
-    def generate(self, prompt: str, **kwargs) -> LLMResponse:
+    def generate(self, prompt: str, **kwargs: Any) -> LLMResponse:
         # Implement HTTP client to vLLM server
         raise NotImplementedError
 
@@ -152,16 +152,16 @@ class VLLMProvider(LLMProvider):
         return self.model_name
 
 
-def create_llm_provider(provider_type: str, **kwargs) -> LLMProvider:  # type: ignore[return]
+def create_llm_provider(provider_type: str, **kwargs: Any) -> LLMProvider:
     """Factory function to create LLM provider."""
     providers = {
         "openai": OpenAIProvider,
         "anthropic": AnthropicProvider,
         "ollama": OllamaProvider,
-        "vllm": VLLMProvider,
+        # "vllm": VLLMProvider,  # TODO: Implement VLLMProvider when ready
     }
 
     if provider_type not in providers:
         raise ValueError(f"Unsupported provider: {provider_type}")
 
-    return providers[provider_type](**kwargs)
+    return providers[provider_type](**kwargs)  # type: ignore[abstract]

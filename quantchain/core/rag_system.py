@@ -57,12 +57,21 @@ class ChromaVectorStore(VectorStore):
         self.collection = self.client.get_or_create_collection("market_data")
 
     def store(self, data: MarketData, embedding: List[float]) -> str:
-        data_id = f"{data.symbol}_{data.timestamp.isoformat()}_{data.data_type}"
+        import hashlib
+
+        content_str = json.dumps(data.content, sort_keys=True)
+        hash_input = (
+            f"{data.symbol}_{data.timestamp.isoformat()}_{data.data_type}_{content_str}"
+        )
+        unique_hash = hashlib.sha256(hash_input.encode("utf-8")).hexdigest()[:16]
+        data_id = (
+            f"{data.symbol}_{data.timestamp.isoformat()}_{data.data_type}_{unique_hash}"
+        )
         metadata = {
             "symbol": data.symbol,
             "timestamp": data.timestamp.isoformat(),
             "data_type": data.data_type,
-            "content": json.dumps(data.content),
+            "content": content_str,
         }
         self.collection.add(ids=[data_id], embeddings=[embedding], metadatas=[metadata])
         return data_id
@@ -72,18 +81,26 @@ class ChromaVectorStore(VectorStore):
             query_embeddings=[query_embedding], n_results=limit
         )
 
-        market_data = []
+        market_data: List[MarketData] = []
+        if not results["metadatas"] or not results["metadatas"][0]:
+            return market_data
+
         for i, metadata in enumerate(results["metadatas"][0]):
             content = json.loads(metadata["content"])
+            embedding = None
+            if (
+                results.get("embeddings")
+                and results["embeddings"][0]
+                and i < len(results["embeddings"][0])
+            ):
+                embedding = results["embeddings"][0][i]
             market_data.append(
                 MarketData(
                     symbol=metadata["symbol"],
                     timestamp=datetime.fromisoformat(metadata["timestamp"]),
                     data_type=metadata["data_type"],
                     content=content,
-                    embedding=(
-                        results["embeddings"][0][i] if results["embeddings"] else None
-                    ),
+                    embedding=embedding,
                 )
             )
         return market_data
@@ -114,7 +131,7 @@ class SentenceTransformerProvider(EmbeddingProvider):
         self.model = SentenceTransformer(model_name)
 
     def encode(self, text: str) -> List[float]:
-        return self.model.encode(text).tolist()
+        return list(self.model.encode(text).tolist())
 
 
 class MarketDataRAG:
@@ -148,11 +165,15 @@ class MarketDataRAG:
 
         context_parts = []
         for data in relevant_data:
-            context_parts.append(f"Symbol: {data.symbol}")
-            context_parts.append(f"Type: {data.data_type}")
-            context_parts.append(f"Time: {data.timestamp.isoformat()}")
-            context_parts.append(f"Data: {json.dumps(data.content, indent=2)}")
-            context_parts.append("---")
+            context_parts.extend(
+                [
+                    f"Symbol: {data.symbol}",
+                    f"Type: {data.data_type}",
+                    f"Time: {data.timestamp.isoformat()}",
+                    f"Data: {json.dumps(data.content, indent=2)}",
+                    "---",
+                ]
+            )
 
         context = "\n".join(context_parts)
         return f"{base_prompt}\n\nRelevant Market Data:\n{context}\n\nQuery: {query}"

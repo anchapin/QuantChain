@@ -15,6 +15,7 @@ except ImportError:
 from .config import QuantChainConfig
 from .llm_providers import LLMProvider, create_llm_provider
 from .reflection import ReflectionEngine, AgentAction, ReflectionReport
+from .rag_system import MarketDataRAG
 
 
 @dataclass
@@ -53,6 +54,7 @@ class QuantChainAgent:
             raise ImportError("langgraph package not installed")
 
         self.config = config
+        self.rag_system: Optional[MarketDataRAG]
         self.tools = tools or []
 
         # Initialize LLM provider
@@ -66,10 +68,26 @@ class QuantChainAgent:
             )
         self.llm_provider = llm_provider
 
-        # Initialize RAG system
-        # Note: Would need to initialize vector store and embedding provider
-        # For now, placeholder
-        self.rag_system = None  # MarketDataRAG(...)
+        # Initialize RAG system from config
+        rag_config = config.get("rag", {})
+        if rag_config.get("enabled", False):
+            from .rag_system import (
+                ChromaVectorStore,
+                SentenceTransformerProvider,
+                MarketDataRAG,
+            )
+
+            vector_store = ChromaVectorStore(
+                persist_directory=rag_config.get(
+                    "persist_directory", "./data/chroma_db"
+                )
+            )
+            embedding_provider = SentenceTransformerProvider(
+                model_name=rag_config.get("embedding_model", "all-MiniLM-L6-v2")
+            )
+            self.rag_system = MarketDataRAG(vector_store, embedding_provider)
+        else:
+            self.rag_system = None
 
         # Initialize reflection engine
         self.reflection_engine = ReflectionEngine()
@@ -118,6 +136,8 @@ class QuantChainAgent:
                 return state
 
             # Use tools if available
+            # TODO: Production tool selection and execution logic required here.
+            # WARNING: Placeholder logic below - replace for production.
             if self.tools and "tool" in reasoning.lower():
                 action = self._select_tool(reasoning)
                 if action:
@@ -133,7 +153,7 @@ class QuantChainAgent:
                 state["final_answer"] is not None
                 or state["current_step"] >= state["max_steps"]
             ):
-                return END
+                return str(END)
             return "reason"
 
         # Build graph
@@ -191,7 +211,7 @@ class QuantChainAgent:
         """Calculate confidence score from reasoning."""
         # Simple heuristic - count certainty words
         certainty_words = ["certain", "confident", "sure", "definitely", "clearly"]
-        score = sum(1 for word in certainty_words if word in reasoning.lower())
+        score = sum(word in reasoning.lower() for word in certainty_words)
         return min(score / len(certainty_words), 1.0)
 
     def _select_tool(self, reasoning: str) -> Optional[AgentAction]:
