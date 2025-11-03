@@ -6,102 +6,163 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  PYTHON_VERSION: '3.12'
+  PIP_CACHE_DIR: ~/.cache/pip
+
 jobs:
-  test:
+  # Pre-job to install and cache dependencies once
+  setup:
     runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.cache-key.outputs.key }}
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    
     - name: Set up Python
       uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
       with:
-        python-version: '3.12'
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Generate cache key
+      id: cache-key
+      run: |
+        CACHE_KEY="${{ runner.os }}-python${{ env.PYTHON_VERSION }}-pip-$(python -c 'import hashlib; print(hashlib.sha256(open("pyproject.toml", "rb").read()).hexdigest()[:16])')"
+        echo "key=$CACHE_KEY" >> $GITHUB_OUTPUT
+    
     - name: Cache pip dependencies
       uses: actions/cache@v4
       with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt', '**/pyproject.toml') }}
+        path: ${{ env.PIP_CACHE_DIR }}
+        key: ${{ steps.cache-key.outputs.key }}
         restore-keys: |
+          ${{ runner.os }}-python${{ env.PYTHON_VERSION }}-pip-
           ${{ runner.os }}-pip-
+    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -e .
+        pip install -e ".[all-dev]"
+        # Install core runtime dependencies for all jobs
+        pip install -e ".[core]"
+
+  # Test job
+  test:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    
+    - name: Set up Python
+      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Restore pip cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.PIP_CACHE_DIR }}
+        key: ${{ needs.setup.outputs.cache-key }}
+        restore-keys: |
+          ${{ runner.os }}-python${{ env.PYTHON_VERSION }}-pip-
+          ${{ runner.os }}-pip-
+    
+    - name: Verify dependencies
+      run: |
+        pip list | grep -E "(pytest|pytest-cov|pytest-mock)"
+    
     - name: Run tests with coverage
       run: |
         pytest --cov=quantchain --cov-report=xml --cov-fail-under=80
+    
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457
       with:
         file: ./coverage.xml
 
+  # Lint job
   lint:
+    needs: setup
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    
     - name: Set up Python
       uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
       with:
-        python-version: '3.12'
-    - name: Cache pip dependencies
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Restore pip cache
       uses: actions/cache@v4
       with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-lint-${{ hashFiles('**/requirements.txt') }}
+        path: ${{ env.PIP_CACHE_DIR }}
+        key: ${{ needs.setup.outputs.cache-key }}
         restore-keys: |
+          ${{ runner.os }}-python${{ env.PYTHON_VERSION }}-pip-
           ${{ runner.os }}-pip-
-    - name: Install dependencies
+    
+    - name: Verify dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install flake8
+        pip list | grep -E "(flake8|mypy|black)"
+    
     - name: Lint with flake8
       run: |
         flake8 --max-line-length=88 quantchain tests
 
+  # Format check job
   format:
+    needs: setup
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    
     - name: Set up Python
       uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
       with:
-        python-version: '3.12'
-    - name: Cache pip dependencies
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Restore pip cache
       uses: actions/cache@v4
       with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-format-${{ hashFiles('**/requirements.txt') }}
+        path: ${{ env.PIP_CACHE_DIR }}
+        key: ${{ needs.setup.outputs.cache-key }}
         restore-keys: |
+          ${{ runner.os }}-python${{ env.PYTHON_VERSION }}-pip-
           ${{ runner.os }}-pip-
-    - name: Install dependencies
+    
+    - name: Verify dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install black
+        pip list | grep black
+    
     - name: Check formatting with black
       run: |
         black --check quantchain tests
 
+  # Type check job
   type-check:
+    needs: setup
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    
     - name: Set up Python
       uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
       with:
-        python-version: '3.12'
-    - name: Cache pip dependencies
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Restore pip cache
       uses: actions/cache@v4
       with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-typecheck-${{ hashFiles('**/requirements.txt', '**/pyproject.toml') }}
+        path: ${{ env.PIP_CACHE_DIR }}
+        key: ${{ needs.setup.outputs.cache-key }}
         restore-keys: |
+          ${{ runner.os }}-python${{ env.PYTHON_VERSION }}-pip-
           ${{ runner.os }}-pip-
-    - name: Install dependencies
+    
+    - name: Verify dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install types-PyYAML
-        pip install -e .
+        pip list | grep -E "(mypy|types-PyYAML)"
+    
     - name: Type check with mypy
       run: |
         mypy quantchain
