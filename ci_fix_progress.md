@@ -27,6 +27,7 @@ PR 14 ("Feature/core-agent-engine") introduces core agent engine with new depend
 - Added PyYAML to dependencies (run 10).
 - Added pip dependency caching to all jobs to speed up CI runs.
 - Removed redundant dependency installations from lint/format jobs (only install what's needed).
+- Updated actions/setup-python SHA from invalid v4.7.1 SHA to valid v6.0.0 SHA (e797f83bcb11b83ae66e0230d6156d7c80228e7c).
 - Verified dependencies install and tests run successfully locally.
 
 ## Investigation Results
