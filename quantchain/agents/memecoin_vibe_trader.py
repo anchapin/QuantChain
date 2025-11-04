@@ -345,7 +345,7 @@ class MemecoinVibeTrader:
 
                     # Parse response
                     assessment = self._parse_llm_response(
-                        getattr(response, 'content', ''), token, social_metrics
+                        getattr(response, "content", ""), token, social_metrics
                     )
                     assessments.append(assessment)
 

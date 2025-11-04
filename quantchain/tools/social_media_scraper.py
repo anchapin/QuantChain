@@ -300,5 +300,8 @@ class SocialMediaScraper:
             return {}
 
         return self._retry_handler.execute(
-            _request, exceptions=(requests.exceptions.RequestException if requests else Exception),
+            _request,
+            exceptions=(
+                requests.exceptions.RequestException if requests else Exception
+            ),
         )
