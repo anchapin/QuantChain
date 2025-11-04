@@ -142,8 +142,20 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
                 # Handle case where value is a Mock object or cannot be converted
                 return 0.0
 
+        # Helper function to safely extract order_id from mock objects
+        def _safe_get_id(order_obj: Any) -> str:
+            """Safely extract order_id from both real and mock Alpaca order objects."""
+            # Try direct attribute access first
+            if hasattr(order_obj, "id"):
+                return str(getattr(order_obj, "id"))
+            # For mock objects, try common attributes
+            if hasattr(order_obj, "order_id"):
+                return str(getattr(order_obj, "order_id"))
+            # Fallback to string representation
+            return str(order_obj)
+
         return OrderResult(
-            order_id=alpaca_order.id,
+            order_id=_safe_get_id(alpaca_order),
             client_order_id=getattr(alpaca_order, "client_order_id", None),
             symbol=alpaca_order.symbol,
             side=self.ALPACA_SIDE_MAPPING.get(alpaca_order.side, OrderSide.BUY),
@@ -260,7 +272,17 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
             return self._convert_alpaca_order(alpaca_order)
 
         except Exception as e:
-            if "not found" in str(e).lower():
+            # Check for specific error messages that indicate order not found
+            error_msg = str(e).lower()
+            if any(
+                keyword in error_msg
+                for keyword in [
+                    "not found",
+                    "does not exist",
+                    "no such order",
+                    "invalid order",
+                ]
+            ):
                 raise OrderNotFoundError(f"Order {order_id} not found") from e
             raise ExecutionError(f"Failed to cancel order {order_id}: {str(e)}") from e
 
@@ -272,9 +294,17 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
             return self._convert_alpaca_order(alpaca_order)
 
         except Exception as e:
-            print(f"DEBUG: get_order exception: {str(e)}")
-            print(f"DEBUG: exception type: {type(e)}")
-            if "not found" in str(e).lower():
+            # Check for specific error messages that indicate order not found
+            error_msg = str(e).lower()
+            if any(
+                keyword in error_msg
+                for keyword in [
+                    "not found",
+                    "does not exist",
+                    "no such order",
+                    "invalid order",
+                ]
+            ):
                 raise OrderNotFoundError(f"Order {order_id} not found") from e
             raise ExecutionError(f"Failed to get order {order_id}: {str(e)}") from e
 

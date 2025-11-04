@@ -273,57 +273,60 @@ class TestAlpacaExecutionConnector:
         """Test order cancellation."""
         # Setup mock order
         mock_alpaca_order = Mock()
-        mock_alpaca_order.id = "order-123"
-        mock_alpaca_order.symbol = "AAPL"
-        mock_alpaca_order.side = AlpacaOrderSide.BUY
-        mock_alpaca_order.order_type = AlpacaOrderType.MARKET
-        mock_alpaca_order.qty = "100"
-        mock_alpaca_order.filled_qty = "50"
-        mock_alpaca_order.limit_price = None
-        mock_alpaca_order.stop_price = None
-        mock_alpaca_order.filled_avg_price = "150.00"
-        mock_alpaca_order.status = "canceled"
-        mock_alpaca_order.submitted_at = datetime.now(timezone.utc)
-        mock_alpaca_order.updated_at = datetime.now(timezone.utc)
-        mock_alpaca_order.client_order_id = None
+        mock_alpaca_order.configure_mock(
+            id="order-123",
+            symbol="AAPL",
+            side=AlpacaOrderSide.BUY,
+            order_type=AlpacaOrderType.MARKET,
+            qty="100",
+            filled_qty="50",
+            limit_price=None,
+            stop_price=None,
+            filled_avg_price="150.00",
+            status="canceled",
+            submitted_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+            client_order_id=None,
+        )
 
-        mock_client.cancel_order.return_value = None
-        mock_client.get_order.return_value = mock_alpaca_order
+        mock_client.cancel_order_by_id.return_value = None
+        mock_client.get_order_by_id.return_value = mock_alpaca_order
 
         result = connector.cancel_order("order-123")
 
         assert result.order_id == "order-123"
         assert result.status == OrderStatus.CANCELLED
-        mock_client.cancel_order.assert_called_once_with("order-123")
-        mock_client.get_order.assert_called_once_with("order-123")
+        mock_client.cancel_order_by_id.assert_called_once_with("order-123")
+        mock_client.get_order_by_id.assert_called_once_with("order-123")
 
     def test_cancel_order_not_found(self, connector, mock_client):
         """Test canceling non-existent order."""
-        mock_client.get_order.side_effect = Exception("Order not found")
-        mock_client.cancel_order.return_value = None
+        mock_client.cancel_order_by_id.side_effect = Exception("Order not found")
 
         with pytest.raises(OrderNotFoundError):
-            connector.cancel_order("non-existent")
+            connector.cancel_order(order_id="non-existent")
 
     def test_get_order(self, connector, mock_client):
         """Test getting order details."""
         # Setup mock order
         mock_alpaca_order = Mock()
-        mock_alpaca_order.id = "order-123"
-        mock_alpaca_order.symbol = "AAPL"
-        mock_alpaca_order.side = AlpacaOrderSide.BUY
-        mock_alpaca_order.order_type = AlpacaOrderType.MARKET
-        mock_alpaca_order.qty = "100"
-        mock_alpaca_order.filled_qty = "100"
-        mock_alpaca_order.limit_price = None
-        mock_alpaca_order.stop_price = None
-        mock_alpaca_order.filled_avg_price = "150.50"
-        mock_alpaca_order.status = "filled"
-        mock_alpaca_order.submitted_at = datetime.now(timezone.utc)
-        mock_alpaca_order.updated_at = datetime.now(timezone.utc)
-        mock_alpaca_order.client_order_id = None
+        mock_alpaca_order.configure_mock(
+            id="order-123",
+            symbol="AAPL",
+            side=AlpacaOrderSide.BUY,
+            order_type=AlpacaOrderType.MARKET,
+            qty="100",
+            filled_qty="100",
+            limit_price=None,
+            stop_price=None,
+            filled_avg_price="150.50",
+            status="filled",
+            submitted_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+            client_order_id=None,
+        )
 
-        mock_client.get_order.return_value = mock_alpaca_order
+        mock_client.get_order_by_id.return_value = mock_alpaca_order
 
         result = connector.get_order("order-123")
 
@@ -332,11 +335,11 @@ class TestAlpacaExecutionConnector:
         assert result.status == OrderStatus.FILLED
         assert result.filled_quantity == 100
         assert result.avg_fill_price == 150.50
-        mock_client.get_order.assert_called_once_with("order-123")
+        mock_client.get_order_by_id.assert_called_once_with("order-123")
 
     def test_get_order_not_found(self, connector, mock_client):
         """Test getting non-existent order."""
-        mock_client.get_order.side_effect = Exception("Order not found")
+        mock_client.get_order_by_id.side_effect = Exception("Order not found")
 
         with pytest.raises(OrderNotFoundError):
             connector.get_order("non-existent")
