@@ -15,6 +15,8 @@ from quantchain.backtesting.performance_metrics import (
     MissingColumnError,
     MetricsCalculationError,
     LibraryImportError,
+    QUANTSTATS_AVAILABLE,
+    EMPYRICAL_AVAILABLE,
 )
 from quantchain.backtesting.engine import BacktestResult, BacktestConfig
 
@@ -229,6 +231,7 @@ class TestTradeBasedMetrics:
 class TestQuantStatsIntegration:
     """Test QuantStats integration."""
 
+    @pytest.mark.skipif(not QUANTSTATS_AVAILABLE, reason="QuantStats not available")
     @patch("quantchain.backtesting.performance_metrics.qs")
     def test_generate_tear_sheet_basic(self, mock_qs):
         """Test basic tear sheet generation."""
@@ -283,6 +286,7 @@ class TestQuantStatsIntegration:
         assert "basic_stats" in tear_sheet
         mock_qs.reports.metrics.assert_called_once()
 
+    @pytest.mark.skipif(not QUANTSTATS_AVAILABLE, reason="QuantStats not available")
     @patch("quantchain.backtesting.performance_metrics.qs")
     def test_generate_tear_sheet_with_save(self, mock_qs):
         """Test tear sheet generation with save."""
@@ -364,6 +368,7 @@ class TestQuantStatsIntegration:
 class TestEmpyricalIntegration:
     """Test Empyrical integration."""
 
+    @pytest.mark.skipif(not EMPYRICAL_AVAILABLE, reason="Empyrical not available")
     @patch("quantchain.backtesting.performance_metrics.empyrical")
     def test_calculate_empyrical_metrics(self, mock_empyrical):
         """Test Empyrical metrics calculation."""

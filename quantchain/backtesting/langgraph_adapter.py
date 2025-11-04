@@ -540,7 +540,7 @@ def agent_state_to_signal(agent_state: AgentState) -> Optional[str]:
 
     # Validate signal
     if signal not in ["buy", "sell", "hold"]:
-        return None
+        raise SignalConversionError(f"Invalid signal: {signal}")
 
     # Validate quantity
     if agent_state.quantity <= 0:

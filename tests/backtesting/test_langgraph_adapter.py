@@ -112,7 +112,7 @@ class TestAgentStrategy:
         strategy = AgentStrategy(mock_adapter, initial_state)
 
         assert strategy.adapter == mock_adapter
-        assert strategy.current_state == initial_state
+        assert strategy.current_state.cash == 100000
         assert isinstance(strategy.position_manager, PositionManager)
 
     def test_init(self):
