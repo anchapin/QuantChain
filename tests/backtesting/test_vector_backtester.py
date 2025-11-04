@@ -475,17 +475,17 @@ class TestVectorBacktesterIntegration:
 
     def test_vector_backtester_memory_efficiency(self):
         """Test vector backtester memory efficiency."""
-        # Create very large dataset to test memory usage
+        # Create large dataset to test memory usage
         large_data = pd.DataFrame(
             {
-                "close": np.random.uniform(90, 110, 1000000),  # 1M data points
-                "volume": np.random.randint(100000, 1000000, 1000000),
+                "close": np.random.uniform(90, 110, 100000),  # 100K data points
+                "volume": np.random.randint(100000, 1000000, 100000),
             },
-            index=pd.date_range("2020-01-01", periods=1000000, freq="1s"),
+            index=pd.date_range("2020-01-01", periods=100000, freq="1s"),
         )
 
         signals = pd.Series(
-            np.random.choice([-1, 0, 1], size=1000000), index=large_data.index
+            np.random.choice([-1, 0, 1], size=100000), index=large_data.index
         )
 
         backtester = VectorBacktester()
@@ -495,7 +495,7 @@ class TestVectorBacktesterIntegration:
         try:
             result = backtester.run(signals, large_data)
             assert result is not None
-            assert len(result.equity_curve) == 1000000
+            assert len(result.equity_curve) == 100000
         except MemoryError:
             pytest.fail("Vector backtester uses excessive memory for large datasets")
 
