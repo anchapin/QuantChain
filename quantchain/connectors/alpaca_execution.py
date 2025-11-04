@@ -1,10 +1,7 @@
 """Alpaca execution connector for equity and crypto trading."""
 
-import time
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
-
-import pandas as pd
 
 from alpaca.trading import (
     TradingClient,
@@ -12,13 +9,11 @@ from alpaca.trading import (
     OrderSide as AlpacaOrderSide,
     OrderType as AlpacaOrderType,
     TimeInForce as AlpacaTimeInForce,
-    GetOrdersRequest,
-    ClosePositionRequest,
     GetAssetsRequest,
-    GetOrderByIdRequest,
+    TakeProfitRequest,
+    StopLossRequest,
 )
 
-from .base_interface import DataFeedInterface
 from ..tools.trading_execution import (
     TradingExecutionInterface,
     OrderRequest,
@@ -34,7 +29,7 @@ from ..tools.trading_execution import (
     InsufficientFundsError,
     OrderNotFoundError,
 )
-from ..core.exceptions import AuthenticationError, DataSourceError
+from ..core.exceptions import AuthenticationError
 
 
 class AlpacaExecutionConnector(TradingExecutionInterface):
@@ -133,7 +128,7 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
         }
         return status_mapping.get(alpaca_status.lower(), OrderStatus.PENDING)
 
-    def _convert_alpaca_order(self, alpaca_order) -> OrderResult:
+    def _convert_alpaca_order(self, alpaca_order: Any) -> OrderResult:
         """Convert Alpaca order to OrderResult."""
         return OrderResult(
             order_id=alpaca_order.id,
@@ -163,20 +158,26 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
         """Get detailed symbol information from Alpaca."""
         try:
             # Try to get asset information
-            request = GetAssetsRequest(symbol_or_asset_id=symbol)
+            request = GetAssetsRequest()
             assets = self.client.get_all_assets(request)
 
             if assets:
-                asset = assets[0]
+                asset = assets[0] if isinstance(assets, list) else assets
+                asset_class = getattr(asset, "asset_class", "equity")
+                if hasattr(asset_class, "value"):
+                    asset_class_str = asset_class.value
+                else:
+                    asset_class_str = str(asset_class)
+
                 return {
-                    "symbol": asset.symbol,
+                    "symbol": getattr(asset, "symbol", symbol),
                     "name": getattr(asset, "name", symbol),
-                    "asset_class": asset.asset_class.value,
-                    "tradable": asset.tradable,
+                    "asset_class": asset_class_str,
+                    "tradable": getattr(asset, "tradable", True),
                     "fractionable": getattr(asset, "fractionable", False),
                     "min_order_size": getattr(asset, "min_order_size", 1),
-                    "price_precision": 4 if asset.asset_class.value == "crypto" else 2,
-                    "size_precision": 8 if asset.asset_class.value == "crypto" else 0,
+                    "price_precision": 4 if asset_class_str.lower() == "crypto" else 2,
+                    "size_precision": 8 if asset_class_str.lower() == "crypto" else 0,
                 }
         except Exception:
             pass
@@ -199,9 +200,6 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
             # Validate order
             self.validate_order(order)
 
-            # Get symbol information for validation
-            symbol_info = self._get_symbol_info(order.symbol)
-
             # Normalize symbol for Alpaca
             normalized_symbol = self._normalize_symbol(order.symbol)
 
@@ -212,10 +210,23 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
                 side=self.SIDE_MAPPING[order.side],
                 type=self.TYPE_MAPPING[order.order_type],
                 time_in_force=self.TIME_IN_FORCE_MAPPING[order.time_in_force],
-                limit_price=order.price,
-                stop_price=order.stop_price,
                 client_order_id=order.client_order_id,
             )
+
+            # Add take profit and stop loss as needed
+            if order.order_type == OrderType.LIMIT and order.price:
+                alpaca_request.take_profit = TakeProfitRequest(limit_price=order.price)
+            elif order.order_type == OrderType.STOP and order.stop_price:
+                alpaca_request.stop_loss = StopLossRequest(stop_price=order.stop_price)
+            elif order.order_type == OrderType.STOP_LIMIT:
+                if order.stop_price:
+                    alpaca_request.stop_loss = StopLossRequest(
+                        stop_price=order.stop_price
+                    )
+                if order.price:
+                    alpaca_request.take_profit = TakeProfitRequest(
+                        limit_price=order.price
+                    )
 
             # Submit order to Alpaca
             alpaca_order = self.client.submit_order(alpaca_request)
@@ -236,10 +247,10 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
         """Cancel an existing order."""
         try:
             # Cancel the order
-            self.client.cancel_order(order_id)
+            self.client.cancel_order_by_id(order_id)
 
             # Get updated order status
-            alpaca_order = self.client.get_order(order_id)
+            alpaca_order = self.client.get_order_by_id(order_id)
             return self._convert_alpaca_order(alpaca_order)
 
         except Exception as e:
@@ -251,7 +262,7 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
         """Retrieve order status and details."""
         try:
             # Use simpler approach without complex request object
-            alpaca_order = self.client.get_order(order_id)
+            alpaca_order = self.client.get_order_by_id(order_id)
             return self._convert_alpaca_order(alpaca_order)
 
         except Exception as e:
@@ -265,17 +276,23 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
             # Get account from Alpaca
             account = self.client.get_account()
 
+            # Handle both dictionary and object cases
+            account_id = str(getattr(account, "id", "unknown"))
+            buying_power = float(getattr(account, "buying_power", 0))
+            cash = float(getattr(account, "cash", 0))
+            portfolio_value = float(getattr(account, "portfolio_value", cash))
+
             # Get positions
             positions = self.get_positions()
 
             return AccountInfo(
-                account_id=account.id,
-                buying_power=float(account.buying_power),
-                cash=float(account.cash),
-                portfolio_value=float(account.portfolio_value or account.cash),
+                account_id=account_id,
+                buying_power=buying_power,
+                cash=cash,
+                portfolio_value=portfolio_value,
                 positions=positions,
                 margin_available=(
-                    float(account.daytrading_buying_power)
+                    float(getattr(account, "daytrading_buying_power", 0))
                     if hasattr(account, "daytrading_buying_power")
                     else None
                 ),
@@ -292,11 +309,12 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
 
             positions = []
             for pos in alpaca_positions:
-                # Convert to standard Position
-                quantity = float(pos.qty)
-                avg_entry_price = float(pos.avg_entry_price or 0)
-                current_price = float(pos.current_price or 0)
-                market_value = float(pos.market_value or 0)
+                # Handle both dictionary and object cases
+                symbol = str(getattr(pos, "symbol", "unknown"))
+                quantity = float(getattr(pos, "qty", 0))
+                avg_entry_price = float(getattr(pos, "avg_entry_price", 0))
+                current_price = float(getattr(pos, "current_price", 0))
+                market_value = float(getattr(pos, "market_value", 0))
 
                 # Calculate unrealized P&L
                 if abs(quantity) > 1e-10 and avg_entry_price > 0:
@@ -310,7 +328,7 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
 
                 positions.append(
                     Position(
-                        symbol=pos.symbol,
+                        symbol=symbol,
                         quantity=quantity,
                         avg_entry_price=avg_entry_price,
                         current_price=current_price,
@@ -335,14 +353,15 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
     ) -> List[OrderResult]:
         """Retrieve historical orders."""
         try:
-            # Build request
+            # Build request with correct parameter names
+            from alpaca.trading import GetOrdersRequest, QueryOrderStatus
+
             request = GetOrdersRequest(
-                symbol=symbol,
-                status=status.value if status else None,
+                symbols=[symbol] if symbol else None,
+                status=QueryOrderStatus(status.value) if status else None,
                 after=start_date,
                 until=end_date,
                 limit=limit,
-                direction="desc",  # Most recent first
             )
 
             # Get orders from Alpaca
@@ -363,7 +382,8 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
 
             # Get market clock
             clock = self.client.get_clock()
-            return clock.is_open
+            is_open = getattr(clock, "is_open", False)
+            return is_open
 
         except Exception as e:
             raise ExecutionError(f"Failed to check market status: {str(e)}") from e
@@ -377,8 +397,10 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
         try:
             clock = self.client.get_clock()
 
+            is_open = getattr(clock, "is_open", False)
+
             return {
-                "is_open": clock.is_open,
+                "is_open": is_open,
                 "next_open": getattr(clock, "next_open", None),
                 "next_close": getattr(clock, "next_close", None),
                 "timestamp": getattr(clock, "timestamp", datetime.now(timezone.utc)),

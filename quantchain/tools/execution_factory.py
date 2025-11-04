@@ -36,8 +36,8 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
             # For live trading, ensure we have real credentials
             if not api_key or not api_secret:
                 raise AuthenticationError(
-                "Alpaca API key and secret required for live trading. "
-                "Set ALPACA_API_KEY and ALPACA_API_SECRET environment variables."
+                    "Alpaca API key and secret required for live trading. "
+                    "Set ALPACA_API_KEY and ALPACA_API_SECRET environment variables."
                 )
 
         # At this point, both api_key and api_secret are guaranteed to be strings

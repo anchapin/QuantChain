@@ -1,8 +1,6 @@
 """Tests for paper trading executor."""
 
 import pytest
-from datetime import datetime, timezone
-from unittest.mock import patch
 
 from quantchain.tools.paper_trading import (
     PaperTradingExecutor,
@@ -15,12 +13,9 @@ from quantchain.tools.paper_trading import (
 )
 from quantchain.tools.trading_execution import (
     OrderRequest,
-    OrderResult,
     OrderSide,
     OrderType,
     OrderStatus,
-    TimeInForce,
-    Position,
     ValidationError,
     ExecutionError,
     OrderNotFoundError,
@@ -218,7 +213,9 @@ class TestPaperTradingExecutor:
             initial_cash=100000.0,
             commission_per_trade=1.0,
             commission_per_share=0.01,
-            slippage_model=NoSlippage(),  # Use no slippage for predictable tests
+            slippage_model=FixedSlippage(
+                slippage_percent=0.1
+            ),  # Use fixed slippage for predictable tests
             fill_model=ImmediateFill(),
         )
 
@@ -285,7 +282,6 @@ class TestPaperTradingExecutor:
         assert "AAPL" not in executor.positions
 
         # Check cash increase
-        expected_proceeds = result.avg_fill_price * 100 - 1.0 - (0.01 * 100)
         assert executor.cash > 95000  # Should have more cash than after initial buy
 
     def test_insufficient_funds(self, executor):
@@ -318,7 +314,7 @@ class TestPaperTradingExecutor:
 
         # Limit buy below market - should fill
         buy_order = OrderRequest(
-            "AAPL", OrderSide.BUY, OrderType.LIMIT, 100, price=149.0
+            "AAPL", OrderSide.BUY, OrderType.LIMIT, 100, price=151.0
         )
         result = executor.place_order(buy_order)
         assert result.status == OrderStatus.FILLED
@@ -326,7 +322,7 @@ class TestPaperTradingExecutor:
         # Limit buy above market - should not fill
         executor.set_market_price("AAPL", 150.0)
         buy_order2 = OrderRequest(
-            "AAPL", OrderSide.BUY, OrderType.LIMIT, 100, price=151.0
+            "AAPL", OrderSide.BUY, OrderType.LIMIT, 100, price=149.0
         )
         result2 = executor.place_order(buy_order2)
         assert result2.status == OrderStatus.PENDING
@@ -410,11 +406,11 @@ class TestPaperTradingExecutor:
         # Place multiple orders
         executor.set_market_price("AAPL", 150.0)
         order1 = OrderRequest("AAPL", OrderSide.BUY, OrderType.MARKET, 100)
-        result1 = executor.place_order(order1)
+        executor.place_order(order1)
 
         executor.set_market_price("MSFT", 300.0)
         order2 = OrderRequest("MSFT", OrderSide.BUY, OrderType.MARKET, 50)
-        result2 = executor.place_order(order2)
+        executor.place_order(order2)
 
         # Get all history
         all_history = executor.get_order_history()

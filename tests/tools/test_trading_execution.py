@@ -3,7 +3,6 @@
 import pytest
 from datetime import datetime
 from typing import Optional
-from unittest.mock import Mock
 
 from quantchain.tools.trading_execution import (
     OrderRequest,
@@ -16,7 +15,6 @@ from quantchain.tools.trading_execution import (
     AccountInfo,
     TradingExecutionInterface,
     ValidationError,
-    ExecutionError,
     OrderNotFoundError,
 )
 

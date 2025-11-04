@@ -2,7 +2,7 @@
 
 import random
 from datetime import datetime, timezone
-from typing import List, Optional, Dict, Any, Union
+from typing import List, Optional, Dict, Any
 from dataclasses import dataclass
 
 import pandas as pd
@@ -14,7 +14,6 @@ from .trading_execution import (
     OrderSide,
     OrderType,
     OrderStatus,
-    TimeInForce,
     Position,
     AccountInfo,
     ExecutionError,
@@ -112,17 +111,23 @@ class ImmediateFill(FillModel):
         if order.order_type == OrderType.MARKET:
             return True
         elif order.order_type == OrderType.LIMIT:
+            if order.price is None:
+                return False
             if order.side == OrderSide.BUY:
                 return market_price <= order.price
             else:
                 return market_price >= order.price
         elif order.order_type == OrderType.STOP:
+            if order.stop_price is None:
+                return False
             if order.side == OrderSide.BUY:
                 return market_price >= order.stop_price
             else:
                 return market_price <= order.stop_price
         elif order.order_type == OrderType.STOP_LIMIT:
             # First check stop condition
+            if order.stop_price is None or order.price is None:
+                return False
             if order.side == OrderSide.BUY:
                 if market_price < order.stop_price:
                     return False
@@ -228,7 +233,9 @@ class PaperTradingExecutor(TradingExecutionInterface):
 
     def _calculate_commission(self, order: OrderRequest) -> float:
         """Calculate commission for an order."""
-        return self.commission_per_trade + (self.commission_per_share * order.quantity)
+        return float(
+            self.commission_per_trade + (self.commission_per_share * order.quantity)
+        )
 
     def _get_market_price(self, symbol: str) -> float:
         """Get current market price for a symbol."""
@@ -280,7 +287,8 @@ class PaperTradingExecutor(TradingExecutionInterface):
             if order.side == OrderSide.BUY:
                 if self.cash < total_cost:
                     raise ExecutionError(
-                        f"Insufficient funds: need {total_cost:.2f}, have {self.cash:.2f}"
+                        f"Insufficient funds: need {total_cost:.2f}, "
+                        f"have {self.cash:.2f}"
                     )
 
                 # Update cash and position

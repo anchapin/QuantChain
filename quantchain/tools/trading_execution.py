@@ -230,9 +230,11 @@ class TradingExecutionInterface(ABC):
         pass
 
     def validate_order(self, order: OrderRequest) -> None:
-        """Validate order parameters (can be overridden for broker-specific validation)."""
-        # Basic validation is done in OrderRequest.__post_init__
-        pass
+        """
+        Validate order parameters (can be overridden for broker-specific validation).
+
+        Basic validation is done in OrderRequest.__post_init__
+        """
 
     def get_symbol_info(self, symbol: str) -> Dict[str, Any]:
         """Get detailed information about a symbol (optional implementation)."""
