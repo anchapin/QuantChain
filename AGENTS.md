@@ -232,6 +232,9 @@ To maintain a clean and organized repository and prevent accidental commits to t
 
 ## 8.1. Agent Implementation Guidelines for Git Operations
 
+# Make sure you are in your project's root directory
+source venv/bin/activate
+
 ### Critical Safety Protocol for All Agents
 
 **ALL agents MUST implement the following safety checks before ANY git operation that modifies code:**

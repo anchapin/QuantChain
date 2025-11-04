@@ -47,6 +47,8 @@ test = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "pytest-mock>=3.10.0",
+ "pytest-timeout>=2.1.0",
+     "pytest-timeout>=2.1.0",
 ]
 
 # Development and linting dependencies
@@ -61,31 +63,33 @@ dev = [
 
 # All development dependencies combined
 all-dev = [
-    "langgraph>=0.1.0",
-    "openai>=1.0.0",
-    "anthropic>=0.20.0",
-    "chromadb>=0.4.0",
-    "sentence-transformers>=2.0.0",
-    "numpy>=1.21.0",
-    "PyYAML>=6.0.0",
-    "pandas>=1.21.0",
-    "requests>=2.25.0",
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
-    "pytest-mock>=3.10.0",
-    "black>=23.0.0",
-    "flake8>=6.0.0",
-    "mypy>=1.0.0",
-    "pre-commit>=3.0.0",
-    "types-PyYAML>=6.0.0",
-    "types-requests>=2.25.0",
-    "alpaca-py>=0.43.0",
-    "ccxt>=4.0.0",
+"langgraph>=0.1.0",
+"openai>=1.0.0",
+"anthropic>=0.20.0",
+"chromadb>=0.4.0",
+"sentence-transformers>=2.0.0",
+"numpy>=1.21.0",
+"PyYAML>=6.0.0",
+"pandas>=1.21.0",
+"requests>=2.25.0",
+"pytest>=7.0.0",
+"pytest-cov>=4.0.0",
+"pytest-mock>=3.10.0",
+"pytest-timeout>=2.1.0",
+ "black>=23.0.0",
+"flake8>=6.0.0",
+"mypy>=1.0.0",
+"pre-commit>=3.0.0",
+"types-PyYAML>=6.0.0",
+"types-requests>=2.25.0",
+"alpaca-py>=0.43.0",
+"ccxt>=4.0.0",
+    "backtesting>=0.6.0",
 ]
 
 # Backtesting dependencies
 backtesting = [
-    "backtesting>=0.35.0",
+    "backtesting>=0.6.0",
 ]
 
 # LLM serving dependencies
@@ -98,6 +102,7 @@ llm = [
 data = [
     "alpaca-py>=0.43.0",
     "ccxt>=4.0.0",
+    "backtesting>=0.6.0",
 ]
 
 # Web dashboard dependencies
@@ -128,7 +133,7 @@ full = [
     "types-requests>=2.25.0",
     "alpaca-py>=0.43.0",
     "ccxt>=4.0.0",
-    "backtesting>=0.35.0",
+    "backtesting>=0.6.0",
     "vllm>=0.3.0",
     "ollama>=0.1.0",
     "streamlit>=1.20.0",
@@ -145,6 +150,7 @@ target-version = ['py38']
 
 [tool.flake8]
 max-line-length = 88
+ignore = ["E203", "W503"]
 
 [tool.mypy]
 python_version = "3.12"

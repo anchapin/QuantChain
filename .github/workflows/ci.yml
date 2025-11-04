@@ -29,8 +29,8 @@ jobs:
     
     - name: Run tests with coverage
       run: |
-        pytest --cov=quantchain --cov-report=xml --cov-fail-under=80
-    
+        pytest --cov=quantchain --cov-report=xml --cov-fail-under=80 --timeout=60
+      
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457
       with:
@@ -55,7 +55,7 @@ jobs:
     
     - name: Lint with flake8
       run: |
-        flake8 --max-line-length=88 quantchain tests
+        flake8 --max-line-length=88 --ignore=E203,W503 quantchain tests
 
   # Format check job
   format:
@@ -97,4 +97,4 @@ jobs:
     
     - name: Type check with mypy
       run: |
-        mypy quantchain --ignore-missing-imports
+        mypy quantchain
