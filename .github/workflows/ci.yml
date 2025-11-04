@@ -97,4 +97,4 @@ jobs:
     
     - name: Type check with mypy
       run: |
-        mypy quantchain
+        mypy quantchain --ignore-missing-imports

@@ -137,6 +137,84 @@ All connectors implement the `DataFeedInterface` providing consistent methods:
 - `get_symbol_info(symbol)`
 - `is_market_open(market=None)`
 
+## Trading Execution
+
+QuantChain provides a unified trading execution interface supporting both live and paper trading across multiple brokers.
+
+### Alpaca Execution
+- **Markets**: US Equities and Cryptocurrencies
+- **Features**: Market/limit/stop orders, position management, account info, order history
+- **Paper Trading**: Full simulation with paper money and real market data
+- **Live Trading**: Real money execution with proper risk controls
+
+```python
+from quantchain.tools import create_execution_interface
+from quantchain.core.config import get_config
+
+# Load configuration (supports both paper and live trading)
+config = get_config("config.json")
+
+# Create execution interface (automatically handles paper/live based on config)
+executor = create_execution_interface(config)
+
+# Place a market order
+from quantchain.tools import OrderRequest, OrderSide, OrderType
+
+order = OrderRequest(
+    symbol="AAPL",
+    side=OrderSide.BUY,
+    order_type=OrderType.MARKET,
+    quantity=10
+)
+result = executor.place_order(order)
+
+# Get account information
+account = executor.get_account()
+print(f"Portfolio Value: ${account.portfolio_value}")
+
+# Get current positions
+positions = executor.get_positions()
+for pos in positions:
+    print(f"{pos.symbol}: {pos.quantity} shares, P&L: ${pos.unrealized_pnl}")
+```
+
+### Paper Trading Engine
+- **Features**: Realistic order simulation with slippage, commissions, and fill models
+- **Scenarios**: Customizable market conditions for strategy testing
+- **Performance Tracking**: Win rate, Sharpe ratio, max drawdown calculations
+
+```python
+from quantchain.tools import PaperTradingExecutor
+
+# Create paper trading executor
+executor = PaperTradingExecutor(
+    initial_cash=100000.0,
+    commission_per_trade=1.0,
+    slippage_model=FixedSlippage(slippage_percent=0.1)
+)
+
+# Set market prices for testing
+executor.set_market_price("AAPL", 150.0)
+
+# Place orders and track performance
+order = OrderRequest(symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100)
+result = executor.place_order(order)
+
+# Get performance metrics
+metrics = executor.get_performance_metrics()
+print(f"Total Return: {metrics.total_return:.2f}%")
+```
+
+### Standardized Interface
+All execution interfaces implement the `TradingExecutionInterface`:
+- `place_order(order)` - Submit buy/sell orders
+- `cancel_order(order_id)` - Cancel pending orders
+- `get_order(order_id)` - Get order status
+- `get_account()` - Account balances and info
+- `get_positions()` - Current holdings
+- `get_order_history()` - Historical orders
+- `is_market_open()` - Market status checks
+
 ## Core Components
 
 ### Agent Engine (`quantchain.core.agent_engine`)
