@@ -253,10 +253,10 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
         """Cancel an existing order."""
         try:
             # Cancel the order
-            self.client.cancel_order(order_id)
+            self.client.cancel_order_by_id(order_id)
 
             # Get updated order status
-            alpaca_order = self.client.get_order(order_id)
+            alpaca_order = self.client.get_order_by_id(order_id)
             return self._convert_alpaca_order(alpaca_order)
 
         except Exception as e:
@@ -268,7 +268,7 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
         """Retrieve order status and details."""
         try:
             # Use simpler approach without complex request object
-            alpaca_order = self.client.get_order(order_id)
+            alpaca_order = self.client.get_order_by_id(order_id)
             return self._convert_alpaca_order(alpaca_order)
 
         except Exception as e:
