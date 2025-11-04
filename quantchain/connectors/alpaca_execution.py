@@ -253,10 +253,10 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
         """Cancel an existing order."""
         try:
             # Cancel the order
-            self.client.cancel_order_by_id(order_id)
+            self.client.cancel_order(order_id)
 
             # Get updated order status
-            alpaca_order = self.client.get_order_by_id(order_id)
+            alpaca_order = self.client.get_order(order_id)
             return self._convert_alpaca_order(alpaca_order)
 
         except Exception as e:
@@ -268,10 +268,12 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
         """Retrieve order status and details."""
         try:
             # Use simpler approach without complex request object
-            alpaca_order = self.client.get_order_by_id(order_id)
+            alpaca_order = self.client.get_order(order_id)
             return self._convert_alpaca_order(alpaca_order)
 
         except Exception as e:
+            print(f"DEBUG: get_order exception: {str(e)}")
+            print(f"DEBUG: exception type: {type(e)}")
             if "not found" in str(e).lower():
                 raise OrderNotFoundError(f"Order {order_id} not found") from e
             raise ExecutionError(f"Failed to get order {order_id}: {str(e)}") from e
