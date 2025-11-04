@@ -2,10 +2,8 @@
 
 import pytest
 from datetime import datetime, timezone
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, Any
+from unittest.mock import Mock, patch
 
-from alpaca.trading import OrderStatus as AlpacaOrderStatus
 from alpaca.trading.enums import (
     OrderSide as AlpacaOrderSide,
     OrderType as AlpacaOrderType,
@@ -18,13 +16,11 @@ from quantchain.tools.trading_execution import (
     OrderSide,
     OrderType,
     OrderStatus,
-    TimeInForce,
     Position,
     AccountInfo,
     ValidationError,
     InsufficientFundsError,
     OrderNotFoundError,
-    ExecutionError,
 )
 
 
@@ -289,6 +285,7 @@ class TestAlpacaExecutionConnector:
         mock_alpaca_order.status = "canceled"
         mock_alpaca_order.submitted_at = datetime.now(timezone.utc)
         mock_alpaca_order.updated_at = datetime.now(timezone.utc)
+        mock_alpaca_order.client_order_id = None
 
         mock_client.cancel_order.return_value = None
         mock_client.get_order.return_value = mock_alpaca_order
@@ -324,6 +321,7 @@ class TestAlpacaExecutionConnector:
         mock_alpaca_order.status = "filled"
         mock_alpaca_order.submitted_at = datetime.now(timezone.utc)
         mock_alpaca_order.updated_at = datetime.now(timezone.utc)
+        mock_alpaca_order.client_order_id = None
 
         mock_client.get_order.return_value = mock_alpaca_order
 
@@ -378,6 +376,9 @@ class TestAlpacaExecutionConnector:
             ]
 
             account = connector.get_account()
+
+            # Verify the return type is correct
+            assert isinstance(account, AccountInfo)
 
             assert account.account_id == "account-123"
             assert account.buying_power == 50000.0

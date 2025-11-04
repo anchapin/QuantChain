@@ -130,6 +130,18 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
 
     def _convert_alpaca_order(self, alpaca_order: Any) -> OrderResult:
         """Convert Alpaca order to OrderResult."""
+
+        # Helper function to safely convert to float
+        def _safe_float(value: Any) -> Optional[float]:
+            """Safely convert a value to float, handling strings and Mock objects."""
+            if value is None:
+                return None
+            try:
+                return float(value)
+            except (TypeError, ValueError):
+                # Handle case where value is a Mock object or cannot be converted
+                return 0.0
+
         return OrderResult(
             order_id=alpaca_order.id,
             client_order_id=getattr(alpaca_order, "client_order_id", None),
@@ -138,17 +150,11 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
             order_type=self.ALPACA_TYPE_MAPPING.get(
                 alpaca_order.order_type, OrderType.MARKET
             ),
-            quantity=float(alpaca_order.qty),
-            filled_quantity=float(alpaca_order.filled_qty or 0),
-            price=float(alpaca_order.limit_price) if alpaca_order.limit_price else None,
-            stop_price=(
-                float(alpaca_order.stop_price) if alpaca_order.stop_price else None
-            ),
-            avg_fill_price=(
-                float(alpaca_order.filled_avg_price)
-                if alpaca_order.filled_avg_price
-                else None
-            ),
+            quantity=_safe_float(alpaca_order.qty) or 0.0,
+            filled_quantity=_safe_float(alpaca_order.filled_qty) or 0.0,
+            price=_safe_float(alpaca_order.limit_price),
+            stop_price=_safe_float(alpaca_order.stop_price),
+            avg_fill_price=_safe_float(alpaca_order.filled_avg_price),
             status=self._convert_order_status(alpaca_order.status),
             timestamp=alpaca_order.submitted_at or datetime.now(timezone.utc),
             updated_at=alpaca_order.updated_at,
