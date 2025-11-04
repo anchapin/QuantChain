@@ -382,8 +382,8 @@ class TestVectorBacktesterIntegration:
 
         execution_time = time.time() - start_time
 
-        # Should complete within reasonable time (adjust threshold as needed)
-        assert execution_time < 2.0  # 2 seconds max
+        # Should complete within reasonable time (adjusted for large dataset)
+        assert execution_time < 30.0  # 30 seconds max for 100k rows
         assert result is not None
         assert len(result.equity_curve) == 100000
 

@@ -454,15 +454,6 @@ def create_test_bar(
     }
 
 
-# Pytest configuration
-pytest_plugins = []
-
-
-# Test markers
-def pytest_configure(config):
-    config.addinivalue_line("markers", "unit: mark test as a unit test")
-    config.addinivalue_line("markers", "integration: mark test as an integration test")
-    config.addinivalue_line("markers", "slow: mark test as slow running")
-    config.addinivalue_line(
-        "markers", "requires_backtestingpy: mark test that requires Backtesting.py"
-    )
+# Note: pytest_plugins and pytest_configure moved to root conftest.py
+# See: https://docs.pytest.org/en/stable/deprecations.html
+# #pytest-plugins-in-non-top-level-conftest-files
