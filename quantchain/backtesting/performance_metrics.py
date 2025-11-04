@@ -177,7 +177,7 @@ class PerformanceMetrics:
             annual_return = float(returns.mean() * annual_factor)
             annual_volatility = float(returns.std() * np.sqrt(annual_factor))
 
-            if annual_volatility == 0:
+            if annual_volatility <= 1e-10:
                 return 0.0
 
             # Risk-free rate is already annual

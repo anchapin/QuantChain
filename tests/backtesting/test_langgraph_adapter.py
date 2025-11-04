@@ -131,6 +131,7 @@ class TestAgentStrategy:
     def test_next(self, mock_bar_to_state):
         """Test processing next bar."""
         mock_adapter = Mock()
+        mock_adapter.config.get.return_value = 0  # Disable timeout
         initial_state = {"cash": 100000}
 
         strategy = AgentStrategy(mock_adapter, initial_state)
@@ -143,8 +144,10 @@ class TestAgentStrategy:
         mock_bar_to_state.return_value = mock_agent_state
 
         # Mock agent graph execution
-        mock_agent_state_copy = Mock()
-        mock_adapter.agent_graph.invoke.return_value = mock_agent_state_copy
+        mock_adapter.agent_graph.invoke.return_value = {
+            "signal": "buy",
+            "quantity": 10,
+        }
 
         bar = {
             "timestamp": datetime.now(),
@@ -256,7 +259,7 @@ class TestDeterministicLLMWrapper:
         response_rules = {"price > 100": "BUY", "price < 90": "SELL"}
         wrapper = DeterministicLLMWrapper(response_rules)
 
-        prompt = "Current price is 105. Should I buy or sell?"
+        prompt = "price > 100, should I buy?"
         response = wrapper(prompt)
 
         # Should match first rule
