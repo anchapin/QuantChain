@@ -159,6 +159,55 @@ Build the agent using the core agentic framework (`LangGraph`), connecting the r
 
 ---
 
+## 4.5. Implemented Agents
+
+The following agents have been implemented following the TDD/SDD workflow:
+
+### Memecoin Vibe Trader Agent
+
+**Location**: `quantchain/agents/memecoin_vibe_trader.py`
+**Spec**: `specs/agents/memecoin_vibe_trader.spec.md`
+**Tests**: `tests/backtests/test_memecoin_vibe_trader.py`
+
+**Overview**:
+An autonomous trading agent for memecoin opportunities using LangGraph workflow orchestration. Combines DEX scanning, social media analysis, and LLM-based vibe assessment.
+
+**Components Used**:
+- `DexscreenerDataConnector`: Scans for new token pairs
+- `SocialMediaScraper`: Gathers Telegram/Twitter metrics
+- `AlpacaExecutionTool`: Executes trades
+- LangGraph: Workflow orchestration
+- LLM: Vibe assessment and trading decisions
+
+**Key Features**:
+- Multi-step LangGraph workflow (scan → filter → assess → execute)
+- Risk management with position limits and allocation controls
+- LLM-powered "vibe" scoring (0-100 scale)
+- Error handling and recovery
+- Comprehensive logging and monitoring
+
+**Configuration**:
+```python
+@dataclass
+class MemecoinVibeTraderConfig:
+    scan_interval: int = 3600  # seconds
+    max_positions: int = 5
+    max_allocation_per_trade: float = 0.02  # 2% of portfolio
+    min_liquidity_threshold: float = 10000  # USD
+    min_vibe_score_threshold: float = 70
+    risk_tolerance: str = "MEDIUM"
+    time_window: str = "1h"
+```
+
+**Usage Example**:
+```python
+from quantchain.agents.memecoin_vibe_trader import MemecoinVibeTrader, MemecoinVibeTraderConfig
+
+config = MemecoinVibeTraderConfig()
+agent = MemecoinVibeTrader(config, dex_connector, social_scraper, execution_tool)
+results = agent.run_cycle()
+```
+
 ## 5. Code Quality Standards
 
 To prevent code sprawl, duplication, and maintainability issues, all contributions must adhere to these standards:

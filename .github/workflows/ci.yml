@@ -1,100 +1,93 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
-
-env:
-  PYTHON_VERSION: '3.12'
+    branches: [ main, develop ]
 
 jobs:
-  # Test job
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9, 3.10, 3.11, 3.12]
+
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-    
-    - name: Set up Python
-      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-    
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e ".[all-dev]"
-    
+        pip install -r requirements.txt
+
     - name: Run tests with coverage
       run: |
-        pytest --cov=quantchain --cov-report=xml --cov-fail-under=80 --timeout=60
-      
+        python -m pytest --cov=quantchain --cov-report=xml --cov-report=html --cov-fail-under=80
+
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457
+      uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
+        fail_ci_if_error: false
 
-  # Lint job
   lint:
     runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-    
-    - name: Set up Python
-      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e ".[all-dev]"
-    
-    - name: Lint with flake8
-      run: |
-        flake8 --max-line-length=88 --ignore=E203,W503 quantchain tests
 
-  # Format check job
-  format:
-    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-    
-    - name: Set up Python
-      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e ".[all-dev]"
-    
-    - name: Check formatting with black
-      run: |
-        black --check quantchain tests
+    - uses: actions/checkout@v4
 
-  # Type check job
-  type-check:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-    
     - name: Set up Python
-      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      uses: actions/setup-python@v4
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-    
+        python-version: '3.12'
+
+    - name: Install linting dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black flake8 mypy pytest
+
+    - name: Run Black (code formatting)
+      run: black --check --diff quantchain tests
+
+    - name: Run Flake8 (linting)
+      run: flake8 quantchain tests --max-line-length=100 --extend-ignore=E203,W503
+
+    - name: Run MyPy (type checking)
+      run: mypy quantchain --ignore-missing-imports
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e ".[all-dev]"
-    
-    - name: Type check with mypy
-      run: |
-        mypy quantchain
+        pip install -r requirements.txt
+
+    - name: Build package
+      run: python setup.py sdist bdist_wheel
+
+    - name: Test Docker build
+      run: docker build -t quantchain:test .

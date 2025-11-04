@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  quantchain:
+    build: .
+    container_name: quantchain
+    volumes:
+      - .:/app
+      - /app/__pycache__
+    environment:
+      - PYTHONPATH=/app
+      # Add your API keys here or use .env file
+      # - ALPACA_API_KEY=your_key
+      # - ALPACA_API_SECRET=your_secret
+      # - OPENAI_API_KEY=your_key
+    ports:
+      - "8501:8501"  # For potential Streamlit dashboard
+    command: python -c "import quantchain; print('QuantChain container ready!')"
+    restart: unless-stopped
+
+  # Optional: Add ChromaDB for vector storage
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: quantchain-chromadb
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+    restart: unless-stopped
+
+volumes:
+  chroma_data:

@@ -84,6 +84,55 @@ examples/            # Sample agents and configurations
 docs/               # Documentation
 ```
 
+## Agents
+
+QuantChain includes pre-built trading agents that demonstrate different trading strategies and use cases.
+
+### Memecoin Vibe Trader
+
+An autonomous trading agent that identifies promising memecoin opportunities by combining on-chain data analysis with social media sentiment and LLM-based "vibe" assessment.
+
+**Features:**
+- Scans new token pairs on DEXs using Dexscreener
+- Gathers social media metrics from Telegram and Twitter
+- Uses LLM to assess token "vibe" and make trading recommendations
+- Executes trades via Alpaca with risk management
+
+**Usage:**
+```python
+from quantchain.agents.memecoin_vibe_trader import MemecoinVibeTrader, MemecoinVibeTraderConfig
+from quantchain.connectors.dexscreener_connector import DexscreenerDataConnector
+from quantchain.tools.social_media_scraper import SocialMediaScraper
+from quantchain.tools.execution import AlpacaExecutionTool
+
+# Initialize components
+config = MemecoinVibeTraderConfig(
+    min_vibe_score_threshold=70,
+    max_positions=5,
+    max_allocation_per_trade=0.02
+)
+
+dex_connector = DexscreenerDataConnector()
+social_scraper = SocialMediaScraper()
+execution_tool = AlpacaExecutionTool.from_credentials(
+    api_key="your_api_key",
+    api_secret="your_api_secret"
+)
+
+# Create and run agent
+agent = MemecoinVibeTrader(config, dex_connector, social_scraper, execution_tool)
+results = agent.run_cycle()
+
+print(f"Scanned {results['tokens_scanned']} tokens, executed {results['trades_executed']} trades")
+```
+
+**Configuration Options:**
+- `scan_interval`: Time between scans (default: 3600 seconds)
+- `max_positions`: Maximum number of concurrent positions (default: 5)
+- `max_allocation_per_trade`: Max portfolio allocation per trade (default: 2%)
+- `min_liquidity_threshold`: Minimum liquidity required (default: $10,000)
+- `min_vibe_score_threshold`: Minimum vibe score for trades (default: 70)
+
 ## Data Connectors
 
 QuantChain provides a standardized interface for connecting to various data sources for market data:
