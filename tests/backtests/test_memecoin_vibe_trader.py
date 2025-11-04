@@ -3,7 +3,11 @@ from unittest.mock import MagicMock, patch
 from datetime import datetime, timedelta
 from typing import List
 
-from quantchain.agents.memecoin_vibe_trader import MemecoinVibeTrader, MemecoinVibeTraderConfig, MockLLM
+from quantchain.agents.memecoin_vibe_trader import (
+    MemecoinVibeTrader,
+    MemecoinVibeTraderConfig,
+    MockLLM,
+)
 from quantchain.connectors.dexscreener_connector import DexscreenerDataConnector
 from quantchain.tools.social_media_scraper import SocialMediaScraper, SocialMetrics
 from quantchain.tools.execution import AlpacaExecutionTool
@@ -23,7 +27,7 @@ class TestMemecoinVibeTrader:
                 "liquidity": 50000.0,
                 "volume_24h": 100000.0,
                 "created_at": datetime.now() - timedelta(hours=1),
-                "dex": "uniswap"
+                "dex": "uniswap",
             },
             {
                 "address": "0x0987654321098765432109876543210987654321",
@@ -32,8 +36,8 @@ class TestMemecoinVibeTrader:
                 "liquidity": 25000.0,
                 "volume_24h": 50000.0,
                 "created_at": datetime.now() - timedelta(hours=2),
-                "dex": "pancakeswap"
-            }
+                "dex": "pancakeswap",
+            },
         ]
 
     @pytest.fixture
@@ -44,7 +48,7 @@ class TestMemecoinVibeTrader:
             "twitter_followers": 10000,
             "recent_posts": 25,
             "engagement_rate": 0.15,
-            "sentiment_score": 0.8
+            "sentiment_score": 0.8,
         }
 
     @pytest.fixture
@@ -55,14 +59,14 @@ class TestMemecoinVibeTrader:
                 "vibe_score": 85.0,
                 "recommendation": "BUY",
                 "risk_level": "MEDIUM",
-                "reasoning": "Strong social momentum and unique token name"
+                "reasoning": "Strong social momentum and unique token name",
             },
             "MOON": {
                 "vibe_score": 45.0,
                 "recommendation": "SKIP",
                 "risk_level": "HIGH",
-                "reasoning": "Low social engagement and generic name"
-            }
+                "reasoning": "Low social engagement and generic name",
+            },
         }
 
     @pytest.fixture
@@ -78,38 +82,42 @@ class TestMemecoinVibeTrader:
                 "max_allocation_per_trade": 0.02,
                 "min_liquidity_threshold": 10000.0,
                 "min_vibe_score_threshold": 70.0,
-                "risk_tolerance": "MEDIUM"
-            }
+                "risk_tolerance": "MEDIUM",
+            },
         }
 
     def test_agent_identifies_and_trades_high_vibe_token(
-        self,
-        mock_token_pairs,
-        mock_social_metrics,
-        mock_llm_response,
-        backtest_config
+        self, mock_token_pairs, mock_social_metrics, mock_llm_response, backtest_config
     ):
         """Test that agent successfully identifies and trades a high-vibe token"""
 
-        with patch('quantchain.connectors.dexscreener_connector.DexscreenerDataConnector') as mock_dex_connector, \
-             patch('quantchain.tools.social_media_scraper.SocialMediaScraper') as mock_social_scraper, \
-             patch('quantchain.tools.execution.AlpacaExecutionTool') as mock_execution_tool:
+        with patch(
+            "quantchain.connectors.dexscreener_connector.DexscreenerDataConnector"
+        ) as mock_dex_connector, patch(
+            "quantchain.tools.social_media_scraper.SocialMediaScraper"
+        ) as mock_social_scraper, patch(
+            "quantchain.tools.execution.AlpacaExecutionTool"
+        ) as mock_execution_tool:
 
             # Setup mocks
             mock_dex_instance = mock_dex_connector.return_value
             mock_dex_instance.get_new_token_pairs.return_value = mock_token_pairs
-            
+
             # Create a mock that returns different social metrics for different tokens
             def mock_get_social_metrics(symbol, address):
                 return SocialMetrics(**mock_social_metrics)
-            
-            mock_social_scraper.return_value.get_social_metrics.side_effect = mock_get_social_metrics
+
+            mock_social_scraper.return_value.get_social_metrics.side_effect = (
+                mock_get_social_metrics
+            )
 
             # Create mock LLM with response
-            mock_llm = MockLLM("""VIBE_SCORE: 85.0
+            mock_llm = MockLLM(
+                """VIBE_SCORE: 85.0
     RECOMMENDATION: BUY
     RISK_LEVEL: MEDIUM
-    REASONING: Strong social momentum and unique token name""")
+    REASONING: Strong social momentum and unique token name"""
+            )
 
             mock_execution_tool_instance = MagicMock()
             mock_execution_tool_instance.execute_market_order.return_value = MagicMock(
@@ -119,7 +127,7 @@ class TestMemecoinVibeTrader:
                 "portfolio_value": 10000.0,
                 "buying_power": 9500.0,
                 "cash": 9500.0,
-                "total_equity": 10000.0
+                "total_equity": 10000.0,
             }
             mock_execution_tool_instance.get_positions.return_value = []
             mock_execution_tool.return_value = mock_execution_tool_instance
@@ -131,7 +139,7 @@ class TestMemecoinVibeTrader:
                 dex_connector=mock_dex_instance,
                 social_scraper=mock_social_scraper.return_value,
                 execution_tool=mock_execution_tool_instance,
-                llm=mock_llm
+                llm=mock_llm,
             )
 
             # Act
@@ -147,7 +155,9 @@ class TestMemecoinVibeTrader:
     def test_agent_skips_low_vibe_tokens(self, mock_token_pairs, backtest_config):
         """Test that agent skips tokens with low vibe scores"""
 
-        with patch('quantchain.connectors.dexscreener_connector.DexscreenerDataConnector') as mock_dex_connector:
+        with patch(
+            "quantchain.connectors.dexscreener_connector.DexscreenerDataConnector"
+        ) as mock_dex_connector:
 
             # Setup mock to return low-scoring tokens
             mock_dex_instance = mock_dex_connector.return_value
@@ -160,10 +170,14 @@ class TestMemecoinVibeTrader:
     def test_agent_handles_dexscreener_api_failure(self, backtest_config):
         """Test that agent gracefully handles Dexscreener API failures"""
 
-        with patch('quantchain.connectors.dexscreener_connector.DexscreenerDataConnector') as mock_dex_connector:
+        with patch(
+            "quantchain.connectors.dexscreener_connector.DexscreenerDataConnector"
+        ) as mock_dex_connector:
 
             mock_dex_instance = mock_dex_connector.return_value
-            mock_dex_instance.get_new_token_pairs.side_effect = Exception("API unavailable")
+            mock_dex_instance.get_new_token_pairs.side_effect = Exception(
+                "API unavailable"
+            )
 
             # TODO: Implement proper test for API failure handling
             pass  # Placeholder until implementation exists
@@ -171,7 +185,9 @@ class TestMemecoinVibeTrader:
     def test_agent_handles_social_scraping_failure(self, backtest_config):
         """Test that agent continues processing when social media scraping fails"""
 
-        with patch('quantchain.tools.social_media_scraper.SocialMediaScraper') as mock_social_scraper:
+        with patch(
+            "quantchain.tools.social_media_scraper.SocialMediaScraper"
+        ) as mock_social_scraper:
 
             # Setup mock to fail for one token but succeed for others
             mock_social_instance = mock_social_scraper.return_value
@@ -182,8 +198,8 @@ class TestMemecoinVibeTrader:
                     "twitter_followers": 2000,
                     "recent_posts": 10,
                     "engagement_rate": 0.1,
-                    "sentiment_score": 0.6
-                }  # Second call succeeds
+                    "sentiment_score": 0.6,
+                },  # Second call succeeds
             ]
 
             # TODO: Implement proper test for social scraping failure handling

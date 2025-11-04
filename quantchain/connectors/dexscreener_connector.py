@@ -4,7 +4,7 @@ import requests
 import pandas as pd
 import logging
 from typing import List, Dict, Optional, Any, cast
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import time
 from urllib.parse import urljoin
 
@@ -434,7 +434,9 @@ class DexscreenerDataConnector(DataFeedInterface):
             trending_pairs = self.get_trending_pairs(limit=200)
 
             new_pairs = []
-            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=time_window_hours)
+            cutoff_time = datetime.now(timezone.utc) - timedelta(
+                hours=time_window_hours
+            )
 
             for pair in trending_pairs:
                 # Extract pair address and get detailed info
@@ -477,7 +479,9 @@ class DexscreenerDataConnector(DataFeedInterface):
 
                 except Exception as e:
                     # Skip pairs that fail to load details
-                    self.logger.debug(f"Failed to get details for pair {pair_address}: {str(e)}")
+                    self.logger.debug(
+                        f"Failed to get details for pair {pair_address}: {str(e)}"
+                    )
                     continue
 
             # Sort by volume (most active first)
@@ -497,11 +501,11 @@ class DexscreenerDataConnector(DataFeedInterface):
         Returns:
             Time window in hours
         """
-        if time_window.endswith('h'):
+        if time_window.endswith("h"):
             return float(time_window[:-1])
-        elif time_window.endswith('d'):
+        elif time_window.endswith("d"):
             return float(time_window[:-1]) * 24
-        elif time_window.endswith('m'):
+        elif time_window.endswith("m"):
             return float(time_window[:-1]) * 24 * 30  # Approximate
         else:
             # Default to 1 hour

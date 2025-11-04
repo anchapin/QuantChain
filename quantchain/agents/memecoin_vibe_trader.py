@@ -12,7 +12,8 @@ from ..connectors.dexscreener_connector import DexscreenerDataConnector
 
 class LLMProtocol(Protocol):
     """Protocol for LLM interface."""
-    def invoke(self, prompt: str) -> any:
+
+    def invoke(self, prompt: str) -> Any:
         """Invoke the LLM with a prompt."""
         ...
 
@@ -23,12 +24,16 @@ class MockLLM:
     def __init__(self, response_text: str = ""):
         self.response_text = response_text
 
-    def invoke(self, prompt: str) -> any:
+    def invoke(self, prompt: str) -> Any:
         """Return mock response."""
+
         class MockResponse:
             def __init__(self, content: str):
                 self.content = content
+
         return MockResponse(self.response_text)
+
+
 from ..tools.social_media_scraper import SocialMediaScraper, SocialMetrics
 from ..tools.execution import AlpacaExecutionTool
 from ..core.exceptions import QuantChainError
@@ -37,6 +42,7 @@ from ..core.exceptions import QuantChainError
 @dataclass
 class TokenPair:
     """Token pair data structure."""
+
     address: str
     symbol: str
     name: str
@@ -51,6 +57,7 @@ class TokenPair:
 @dataclass
 class VibeAssessment:
     """LLM assessment of token vibe."""
+
     token: TokenPair
     social_metrics: SocialMetrics
     vibe_score: float  # 0-100 scale
@@ -62,10 +69,11 @@ class VibeAssessment:
 @dataclass
 class AgentState:
     """State for the LangGraph agent."""
-    tokens: List[TokenPair] = None
-    social_data: Dict[str, SocialMetrics] = None
-    assessments: List[VibeAssessment] = None
-    trades_executed: List[Dict[str, Any]] = None
+
+    tokens: Optional[List[TokenPair]] = None
+    social_data: Optional[Dict[str, SocialMetrics]] = None
+    assessments: Optional[List[VibeAssessment]] = None
+    trades_executed: Optional[List[Dict[str, Any]]] = None
     current_step: str = "scan"
     error_message: Optional[str] = None
 
@@ -83,6 +91,7 @@ class AgentState:
 @dataclass
 class MemecoinVibeTraderConfig:
     """Configuration for the Memecoin Vibe Trader."""
+
     scan_interval: int = 3600  # seconds
     max_positions: int = 5
     max_allocation_per_trade: float = 0.02  # 2% of portfolio
@@ -94,6 +103,7 @@ class MemecoinVibeTraderConfig:
 
 class MemecoinVibeTraderError(QuantChainError):
     """Custom exception for Memecoin Vibe Trader."""
+
     pass
 
 
@@ -159,7 +169,7 @@ class MemecoinVibeTrader:
                 "continue": "gather_social_data",
                 "error": "handle_error",
                 "end": END,
-            }
+            },
         )
 
         workflow.add_conditional_edges(
@@ -169,7 +179,7 @@ class MemecoinVibeTrader:
                 "continue": "assess_vibes",
                 "error": "handle_error",
                 "end": END,
-            }
+            },
         )
 
         workflow.add_conditional_edges(
@@ -179,7 +189,7 @@ class MemecoinVibeTrader:
                 "continue": "execute_trades",
                 "error": "handle_error",
                 "end": END,
-            }
+            },
         )
 
         workflow.add_conditional_edges(
@@ -189,7 +199,7 @@ class MemecoinVibeTrader:
                 "continue": END,
                 "error": "handle_error",
                 "end": END,
-            }
+            },
         )
 
         workflow.add_edge("handle_error", END)
@@ -210,12 +220,24 @@ class MemecoinVibeTrader:
             final_state = self.workflow.invoke(initial_state)
 
             # Return summary
-            error_msg = getattr(final_state, 'error_message', None)
+            error_msg = getattr(final_state, "error_message", None)
             # LangGraph returns state as dict, so access with dict.get
-            tokens = final_state.get('tokens', []) if isinstance(final_state, dict) else getattr(final_state, 'tokens', [])
-            assessments = final_state.get('assessments', []) if isinstance(final_state, dict) else getattr(final_state, 'assessments', [])
-            trades = final_state.get('trades_executed', []) if isinstance(final_state, dict) else getattr(final_state, 'trades_executed', [])
-            
+            tokens = (
+                final_state.get("tokens", [])
+                if isinstance(final_state, dict)
+                else getattr(final_state, "tokens", [])
+            )
+            assessments = (
+                final_state.get("assessments", [])
+                if isinstance(final_state, dict)
+                else getattr(final_state, "assessments", [])
+            )
+            trades = (
+                final_state.get("trades_executed", [])
+                if isinstance(final_state, dict)
+                else getattr(final_state, "trades_executed", [])
+            )
+
             return {
                 "success": error_msg is None,
                 "tokens_scanned": len(tokens),
@@ -288,7 +310,9 @@ class MemecoinVibeTrader:
                     self.logger.debug(f"Got social data for {token.symbol}")
 
                 except Exception as e:
-                    self.logger.warning(f"Failed to get social data for {token.symbol}: {str(e)}")
+                    self.logger.warning(
+                        f"Failed to get social data for {token.symbol}: {str(e)}"
+                    )
                     # Use default empty metrics
                     social_data[token.symbol] = SocialMetrics()
 
@@ -309,7 +333,9 @@ class MemecoinVibeTrader:
             assessments = []
             for token in state.tokens:
                 try:
-                    social_metrics = state.social_data.get(token.symbol, SocialMetrics())
+                    social_metrics = state.social_data.get(
+                        token.symbol, SocialMetrics()
+                    )
 
                     # Create assessment prompt
                     prompt = self._create_assessment_prompt(token, social_metrics)
@@ -318,22 +344,28 @@ class MemecoinVibeTrader:
                     response = self.llm.invoke(prompt)
 
                     # Parse response
-                    assessment = self._parse_llm_response(response.content, token, social_metrics)
+                    assessment = self._parse_llm_response(
+                        getattr(response, 'content', ''), token, social_metrics
+                    )
                     assessments.append(assessment)
 
-                    self.logger.debug(f"Assessed {token.symbol}: {assessment.recommendation}")
+                    self.logger.debug(
+                        f"Assessed {token.symbol}: {assessment.recommendation}"
+                    )
 
                 except Exception as e:
                     self.logger.warning(f"Failed to assess {token.symbol}: {str(e)}")
                     # Create default SKIP assessment
-                    assessments.append(VibeAssessment(
-                        token=token,
-                        social_metrics=social_metrics,
-                        vibe_score=0.0,
-                        recommendation="SKIP",
-                        risk_level="HIGH",
-                        reasoning=f"Assessment failed: {str(e)}"
-                    ))
+                    assessments.append(
+                        VibeAssessment(
+                            token=token,
+                            social_metrics=social_metrics,
+                            vibe_score=0.0,
+                            recommendation="SKIP",
+                            risk_level="HIGH",
+                            reasoning=f"Assessment failed: {str(e)}",
+                        )
+                    )
 
             state.assessments = assessments
             state.current_step = "assessment"
@@ -361,20 +393,25 @@ class MemecoinVibeTrader:
 
             # Filter assessments for BUY recommendations above threshold
             buy_candidates = [
-                assessment for assessment in state.assessments
-                if (assessment.recommendation == "BUY" and
-                    assessment.vibe_score >= self.config.min_vibe_score_threshold and
-                    assessment.token.symbol not in current_position_symbols)
+                assessment
+                for assessment in state.assessments
+                if (
+                    assessment.recommendation == "BUY"
+                    and assessment.vibe_score >= self.config.min_vibe_score_threshold
+                    and assessment.token.symbol not in current_position_symbols
+                )
             ]
 
             # Sort by vibe score (highest first)
             buy_candidates.sort(key=lambda x: x.vibe_score, reverse=True)
 
             # Execute trades within limits
-            for assessment in buy_candidates[:self.config.max_positions]:
+            for assessment in buy_candidates[: self.config.max_positions]:
                 try:
                     # Calculate position size
-                    position_value = portfolio_value * self.config.max_allocation_per_trade
+                    position_value = (
+                        portfolio_value * self.config.max_allocation_per_trade
+                    )
                     # Assume $1 per token for simplicity (would need price lookup in real impl)
                     quantity = position_value / 1.0
 
@@ -382,7 +419,7 @@ class MemecoinVibeTrader:
                     order_result = self.execution_tool.execute_market_order(
                         symbol=f"{assessment.token.symbol}/USD",  # Alpaca format
                         side="buy",
-                        quantity=quantity
+                        quantity=quantity,
                     )
 
                     trade_info = {
@@ -397,7 +434,9 @@ class MemecoinVibeTrader:
                     self.logger.info(f"Executed trade for {assessment.token.symbol}")
 
                 except Exception as e:
-                    self.logger.error(f"Failed to execute trade for {assessment.token.symbol}: {str(e)}")
+                    self.logger.error(
+                        f"Failed to execute trade for {assessment.token.symbol}: {str(e)}"
+                    )
 
             state.trades_executed = trades_executed
             state.current_step = "execution"
@@ -445,7 +484,9 @@ class MemecoinVibeTrader:
         # Always continue to end, even if no trades were executed
         return "continue"
 
-    def _create_assessment_prompt(self, token: TokenPair, social_metrics: SocialMetrics) -> str:
+    def _create_assessment_prompt(
+        self, token: TokenPair, social_metrics: SocialMetrics
+    ) -> str:
         """Create the LLM prompt for vibe assessment."""
         return f"""Analyze this cryptocurrency token and determine if it's worth trading based on its "vibe" - the combination of cultural relevance, social momentum, and market potential.
 
@@ -476,9 +517,11 @@ RISK_LEVEL: [LOW/MEDIUM/HIGH]
 REASONING: [Your detailed analysis in 2-3 sentences]
 """
 
-    def _parse_llm_response(self, response: str, token: TokenPair, social_metrics: SocialMetrics) -> VibeAssessment:
+    def _parse_llm_response(
+        self, response: str, token: TokenPair, social_metrics: SocialMetrics
+    ) -> VibeAssessment:
         """Parse the LLM response into a VibeAssessment."""
-        lines = response.strip().split('\n')
+        lines = response.strip().split("\n")
 
         vibe_score = 50.0
         recommendation = "HOLD"

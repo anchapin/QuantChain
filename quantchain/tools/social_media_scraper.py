@@ -4,7 +4,6 @@ import logging
 import time
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
-from urllib.parse import urlparse, parse_qs
 import re
 
 try:
@@ -21,6 +20,7 @@ from ..core.retry import RetryHandler
 @dataclass
 class SocialMetrics:
     """Data structure for social media metrics."""
+
     telegram_followers: int = 0
     twitter_followers: int = 0
     recent_posts: int = 0
@@ -77,7 +77,9 @@ class SocialMediaScraper:
         self._last_request_time = 0
         self._min_request_interval = 1.0  # 1 second between requests
 
-    def get_social_metrics(self, token_symbol: str, token_address: str) -> SocialMetrics:
+    def get_social_metrics(
+        self, token_symbol: str, token_address: str
+    ) -> SocialMetrics:
         """Get comprehensive social media metrics for a token.
 
         Args:
@@ -115,7 +117,9 @@ class SocialMediaScraper:
             return metrics
 
         except Exception as e:
-            raise DataSourceError(f"Failed to scrape social metrics for {token_symbol}: {str(e)}") from e
+            raise DataSourceError(
+                f"Failed to scrape social metrics for {token_symbol}: {str(e)}"
+            ) from e
 
     def _get_telegram_metrics(self, token_symbol: str) -> Dict[str, Any]:
         """Scrape Telegram metrics for a token.
@@ -134,7 +138,11 @@ class SocialMediaScraper:
             # This is a simplified implementation - in production you'd want
             # Telegram API integration or more robust scraping
 
-            search_terms = [token_symbol.lower(), f"{token_symbol}official", f"{token_symbol}community"]
+            search_terms = [
+                token_symbol.lower(),
+                f"{token_symbol}official",
+                f"{token_symbol}community",
+            ]
 
             best_channel = None
             max_followers = 0
@@ -164,7 +172,9 @@ class SocialMediaScraper:
             return {"followers": 0, "recent_posts": 0}
 
         except Exception as e:
-            self.logger.warning(f"Telegram scraping failed for {token_symbol}: {str(e)}")
+            self.logger.warning(
+                f"Telegram scraping failed for {token_symbol}: {str(e)}"
+            )
             return {"followers": 0, "recent_posts": 0}
 
     def _get_twitter_metrics(self, token_symbol: str) -> Dict[str, Any]:
@@ -185,7 +195,9 @@ class SocialMediaScraper:
 
             if account_data:
                 # Get recent tweets and engagement
-                recent_activity = self._get_twitter_recent_activity(account_data.get("username", ""))
+                recent_activity = self._get_twitter_recent_activity(
+                    account_data.get("username", "")
+                )
 
                 return {
                     "followers": account_data.get("followers", 0),
@@ -246,7 +258,9 @@ class SocialMediaScraper:
             return None
 
         except Exception as e:
-            self.logger.debug(f"Failed to find Twitter account for {token_symbol}: {str(e)}")
+            self.logger.debug(
+                f"Failed to find Twitter account for {token_symbol}: {str(e)}"
+            )
             return None
 
     def _get_twitter_account_info(self, username: str) -> Optional[Dict[str, Any]]:
@@ -277,9 +291,14 @@ class SocialMediaScraper:
 
     def _make_request(self, url: str, **kwargs: Any) -> Any:
         """Make HTTP request with retry logic."""
-        def _request() -> Any:
-            response = self.session.get(url, timeout=self.timeout, **kwargs)
-            response.raise_for_status()
-            return response.json()
 
-        return self._retry_handler.execute(_request, exceptions=(requests.exceptions.RequestException,))
+        def _request() -> Any:
+            if self.session:
+                response = self.session.get(url, timeout=self.timeout, **kwargs)
+                response.raise_for_status()
+                return response.json()
+            return {}
+
+        return self._retry_handler.execute(
+            _request, exceptions=(requests.exceptions.RequestException if requests else Exception),
+        )

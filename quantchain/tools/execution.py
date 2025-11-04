@@ -1,6 +1,5 @@
 """Alpaca execution tool for trading operations."""
 
-from typing import Optional, Dict, Any
 from dataclasses import dataclass
 
 from ..connectors.alpaca_execution import AlpacaExecutionConnector
@@ -19,11 +18,7 @@ class AlpacaExecutionTool:
 
     @classmethod
     def from_credentials(
-        cls,
-        api_key: str,
-        api_secret: str,
-        use_paper: bool = True,
-        **kwargs: Any
+        cls, api_key: str, api_secret: str, use_paper: bool = True, **kwargs: Any
     ) -> "AlpacaExecutionTool":
         """Create tool from Alpaca credentials.
 
@@ -37,18 +32,12 @@ class AlpacaExecutionTool:
             Configured AlpacaExecutionTool
         """
         connector = AlpacaExecutionConnector(
-            api_key=api_key,
-            api_secret=api_secret,
-            use_paper=use_paper,
-            **kwargs
+            api_key=api_key, api_secret=api_secret, use_paper=use_paper, **kwargs
         )
         return cls(connector=connector)
 
     def execute_market_order(
-        self,
-        symbol: str,
-        side: str,
-        quantity: float
+        self, symbol: str, side: str, quantity: float
     ) -> OrderResult:
         """Execute a market order.
 
@@ -65,18 +54,18 @@ class AlpacaExecutionTool:
             ExecutionError: If order execution fails
         """
         # Validate side
-        if side.lower() not in ['buy', 'sell']:
+        if side.lower() not in ["buy", "sell"]:
             raise ValueError(f"Invalid side: {side}. Must be 'buy' or 'sell'")
 
         # Convert to enum
-        order_side = OrderSide.BUY if side.lower() == 'buy' else OrderSide.SELL
+        order_side = OrderSide.BUY if side.lower() == "buy" else OrderSide.SELL
 
         # Create order request
         order_request = OrderRequest(
             symbol=symbol,
             side=order_side,
             order_type=OrderType.MARKET,
-            quantity=quantity
+            quantity=quantity,
         )
 
         # Execute order
