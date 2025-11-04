@@ -363,8 +363,8 @@ class TestStateConversion:
 
         # Invalid signal
         agent_state.signal = "invalid"
-        signal = agent_state_to_signal(agent_state)
-        assert signal is None
+        with pytest.raises(SignalConversionError):
+            agent_state_to_signal(agent_state)
 
         # Insufficient cash for buy
         agent_state.signal = "buy"

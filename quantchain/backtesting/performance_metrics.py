@@ -115,6 +115,10 @@ class PerformanceMetrics:
             return 0.0
 
         try:
+            if equity_curve.isnull().any() or np.isinf(equity_curve).any():
+                raise ValueError(
+                    "Equity curve contains invalid values (NaN or infinity)"
+                )
             return float(equity_curve.iloc[-1] / equity_curve.iloc[0]) - 1
         except Exception as e:
             raise MetricsCalculationError(f"Failed to calculate total return: {e}")
