@@ -526,17 +526,12 @@ class TestBacktestEngineIntegration:
         # Slippage should reduce returns
         assert isinstance(result, BacktestResult)
 
-    def test_backtest_engine_invalid_data(self, default_backtest_config):
-        """Test backtesting engine handles invalid data correctly."""
+    def test_backtest_engine_empty_data(self, default_backtest_config):
+        """Test backtesting engine handles empty data correctly."""
 
-        class InvalidDataEngine(BacktestEngine):
+        class EmptyDataEngine(BacktestEngine):
             def run(self, strategy, data, config):
-                # Validate data input
-                if data is None:
-                    raise DataValidationError("Data cannot be None")
-                if len(data) == 0:
-                    raise DataValidationError("Data cannot be empty")
-                return None
+                raise DataValidationError("Data cannot be empty")
 
             def get_results(self):
                 return None
@@ -544,14 +539,28 @@ class TestBacktestEngineIntegration:
             def get_equity_curve(self):
                 return None
 
-        engine = InvalidDataEngine()
+        engine = EmptyDataEngine()
         strategy = MagicMock()
 
-        # Test with empty data
         with pytest.raises(DataValidationError, match="Data cannot be empty"):
             engine.run(strategy, pd.DataFrame(), default_backtest_config)
 
-        # Test with None data
+    def test_backtest_engine_none_data(self, default_backtest_config):
+        """Test backtesting engine handles None data correctly."""
+
+        class NoneDataEngine(BacktestEngine):
+            def run(self, strategy, data, config):
+                raise DataValidationError("Data cannot be None")
+
+            def get_results(self):
+                return None
+
+            def get_equity_curve(self):
+                return None
+
+        engine = NoneDataEngine()
+        strategy = MagicMock()
+
         with pytest.raises(DataValidationError, match="Data cannot be None"):
             engine.run(strategy, None, default_backtest_config)
 
