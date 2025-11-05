@@ -14,7 +14,7 @@ class TestMemecoinVibeTrader:
     """Backtest tests for Memecoin Vibe Trader Agent"""
 
     @pytest.fixture
-    def mock_token_pairs(self):
+    def mock_token_pairs(self) -> list:
         """Mock token pairs data"""
         return [
             {
@@ -38,7 +38,7 @@ class TestMemecoinVibeTrader:
         ]
 
     @pytest.fixture
-    def mock_social_metrics(self):
+    def mock_social_metrics(self) -> dict:
         """Mock social media metrics"""
         return {
             "telegram_followers": 5000,
@@ -49,25 +49,7 @@ class TestMemecoinVibeTrader:
         }
 
     @pytest.fixture
-    def mock_llm_response(self):
-        """Mock LLM ranking response"""
-        return {
-            "VIBE": {
-                "vibe_score": 85.0,
-                "recommendation": "BUY",
-                "risk_level": "MEDIUM",
-                "reasoning": "Strong social momentum and unique token name",
-            },
-            "MOON": {
-                "vibe_score": 45.0,
-                "recommendation": "SKIP",
-                "risk_level": "HIGH",
-                "reasoning": "Low social engagement and generic name",
-            },
-        }
-
-    @pytest.fixture
-    def backtest_config(self):
+    def backtest_config(self) -> dict:
         """Mock backtest configuration"""
         return {
             "start_date": "2024-01-01",
@@ -83,9 +65,9 @@ class TestMemecoinVibeTrader:
             },
         }
 
-    def test_agent_identifies_and_trades_high_vibe_token(
+    def test_agent_identifies_and_trades_high_vibe_token(  # type: ignore
         self, mock_token_pairs, mock_social_metrics, mock_llm_response, backtest_config
-    ):
+    ) -> None:
         """Test that agent successfully identifies and trades a high-vibe token"""
 
         with patch(
@@ -149,73 +131,299 @@ class TestMemecoinVibeTrader:
             assert len(results["trades"]) > 0
             assert mock_execution_tool_instance.execute_market_order.called
 
-    def test_agent_skips_low_vibe_tokens(self, mock_token_pairs, backtest_config):
+    def test_agent_skips_low_vibe_tokens(  # type: ignore
+        self, mock_token_pairs, mock_social_metrics, backtest_config
+    ) -> None:
         """Test that agent skips tokens with low vibe scores"""
 
         with patch(
             "quantchain.connectors.dexscreener_connector.DexscreenerDataConnector"
-        ) as mock_dex_connector:
+        ) as mock_dex_connector, patch(
+            "quantchain.tools.social_media_scraper.SocialMediaScraper"
+        ) as mock_social_scraper, patch(
+            "quantchain.tools.execution.AlpacaExecutionTool"
+        ) as mock_execution_tool:
 
-            # Setup mock to return low-scoring tokens
+            # Setup mocks
             mock_dex_instance = mock_dex_connector.return_value
             mock_dex_instance.get_new_token_pairs.return_value = mock_token_pairs
 
-            # This test is placeholder - actual implementation needs to mock LLM
-            # properly
-            # TODO: Implement proper LLM mocking for low vibe scores
-            pytest.skip(
-                "Test not yet implemented - needs LLM mocking for low vibe scores"
+            # Mock social scraper to return consistent metrics
+            def mock_get_social_metrics(symbol, address):  # type: ignore
+                return SocialMetrics(**mock_social_metrics)
+
+            mock_social_scraper.return_value.get_social_metrics.side_effect = (
+                mock_get_social_metrics
             )
 
-    def test_agent_handles_dexscreener_api_failure(self, backtest_config):
+            # Create mock LLM that returns LOW vibe scores (below threshold of 70)
+            mock_llm = MockLLM(
+                """VIBE_SCORE: 45.0
+    RECOMMENDATION: SKIP
+    RISK_LEVEL: HIGH
+    REASONING: Low social engagement and generic name"""
+            )
+
+            mock_execution_tool_instance = MagicMock()
+            mock_execution_tool.return_value = mock_execution_tool_instance
+
+            # Create agent
+            config = MemecoinVibeTraderConfig(**backtest_config["agent_config"])
+            agent = MemecoinVibeTrader(
+                config=config,
+                dex_connector=mock_dex_instance,
+                social_scraper=mock_social_scraper.return_value,
+                execution_tool=mock_execution_tool_instance,
+                llm=mock_llm,
+            )
+
+            # Act
+            results = agent.run_cycle()
+
+            # Assert - no trades should be executed due to low vibe scores
+            assert results["success"] is True
+            assert results["tokens_scanned"] == 2  # Both tokens scanned
+            assert results["assessments_made"] == 2  # Both tokens assessed
+            assert len(results["trades"]) == 0  # No trades executed
+            # Verify execution tool was never called to place orders
+            assert not mock_execution_tool_instance.execute_market_order.called
+
+    def test_agent_handles_dexscreener_api_failure(
+        self, backtest_config
+    ) -> None:  # type: ignore
         """Test that agent gracefully handles Dexscreener API failures"""
 
         with patch(
             "quantchain.connectors.dexscreener_connector.DexscreenerDataConnector"
-        ) as mock_dex_connector:
+        ) as mock_dex_connector, patch(
+            "quantchain.tools.social_media_scraper.SocialMediaScraper"
+        ) as mock_social_scraper, patch(
+            "quantchain.tools.execution.AlpacaExecutionTool"
+        ) as mock_execution_tool:
 
             mock_dex_instance = mock_dex_connector.return_value
             mock_dex_instance.get_new_token_pairs.side_effect = Exception(
                 "API unavailable"
             )
 
-            # TODO: Implement proper test for API failure handling
-            pytest.skip("Test not yet implemented - needs API failure handling")
-
-    def test_agent_handles_social_scraping_failure(self, backtest_config):
-        """Test that agent continues processing when social media scraping fails"""
-
-        with patch(
-            "quantchain.tools.social_media_scraper.SocialMediaScraper"
-        ) as mock_social_scraper:
-
-            # Setup mock to fail for one token but succeed for others
+            # Mock other components (though they shouldn't be called)
             mock_social_instance = mock_social_scraper.return_value
-            mock_social_instance.get_social_metrics.side_effect = [
-                Exception("Scraping failed"),  # First call fails
-                {
-                    "telegram_followers": 1000,
-                    "twitter_followers": 2000,
-                    "recent_posts": 10,
-                    "engagement_rate": 0.1,
-                    "sentiment_score": 0.6,
-                },  # Second call succeeds
-            ]
+            mock_execution_instance = mock_execution_tool.return_value
 
-            # TODO: Implement proper test for social scraping failure handling
-            pytest.skip(
-                "Test not yet implemented - needs social scraping failure handling"
+            # Create agent
+            config = MemecoinVibeTraderConfig(**backtest_config["agent_config"])
+            agent = MemecoinVibeTrader(
+                config=config,
+                dex_connector=mock_dex_instance,
+                social_scraper=mock_social_instance,
+                execution_tool=mock_execution_instance,
             )
 
-    def test_agent_respects_risk_limits(self, backtest_config):
+            # Act
+            results = agent.run_cycle()
+
+            # Assert - agent should handle API failure gracefully
+            assert results["success"] is False  # Cycle failed due to API error
+            assert "error_message" in results
+            assert "API unavailable" in results["error_message"]
+            assert (
+                results["tokens_scanned"] == 0
+            )  # No tokens scanned due to API failure
+            assert results["assessments_made"] == 0  # No assessments made
+            assert len(results["trades"]) == 0  # No trades executed
+
+            # Verify downstream components were not called
+            assert not mock_social_instance.get_social_metrics.called
+            assert not mock_execution_instance.execute_market_order.called
+
+    def test_agent_handles_social_scraping_failure(  # type: ignore
+        self, mock_token_pairs, backtest_config
+    ) -> None:
+        """Test agent continues processing when social scraping fails for one token"""
+
+        with patch(
+            "quantchain.connectors.dexscreener_connector.DexscreenerDataConnector"
+        ) as mock_dex_connector, patch(
+            "quantchain.tools.social_media_scraper.SocialMediaScraper"
+        ) as mock_social_scraper, patch(
+            "quantchain.tools.execution.AlpacaExecutionTool"
+        ) as mock_execution_tool:
+
+            # Setup mocks
+            mock_dex_instance = mock_dex_connector.return_value
+            mock_dex_instance.get_new_token_pairs.return_value = mock_token_pairs
+
+            # Setup mock to fail for first token but succeed for second
+            mock_social_instance = mock_social_scraper.return_value
+            mock_social_instance.get_social_metrics.side_effect = [
+                Exception("Scraping failed for VIBE"),  # First token fails
+                SocialMetrics(  # Second token succeeds
+                    telegram_followers=1000,
+                    twitter_followers=2000,
+                    recent_posts=10,
+                    engagement_rate=0.1,
+                    sentiment_score=0.6,
+                ),
+            ]
+
+            # Create mock LLM that gives high score to second token
+            mock_llm = MockLLM(
+                """VIBE_SCORE: 85.0
+    RECOMMENDATION: BUY
+    RISK_LEVEL: MEDIUM
+    REASONING: Strong social momentum"""
+            )
+
+            mock_execution_tool_instance = MagicMock()
+            mock_execution_tool_instance.execute_market_order.return_value = MagicMock(
+                order_id="test_order_123"
+            )
+            mock_execution_tool_instance.get_account_balance.return_value = {
+                "portfolio_value": 10000.0,
+                "buying_power": 9500.0,
+                "cash": 9500.0,
+                "total_equity": 10000.0,
+            }
+            mock_execution_tool_instance.get_positions.return_value = []
+            mock_execution_tool.return_value = mock_execution_tool_instance
+
+            # Create agent
+            config = MemecoinVibeTraderConfig(**backtest_config["agent_config"])
+            agent = MemecoinVibeTrader(
+                config=config,
+                dex_connector=mock_dex_instance,
+                social_scraper=mock_social_instance,
+                execution_tool=mock_execution_tool_instance,
+                llm=mock_llm,
+            )
+
+            # Act
+            results = agent.run_cycle()
+
+            # Assert - agent should continue processing despite failure for first token
+            assert results["success"] is True  # Overall success despite partial failure
+            assert results["tokens_scanned"] == 2  # Both tokens scanned
+            assert (
+                results["assessments_made"] == 1
+            )  # Only second token assessed (first failed)
+            assert (
+                len(results["trades"]) == 1
+            )  # One trade executed for successful token
+
+            # Verify social scraper was called for both tokens
+            assert mock_social_instance.get_social_metrics.call_count == 2
+            # Verify execution happened for the successful token
+            assert mock_execution_tool_instance.execute_market_order.called
+
+    def test_agent_respects_risk_limits(
+        self, mock_social_metrics, backtest_config
+    ) -> None:  # type: ignore
         """Test that agent respects position limits and allocation constraints"""
 
-        # Configure agent with strict limits
+        # Create multiple high-vibe tokens
+        multiple_tokens = [
+            {
+                "address": "0x1234567890123456789012345678901234567890",
+                "symbol": "VIBE1",
+                "name": "VibeCoin1",
+                "liquidity": 50000.0,
+                "volume_24h": 100000.0,
+                "created_at": datetime.now() - timedelta(hours=1),
+                "dex": "uniswap",
+            },
+            {
+                "address": "0x0987654321098765432109876543210987654321",
+                "symbol": "VIBE2",
+                "name": "VibeCoin2",
+                "liquidity": 60000.0,
+                "volume_24h": 120000.0,
+                "created_at": datetime.now() - timedelta(hours=1),
+                "dex": "uniswap",
+            },
+            {
+                "address": "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+                "symbol": "VIBE3",
+                "name": "VibeCoin3",
+                "liquidity": 70000.0,
+                "volume_24h": 140000.0,
+                "created_at": datetime.now() - timedelta(hours=1),
+                "dex": "uniswap",
+            },
+        ]
+
+        # Configure agent with strict limits: max 1 position, 1% allocation per trade
         strict_config = backtest_config.copy()
         strict_config["agent_config"]["max_positions"] = 1
         strict_config["agent_config"]["max_allocation_per_trade"] = 0.01
 
-        # TODO: Implement test when agent exists
-        # Multiple high-vibe tokens should only result in 1 trade
-        # Trade size should be limited to 1% of portfolio
-        pytest.skip("Test not yet implemented - needs agent exists check")
+        with patch(
+            "quantchain.connectors.dexscreener_connector.DexscreenerDataConnector"
+        ) as mock_dex_connector, patch(
+            "quantchain.tools.social_media_scraper.SocialMediaScraper"
+        ) as mock_social_scraper, patch(
+            "quantchain.tools.execution.AlpacaExecutionTool"
+        ) as mock_execution_tool:
+
+            # Setup mocks
+            mock_dex_instance = mock_dex_connector.return_value
+            mock_dex_instance.get_new_token_pairs.return_value = multiple_tokens
+
+            # Mock social scraper to return consistent high metrics
+            def mock_get_social_metrics(symbol, address):  # type: ignore
+                return SocialMetrics(**mock_social_metrics)
+
+            mock_social_scraper.return_value.get_social_metrics.side_effect = (
+                mock_get_social_metrics
+            )
+
+            # Create mock LLM that returns HIGH vibe scores for all tokens
+            mock_llm = MockLLM(
+                """VIBE_SCORE: 90.0
+    RECOMMENDATION: BUY
+    RISK_LEVEL: LOW
+    REASONING: Excellent social momentum and strong fundamentals"""
+            )
+
+            mock_execution_tool_instance = MagicMock()
+            mock_execution_tool_instance.execute_market_order.return_value = MagicMock(
+                order_id="test_order_123"
+            )
+            mock_execution_tool_instance.get_account_balance.return_value = {
+                "portfolio_value": 10000.0,  # $10,000 portfolio
+                "buying_power": 9500.0,
+                "cash": 9500.0,
+                "total_equity": 10000.0,
+            }
+            mock_execution_tool_instance.get_positions.return_value = []
+            mock_execution_tool.return_value = mock_execution_tool_instance
+
+            # Create agent with strict risk limits
+            config = MemecoinVibeTraderConfig(**strict_config["agent_config"])
+            agent = MemecoinVibeTrader(
+                config=config,
+                dex_connector=mock_dex_instance,
+                social_scraper=mock_social_scraper.return_value,
+                execution_tool=mock_execution_tool_instance,
+                llm=mock_llm,
+            )
+
+            # Act
+            results = agent.run_cycle()
+
+            # Assert - only 1 trade should be executed despite 3 high-vibe tokens
+            assert results["success"] is True
+            assert results["tokens_scanned"] == 3  # All 3 tokens scanned
+            assert results["assessments_made"] == 3  # All 3 tokens assessed
+            assert (
+                len(results["trades"]) == 1
+            )  # Only 1 trade executed due to position limit
+
+            # Verify only one execution call was made
+            assert mock_execution_tool_instance.execute_market_order.call_count == 1
+
+            # Verify the trade size respects allocation limit (1% of $10,000 = $100)
+            call_args = mock_execution_tool_instance.execute_market_order.call_args
+            executed_quantity = call_args[1][
+                "quantity"
+            ]  # Assuming price is $1 for simplicity in test
+            assert executed_quantity <= 100  # Should not exceed $100 allocation

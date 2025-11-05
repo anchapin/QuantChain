@@ -48,7 +48,7 @@ jobs:
         python -m pytest --cov=quantchain --cov-report=xml --cov-report=html --cov-fail-under=75
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@af09b5e394c93991b95a5e7646aeb90c1917f78f
+      uses: codecov/codecov-action@9cc74bf7e13a810454a28846494ddbc3795eb693
       with:
         files: ./coverage.xml
         fail_ci_if_error: false

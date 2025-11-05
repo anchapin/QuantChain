@@ -405,11 +405,23 @@ class DexscreenerDataConnector(DataFeedInterface):
                 f"Failed to search pairs for '{query}': {str(e)}"
             ) from e
 
-    def get_new_token_pairs(self, time_window: str = "1h") -> List[Dict[str, Any]]:
+    def get_new_token_pairs(
+        self,
+        time_window: str = "1h",
+        min_liquidity_usd: float = 50000.0,
+        min_volume_usd: float = 0.0,
+        require_metadata: bool = False,
+    ) -> List[Dict[str, Any]]:
         """Fetch newly created token pairs within the specified time window.
 
         Args:
             time_window: Time window to look back (e.g., '1h', '24h', '7d')
+            min_liquidity_usd: Minimum liquidity in USD for a pair to be considered new
+                              (default: 50000)
+            min_volume_usd: Minimum volume in USD for a pair to be considered
+                            (default: 0)
+            require_metadata: If True, only include pairs with token metadata
+                              (default: False)
 
         Returns:
             List of new token pair dictionaries with basic metrics
@@ -453,11 +465,22 @@ class DexscreenerDataConnector(DataFeedInterface):
                     liquidity = float(pair_detail.get("liquidity", {}).get("usd", 0))
                     volume_24h = float(pair_detail.get("volume", {}).get("h24", 0))
 
-                    # Heuristic: Consider pairs "new" if they have low liquidity
-                    # (< $50k) and reasonable volume (indicating recent activity)
-                    if liquidity < 50000 and volume_24h > 1000:
-                        base_token = pair_detail.get("baseToken", {})
-                        quote_token = pair_detail.get("quoteToken", {})
+                    # Extract token info for filtering
+                    base_token = pair_detail.get("baseToken", {})
+                    quote_token = pair_detail.get("quoteToken", {})
+
+                    # Apply configurable filters for new pair detection
+                    liquidity_ok = liquidity >= min_liquidity_usd
+                    volume_ok = volume_24h >= min_volume_usd
+
+                    # Check metadata requirement if specified
+                    metadata_ok = True
+                    if require_metadata:
+                        metadata_ok = bool(base_token.get("name")) and bool(
+                            base_token.get("symbol")
+                        )
+
+                    if liquidity_ok and volume_ok and metadata_ok:
 
                         new_pair = {
                             "address": pair_address,
