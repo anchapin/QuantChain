@@ -319,8 +319,8 @@ def moving_average_strategy():
             if len(self.price_history) < self.long_window:
                 return None
 
-            short_ma = np.mean(self.price_history[-self.short_window :])
-            long_ma = np.mean(self.price_history[-self.long_window :])
+            short_ma = np.mean(self.price_history[-self.short_window:])
+            long_ma = np.mean(self.price_history[-self.long_window:])
 
             # Golden cross - short MA crosses above long MA
             if not self.position and short_ma > long_ma:

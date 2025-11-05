@@ -381,7 +381,9 @@ class TestBacktestEngineIntegration:
 
                 # Create equity curve with commission impact but slight appreciation
                 appreciation_factor = 1.02  # 2% appreciation to offset commission
-                equity_curve = [initial_cash * appreciation_factor * (1 - config.commission_rate)] * len(data)
+                equity_curve = [
+                    initial_cash * appreciation_factor * (1 - config.commission_rate)
+                ] * len(data)
                 equity_series = pd.Series(equity_curve, index=data.index)
 
                 # Results with commission
