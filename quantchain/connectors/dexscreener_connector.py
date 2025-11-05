@@ -4,7 +4,7 @@ import requests
 import pandas as pd
 import logging
 from typing import List, Dict, Optional, Any, cast
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import time
 from urllib.parse import urljoin
 
@@ -76,11 +76,13 @@ class DexscreenerDataConnector(DataFeedInterface):
         def _request() -> Dict[str, Any]:
             response = self.session.get(url, params=params, timeout=self.timeout)
             response.raise_for_status()
-            return response.json()  # type: ignore[no-any-return]
+            result = response.json()
+            return result  # type: ignore[no-any-return]
 
-        return self._retry_handler.execute(
+        result = self._retry_handler.execute(
             _request, exceptions=(requests.exceptions.RequestException,)
         )
+        return result  # type: ignore[no-any-return]
 
     def _normalize_pair_address(self, symbol: str) -> str:
         """Extract pair address from symbol format like 'TOKEN/USD:ADDRESS'."""
@@ -412,3 +414,104 @@ class DexscreenerDataConnector(DataFeedInterface):
             raise DataSourceError(
                 f"Failed to search pairs for '{query}': {str(e)}"
             ) from e
+
+    def get_new_token_pairs(self, time_window: str = "1h") -> List[Dict[str, Any]]:
+        """Fetch newly created token pairs within the specified time window.
+
+        Args:
+            time_window: Time window to look back (e.g., '1h', '24h', '7d')
+
+        Returns:
+            List of new token pair dictionaries with basic metrics
+
+        Raises:
+            DataSourceError: If API request fails
+        """
+        try:
+            # Convert time window to hours for filtering
+            time_window_hours = self._parse_time_window(time_window)
+
+            # Get trending pairs
+            # (Dexscreener doesn't have a direct "new pairs" endpoint)
+            # We'll use trending pairs and filter by creation time
+            trending_pairs = self.get_trending_pairs(limit=200)
+
+            new_pairs = []
+            cutoff_time = datetime.now(timezone.utc) - timedelta(
+                hours=time_window_hours
+            )
+
+            for pair in trending_pairs:
+                # Extract pair address and get detailed info
+                pair_address = pair.get("pair_address", "")
+                if not pair_address:
+                    continue
+
+                try:
+                    # Get detailed pair info
+                    data = self._make_request(f"dex/pairs/{pair_address}")
+                    if not data.get("pairs"):
+                        continue
+
+                    pair_detail = data["pairs"][0]
+
+                    # Check if pair was created within time window
+                    # Dexscreener doesn't provide creation timestamp,
+                    # so we'll use a heuristic
+                    # based on liquidity and volume patterns
+                    # (new pairs typically have low liquidity initially)
+                    liquidity = float(pair_detail.get("liquidity", {}).get("usd", 0))
+                    volume_24h = float(pair_detail.get("volume", {}).get("h24", 0))
+
+                    # Heuristic: Consider pairs "new" if they have low liquidity
+                    # (< $50k) and reasonable volume (indicating recent activity)
+                    if liquidity < 50000 and volume_24h > 1000:
+                        base_token = pair_detail.get("baseToken", {})
+                        quote_token = pair_detail.get("quoteToken", {})
+
+                        new_pair = {
+                            "address": pair_address,
+                            "symbol": base_token.get("symbol", ""),
+                            "name": base_token.get("name", ""),
+                            "liquidity": liquidity,
+                            "volume_24h": volume_24h,
+                            "created_at": cutoff_time,  # Approximate creation time
+                            "dex": pair_detail.get("dexId", ""),
+                            "base_token_address": base_token.get("address", ""),
+                            "quote_token_address": quote_token.get("address", ""),
+                        }
+                        new_pairs.append(new_pair)
+
+                except Exception as e:
+                    # Skip pairs that fail to load details
+                    self.logger.debug(
+                        f"Failed to get details for pair {pair_address}: {str(e)}"
+                    )
+                    continue
+
+            # Sort by volume (most active first)
+            new_pairs.sort(key=lambda x: x["volume_24h"], reverse=True)
+
+            return new_pairs[:50]  # Return top 50 new pairs
+
+        except Exception as e:
+            raise DataSourceError(f"Failed to fetch new token pairs: {str(e)}") from e
+
+    def _parse_time_window(self, time_window: str) -> float:
+        """Parse time window string to hours.
+
+        Args:
+            time_window: Time window string (e.g., '1h', '24h', '7d')
+
+        Returns:
+            Time window in hours
+        """
+        if time_window.endswith("h"):
+            return float(time_window[:-1])
+        elif time_window.endswith("d"):
+            return float(time_window[:-1]) * 24
+        elif time_window.endswith("m"):
+            return float(time_window[:-1]) * 24 * 30  # Approximate
+        else:
+            # Default to 1 hour
+            return 1.0

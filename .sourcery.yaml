@@ -1,0 +1,11 @@
+# Sourcery Configuration
+# https://docs.sourcery.ai/Configuration/
+
+# Rules configuration  
+rules: []
+
+# Ignore patterns
+ignore:
+  - "**/venv/**"
+  - "**/__pycache__/**"
+  - "**/node_modules/**"

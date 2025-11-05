@@ -29,9 +29,13 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
         api_secret = config.get_api_key("alpaca_secret")
 
         if paper_trading:
-            # For paper trading, use dummy credentials if not provided
-            api_key = api_key or "paper-key"
-            api_secret = api_secret or "paper-secret"
+            # For paper trading, check for credentials or raise proper error
+            if not api_key or not api_secret:
+                raise AuthenticationError(
+                    "Alpaca API credentials required for paper trading. "
+                    "Set ALPACA_API_KEY and ALPACA_API_SECRET environment variables, "
+                    "or configure them in your config file."
+                )
         else:
             # For live trading, ensure we have real credentials
             if not api_key or not api_secret:

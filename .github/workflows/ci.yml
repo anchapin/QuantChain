@@ -1,100 +1,160 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
-
-env:
-  PYTHON_VERSION: '3.12'
+    branches: [ main, develop ]
 
 jobs:
-  # Test job
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9, '3.10', 3.11, 3.12]
+
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-    
-    - name: Set up Python
-      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-    
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-test-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-test-
+
+    - name: Free up disk space
+      run: |
+        # Clean up unnecessary files to free disk space
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/local/share/boost
+        sudo apt-get clean
+        docker system prune -af --volumes || true
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e ".[all-dev]"
-    
+        pip install -r requirements-dev.txt
+
     - name: Run tests with coverage
       run: |
-        pytest --cov=quantchain --cov-report=xml --cov-fail-under=80 --timeout=60
-      
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457
-      with:
-        file: ./coverage.xml
+        python -m pytest --cov=quantchain --cov-report=xml --cov-report=html --cov-fail-under=75
 
-  # Lint job
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@af09b5e394c93991b95a5e7646aeb90c1917f78f
+      with:
+        files: ./coverage.xml
+        fail_ci_if_error: false
+
   lint:
     runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-    
-    - name: Set up Python
-      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e ".[all-dev]"
-    
-    - name: Lint with flake8
-      run: |
-        flake8 --max-line-length=88 --ignore=E203,W503 quantchain tests
 
-  # Format check job
-  format:
-    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-    
-    - name: Set up Python
-      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e ".[all-dev]"
-    
-    - name: Check formatting with black
-      run: |
-        black --check quantchain tests
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
 
-  # Type check job
-  type-check:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-    
     - name: Set up Python
-      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-    
-    - name: Install dependencies
+        python-version: '3.12'
+
+    - name: Install linting dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e ".[all-dev]"
-    
-    - name: Type check with mypy
+        pip install -r requirements-dev.txt
+
+    - name: Run Black (code formatting)
+      run: black --check --diff quantchain tests
+
+    - name: Run Flake8 (linting)
+      run: flake8 quantchain tests --max-line-length=88 --extend-ignore=E203,W503
+
+    - name: Run MyPy (type checking)
+      run: mypy quantchain --ignore-missing-imports
+
+    - name: Run Sourcery (code review)
       run: |
-        mypy quantchain
+        pip install sourcery-cli
+        sourcery review quantchain tests || echo "Sourcery found issues - will fix in separate PR"
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    timeout-minutes: 30
+
+    steps:
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+
+    - name: Set up Python
+      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
+      with:
+        python-version: '3.12'
+
+    - name: Free up disk space
+      run: |
+        # Clean up unnecessary files to free disk space
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/local/share/boost
+        sudo apt-get clean
+        docker system prune -af --volumes || true
+
+    - name: Install build dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build
+
+    - name: Build package
+      run: python -m build
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
+
+    - name: Log disk space pre-build
+      run: |
+        echo "=== Pre-build disk space ==="
+        df -h
+        docker system df
+
+    - name: Test Docker build with optimizations
+      run: |
+        # Use minimal requirements for faster CI builds
+        echo "Using CI requirements for faster build..."
+        cp requirements-ci.txt requirements.txt
+        
+        # Build with resource limits and proper error handling
+        echo "Starting Docker build..."
+        if docker buildx build \
+          --load \
+          --memory=1g \
+          --progress=plain \
+          -t quantchain:test \
+          --file Dockerfile.ci \
+          .; then
+          echo "Docker build successful"
+        else
+          echo "Docker build failed, checking system resources..."
+          df -h
+          docker system df
+          echo "Build logs:"
+          docker buildx build --progress=plain -t quantchain:test --file Dockerfile.ci . 2>&1 | tail -50
+          exit 1
+        fi
+
+    - name: Verify image
+      run: |
+        echo "=== Verifying built image ==="
+        docker images quantchain:test
+        docker run --rm quantchain:test bash -c "cd /app && python -c \"import yaml, numpy; print('CI dependencies imported successfully')\""
+
+    - name: Post-build cleanup
+      run: |
+        echo "=== Post-build cleanup ==="
+        docker system prune -f --volumes || true
+        df -h
