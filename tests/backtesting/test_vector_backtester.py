@@ -215,9 +215,11 @@ class TestVectorBacktester:
 
         # Should handle both positive and negative positions
         positions = result.trade_log.get("position", pd.Series())
-        if len(positions) > 0:
-            assert positions.min() <= 0  # Should have some short positions
-            assert positions.max() >= 0  # Should have some long positions
+
+        # With our test data, we should have positions to test
+        assert len(positions) > 0, "Test should generate positions"
+        assert positions.min() <= 0  # Should have some short positions
+        assert positions.max() >= 0  # Should have some long positions
 
 
 @pytest.mark.unit
@@ -306,8 +308,8 @@ class TestVectorizedPositionManager:
         assert len(trades) == 2  # Buy and sell trades
 
         # Commission should be calculated for both trades
-        if "commission" in trades.columns:
-            assert (trades["commission"] > 0).all()
+        assert "commission" in trades.columns, "Trades should have commission column"
+        assert (trades["commission"] > 0).all()
 
     def test_vectorized_position_manager_insufficient_cash(self):
         """Test handling insufficient cash for positions."""
@@ -428,16 +430,19 @@ class TestVectorBacktesterIntegration:
         assert result is not None
 
         # Check position tracking in trade log
-        if len(result.trade_log) > 0:
-            # Should have entries for each signal
-            trade_count = len(result.trade_log)
-            assert trade_count >= 4  # At least 4 trades
+        assert len(result.trade_log) > 0, "Should have trade log entries"
 
-            # Check that positions are tracked correctly
-            if "position" in result.trade_log.columns:
-                positions = result.trade_log["position"].values
-                assert positions[0] > 0  # First buy
-                assert positions[-1] == 0  # Final sell (flat position)
+        # Should have entries for each signal
+        trade_count = len(result.trade_log)
+        assert trade_count >= 4  # At least 4 trades
+
+        # Check that positions are tracked correctly
+        assert (
+            "position" in result.trade_log.columns
+        ), "Trade log should have position column"
+        positions = result.trade_log["position"].values
+        assert positions[0] > 0  # First buy
+        assert positions[-1] == 0  # Final sell (flat position)
 
     def test_vector_backtester_error_handling_invalid_signals(self, sample_ohlcv_data):
         """Test error handling with invalid signals."""

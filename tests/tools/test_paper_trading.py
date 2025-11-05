@@ -72,10 +72,8 @@ class TestSlippageModels:
         slippage = RandomSlippage(min_slippage=0.0, max_slippage=0.2)
         order = OrderRequest("AAPL", OrderSide.BUY, OrderType.MARKET, 100)
 
-        results = []
-        for _ in range(100):
-            result = slippage.apply_slippage(order, 150.0)
-            results.append(result)
+        # Test multiple slippage applications
+        results = [slippage.apply_slippage(order, 150.0) for _ in range(100)]
 
         # Should vary around 150.0
         assert min(results) >= 149.7  # 150 - (150 * 0.002)
@@ -461,9 +459,8 @@ class TestPaperTradingExecutor:
         executor.update_market_data(symbols)
 
         # Should have prices for all symbols
-        for symbol in symbols:
-            assert symbol in executor.market_prices
-            assert executor.market_prices[symbol] > 0
+        assert all(symbol in executor.market_prices for symbol in symbols)
+        assert all(executor.market_prices[symbol] > 0 for symbol in symbols)
 
     def test_reset(self, executor):
         """Test resetting the executor state."""

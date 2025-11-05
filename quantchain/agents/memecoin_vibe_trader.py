@@ -567,28 +567,20 @@ REASONING: [Your detailed analysis in 2-3 sentences]
         for line in lines:
             line = line.strip()
 
-            # Parse vibe score with regex validation
-            vibe_match = vibe_score_pattern.match(line)
-            if vibe_match:
+            if vibe_match := vibe_score_pattern.match(line):
                 try:
                     score = float(vibe_match.group(1))
                     vibe_score = max(0, min(100, score))  # Clamp to 0-100
                 except ValueError:
                     pass
 
-            # Parse recommendation with regex validation
-            rec_match = recommendation_pattern.match(line)
-            if rec_match:
+            if rec_match := recommendation_pattern.match(line):
                 recommendation = rec_match.group(1).upper()
 
-            # Parse risk level with regex validation
-            risk_match = risk_level_pattern.match(line)
-            if risk_match:
+            if risk_match := risk_level_pattern.match(line):
                 risk_level = risk_match.group(1).upper()
 
-            # Parse reasoning with regex validation
-            reason_match = reasoning_pattern.match(line)
-            if reason_match:
+            if reason_match := reasoning_pattern.match(line):
                 reasoning = reason_match.group(1).strip()
 
         return VibeAssessment(

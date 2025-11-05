@@ -170,14 +170,11 @@ class APISecurityManager:
             return False
 
         # Validate secret if required and provided
-        if (
-            "secret_pattern" in patterns
-            and test_secret
-            and not re.match(patterns["secret_pattern"], test_secret)
-        ):
-            return False
-
-        return True
+        return bool(
+            "secret_pattern" not in patterns
+            or not test_secret
+            or re.match(patterns["secret_pattern"], test_secret)
+        )
 
     def list_services(self) -> List[str]:
         """List all configured services.

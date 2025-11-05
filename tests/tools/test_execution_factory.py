@@ -19,11 +19,11 @@ class TestExecutionFactory:
         """Test creating Alpaca connector in paper trading mode."""
 
         def mock_get(key, default=None):
-            if key == "trading.default_broker":
-                return "alpaca"
-            elif key == "trading.paper_trading":
-                return True
-            return default
+            mock_responses = {
+                "trading.default_broker": "alpaca",
+                "trading.paper_trading": True,
+            }
+            return mock_responses.get(key, default)
 
         mock_config.get.side_effect = mock_get
         mock_config.get_api_key.side_effect = lambda key: (
@@ -41,11 +41,11 @@ class TestExecutionFactory:
         """Test creating Alpaca connector in live trading mode."""
 
         def mock_get(key, default=None):
-            if key == "trading.default_broker":
-                return "alpaca"
-            elif key == "trading.paper_trading":
-                return False
-            return default
+            mock_responses = {
+                "trading.default_broker": "alpaca",
+                "trading.paper_trading": False,
+            }
+            return mock_responses.get(key, default)
 
         mock_config.get.side_effect = mock_get
         mock_config.get_api_key.side_effect = lambda key: (
@@ -78,11 +78,11 @@ class TestExecutionFactory:
         """Test error when API key is missing for live trading."""
 
         def mock_get(key, default=None):
-            if key == "trading.default_broker":
-                return "alpaca"
-            elif key == "trading.paper_trading":
-                return False
-            return default
+            mock_responses = {
+                "trading.default_broker": "alpaca",
+                "trading.paper_trading": False,
+            }
+            return mock_responses.get(key, default)
 
         mock_config.get.side_effect = mock_get
         mock_config.get_api_key.return_value = None

@@ -453,10 +453,7 @@ class TestTradingExecutionInterface:
             OrderRequest("AAPL", OrderSide.SELL, OrderType.MARKET, 25),
         ]
 
-        results = []
-        for order in orders:
-            result = executor.place_order(order)
-            results.append(result)
+        results = [executor.place_order(order) for order in orders]
 
         # Test symbol filter
         aapl_orders = executor.get_order_history(symbol="AAPL")
