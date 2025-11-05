@@ -8,6 +8,9 @@ from datetime import datetime
 from langgraph.graph import StateGraph, END
 
 from ..connectors.dexscreener_connector import DexscreenerDataConnector
+from ..tools.social_media_scraper import SocialMediaScraper, SocialMetrics
+from ..tools.execution import AlpacaExecutionTool
+from ..core.exceptions import QuantChainError
 
 
 class LLMProtocol(Protocol):
@@ -32,11 +35,6 @@ class MockLLM:
                 self.content = content
 
         return MockResponse(self.response_text)
-
-
-from ..tools.social_media_scraper import SocialMediaScraper, SocialMetrics
-from ..tools.execution import AlpacaExecutionTool
-from ..core.exceptions import QuantChainError
 
 
 @dataclass
@@ -77,7 +75,7 @@ class AgentState:
     current_step: str = "scan"
     error_message: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.tokens is None:
             self.tokens = []
         if self.social_data is None:
@@ -301,20 +299,21 @@ class MemecoinVibeTrader:
             self.logger.info("Gathering social media data...")
 
             social_data = {}
-            for token in state.tokens:
-                try:
-                    metrics = self.social_scraper.get_social_metrics(
-                        token.symbol, token.address
-                    )
-                    social_data[token.symbol] = metrics
-                    self.logger.debug(f"Got social data for {token.symbol}")
+            if state.tokens:
+                for token in state.tokens:
+                    try:
+                        metrics = self.social_scraper.get_social_metrics(
+                            token.symbol, token.address
+                        )
+                        social_data[token.symbol] = metrics
+                        self.logger.debug(f"Got social data for {token.symbol}")
 
-                except Exception as e:
-                    self.logger.warning(
-                        f"Failed to get social data for {token.symbol}: {str(e)}"
-                    )
-                    # Use default empty metrics
-                    social_data[token.symbol] = SocialMetrics()
+                    except Exception as e:
+                        self.logger.warning(
+                            f"Failed to get social data for {token.symbol}: {str(e)}"
+                        )
+                        # Use default empty metrics
+                        social_data[token.symbol] = SocialMetrics()
 
             state.social_data = social_data
             state.current_step = "social"
@@ -331,41 +330,44 @@ class MemecoinVibeTrader:
             self.logger.info("Assessing token vibes...")
 
             assessments = []
-            for token in state.tokens:
-                try:
-                    social_metrics = state.social_data.get(
-                        token.symbol, SocialMetrics()
-                    )
-
-                    # Create assessment prompt
-                    prompt = self._create_assessment_prompt(token, social_metrics)
-
-                    # Get LLM response
-                    response = self.llm.invoke(prompt)
-
-                    # Parse response
-                    assessment = self._parse_llm_response(
-                        getattr(response, "content", ""), token, social_metrics
-                    )
-                    assessments.append(assessment)
-
-                    self.logger.debug(
-                        f"Assessed {token.symbol}: {assessment.recommendation}"
-                    )
-
-                except Exception as e:
-                    self.logger.warning(f"Failed to assess {token.symbol}: {str(e)}")
-                    # Create default SKIP assessment
-                    assessments.append(
-                        VibeAssessment(
-                            token=token,
-                            social_metrics=social_metrics,
-                            vibe_score=0.0,
-                            recommendation="SKIP",
-                            risk_level="HIGH",
-                            reasoning=f"Assessment failed: {str(e)}",
+            if state.tokens:
+                for token in state.tokens:
+                    try:
+                        social_metrics = (state.social_data or {}).get(
+                            token.symbol, SocialMetrics()
                         )
-                    )
+
+                        # Create assessment prompt
+                        prompt = self._create_assessment_prompt(token, social_metrics)
+
+                        # Get LLM response
+                        response = self.llm.invoke(prompt)
+
+                        # Parse response
+                        assessment = self._parse_llm_response(
+                            getattr(response, "content", ""), token, social_metrics
+                        )
+                        assessments.append(assessment)
+
+                        self.logger.debug(
+                            f"Assessed {token.symbol}: {assessment.recommendation}"
+                        )
+
+                    except Exception as e:
+                        self.logger.warning(
+                            f"Failed to assess {token.symbol}: {str(e)}"
+                        )
+                        # Create default SKIP assessment
+                        assessments.append(
+                            VibeAssessment(
+                                token=token,
+                                social_metrics=social_metrics,
+                                vibe_score=0.0,
+                                recommendation="SKIP",
+                                risk_level="HIGH",
+                                reasoning=f"Assessment failed: {str(e)}",
+                            )
+                        )
 
             state.assessments = assessments
             state.current_step = "assessment"
@@ -394,7 +396,7 @@ class MemecoinVibeTrader:
             # Filter assessments for BUY recommendations above threshold
             buy_candidates = [
                 assessment
-                for assessment in state.assessments
+                for assessment in (state.assessments or [])
                 if (
                     assessment.recommendation == "BUY"
                     and assessment.vibe_score >= self.config.min_vibe_score_threshold
@@ -412,12 +414,13 @@ class MemecoinVibeTrader:
                     position_value = (
                         portfolio_value * self.config.max_allocation_per_trade
                     )
-                    # Assume $1 per token for simplicity (would need price lookup in real impl)
+                    # Assume $1 per token for simplicity
+                    # (would need price lookup in real impl)
                     quantity = position_value / 1.0
 
-                    # Execute buy order
+                    # Execute buy order (Alpaca format)
                     order_result = self.execution_tool.execute_market_order(
-                        symbol=f"{assessment.token.symbol}/USD",  # Alpaca format
+                        symbol=f"{assessment.token.symbol}/USD",
                         side="buy",
                         quantity=quantity,
                     )
@@ -435,7 +438,8 @@ class MemecoinVibeTrader:
 
                 except Exception as e:
                     self.logger.error(
-                        f"Failed to execute trade for {assessment.token.symbol}: {str(e)}"
+                        f"Failed to execute trade for {assessment.token.symbol}: "
+                        f"{str(e)}"
                     )
 
             state.trades_executed = trades_executed
@@ -488,7 +492,9 @@ class MemecoinVibeTrader:
         self, token: TokenPair, social_metrics: SocialMetrics
     ) -> str:
         """Create the LLM prompt for vibe assessment."""
-        return f"""Analyze this cryptocurrency token and determine if it's worth trading based on its "vibe" - the combination of cultural relevance, social momentum, and market potential.
+        return f"""Analyze this cryptocurrency token and determine if it's worth trading
+        based on its "vibe" - the combination of cultural relevance, social momentum,
+        and market potential.
 
 Token Information:
 - Symbol: {token.symbol}

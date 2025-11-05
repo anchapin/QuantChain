@@ -1,6 +1,7 @@
 """Alpaca execution tool for trading operations."""
 
 from dataclasses import dataclass
+from typing import Any, Dict
 
 from ..connectors.alpaca_execution import AlpacaExecutionConnector
 from ..tools.trading_execution import OrderRequest, OrderSide, OrderType, OrderResult

@@ -76,11 +76,13 @@ class DexscreenerDataConnector(DataFeedInterface):
         def _request() -> Dict[str, Any]:
             response = self.session.get(url, params=params, timeout=self.timeout)
             response.raise_for_status()
-            return response.json()  # type: ignore[no-any-return]
+            result = response.json()
+            return result  # type: ignore[no-any-return]
 
-        return self._retry_handler.execute(
+        result = self._retry_handler.execute(
             _request, exceptions=(requests.exceptions.RequestException,)
         )
+        return result  # type: ignore[no-any-return]
 
     def _normalize_pair_address(self, symbol: str) -> str:
         """Extract pair address from symbol format like 'TOKEN/USD:ADDRESS'."""
@@ -429,7 +431,8 @@ class DexscreenerDataConnector(DataFeedInterface):
             # Convert time window to hours for filtering
             time_window_hours = self._parse_time_window(time_window)
 
-            # Get trending pairs (Dexscreener doesn't have a direct "new pairs" endpoint)
+            # Get trending pairs
+            # (Dexscreener doesn't have a direct "new pairs" endpoint)
             # We'll use trending pairs and filter by creation time
             trending_pairs = self.get_trending_pairs(limit=200)
 
@@ -453,13 +456,15 @@ class DexscreenerDataConnector(DataFeedInterface):
                     pair_detail = data["pairs"][0]
 
                     # Check if pair was created within time window
-                    # Dexscreener doesn't provide creation timestamp, so we'll use a heuristic
-                    # based on liquidity and volume patterns (new pairs typically have low liquidity initially)
+                    # Dexscreener doesn't provide creation timestamp,
+                    # so we'll use a heuristic
+                    # based on liquidity and volume patterns
+                    # (new pairs typically have low liquidity initially)
                     liquidity = float(pair_detail.get("liquidity", {}).get("usd", 0))
                     volume_24h = float(pair_detail.get("volume", {}).get("h24", 0))
 
-                    # Heuristic: Consider pairs "new" if they have low liquidity (< $50k)
-                    # and reasonable volume (indicating recent activity)
+                    # Heuristic: Consider pairs "new" if they have low liquidity
+                    # (< $50k) and reasonable volume (indicating recent activity)
                     if liquidity < 50000 and volume_24h > 1000:
                         base_token = pair_detail.get("baseToken", {})
                         quote_token = pair_detail.get("quoteToken", {})

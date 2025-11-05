@@ -2,19 +2,38 @@
 
 import logging
 import time
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, TYPE_CHECKING
 from dataclasses import dataclass
-import re
 
 try:
     import requests
-    from bs4 import BeautifulSoup
 except ImportError:
-    requests = None
-    BeautifulSoup = None
+    requests = None  # type: ignore[assignment]
 
 from ..core.exceptions import DataSourceError
 from ..core.retry import RetryHandler
+
+
+def _get_beautiful_soup() -> Any:
+    """Get BeautifulSoup class or None if not available."""
+    if TYPE_CHECKING:
+        try:
+            from bs4 import BeautifulSoup
+
+            return BeautifulSoup
+        except ImportError:
+            return None
+    else:
+        try:
+            from bs4 import BeautifulSoup
+
+            return BeautifulSoup
+        except ImportError:
+            return None
+
+
+# Make BeautifulSoup available at module level
+BeautifulSoup = _get_beautiful_soup()
 
 
 @dataclass
@@ -74,7 +93,7 @@ class SocialMediaScraper:
         )
 
         # Rate limiting
-        self._last_request_time = 0
+        self._last_request_time: float = 0
         self._min_request_interval = 1.0  # 1 second between requests
 
     def get_social_metrics(
@@ -302,6 +321,6 @@ class SocialMediaScraper:
         return self._retry_handler.execute(
             _request,
             exceptions=(
-                requests.exceptions.RequestException if requests else Exception
+                requests.exceptions.RequestException if requests else Exception,
             ),
         )
