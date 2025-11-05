@@ -10,7 +10,7 @@ authors = [
     {name = "QuantChain Team", email = "team@quantchain.dev"}
 ]
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.8"
 classifiers = [
     "Development Status :: 3 - Alpha",
