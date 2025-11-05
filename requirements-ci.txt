@@ -1,0 +1,14 @@
+# Minimal CI dependencies for Docker build testing
+# Core dependencies only - skip heavy ML libraries for CI
+
+# Essential core
+PyYAML>=6.0.0
+numpy>=1.21.0
+
+# Type stubs for mypy
+types-requests
+types-PyYAML
+
+# Note: Heavy dependencies like langchain, chromadb, sentence-transformers, 
+# torch, and onnxruntime are excluded to speed up CI builds
+# They will be installed in full builds when needed

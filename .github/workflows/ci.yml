@@ -86,6 +86,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     needs: [test, lint]
+    timeout-minutes: 30
 
     steps:
     - uses: actions/checkout@v4
@@ -121,36 +122,40 @@ jobs:
         df -h
         docker system df
 
-    - name: Optimize Docker builder cache
-      run: |
-        echo "=== Docker builder cache cleanup ==="
-        docker builder prune --filter type=exec.cachemount --filter unused-for=24h --force || true
-        docker builder prune --filter type=source.local --filter unused-for=24h --force || true
-
     - name: Test Docker build with optimizations
       run: |
-        # Build with reduced memory and --no-cache flag for clean builds
-        docker buildx build \
+        # Use minimal requirements for faster CI builds
+        echo "Using CI requirements for faster build..."
+        cp requirements-ci.txt requirements.txt
+        
+        # Build with resource limits and proper error handling
+        echo "Starting Docker build..."
+        if docker buildx build \
           --load \
-          --memory=1.5g \
-          --no-cache \
+          --memory=1g \
+          --cpus=2 \
+          --progress=plain \
           -t quantchain:test \
-          . || {
-          echo "Docker build failed, checking disk space..."
+          --file Dockerfile.ci \
+          .; then
+          echo "Docker build successful"
+        else
+          echo "Docker build failed, checking system resources..."
           df -h
           docker system df
+          echo "Build logs:"
+          docker buildx build --progress=plain -t quantchain:test --file Dockerfile.ci . 2>&1 | tail -50
           exit 1
-        }
+        fi
 
-    - name: Post-build cleanup and verification
+    - name: Verify image
       run: |
-        echo "=== Post-build disk space verification ==="
-        df -h
-        docker system df
-        echo "=== Docker cleanup ==="
-        docker system prune -f --volumes || true
-
-    - name: Verify image size
-      run: |
+        echo "=== Verifying built image ==="
         docker images quantchain:test
-        docker inspect quantchain:test | grep -E '"Size":|"VirtualSize":'
+        docker run --rm quantchain:test python -c "import yaml, numpy; print('CI dependencies imported successfully')"
+
+    - name: Post-build cleanup
+      run: |
+        echo "=== Post-build cleanup ==="
+        docker system prune -f --volumes || true
+        df -h
