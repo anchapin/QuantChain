@@ -76,13 +76,14 @@ class DexscreenerDataConnector(DataFeedInterface):
         def _request() -> Dict[str, Any]:
             response = self.session.get(url, params=params, timeout=self.timeout)
             response.raise_for_status()
-            result = response.json()
-            return result  # type: ignore[no-any-return]
+            return response.json()  # type: ignore[no-any-return]
 
-        result = self._retry_handler.execute(
-            _request, exceptions=(requests.exceptions.RequestException,)
+        return cast(
+            Dict[str, Any],
+            self._retry_handler.execute(
+                _request, exceptions=(requests.exceptions.RequestException,)
+            ),
         )
-        return result  # type: ignore[no-any-return]
 
     def _normalize_pair_address(self, symbol: str) -> str:
         """Extract pair address from symbol format like 'TOKEN/USD:ADDRESS'."""

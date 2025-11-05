@@ -364,6 +364,8 @@ def generate_synthetic_market_data(
     volatility=0.02,
     volume_base=500000,
 ):
+    if symbols is None:
+        symbols = ["AAPL"]
     """
     Helper function to generate synthetic market data.
 
