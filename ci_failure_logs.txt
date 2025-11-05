@@ -1,0 +1,730 @@
+test (3.11)	Set up job	﻿2025-11-05T14:37:20.2421260Z Current runner version: '2.329.0'
+test (3.11)	Set up job	2025-11-05T14:37:20.2444846Z ##[group]Runner Image Provisioner
+test (3.11)	Set up job	2025-11-05T14:37:20.2445582Z Hosted Compute Agent
+test (3.11)	Set up job	2025-11-05T14:37:20.2446157Z Version: 20251016.436
+test (3.11)	Set up job	2025-11-05T14:37:20.2446874Z Commit: 8ab8ac8bfd662a3739dab9fe09456aba92132568
+test (3.11)	Set up job	2025-11-05T14:37:20.2447567Z Build Date: 2025-10-15T20:44:12Z
+test (3.11)	Set up job	2025-11-05T14:37:20.2448135Z ##[endgroup]
+test (3.11)	Set up job	2025-11-05T14:37:20.2448650Z ##[group]Operating System
+test (3.11)	Set up job	2025-11-05T14:37:20.2449160Z Ubuntu
+test (3.11)	Set up job	2025-11-05T14:37:20.2449609Z 24.04.3
+test (3.11)	Set up job	2025-11-05T14:37:20.2450042Z LTS
+test (3.11)	Set up job	2025-11-05T14:37:20.2450435Z ##[endgroup]
+test (3.11)	Set up job	2025-11-05T14:37:20.2450907Z ##[group]Runner Image
+test (3.11)	Set up job	2025-11-05T14:37:20.2451398Z Image: ubuntu-24.04
+test (3.11)	Set up job	2025-11-05T14:37:20.2451858Z Version: 20251030.96.2
+test (3.11)	Set up job	2025-11-05T14:37:20.2452749Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251030.96/images/ubuntu/Ubuntu2404-Readme.md
+test (3.11)	Set up job	2025-11-05T14:37:20.2453983Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251030.96
+test (3.11)	Set up job	2025-11-05T14:37:20.2455039Z ##[endgroup]
+test (3.11)	Set up job	2025-11-05T14:37:20.2456008Z ##[group]GITHUB_TOKEN Permissions
+test (3.11)	Set up job	2025-11-05T14:37:20.2458378Z Contents: read
+test (3.11)	Set up job	2025-11-05T14:37:20.2458872Z Metadata: read
+test (3.11)	Set up job	2025-11-05T14:37:20.2459337Z Packages: read
+test (3.11)	Set up job	2025-11-05T14:37:20.2459799Z ##[endgroup]
+test (3.11)	Set up job	2025-11-05T14:37:20.2461699Z Secret source: Actions
+test (3.11)	Set up job	2025-11-05T14:37:20.2462320Z Prepare workflow directory
+test (3.11)	Set up job	2025-11-05T14:37:20.2767002Z Prepare all required actions
+test (3.11)	Set up job	2025-11-05T14:37:20.2803624Z Getting action download info
+test (3.11)	Set up job	2025-11-05T14:37:20.6948975Z Download action repository 'actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8' (SHA:08c6903cd8c0fde910a37f88322edcfb5dd907a8)
+test (3.11)	Set up job	2025-11-05T14:37:20.8682257Z Download action repository 'actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c' (SHA:e797f83bcb11b83ae66e0230d6156d7c80228e7c)
+test (3.11)	Set up job	2025-11-05T14:37:20.9739569Z Download action repository 'actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830' (SHA:0057852bfaa89a56745cba8c7296529d2fc39830)
+test (3.11)	Set up job	2025-11-05T14:37:21.0552378Z Download action repository 'codecov/codecov-action@af09b5e394c93991b95a5e7646aeb90c1917f78f' (SHA:af09b5e394c93991b95a5e7646aeb90c1917f78f)
+test (3.11)	Set up job	2025-11-05T14:37:21.4554794Z Getting action download info
+test (3.11)	Set up job	2025-11-05T14:37:21.6135595Z Download action repository 'actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea' (SHA:60a0d83039c74a4aee543508d2ffcb1c3799cdea)
+test (3.11)	Set up job	2025-11-05T14:37:22.0469164Z Complete job name: test (3.11)
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	﻿2025-11-05T14:37:22.1079924Z ##[group]Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.1081464Z with:
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.1082173Z   repository: anchapin/QuantChain
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.1083285Z   token: ***
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.1083955Z   ssh-strict: true
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.1084642Z   ssh-user: git
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.1085364Z   persist-credentials: true
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.1086135Z   clean: true
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.1087041Z   sparse-checkout-cone-mode: true
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.1087887Z   fetch-depth: 1
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.1088561Z   fetch-tags: false
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.1089313Z   show-progress: true
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.1090024Z   lfs: false
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.1090669Z   submodules: false
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.1091375Z   set-safe-directory: true
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.1092348Z ##[endgroup]
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.1983863Z Syncing repository: anchapin/QuantChain
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.1986215Z ##[group]Getting Git version info
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.1987714Z Working directory is '/home/runner/work/QuantChain/QuantChain'
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.1989520Z [command]/usr/bin/git version
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2027622Z git version 2.51.2
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2045253Z ##[endgroup]
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2058573Z Temporarily overriding HOME='/home/runner/work/_temp/e4a29c99-a804-41d3-849e-73d267b30bdd' before making global git config changes
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2060918Z Adding repository directory to the temporary git global config as a safe directory
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2063124Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/QuantChain/QuantChain
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2095440Z Deleting the contents of '/home/runner/work/QuantChain/QuantChain'
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2098842Z ##[group]Initializing the repository
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2102674Z [command]/usr/bin/git init /home/runner/work/QuantChain/QuantChain
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2197056Z hint: Using 'master' as the name for the initial branch. This default branch name
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2199795Z hint: is subject to change. To configure the initial branch name to use in all
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2202485Z hint: of your new repositories, which will suppress this warning, call:
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2204324Z hint:
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2205844Z hint: 	git config --global init.defaultBranch <name>
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2207704Z hint:
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2209250Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2211848Z hint: 'development'. The just-created branch can be renamed via this command:
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2213919Z hint:
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2215047Z hint: 	git branch -m <name>
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2216392Z hint:
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2218353Z hint: Disable this message with "git config set advice.defaultBranchName false"
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2220900Z Initialized empty Git repository in /home/runner/work/QuantChain/QuantChain/.git/
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2225358Z [command]/usr/bin/git remote add origin https://github.com/anchapin/QuantChain
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2241850Z ##[endgroup]
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2244233Z ##[group]Disabling automatic garbage collection
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2247561Z [command]/usr/bin/git config --local gc.auto 0
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2268270Z ##[endgroup]
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2269463Z ##[group]Setting up auth
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2274139Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2300897Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2573045Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2601597Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2780076Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2808073Z ##[endgroup]
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2810160Z ##[group]Fetching the repository
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.2819379Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +e23da0c752de34bd3cef6836d0b8b5feb4671e8d:refs/remotes/pull/22/merge
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6172791Z From https://github.com/anchapin/QuantChain
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6174575Z  * [new ref]         e23da0c752de34bd3cef6836d0b8b5feb4671e8d -> pull/22/merge
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6200066Z ##[endgroup]
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6201553Z ##[group]Determining the checkout info
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6202953Z ##[endgroup]
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6206397Z [command]/usr/bin/git sparse-checkout disable
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6245099Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6267654Z ##[group]Checking out the ref
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6271395Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/22/merge
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6343550Z Note: switching to 'refs/remotes/pull/22/merge'.
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6344853Z 
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6346118Z You are in 'detached HEAD' state. You can look around, make experimental
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6349161Z changes and commit them, and you can discard any commits you make in this
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6352252Z state without impacting any branches by switching back to a branch.
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6354052Z 
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6355159Z If you want to create a new branch to retain commits you create, you may
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6358224Z do so (now or later) by using -c with the switch command. Example:
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6360207Z 
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6360901Z   git switch -c <new-branch-name>
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6362016Z 
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6362625Z Or undo this operation with:
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6363272Z 
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6363635Z   git switch -
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6364114Z 
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6364889Z Turn off this advice by setting config variable advice.detachedHead to false
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6366014Z 
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6367861Z HEAD is now at e23da0c Merge de9030c484c35e868ef6d84fe904714a6c9d239e into f08fa4d5fb927de2df450544f63ed2bc2a20556a
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6371038Z ##[endgroup]
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6383990Z [command]/usr/bin/git log -1 --format=%H
+test (3.11)	Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:37:22.6401729Z e23da0c752de34bd3cef6836d0b8b5feb4671e8d
+test (3.11)	Set up Python 3.11	﻿2025-11-05T14:37:22.6653405Z ##[group]Run actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
+test (3.11)	Set up Python 3.11	2025-11-05T14:37:22.6654645Z with:
+test (3.11)	Set up Python 3.11	2025-11-05T14:37:22.6655289Z   python-version: 3.11
+test (3.11)	Set up Python 3.11	2025-11-05T14:37:22.6656015Z   check-latest: false
+test (3.11)	Set up Python 3.11	2025-11-05T14:37:22.6657096Z   token: ***
+test (3.11)	Set up Python 3.11	2025-11-05T14:37:22.6657766Z   update-environment: true
+test (3.11)	Set up Python 3.11	2025-11-05T14:37:22.6658555Z   allow-prereleases: false
+test (3.11)	Set up Python 3.11	2025-11-05T14:37:22.6659312Z   freethreaded: false
+test (3.11)	Set up Python 3.11	2025-11-05T14:37:22.6660011Z ##[endgroup]
+test (3.11)	Set up Python 3.11	2025-11-05T14:37:22.8017505Z ##[group]Installed versions
+test (3.11)	Set up Python 3.11	2025-11-05T14:37:22.8112778Z (node:2103) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+test (3.11)	Set up Python 3.11	2025-11-05T14:37:22.8116200Z (Use `node --trace-deprecation ...` to show where the warning was created)
+test (3.11)	Set up Python 3.11	2025-11-05T14:37:22.8118504Z Successfully set up CPython (3.11.14)
+test (3.11)	Set up Python 3.11	2025-11-05T14:37:22.8120768Z ##[endgroup]
+test (3.11)	Cache pip dependencies	﻿2025-11-05T14:37:22.8923036Z ##[group]Run actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:22.8924269Z with:
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:22.8924892Z   path: ~/.cache/pip
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:22.8926143Z   key: Linux-pip-test-e81e89052d70d1b9dc4748ec2fcd911c7cb145da3e0f0bf3ece71c3344d344f4
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:22.8928132Z   restore-keys: Linux-pip-test-
+test (3.11)	Cache pip dependencies	
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:22.8929079Z   enableCrossOsArchive: false
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:22.8929906Z   fail-on-cache-miss: false
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:22.8930664Z   lookup-only: false
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:22.8931369Z   save-always: false
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:22.8932024Z env:
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:22.8932813Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:22.8934155Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:22.8935481Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:22.8936821Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:22.8938058Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:22.8939438Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:22.8940458Z ##[endgroup]
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:23.2580957Z Cache hit for: Linux-pip-test-e81e89052d70d1b9dc4748ec2fcd911c7cb145da3e0f0bf3ece71c3344d344f4
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:24.3851338Z Received 130023424 of 4268273362 (3.0%), 124.0 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:25.3856811Z Received 281018368 of 4268273362 (6.6%), 133.9 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:26.3867011Z Received 494927872 of 4268273362 (11.6%), 157.2 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:27.3871452Z Received 675282944 of 4268273362 (15.8%), 160.9 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:28.3871184Z Received 847249408 of 4268273362 (19.8%), 161.5 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:29.3877200Z Received 1044381696 of 4268273362 (24.5%), 165.9 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:30.3893225Z Received 1207959552 of 4268273362 (28.3%), 164.5 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:31.3893402Z Received 1388314624 of 4268273362 (32.5%), 165.4 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:32.3938568Z Received 1568669696 of 4268273362 (36.8%), 166.1 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:33.4273562Z Received 1744830464 of 4268273362 (40.9%), 165.7 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:34.4265561Z Received 1904214016 of 4268273362 (44.6%), 164.5 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:35.4261834Z Received 2092957696 of 4268273362 (49.0%), 165.8 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:36.5015471Z Received 2281701376 of 4268273362 (53.5%), 165.9 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:37.5004331Z Received 2449473536 of 4268273362 (57.4%), 165.5 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:38.5003691Z Received 2638217216 of 4268273362 (61.8%), 166.4 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:39.5003557Z Received 2814377984 of 4268273362 (65.9%), 166.5 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:40.5014367Z Received 2952790016 of 4268273362 (69.2%), 164.5 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:41.5012865Z Received 3107979264 of 4268273362 (72.8%), 163.6 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:42.5014248Z Received 3284140032 of 4268273362 (76.9%), 163.8 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:43.5023150Z Received 3460300800 of 4268273362 (81.1%), 164.0 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:44.5024835Z Received 3602907136 of 4268273362 (84.4%), 162.7 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:45.5018122Z Received 3745513472 of 4268273362 (87.8%), 161.5 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:46.5043474Z Received 3892314112 of 4268273362 (91.2%), 160.6 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:47.5031850Z Received 4060086272 of 4268273362 (95.1%), 160.5 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:48.5033594Z Received 4227858432 of 4268273362 (99.1%), 160.5 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:48.8059206Z Received 4268273362 of 4268273362 (100.0%), 160.1 MBs/sec
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:48.8062162Z Cache Size: ~4071 MB (4268273362 B)
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:48.8179457Z [command]/usr/bin/tar -xf /home/runner/work/_temp/1a4348ce-4b0e-49f0-9fc7-9e7d932ef5b9/cache.tzst -P -C /home/runner/work/QuantChain/QuantChain --use-compress-program unzstd
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:57.1679181Z Cache restored successfully
+test (3.11)	Cache pip dependencies	2025-11-05T14:37:57.5908965Z Cache restored from key: Linux-pip-test-e81e89052d70d1b9dc4748ec2fcd911c7cb145da3e0f0bf3ece71c3344d344f4
+test (3.11)	Free up disk space	﻿2025-11-05T14:37:57.6009520Z ##[group]Run # Clean up unnecessary files to free disk space
+test (3.11)	Free up disk space	2025-11-05T14:37:57.6010033Z [36;1m# Clean up unnecessary files to free disk space[0m
+test (3.11)	Free up disk space	2025-11-05T14:37:57.6010395Z [36;1msudo rm -rf /usr/share/dotnet[0m
+test (3.11)	Free up disk space	2025-11-05T14:37:57.6010695Z [36;1msudo rm -rf /opt/ghc[0m
+test (3.11)	Free up disk space	2025-11-05T14:37:57.6010983Z [36;1msudo rm -rf /usr/local/share/boost[0m
+test (3.11)	Free up disk space	2025-11-05T14:37:57.6011274Z [36;1msudo apt-get clean[0m
+test (3.11)	Free up disk space	2025-11-05T14:37:57.6011597Z [36;1mdocker system prune -af --volumes || true[0m
+test (3.11)	Free up disk space	2025-11-05T14:37:58.0834490Z shell: /usr/bin/bash -e {0}
+test (3.11)	Free up disk space	2025-11-05T14:37:58.0834796Z env:
+test (3.11)	Free up disk space	2025-11-05T14:37:58.0835088Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+test (3.11)	Free up disk space	2025-11-05T14:37:58.0835495Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+test (3.11)	Free up disk space	2025-11-05T14:37:58.0835874Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+test (3.11)	Free up disk space	2025-11-05T14:37:58.0836216Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+test (3.11)	Free up disk space	2025-11-05T14:37:58.0837002Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+test (3.11)	Free up disk space	2025-11-05T14:37:58.0837445Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+test (3.11)	Free up disk space	2025-11-05T14:37:58.0837740Z ##[endgroup]
+test (3.11)	Free up disk space	2025-11-05T14:38:28.6602095Z Total reclaimed space: 0B
+test (3.11)	Install dependencies	﻿2025-11-05T14:38:28.6642879Z ##[group]Run python -m pip install --upgrade pip
+test (3.11)	Install dependencies	2025-11-05T14:38:28.6643299Z [36;1mpython -m pip install --upgrade pip[0m
+test (3.11)	Install dependencies	2025-11-05T14:38:28.6643593Z [36;1mpip install -r requirements-dev.txt[0m
+test (3.11)	Install dependencies	2025-11-05T14:38:28.6664331Z shell: /usr/bin/bash -e {0}
+test (3.11)	Install dependencies	2025-11-05T14:38:28.6664572Z env:
+test (3.11)	Install dependencies	2025-11-05T14:38:28.6664876Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+test (3.11)	Install dependencies	2025-11-05T14:38:28.6665274Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+test (3.11)	Install dependencies	2025-11-05T14:38:28.6665664Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+test (3.11)	Install dependencies	2025-11-05T14:38:28.6666012Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+test (3.11)	Install dependencies	2025-11-05T14:38:28.6666420Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+test (3.11)	Install dependencies	2025-11-05T14:38:28.6666964Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+test (3.11)	Install dependencies	2025-11-05T14:38:28.6667311Z ##[endgroup]
+test (3.11)	Install dependencies	2025-11-05T14:38:33.2067641Z Requirement already satisfied: pip in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (25.3)
+test (3.11)	Install dependencies	2025-11-05T14:38:34.2421490Z Collecting langchain>=0.1.0 (from -r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 2))
+test (3.11)	Install dependencies	2025-11-05T14:38:34.2440184Z   Using cached langchain-1.0.3-py3-none-any.whl.metadata (4.7 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:34.2903855Z Collecting langgraph>=0.1.0 (from -r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 3))
+test (3.11)	Install dependencies	2025-11-05T14:38:34.2918617Z   Using cached langgraph-1.0.2-py3-none-any.whl.metadata (7.4 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:34.3476045Z Collecting openai>=1.0.0 (from -r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 4))
+test (3.11)	Install dependencies	2025-11-05T14:38:34.3489827Z   Using cached openai-2.7.1-py3-none-any.whl.metadata (29 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:34.3789680Z Collecting anthropic>=0.20.0 (from -r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 5))
+test (3.11)	Install dependencies	2025-11-05T14:38:34.3803388Z   Using cached anthropic-0.72.0-py3-none-any.whl.metadata (28 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:34.4115175Z Collecting chromadb>=0.4.0 (from -r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:34.4128305Z   Using cached chromadb-1.3.3-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.2 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:34.4287429Z Collecting sentence-transformers>=2.0.0 (from -r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:34.4299669Z   Using cached sentence_transformers-5.1.2-py3-none-any.whl.metadata (16 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:34.4623543Z Collecting PyYAML>=6.0.0 (from -r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 8))
+test (3.11)	Install dependencies	2025-11-05T14:38:34.4634550Z   Using cached pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:34.6040896Z Collecting numpy>=1.21.0 (from -r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 9))
+test (3.11)	Install dependencies	2025-11-05T14:38:34.6054170Z   Using cached numpy-2.3.4-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (62 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:34.6331871Z Collecting alpaca-py>=0.43.1 (from -r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 12))
+test (3.11)	Install dependencies	2025-11-05T14:38:34.6343632Z   Using cached alpaca_py-0.43.2-py3-none-any.whl.metadata (13 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:34.6589490Z Collecting types-requests (from -r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 15))
+test (3.11)	Install dependencies	2025-11-05T14:38:34.6599670Z   Using cached types_requests-2.32.4.20250913-py3-none-any.whl.metadata (2.0 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:34.6745497Z Collecting types-PyYAML (from -r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 16))
+test (3.11)	Install dependencies	2025-11-05T14:38:34.6757481Z   Using cached types_pyyaml-6.0.12.20250915-py3-none-any.whl.metadata (1.7 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:34.7025231Z Collecting pytest>=7.0.0 (from -r requirements-dev.txt (line 5))
+test (3.11)	Install dependencies	2025-11-05T14:38:34.7037201Z   Using cached pytest-8.4.2-py3-none-any.whl.metadata (7.7 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:34.7175444Z Collecting pytest-cov>=4.0.0 (from -r requirements-dev.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:34.7187140Z   Using cached pytest_cov-7.0.0-py3-none-any.whl.metadata (31 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:34.7357754Z Collecting pytest-mock>=3.10.0 (from -r requirements-dev.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:34.7370371Z   Using cached pytest_mock-3.15.1-py3-none-any.whl.metadata (3.9 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:34.7906102Z Collecting black>=23.0.0 (from -r requirements-dev.txt (line 10))
+test (3.11)	Install dependencies	2025-11-05T14:38:34.7918200Z   Using cached black-25.9.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl.metadata (83 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:34.8137103Z Collecting flake8>=6.0.0 (from -r requirements-dev.txt (line 11))
+test (3.11)	Install dependencies	2025-11-05T14:38:34.8149252Z   Using cached flake8-7.3.0-py2.py3-none-any.whl.metadata (3.8 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:34.8948842Z Collecting mypy>=1.0.0 (from -r requirements-dev.txt (line 12))
+test (3.11)	Install dependencies	2025-11-05T14:38:34.8962262Z   Using cached mypy-1.18.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.2 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:34.9251568Z Collecting pre-commit>=3.0.0 (from -r requirements-dev.txt (line 13))
+test (3.11)	Install dependencies	2025-11-05T14:38:34.9262736Z   Using cached pre_commit-4.3.0-py2.py3-none-any.whl.metadata (1.2 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:34.9631997Z Collecting langchain-core<2.0.0,>=1.0.0 (from langchain>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 2))
+test (3.11)	Install dependencies	2025-11-05T14:38:34.9644891Z   Using cached langchain_core-1.0.3-py3-none-any.whl.metadata (3.5 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.0732822Z Collecting pydantic<3.0.0,>=2.7.4 (from langchain>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 2))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.0747300Z   Using cached pydantic-2.12.4-py3-none-any.whl.metadata (89 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.1098775Z Collecting langgraph-checkpoint<4.0.0,>=2.1.0 (from langgraph>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 3))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.1112100Z   Using cached langgraph_checkpoint-3.0.1-py3-none-any.whl.metadata (4.7 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.1216551Z Collecting langgraph-prebuilt<1.1.0,>=1.0.2 (from langgraph>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 3))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.1230023Z   Using cached langgraph_prebuilt-1.0.2-py3-none-any.whl.metadata (5.0 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.1406552Z Collecting langgraph-sdk<0.3.0,>=0.2.2 (from langgraph>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 3))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.1420039Z   Using cached langgraph_sdk-0.2.9-py3-none-any.whl.metadata (1.5 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.2035723Z Collecting xxhash>=3.5.0 (from langgraph>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 3))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.2051008Z   Using cached xxhash-3.6.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (13 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.2179760Z Collecting jsonpatch<2.0.0,>=1.33.0 (from langchain-core<2.0.0,>=1.0.0->langchain>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 2))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.2192445Z   Using cached jsonpatch-1.33-py2.py3-none-any.whl.metadata (3.0 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.2784328Z Collecting langsmith<1.0.0,>=0.3.45 (from langchain-core<2.0.0,>=1.0.0->langchain>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 2))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.2799843Z   Using cached langsmith-0.4.41-py3-none-any.whl.metadata (14 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.3232869Z Collecting packaging<26.0.0,>=23.2.0 (from langchain-core<2.0.0,>=1.0.0->langchain>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 2))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.3247048Z   Using cached packaging-25.0-py3-none-any.whl.metadata (3.3 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.3397951Z Collecting tenacity!=8.4.0,<10.0.0,>=8.1.0 (from langchain-core<2.0.0,>=1.0.0->langchain>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 2))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.3411082Z   Using cached tenacity-9.1.2-py3-none-any.whl.metadata (1.2 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.3557537Z Collecting typing-extensions<5.0.0,>=4.7.0 (from langchain-core<2.0.0,>=1.0.0->langchain>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 2))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.3570112Z   Using cached typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.3687543Z Collecting jsonpointer>=1.9 (from jsonpatch<2.0.0,>=1.33.0->langchain-core<2.0.0,>=1.0.0->langchain>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 2))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.3699910Z   Using cached jsonpointer-3.0.0-py2.py3-none-any.whl.metadata (2.3 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.4281093Z Collecting ormsgpack>=1.12.0 (from langgraph-checkpoint<4.0.0,>=2.1.0->langgraph>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 3))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.4294239Z   Using cached ormsgpack-1.12.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (1.2 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.4466093Z Collecting httpx>=0.25.2 (from langgraph-sdk<0.3.0,>=0.2.2->langgraph>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 3))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.4479522Z   Using cached httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.6420936Z Collecting orjson>=3.10.1 (from langgraph-sdk<0.3.0,>=0.2.2->langgraph>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 3))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.6435373Z   Using cached orjson-3.11.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (41 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.6832767Z Collecting requests-toolbelt>=1.0.0 (from langsmith<1.0.0,>=0.3.45->langchain-core<2.0.0,>=1.0.0->langchain>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 2))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.6846235Z   Using cached requests_toolbelt-1.0.0-py2.py3-none-any.whl.metadata (14 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.7082287Z Collecting requests>=2.0.0 (from langsmith<1.0.0,>=0.3.45->langchain-core<2.0.0,>=1.0.0->langchain>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 2))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.7095335Z   Using cached requests-2.32.5-py3-none-any.whl.metadata (4.9 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.7662882Z Collecting zstandard>=0.23.0 (from langsmith<1.0.0,>=0.3.45->langchain-core<2.0.0,>=1.0.0->langchain>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 2))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.7675999Z   Using cached zstandard-0.25.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (3.3 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.7833275Z Collecting anyio (from httpx>=0.25.2->langgraph-sdk<0.3.0,>=0.2.2->langgraph>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 3))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.7845905Z   Using cached anyio-4.11.0-py3-none-any.whl.metadata (4.1 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.8002252Z Collecting certifi (from httpx>=0.25.2->langgraph-sdk<0.3.0,>=0.2.2->langgraph>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 3))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.8015820Z   Using cached certifi-2025.10.5-py3-none-any.whl.metadata (2.5 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.8169593Z Collecting httpcore==1.* (from httpx>=0.25.2->langgraph-sdk<0.3.0,>=0.2.2->langgraph>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 3))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.8183048Z   Using cached httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.8677373Z Collecting idna (from httpx>=0.25.2->langgraph-sdk<0.3.0,>=0.2.2->langgraph>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 3))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.8691201Z   Using cached idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.8790980Z Collecting h11>=0.16 (from httpcore==1.*->httpx>=0.25.2->langgraph-sdk<0.3.0,>=0.2.2->langgraph>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 3))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.8803727Z   Using cached h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:35.8901008Z Collecting annotated-types>=0.6.0 (from pydantic<3.0.0,>=2.7.4->langchain>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 2))
+test (3.11)	Install dependencies	2025-11-05T14:38:35.8913776Z   Using cached annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:36.4598944Z Collecting pydantic-core==2.41.5 (from pydantic<3.0.0,>=2.7.4->langchain>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 2))
+test (3.11)	Install dependencies	2025-11-05T14:38:36.4613898Z   Using cached pydantic_core-2.41.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.3 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:36.7223886Z Collecting typing-inspection>=0.4.2 (from pydantic<3.0.0,>=2.7.4->langchain>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 2))
+test (3.11)	Install dependencies	2025-11-05T14:38:36.7237608Z   Using cached typing_inspection-0.4.2-py3-none-any.whl.metadata (2.6 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:36.7416403Z Collecting distro<2,>=1.7.0 (from openai>=1.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 4))
+test (3.11)	Install dependencies	2025-11-05T14:38:36.7430185Z   Using cached distro-1.9.0-py3-none-any.whl.metadata (6.8 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:36.7965762Z Collecting jiter<1,>=0.10.0 (from openai>=1.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 4))
+test (3.11)	Install dependencies	2025-11-05T14:38:36.7980848Z   Using cached jiter-0.11.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.2 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:36.8211429Z Collecting sniffio (from openai>=1.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 4))
+test (3.11)	Install dependencies	2025-11-05T14:38:36.8301211Z   Using cached sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:36.8544979Z Collecting tqdm>4 (from openai>=1.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 4))
+test (3.11)	Install dependencies	2025-11-05T14:38:36.8558179Z   Using cached tqdm-4.67.1-py3-none-any.whl.metadata (57 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:36.8826232Z Collecting docstring-parser<1,>=0.15 (from anthropic>=0.20.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 5))
+test (3.11)	Install dependencies	2025-11-05T14:38:36.8839781Z   Using cached docstring_parser-0.17.0-py3-none-any.whl.metadata (3.5 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:36.9091054Z Collecting build>=1.0.3 (from chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:36.9104439Z   Using cached build-1.3.0-py3-none-any.whl.metadata (5.6 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:36.9794252Z Collecting pybase64>=1.4.1 (from chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:36.9807960Z   Using cached pybase64-1.4.2-cp311-cp311-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl.metadata (8.7 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:37.0046206Z Collecting uvicorn>=0.18.3 (from uvicorn[standard]>=0.18.3->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:37.0060095Z   Using cached uvicorn-0.38.0-py3-none-any.whl.metadata (6.8 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:37.0445032Z Collecting posthog<6.0.0,>=2.4.0 (from chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:37.0458640Z   Using cached posthog-5.4.0-py3-none-any.whl.metadata (5.7 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:37.0948093Z Collecting onnxruntime>=1.14.1 (from chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:37.0963475Z   Using cached onnxruntime-1.23.2-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (5.1 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:37.1145256Z Collecting opentelemetry-api>=1.2.0 (from chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:37.1158287Z   Using cached opentelemetry_api-1.38.0-py3-none-any.whl.metadata (1.5 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:37.1313154Z Collecting opentelemetry-exporter-otlp-proto-grpc>=1.2.0 (from chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:37.1325770Z   Using cached opentelemetry_exporter_otlp_proto_grpc-1.38.0-py3-none-any.whl.metadata (2.4 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:37.1507015Z Collecting opentelemetry-sdk>=1.2.0 (from chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:37.2170666Z   Using cached opentelemetry_sdk-1.38.0-py3-none-any.whl.metadata (1.5 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:37.3405167Z Collecting tokenizers>=0.13.2 (from chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:37.3419617Z   Using cached tokenizers-0.22.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:37.3606445Z Collecting pypika>=0.48.9 (from chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:37.3607675Z   Using cached pypika-0.48.9-py2.py3-none-any.whl
+test (3.11)	Install dependencies	2025-11-05T14:38:37.3949735Z Collecting overrides>=7.3.1 (from chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:37.3961460Z   Using cached overrides-7.7.0-py3-none-any.whl.metadata (5.8 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:37.4144132Z Collecting importlib-resources (from chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:37.4156317Z   Using cached importlib_resources-6.5.2-py3-none-any.whl.metadata (3.9 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:37.8764303Z Collecting grpcio>=1.58.0 (from chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:37.8775431Z   Using cached grpcio-1.76.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (3.7 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:37.9121580Z Collecting bcrypt>=4.0.1 (from chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:37.9134321Z   Using cached bcrypt-5.0.0-cp39-abi3-manylinux_2_34_x86_64.whl.metadata (10 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:37.9306623Z Collecting typer>=0.9.0 (from chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:37.9320778Z   Using cached typer-0.20.0-py3-none-any.whl.metadata (16 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:37.9520424Z Collecting kubernetes>=28.1.0 (from chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:37.9534378Z   Using cached kubernetes-34.1.0-py2.py3-none-any.whl.metadata (1.7 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:37.9917825Z Collecting mmh3>=4.0.1 (from chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:37.9930228Z   Using cached mmh3-5.2.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (14 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:38.0385885Z Collecting rich>=10.11.0 (from chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:38.0399598Z   Using cached rich-14.2.0-py3-none-any.whl.metadata (18 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:38.0597003Z Collecting jsonschema>=4.19.0 (from chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:38.0609647Z   Using cached jsonschema-4.25.1-py3-none-any.whl.metadata (7.6 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:38.0890773Z Collecting six>=1.5 (from posthog<6.0.0,>=2.4.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:38.0902918Z   Using cached six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:38.1008309Z Collecting python-dateutil>=2.2 (from posthog<6.0.0,>=2.4.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:38.1019641Z   Using cached python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:38.1122178Z Collecting backoff>=1.10.0 (from posthog<6.0.0,>=2.4.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:38.1133685Z   Using cached backoff-2.2.1-py3-none-any.whl.metadata (14 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:38.1831896Z Collecting charset_normalizer<4,>=2 (from requests>=2.0.0->langsmith<1.0.0,>=0.3.45->langchain-core<2.0.0,>=1.0.0->langchain>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 2))
+test (3.11)	Install dependencies	2025-11-05T14:38:38.1843993Z   Using cached charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (37 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:38.2110146Z Collecting urllib3<3,>=1.21.1 (from requests>=2.0.0->langsmith<1.0.0,>=0.3.45->langchain-core<2.0.0,>=1.0.0->langchain>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 2))
+test (3.11)	Install dependencies	2025-11-05T14:38:38.2122197Z   Using cached urllib3-2.5.0-py3-none-any.whl.metadata (6.5 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:38.2590189Z Collecting transformers<5.0.0,>=4.41.0 (from sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:38.2603968Z   Using cached transformers-4.57.1-py3-none-any.whl.metadata (43 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:38.4323635Z Collecting torch>=1.11.0 (from sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:38.4337456Z   Using cached torch-2.9.0-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (30 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:38.5008767Z Collecting scikit-learn (from sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:38.5022270Z   Using cached scikit_learn-1.7.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (11 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:38.6018281Z Collecting scipy (from sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:38.6032772Z   Using cached scipy-1.16.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (62 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:38.6477186Z Collecting huggingface-hub>=0.20.0 (from sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:38.6491615Z   Using cached huggingface_hub-1.0.1-py3-none-any.whl.metadata (13 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:38.8817581Z Collecting Pillow (from sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:38.8832382Z   Using cached pillow-12.0.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (8.8 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:38.9044859Z Collecting filelock (from transformers<5.0.0,>=4.41.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:38.9058966Z   Using cached filelock-3.20.0-py3-none-any.whl.metadata (2.1 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:38.9204910Z Collecting huggingface-hub>=0.20.0 (from sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:38.9217882Z   Using cached huggingface_hub-0.36.0-py3-none-any.whl.metadata (14 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:39.2189670Z Collecting regex!=2019.12.17 (from transformers<5.0.0,>=4.41.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:39.2204401Z   Using cached regex-2025.11.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:39.3149438Z Collecting safetensors>=0.4.3 (from transformers<5.0.0,>=4.41.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:39.3160858Z   Using cached safetensors-0.6.2-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:39.3528946Z Collecting fsspec>=2023.5.0 (from huggingface-hub>=0.20.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:39.3542768Z   Using cached fsspec-2025.10.0-py3-none-any.whl.metadata (10 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:39.4187835Z Collecting hf-xet<2.0.0,>=1.1.3 (from huggingface-hub>=0.20.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:39.4200469Z   Using cached hf_xet-1.2.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:39.4961528Z Collecting msgpack<2.0.0,>=1.0.3 (from alpaca-py>=0.43.1->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 12))
+test (3.11)	Install dependencies	2025-11-05T14:38:39.4975439Z   Using cached msgpack-1.1.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (8.1 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:39.5870376Z Collecting pandas>=1.5.3 (from alpaca-py>=0.43.1->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 12))
+test (3.11)	Install dependencies	2025-11-05T14:38:39.5882761Z   Using cached pandas-2.3.3-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (91 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:39.6507374Z Collecting sseclient-py<2.0.0,>=1.7.2 (from alpaca-py>=0.43.1->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 12))
+test (3.11)	Install dependencies	2025-11-05T14:38:39.6520242Z   Using cached sseclient_py-1.8.0-py2.py3-none-any.whl.metadata (2.0 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:39.7205732Z Collecting websockets>=10.4 (from alpaca-py>=0.43.1->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 12))
+test (3.11)	Install dependencies	2025-11-05T14:38:39.7218779Z   Using cached websockets-15.0.1-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:39.7438407Z Collecting iniconfig>=1 (from pytest>=7.0.0->-r requirements-dev.txt (line 5))
+test (3.11)	Install dependencies	2025-11-05T14:38:39.7450623Z   Using cached iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:39.7546434Z Collecting pluggy<2,>=1.5 (from pytest>=7.0.0->-r requirements-dev.txt (line 5))
+test (3.11)	Install dependencies	2025-11-05T14:38:39.7559913Z   Using cached pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:39.7725056Z Collecting pygments>=2.7.2 (from pytest>=7.0.0->-r requirements-dev.txt (line 5))
+test (3.11)	Install dependencies	2025-11-05T14:38:39.7737105Z   Using cached pygments-2.19.2-py3-none-any.whl.metadata (2.5 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.1494708Z Collecting coverage>=7.10.6 (from coverage[toml]>=7.10.6->pytest-cov>=4.0.0->-r requirements-dev.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.1506186Z   Using cached coverage-7.11.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (9.0 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.1803908Z Collecting click>=8.0.0 (from black>=23.0.0->-r requirements-dev.txt (line 10))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.1817271Z   Using cached click-8.3.0-py3-none-any.whl.metadata (2.6 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.1897377Z Collecting mypy-extensions>=0.4.3 (from black>=23.0.0->-r requirements-dev.txt (line 10))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.1910360Z   Using cached mypy_extensions-1.1.0-py3-none-any.whl.metadata (1.1 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.2042841Z Collecting pathspec>=0.9.0 (from black>=23.0.0->-r requirements-dev.txt (line 10))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.2054669Z   Using cached pathspec-0.12.1-py3-none-any.whl.metadata (21 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.2207523Z Collecting platformdirs>=2 (from black>=23.0.0->-r requirements-dev.txt (line 10))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.2219897Z   Using cached platformdirs-4.5.0-py3-none-any.whl.metadata (12 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.2315629Z Collecting pytokens>=0.1.10 (from black>=23.0.0->-r requirements-dev.txt (line 10))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.2327903Z   Using cached pytokens-0.3.0-py3-none-any.whl.metadata (2.0 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.2456298Z Collecting mccabe<0.8.0,>=0.7.0 (from flake8>=6.0.0->-r requirements-dev.txt (line 11))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.2468837Z   Using cached mccabe-0.7.0-py2.py3-none-any.whl.metadata (5.0 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.2560464Z Collecting pycodestyle<2.15.0,>=2.14.0 (from flake8>=6.0.0->-r requirements-dev.txt (line 11))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.2572770Z   Using cached pycodestyle-2.14.0-py2.py3-none-any.whl.metadata (4.5 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.2686103Z Collecting pyflakes<3.5.0,>=3.4.0 (from flake8>=6.0.0->-r requirements-dev.txt (line 11))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.2698747Z   Using cached pyflakes-3.4.0-py2.py3-none-any.whl.metadata (3.5 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.2927701Z Collecting cfgv>=2.0.0 (from pre-commit>=3.0.0->-r requirements-dev.txt (line 13))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.2940225Z   Using cached cfgv-3.4.0-py2.py3-none-any.whl.metadata (8.5 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.3296321Z Collecting identify>=1.0.0 (from pre-commit>=3.0.0->-r requirements-dev.txt (line 13))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.3307273Z   Using cached identify-2.6.15-py2.py3-none-any.whl.metadata (4.4 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.3422937Z Collecting nodeenv>=0.11.1 (from pre-commit>=3.0.0->-r requirements-dev.txt (line 13))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.3434809Z   Using cached nodeenv-1.9.1-py2.py3-none-any.whl.metadata (21 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.3795163Z Collecting virtualenv>=20.10.0 (from pre-commit>=3.0.0->-r requirements-dev.txt (line 13))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.3809129Z   Using cached virtualenv-20.35.4-py3-none-any.whl.metadata (4.6 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.4018051Z Collecting pyproject_hooks (from build>=1.0.3->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.4030290Z   Using cached pyproject_hooks-1.2.0-py3-none-any.whl.metadata (1.3 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.4384185Z Collecting attrs>=22.2.0 (from jsonschema>=4.19.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.4396023Z   Using cached attrs-25.4.0-py3-none-any.whl.metadata (10 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.4499743Z Collecting jsonschema-specifications>=2023.03.6 (from jsonschema>=4.19.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.4511715Z   Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.4707727Z Collecting referencing>=0.28.4 (from jsonschema>=4.19.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.4718110Z   Using cached referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.6760790Z Collecting rpds-py>=0.7.1 (from jsonschema>=4.19.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.6776249Z   Using cached rpds_py-0.28.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.7365333Z Collecting google-auth>=1.0.1 (from kubernetes>=28.1.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.7375837Z   Using cached google_auth-2.42.1-py2.py3-none-any.whl.metadata (6.6 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.7678382Z Collecting websocket-client!=0.40.0,!=0.41.*,!=0.42.*,>=0.32.0 (from kubernetes>=28.1.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.7688771Z   Using cached websocket_client-1.9.0-py3-none-any.whl.metadata (8.3 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.7795277Z Collecting requests-oauthlib (from kubernetes>=28.1.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.7806901Z   Using cached requests_oauthlib-2.0.0-py2.py3-none-any.whl.metadata (11 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.7919827Z Collecting urllib3<3,>=1.21.1 (from requests>=2.0.0->langsmith<1.0.0,>=0.3.45->langchain-core<2.0.0,>=1.0.0->langchain>=0.1.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 2))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.7929639Z   Using cached urllib3-2.3.0-py3-none-any.whl.metadata (6.5 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.8003055Z Collecting durationpy>=0.7 (from kubernetes>=28.1.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.8014945Z   Using cached durationpy-0.10-py3-none-any.whl.metadata (340 bytes)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.8205820Z Collecting cachetools<7.0,>=2.0.0 (from google-auth>=1.0.1->kubernetes>=28.1.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.8217449Z   Using cached cachetools-6.2.1-py3-none-any.whl.metadata (5.5 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.8390880Z Collecting pyasn1-modules>=0.2.1 (from google-auth>=1.0.1->kubernetes>=28.1.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.8409631Z   Using cached pyasn1_modules-0.4.2-py3-none-any.whl.metadata (3.5 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.8536780Z Collecting rsa<5,>=3.1.4 (from google-auth>=1.0.1->kubernetes>=28.1.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.8547994Z   Using cached rsa-4.9.1-py3-none-any.whl.metadata (5.6 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.8757723Z Collecting pyasn1>=0.1.3 (from rsa<5,>=3.1.4->google-auth>=1.0.1->kubernetes>=28.1.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.8769744Z   Using cached pyasn1-0.6.1-py3-none-any.whl.metadata (8.4 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.8983835Z Collecting coloredlogs (from onnxruntime>=1.14.1->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.8994789Z   Using cached coloredlogs-15.0.1-py2.py3-none-any.whl.metadata (12 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:40.9098245Z Collecting flatbuffers (from onnxruntime>=1.14.1->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:40.9109839Z   Using cached flatbuffers-25.9.23-py2.py3-none-any.whl.metadata (875 bytes)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.0462389Z Collecting protobuf (from onnxruntime>=1.14.1->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.0474473Z   Using cached protobuf-6.33.0-cp39-abi3-manylinux2014_x86_64.whl.metadata (593 bytes)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.0599306Z Collecting sympy (from onnxruntime>=1.14.1->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.0611522Z   Using cached sympy-1.14.0-py3-none-any.whl.metadata (12 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.0882643Z Collecting importlib-metadata<8.8.0,>=6.0 (from opentelemetry-api>=1.2.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.0894885Z   Using cached importlib_metadata-8.7.0-py3-none-any.whl.metadata (4.8 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.1074063Z Collecting zipp>=3.20 (from importlib-metadata<8.8.0,>=6.0->opentelemetry-api>=1.2.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.1085962Z   Using cached zipp-3.23.0-py3-none-any.whl.metadata (3.6 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.1281375Z Collecting googleapis-common-protos~=1.57 (from opentelemetry-exporter-otlp-proto-grpc>=1.2.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.1293127Z   Using cached googleapis_common_protos-1.71.0-py3-none-any.whl.metadata (9.4 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.1582553Z Collecting opentelemetry-exporter-otlp-proto-common==1.38.0 (from opentelemetry-exporter-otlp-proto-grpc>=1.2.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.1593500Z   Using cached opentelemetry_exporter_otlp_proto_common-1.38.0-py3-none-any.whl.metadata (1.8 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.1725897Z Collecting opentelemetry-proto==1.38.0 (from opentelemetry-exporter-otlp-proto-grpc>=1.2.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.1737654Z   Using cached opentelemetry_proto-1.38.0-py3-none-any.whl.metadata (2.3 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.2472222Z Collecting opentelemetry-semantic-conventions==0.59b0 (from opentelemetry-sdk>=1.2.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.2484269Z   Using cached opentelemetry_semantic_conventions-0.59b0-py3-none-any.whl.metadata (2.4 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.3061774Z Collecting pytz>=2020.1 (from pandas>=1.5.3->alpaca-py>=0.43.1->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 12))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.3074885Z   Using cached pytz-2025.2-py2.py3-none-any.whl.metadata (22 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.3187304Z Collecting tzdata>=2022.7 (from pandas>=1.5.3->alpaca-py>=0.43.1->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 12))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.3198821Z   Using cached tzdata-2025.2-py2.py3-none-any.whl.metadata (1.4 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.3901778Z Collecting markdown-it-py>=2.2.0 (from rich>=10.11.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.3913136Z   Using cached markdown_it_py-4.0.0-py3-none-any.whl.metadata (7.3 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.4099389Z Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich>=10.11.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.4111724Z   Using cached mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.4483958Z Collecting networkx>=2.5.1 (from torch>=1.11.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.4495650Z   Using cached networkx-3.5-py3-none-any.whl.metadata (6.3 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.4648235Z Collecting jinja2 (from torch>=1.11.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.4660743Z   Using cached jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.4811744Z Collecting nvidia-cuda-nvrtc-cu12==12.8.93 (from torch>=1.11.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.4824555Z   Using cached nvidia_cuda_nvrtc_cu12-12.8.93-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl.metadata (1.7 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.4920102Z Collecting nvidia-cuda-runtime-cu12==12.8.90 (from torch>=1.11.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.4932984Z   Using cached nvidia_cuda_runtime_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.7 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5037008Z Collecting nvidia-cuda-cupti-cu12==12.8.90 (from torch>=1.11.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5049752Z   Using cached nvidia_cuda_cupti_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.7 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5157332Z Collecting nvidia-cudnn-cu12==9.10.2.21 (from torch>=1.11.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5170181Z   Using cached nvidia_cudnn_cu12-9.10.2.21-py3-none-manylinux_2_27_x86_64.whl.metadata (1.8 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5263260Z Collecting nvidia-cublas-cu12==12.8.4.1 (from torch>=1.11.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5275863Z   Using cached nvidia_cublas_cu12-12.8.4.1-py3-none-manylinux_2_27_x86_64.whl.metadata (1.7 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5367475Z Collecting nvidia-cufft-cu12==11.3.3.83 (from torch>=1.11.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5378910Z   Using cached nvidia_cufft_cu12-11.3.3.83-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.7 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5467373Z Collecting nvidia-curand-cu12==10.3.9.90 (from torch>=1.11.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5478993Z   Using cached nvidia_curand_cu12-10.3.9.90-py3-none-manylinux_2_27_x86_64.whl.metadata (1.7 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5571856Z Collecting nvidia-cusolver-cu12==11.7.3.90 (from torch>=1.11.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5583140Z   Using cached nvidia_cusolver_cu12-11.7.3.90-py3-none-manylinux_2_27_x86_64.whl.metadata (1.8 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5680732Z Collecting nvidia-cusparse-cu12==12.5.8.93 (from torch>=1.11.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5692292Z   Using cached nvidia_cusparse_cu12-12.5.8.93-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.8 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5762397Z Collecting nvidia-cusparselt-cu12==0.7.1 (from torch>=1.11.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5773789Z   Using cached nvidia_cusparselt_cu12-0.7.1-py3-none-manylinux2014_x86_64.whl.metadata (7.0 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5859515Z Collecting nvidia-nccl-cu12==2.27.5 (from torch>=1.11.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5870715Z   Using cached nvidia_nccl_cu12-2.27.5-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.0 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5952975Z Collecting nvidia-nvshmem-cu12==3.3.20 (from torch>=1.11.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.5964374Z   Using cached nvidia_nvshmem_cu12-3.3.20-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.1 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.6058304Z Collecting nvidia-nvtx-cu12==12.8.90 (from torch>=1.11.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.6070081Z   Using cached nvidia_nvtx_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.8 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.6167303Z Collecting nvidia-nvjitlink-cu12==12.8.93 (from torch>=1.11.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.6178981Z   Using cached nvidia_nvjitlink_cu12-12.8.93-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl.metadata (1.7 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.6247314Z Collecting nvidia-cufile-cu12==1.13.1.3 (from torch>=1.11.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.6258713Z   Using cached nvidia_cufile_cu12-1.13.1.3-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (1.7 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.6373907Z Collecting triton==3.5.0 (from torch>=1.11.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.6385225Z   Using cached triton-3.5.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (1.7 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.7020649Z Collecting mpmath<1.4,>=1.1.0 (from sympy->onnxruntime>=1.14.1->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.7031947Z   Using cached mpmath-1.3.0-py3-none-any.whl.metadata (8.6 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.7230057Z Collecting shellingham>=1.3.0 (from typer>=0.9.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.7241413Z   Using cached shellingham-1.5.4-py2.py3-none-any.whl.metadata (3.5 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.7725715Z Collecting httptools>=0.6.3 (from uvicorn[standard]>=0.18.3->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.7738181Z   Using cached httptools-0.7.1-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (3.5 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.7874693Z Collecting python-dotenv>=0.13 (from uvicorn[standard]>=0.18.3->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.7886229Z   Using cached python_dotenv-1.2.1-py3-none-any.whl.metadata (25 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:41.8214493Z Collecting uvloop>=0.15.1 (from uvicorn[standard]>=0.18.3->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:41.8228297Z   Using cached uvloop-0.22.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (4.9 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.0245961Z Collecting watchfiles>=0.13 (from uvicorn[standard]>=0.18.3->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:42.0258991Z   Using cached watchfiles-1.1.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.0501563Z Collecting distlib<1,>=0.3.7 (from virtualenv>=20.10.0->pre-commit>=3.0.0->-r requirements-dev.txt (line 13))
+test (3.11)	Install dependencies	2025-11-05T14:38:42.0513449Z   Using cached distlib-0.4.0-py2.py3-none-any.whl.metadata (5.2 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.1104227Z Collecting humanfriendly>=9.1 (from coloredlogs->onnxruntime>=1.14.1->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:42.1115888Z   Using cached humanfriendly-10.0-py2.py3-none-any.whl.metadata (9.2 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.1648505Z Collecting MarkupSafe>=2.0 (from jinja2->torch>=1.11.0->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:42.1661898Z   Using cached markupsafe-3.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.1910491Z Collecting oauthlib>=3.0.0 (from requests-oauthlib->kubernetes>=28.1.0->chromadb>=0.4.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 6))
+test (3.11)	Install dependencies	2025-11-05T14:38:42.1921337Z   Using cached oauthlib-3.3.1-py3-none-any.whl.metadata (7.9 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2317957Z Collecting joblib>=1.2.0 (from scikit-learn->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2329600Z   Using cached joblib-1.5.2-py3-none-any.whl.metadata (5.6 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2410402Z Collecting threadpoolctl>=3.1.0 (from scikit-learn->sentence-transformers>=2.0.0->-r /home/runner/work/QuantChain/QuantChain/requirements.txt (line 7))
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2421598Z   Using cached threadpoolctl-3.6.0-py3-none-any.whl.metadata (13 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2711639Z Using cached langchain-1.0.3-py3-none-any.whl (91 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2723244Z Using cached langgraph-1.0.2-py3-none-any.whl (156 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2735268Z Using cached langchain_core-1.0.3-py3-none-any.whl (469 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2749633Z Using cached pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (806 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2764781Z Using cached jsonpatch-1.33-py2.py3-none-any.whl (12 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2775960Z Using cached langgraph_checkpoint-3.0.1-py3-none-any.whl (46 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2787832Z Using cached langgraph_prebuilt-1.0.2-py3-none-any.whl (34 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2799052Z Using cached langgraph_sdk-0.2.9-py3-none-any.whl (56 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2810438Z Using cached langsmith-0.4.41-py3-none-any.whl (399 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2823625Z Using cached httpx-0.28.1-py3-none-any.whl (73 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2835293Z Using cached httpcore-1.0.9-py3-none-any.whl (78 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2846616Z Using cached packaging-25.0-py3-none-any.whl (66 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2858298Z Using cached pydantic-2.12.4-py3-none-any.whl (463 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2872097Z Using cached pydantic_core-2.41.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2893903Z Using cached tenacity-9.1.2-py3-none-any.whl (28 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2905198Z Using cached typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2916481Z Using cached openai-2.7.1-py3-none-any.whl (1.0 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2932600Z Using cached anyio-4.11.0-py3-none-any.whl (109 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2944402Z Using cached distro-1.9.0-py3-none-any.whl (20 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2955734Z Using cached jiter-0.11.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (359 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2968781Z Using cached anthropic-0.72.0-py3-none-any.whl (357 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2981619Z Using cached docstring_parser-0.17.0-py3-none-any.whl (36 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.2993236Z Using cached chromadb-1.3.3-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (20.8 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3103202Z Using cached posthog-5.4.0-py3-none-any.whl (105 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3115056Z Using cached requests-2.32.5-py3-none-any.whl (64 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3127351Z Using cached charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (151 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3138558Z Using cached idna-3.11-py3-none-any.whl (71 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3150198Z Using cached sentence_transformers-5.1.2-py3-none-any.whl (488 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3163837Z Using cached transformers-4.57.1-py3-none-any.whl (12.0 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3232279Z Using cached huggingface_hub-0.36.0-py3-none-any.whl (566 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3246485Z Using cached hf_xet-1.2.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3274311Z Using cached tokenizers-0.22.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3300949Z Using cached numpy-2.3.4-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.9 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3395940Z Using cached alpaca_py-0.43.2-py3-none-any.whl (122 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3409154Z Using cached msgpack-1.1.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (426 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3422855Z Using cached sseclient_py-1.8.0-py2.py3-none-any.whl (8.8 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3435324Z Using cached types_requests-2.32.4.20250913-py3-none-any.whl (20 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3447411Z Using cached types_pyyaml-6.0.12.20250915-py3-none-any.whl (20 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3459763Z Using cached pytest-8.4.2-py3-none-any.whl (365 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3473996Z Using cached pluggy-1.6.0-py3-none-any.whl (20 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3486295Z Using cached pytest_cov-7.0.0-py3-none-any.whl (22 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3498661Z Using cached pytest_mock-3.15.1-py3-none-any.whl (10 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3511426Z Using cached black-25.9.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl (1.6 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3533501Z Using cached flake8-7.3.0-py2.py3-none-any.whl (57 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3545892Z Using cached mccabe-0.7.0-py2.py3-none-any.whl (7.3 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3558514Z Using cached pycodestyle-2.14.0-py2.py3-none-any.whl (31 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3570778Z Using cached pyflakes-3.4.0-py2.py3-none-any.whl (63 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3584224Z Using cached mypy-1.18.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (13.2 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3658486Z Using cached pre_commit-4.3.0-py2.py3-none-any.whl (220 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3671239Z Using cached annotated_types-0.7.0-py3-none-any.whl (13 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3683610Z Using cached backoff-2.2.1-py3-none-any.whl (15 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3695783Z Using cached bcrypt-5.0.0-cp39-abi3-manylinux_2_34_x86_64.whl (278 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3709998Z Using cached build-1.3.0-py3-none-any.whl (23 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3723766Z Using cached certifi-2025.10.5-py3-none-any.whl (163 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3736913Z Using cached cfgv-3.4.0-py2.py3-none-any.whl (7.2 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3749070Z Using cached click-8.3.0-py3-none-any.whl (107 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3762027Z Using cached coverage-7.11.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (248 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3775336Z Using cached fsspec-2025.10.0-py3-none-any.whl (200 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3788650Z Using cached grpcio-1.76.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (6.6 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3832088Z Using cached h11-0.16.0-py3-none-any.whl (37 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3844312Z Using cached identify-2.6.15-py2.py3-none-any.whl (99 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3857072Z Using cached iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3869186Z Using cached jsonpointer-3.0.0-py2.py3-none-any.whl (7.6 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3881476Z Using cached jsonschema-4.25.1-py3-none-any.whl (90 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3893981Z Using cached attrs-25.4.0-py3-none-any.whl (67 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3906600Z Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3919008Z Using cached kubernetes-34.1.0-py2.py3-none-any.whl (2.0 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3940602Z Using cached urllib3-2.3.0-py3-none-any.whl (128 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3953965Z Using cached durationpy-0.10-py3-none-any.whl (3.9 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3966120Z Using cached google_auth-2.42.1-py2.py3-none-any.whl (222 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3979263Z Using cached cachetools-6.2.1-py3-none-any.whl (11 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.3991248Z Using cached rsa-4.9.1-py3-none-any.whl (34 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4003951Z Using cached mmh3-5.2.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (103 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4016493Z Using cached mypy_extensions-1.1.0-py3-none-any.whl (5.0 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4028667Z Using cached nodeenv-1.9.1-py2.py3-none-any.whl (22 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4041790Z Using cached onnxruntime-1.23.2-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (17.4 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4136170Z Using cached opentelemetry_api-1.38.0-py3-none-any.whl (65 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4147698Z Using cached importlib_metadata-8.7.0-py3-none-any.whl (27 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4159290Z Using cached opentelemetry_exporter_otlp_proto_grpc-1.38.0-py3-none-any.whl (19 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4170700Z Using cached opentelemetry_exporter_otlp_proto_common-1.38.0-py3-none-any.whl (18 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4181825Z Using cached opentelemetry_proto-1.38.0-py3-none-any.whl (72 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4193274Z Using cached googleapis_common_protos-1.71.0-py3-none-any.whl (294 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4205707Z Using cached opentelemetry_sdk-1.38.0-py3-none-any.whl (132 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4218095Z Using cached opentelemetry_semantic_conventions-0.59b0-py3-none-any.whl (207 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4230259Z Using cached protobuf-6.33.0-cp39-abi3-manylinux2014_x86_64.whl (323 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4243155Z Using cached orjson-3.11.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (136 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4255218Z Using cached ormsgpack-1.12.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (207 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4267333Z Using cached overrides-7.7.0-py3-none-any.whl (17 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4278673Z Using cached pandas-2.3.3-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (12.8 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4350362Z Using cached pathspec-0.12.1-py3-none-any.whl (31 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4367891Z Using cached platformdirs-4.5.0-py3-none-any.whl (18 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4420702Z Using cached pyasn1-0.6.1-py3-none-any.whl (83 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4421235Z Using cached pyasn1_modules-0.4.2-py3-none-any.whl (181 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4421818Z Using cached pybase64-1.4.2-cp311-cp311-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl (71 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4422369Z Using cached pygments-2.19.2-py3-none-any.whl (1.2 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4430512Z Using cached python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4442572Z Using cached pytokens-0.3.0-py3-none-any.whl (12 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4453674Z Using cached pytz-2025.2-py2.py3-none-any.whl (509 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4467257Z Using cached referencing-0.37.0-py3-none-any.whl (26 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4478869Z Using cached regex-2025.11.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (800 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4493861Z Using cached requests_toolbelt-1.0.0-py2.py3-none-any.whl (54 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4505360Z Using cached rich-14.2.0-py3-none-any.whl (243 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4517744Z Using cached markdown_it_py-4.0.0-py3-none-any.whl (87 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4529294Z Using cached mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4540393Z Using cached rpds_py-0.28.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (382 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4553569Z Using cached safetensors-0.6.2-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (485 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4566920Z Using cached six-1.17.0-py2.py3-none-any.whl (11 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4578007Z Using cached sniffio-1.3.1-py3-none-any.whl (10 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.4589321Z Using cached torch-2.9.0-cp311-cp311-manylinux_2_28_x86_64.whl (899.8 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:42.8838047Z Using cached nvidia_cublas_cu12-12.8.4.1-py3-none-manylinux_2_27_x86_64.whl (594.3 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:43.1777747Z Using cached nvidia_cuda_cupti_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (10.2 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:43.1838729Z Using cached nvidia_cuda_nvrtc_cu12-12.8.93-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl (88.0 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:43.2280232Z Using cached nvidia_cuda_runtime_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (954 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:43.2295826Z Using cached nvidia_cudnn_cu12-9.10.2.21-py3-none-manylinux_2_27_x86_64.whl (706.8 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:43.5719641Z Using cached nvidia_cufft_cu12-11.3.3.83-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (193.1 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:43.6648837Z Using cached nvidia_cufile_cu12-1.13.1.3-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (1.2 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:43.6666364Z Using cached nvidia_curand_cu12-10.3.9.90-py3-none-manylinux_2_27_x86_64.whl (63.6 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:43.7374100Z Using cached nvidia_cusolver_cu12-11.7.3.90-py3-none-manylinux_2_27_x86_64.whl (267.5 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:44.1775649Z Using cached nvidia_cusparse_cu12-12.5.8.93-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (288.2 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:44.7766139Z Using cached nvidia_cusparselt_cu12-0.7.1-py3-none-manylinux2014_x86_64.whl (287.2 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:45.4595616Z Using cached nvidia_nccl_cu12-2.27.5-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (322.3 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:46.2284551Z Using cached nvidia_nvjitlink_cu12-12.8.93-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl (39.3 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:46.3258865Z Using cached nvidia_nvshmem_cu12-3.3.20-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (124.7 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:46.6224368Z Using cached nvidia_nvtx_cu12-12.8.90-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (89 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:46.6237600Z Using cached triton-3.5.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (170.4 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.0447258Z Using cached networkx-3.5-py3-none-any.whl (2.0 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.0469660Z Using cached sympy-1.14.0-py3-none-any.whl (6.3 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.0720642Z Using cached mpmath-1.3.0-py3-none-any.whl (536 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.0735493Z Using cached tqdm-4.67.1-py3-none-any.whl (78 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.0747610Z Using cached typer-0.20.0-py3-none-any.whl (47 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.0758913Z Using cached shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.0770104Z Using cached typing_inspection-0.4.2-py3-none-any.whl (14 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.0781481Z Using cached tzdata-2025.2-py2.py3-none-any.whl (347 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.0794341Z Using cached uvicorn-0.38.0-py3-none-any.whl (68 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.0806415Z Using cached httptools-0.7.1-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (456 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.0819881Z Using cached python_dotenv-1.2.1-py3-none-any.whl (21 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.0831311Z Using cached uvloop-0.22.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (3.8 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.0860878Z Using cached virtualenv-20.35.4-py3-none-any.whl (6.0 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.0900349Z Using cached distlib-0.4.0-py2.py3-none-any.whl (469 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1013428Z Using cached filelock-3.20.0-py3-none-any.whl (16 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1025319Z Using cached watchfiles-1.1.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (456 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1039150Z Using cached websocket_client-1.9.0-py3-none-any.whl (82 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1051048Z Using cached websockets-15.0.1-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl (182 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1063125Z Using cached xxhash-3.6.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (193 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1075502Z Using cached zipp-3.23.0-py3-none-any.whl (10 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1086794Z Using cached zstandard-0.25.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.6 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1124448Z Using cached coloredlogs-15.0.1-py2.py3-none-any.whl (46 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1136113Z Using cached humanfriendly-10.0-py2.py3-none-any.whl (86 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1152355Z Using cached flatbuffers-25.9.23-py2.py3-none-any.whl (30 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1163554Z Using cached importlib_resources-6.5.2-py3-none-any.whl (37 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1174702Z Using cached jinja2-3.1.6-py3-none-any.whl (134 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1187193Z Using cached markupsafe-3.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1198112Z Using cached pillow-12.0.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (7.0 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1338884Z Using cached pyproject_hooks-1.2.0-py3-none-any.whl (10 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1349646Z Using cached requests_oauthlib-2.0.0-py2.py3-none-any.whl (24 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1360756Z Using cached oauthlib-3.3.1-py3-none-any.whl (160 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1372937Z Using cached scikit_learn-1.7.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (9.7 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1549499Z Using cached joblib-1.5.2-py3-none-any.whl (308 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.1562184Z Using cached scipy-1.16.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (35.9 MB)
+test (3.11)	Install dependencies	2025-11-05T14:38:47.2478749Z Using cached threadpoolctl-3.6.0-py3-none-any.whl (18 kB)
+test (3.11)	Install dependencies	2025-11-05T14:38:51.5336041Z Installing collected packages: sseclient-py, pytz, pypika, nvidia-cusparselt-cu12, mpmath, flatbuffers, durationpy, distlib, zstandard, zipp, xxhash, websockets, websocket-client, uvloop, urllib3, tzdata, typing-extensions, types-PyYAML, triton, tqdm, threadpoolctl, tenacity, sympy, sniffio, six, shellingham, safetensors, rpds-py, regex, PyYAML, pytokens, python-dotenv, pyproject_hooks, pygments, pyflakes, pycodestyle, pybase64, pyasn1, protobuf, pluggy, platformdirs, Pillow, pathspec, packaging, overrides, ormsgpack, orjson, oauthlib, nvidia-nvtx-cu12, nvidia-nvshmem-cu12, nvidia-nvjitlink-cu12, nvidia-nccl-cu12, nvidia-curand-cu12, nvidia-cufile-cu12, nvidia-cuda-runtime-cu12, nvidia-cuda-nvrtc-cu12, nvidia-cuda-cupti-cu12, nvidia-cublas-cu12, numpy, nodeenv, networkx, mypy-extensions, msgpack, mmh3, mdurl, mccabe, MarkupSafe, jsonpointer, joblib, jiter, iniconfig, importlib-resources, idna, identify, humanfriendly, httptools, hf-xet, h11, fsspec, filelock, docstring-parser, distro, coverage, click, charset_normalizer, cfgv, certifi, cachetools, bcrypt, backoff, attrs, annotated-types, virtualenv, uvicorn, typing-inspection, types-requests, scipy, rsa, requests, referencing, python-dateutil, pytest, pydantic-core, pyasn1-modules, opentelemetry-proto, nvidia-cusparse-cu12, nvidia-cufft-cu12, nvidia-cudnn-cu12, mypy, markdown-it-py, jsonpatch, jinja2, importlib-metadata, httpcore, grpcio, googleapis-common-protos, flake8, coloredlogs, build, black, anyio, watchfiles, scikit-learn, rich, requests-toolbelt, requests-oauthlib, pytest-mock, pytest-cov, pydantic, pre-commit, posthog, pandas, opentelemetry-exporter-otlp-proto-common, opentelemetry-api, onnxruntime, nvidia-cusolver-cu12, jsonschema-specifications, huggingface-hub, httpx, google-auth, typer, torch, tokenizers, opentelemetry-semantic-conventions, openai, langsmith, langgraph-sdk, kubernetes, jsonschema, anthropic, alpaca-py, transformers, opentelemetry-sdk, langchain-core, sentence-transformers, opentelemetry-exporter-otlp-proto-grpc, langgraph-checkpoint, langgraph-prebuilt, chromadb, langgraph, langchain
+test (3.11)	Install dependencies	2025-11-05T14:40:04.4115833Z 
+test (3.11)	Install dependencies	2025-11-05T14:40:04.4183454Z Successfully installed MarkupSafe-3.0.3 Pillow-12.0.0 PyYAML-6.0.3 alpaca-py-0.43.2 annotated-types-0.7.0 anthropic-0.72.0 anyio-4.11.0 attrs-25.4.0 backoff-2.2.1 bcrypt-5.0.0 black-25.9.0 build-1.3.0 cachetools-6.2.1 certifi-2025.10.5 cfgv-3.4.0 charset_normalizer-3.4.4 chromadb-1.3.3 click-8.3.0 coloredlogs-15.0.1 coverage-7.11.0 distlib-0.4.0 distro-1.9.0 docstring-parser-0.17.0 durationpy-0.10 filelock-3.20.0 flake8-7.3.0 flatbuffers-25.9.23 fsspec-2025.10.0 google-auth-2.42.1 googleapis-common-protos-1.71.0 grpcio-1.76.0 h11-0.16.0 hf-xet-1.2.0 httpcore-1.0.9 httptools-0.7.1 httpx-0.28.1 huggingface-hub-0.36.0 humanfriendly-10.0 identify-2.6.15 idna-3.11 importlib-metadata-8.7.0 importlib-resources-6.5.2 iniconfig-2.3.0 jinja2-3.1.6 jiter-0.11.1 joblib-1.5.2 jsonpatch-1.33 jsonpointer-3.0.0 jsonschema-4.25.1 jsonschema-specifications-2025.9.1 kubernetes-34.1.0 langchain-1.0.3 langchain-core-1.0.3 langgraph-1.0.2 langgraph-checkpoint-3.0.1 langgraph-prebuilt-1.0.2 langgraph-sdk-0.2.9 langsmith-0.4.41 markdown-it-py-4.0.0 mccabe-0.7.0 mdurl-0.1.2 mmh3-5.2.0 mpmath-1.3.0 msgpack-1.1.2 mypy-1.18.2 mypy-extensions-1.1.0 networkx-3.5 nodeenv-1.9.1 numpy-2.3.4 nvidia-cublas-cu12-12.8.4.1 nvidia-cuda-cupti-cu12-12.8.90 nvidia-cuda-nvrtc-cu12-12.8.93 nvidia-cuda-runtime-cu12-12.8.90 nvidia-cudnn-cu12-9.10.2.21 nvidia-cufft-cu12-11.3.3.83 nvidia-cufile-cu12-1.13.1.3 nvidia-curand-cu12-10.3.9.90 nvidia-cusolver-cu12-11.7.3.90 nvidia-cusparse-cu12-12.5.8.93 nvidia-cusparselt-cu12-0.7.1 nvidia-nccl-cu12-2.27.5 nvidia-nvjitlink-cu12-12.8.93 nvidia-nvshmem-cu12-3.3.20 nvidia-nvtx-cu12-12.8.90 oauthlib-3.3.1 onnxruntime-1.23.2 openai-2.7.1 opentelemetry-api-1.38.0 opentelemetry-exporter-otlp-proto-common-1.38.0 opentelemetry-exporter-otlp-proto-grpc-1.38.0 opentelemetry-proto-1.38.0 opentelemetry-sdk-1.38.0 opentelemetry-semantic-conventions-0.59b0 orjson-3.11.4 ormsgpack-1.12.0 overrides-7.7.0 packaging-25.0 pandas-2.3.3 pathspec-0.12.1 platformdirs-4.5.0 pluggy-1.6.0 posthog-5.4.0 pre-commit-4.3.0 protobuf-6.33.0 pyasn1-0.6.1 pyasn1-modules-0.4.2 pybase64-1.4.2 pycodestyle-2.14.0 pydantic-2.12.4 pydantic-core-2.41.5 pyflakes-3.4.0 pygments-2.19.2 pypika-0.48.9 pyproject_hooks-1.2.0 pytest-8.4.2 pytest-cov-7.0.0 pytest-mock-3.15.1 python-dateutil-2.9.0.post0 python-dotenv-1.2.1 pytokens-0.3.0 pytz-2025.2 referencing-0.37.0 regex-2025.11.3 requests-2.32.5 requests-oauthlib-2.0.0 requests-toolbelt-1.0.0 rich-14.2.0 rpds-py-0.28.0 rsa-4.9.1 safetensors-0.6.2 scikit-learn-1.7.2 scipy-1.16.3 sentence-transformers-5.1.2 shellingham-1.5.4 six-1.17.0 sniffio-1.3.1 sseclient-py-1.8.0 sympy-1.14.0 tenacity-9.1.2 threadpoolctl-3.6.0 tokenizers-0.22.1 torch-2.9.0 tqdm-4.67.1 transformers-4.57.1 triton-3.5.0 typer-0.20.0 types-PyYAML-6.0.12.20250915 types-requests-2.32.4.20250913 typing-extensions-4.15.0 typing-inspection-0.4.2 tzdata-2025.2 urllib3-2.3.0 uvicorn-0.38.0 uvloop-0.22.1 virtualenv-20.35.4 watchfiles-1.1.1 websocket-client-1.9.0 websockets-15.0.1 xxhash-3.6.0 zipp-3.23.0 zstandard-0.25.0
+test (3.11)	Run tests with coverage	﻿2025-11-05T14:40:05.8811654Z ##[group]Run python -m pytest --cov=quantchain --cov-report=xml --cov-report=html --cov-fail-under=75
+test (3.11)	Run tests with coverage	2025-11-05T14:40:05.8812296Z [36;1mpython -m pytest --cov=quantchain --cov-report=xml --cov-report=html --cov-fail-under=75[0m
+test (3.11)	Run tests with coverage	2025-11-05T14:40:05.8888266Z shell: /usr/bin/bash -e {0}
+test (3.11)	Run tests with coverage	2025-11-05T14:40:05.8888540Z env:
+test (3.11)	Run tests with coverage	2025-11-05T14:40:05.8888791Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+test (3.11)	Run tests with coverage	2025-11-05T14:40:05.8889188Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+test (3.11)	Run tests with coverage	2025-11-05T14:40:05.8889571Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+test (3.11)	Run tests with coverage	2025-11-05T14:40:05.8889903Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+test (3.11)	Run tests with coverage	2025-11-05T14:40:05.8890241Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+test (3.11)	Run tests with coverage	2025-11-05T14:40:05.8890583Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+test (3.11)	Run tests with coverage	2025-11-05T14:40:05.8890869Z ##[endgroup]
+test (3.11)	Run tests with coverage	2025-11-05T14:40:07.4959400Z ImportError while loading conftest '/home/runner/work/QuantChain/QuantChain/conftest.py'.
+test (3.11)	Run tests with coverage	2025-11-05T14:40:07.4984619Z __init__.py:3: in <module>
+test (3.11)	Run tests with coverage	2025-11-05T14:40:07.4985272Z     from .config import get_config, reload_config, QuantChainConfig
+test (3.11)	Run tests with coverage	2025-11-05T14:40:07.4985916Z E   ModuleNotFoundError: No module named 'QuantChain.config'
+test (3.11)	Run tests with coverage	2025-11-05T14:40:07.5755989Z ##[error]Process completed with exit code 4.
+test (3.11)	Post Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	﻿2025-11-05T14:40:07.5856803Z Post job cleanup.
+test (3.11)	Post Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:40:07.6615947Z [command]/usr/bin/git version
+test (3.11)	Post Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:40:07.6651003Z git version 2.51.2
+test (3.11)	Post Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:40:07.6691133Z Temporarily overriding HOME='/home/runner/work/_temp/ed795e69-cf58-4dc9-9a6e-ac96af672a88' before making global git config changes
+test (3.11)	Post Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:40:07.6692331Z Adding repository directory to the temporary git global config as a safe directory
+test (3.11)	Post Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:40:07.6697250Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/QuantChain/QuantChain
+test (3.11)	Post Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:40:07.6727764Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+test (3.11)	Post Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:40:07.6754587Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+test (3.11)	Post Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:40:07.6967284Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+test (3.11)	Post Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:40:07.6984794Z http.https://github.com/.extraheader
+test (3.11)	Post Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:40:07.6993186Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+test (3.11)	Post Run actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8	2025-11-05T14:40:07.7018036Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+test (3.11)	Complete job	﻿2025-11-05T14:40:07.7274551Z Cleaning up orphan processes
