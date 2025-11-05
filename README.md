@@ -391,3 +391,4 @@ MIT License - see LICENSE file for details.
 ## Disclaimer
 
 This software is for educational and research purposes. Use at your own risk. Not financial advice.
+# CI fix - added security module
