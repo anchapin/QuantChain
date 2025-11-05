@@ -1,2 +1,0 @@
-# Simple debug script
-pass

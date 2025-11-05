@@ -60,6 +60,54 @@ Based on the Product Requirements Document (PRD), the following tech stack is re
 - **Secret Management**: `python-dotenv` for environment variables, with recommendations for `Vault` or cloud secret managers (AWS/GCP) in production.
 - **API Key Management**: Dedicated secure module for handling broker and data feed credentials.
 
+#### Security Module
+
+**Location**: `quantchain/core/security.py`
+**Tests**: `tests/core/test_security.py`
+
+**Overview**:
+A comprehensive API key management system that securely handles credentials for various financial services. Implements best practices for credential storage, validation, and environment-based configuration.
+
+**Key Features**:
+- Environment variable and .env file support
+- Credential format validation for major services
+- Secure storage with precedence rules (env vars > .env files)
+- Service-specific validation patterns
+- Production-ready design for cloud secret managers
+
+**Supported Services**:
+- Alpaca (trading and market data)
+- Polygon (market data)
+- Alpha Vantage (market data)
+- Anthropic (LLM provider)
+- OpenAI (LLM provider)
+
+**Usage Example**:
+```python
+from quantchain.core.security import APISecurityManager
+
+# Initialize with default .env file
+security = APISecurityManager()
+
+# Set API keys
+security.set_api_key("openai", "sk-your-openai-key")
+security.set_api_key("alpaca", "A-your-alpaca-key", "your-alpaca-secret")
+
+# Retrieve keys
+openai_key = security.get_api_key("openai")
+alpaca_secret = security.get_api_secret("alpaca")
+
+# Validate credentials
+is_valid = security.validate_credentials("openai")
+```
+
+**Environment Variables**:
+```
+OPENAI_API_KEY=sk-your-key
+ALPACA_API_KEY=A-your-key
+ALPACA_API_SECRET=your-secret
+```
+
 ## 3. Workflow for New Components (Tools, Data Connectors, etc.)
 
 Components are the building blocks of our agents, as defined in the PRD (e.g., `get_technical_indicator`, `AlpacaDataConnector`).

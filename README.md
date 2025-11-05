@@ -388,7 +388,16 @@ augmented_prompt = rag.generate_augmented_prompt(
 
 MIT License - see LICENSE file for details.
 
+## Security
+
+QuantChain includes a comprehensive security module for managing API credentials:
+
+- **Secure API Key Management**: Environment variables and .env file support
+- **Credential Validation**: Format validation for major financial services
+- **Production Ready**: Support for cloud secret managers (AWS, GCP, Vault)
+
+See `quantchain/core/security.py` for implementation details.
+
 ## Disclaimer
 
 This software is for educational and research purposes. Use at your own risk. Not financial advice.
-# CI fix - added security module
