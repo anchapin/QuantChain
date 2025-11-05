@@ -73,10 +73,15 @@ jobs:
       run: black --check --diff quantchain tests
 
     - name: Run Flake8 (linting)
-      run: flake8 quantchain tests --max-line-length=100 --extend-ignore=E203,W503
+      run: flake8 quantchain tests --max-line-length=88 --extend-ignore=E203,W503
 
     - name: Run MyPy (type checking)
       run: mypy quantchain --ignore-missing-imports
+
+    - name: Run Sourcery (code review)
+      run: |
+        pip install sourcery-cli
+        sourcery review quantchain tests || echo "Sourcery found issues - will fix in separate PR"
 
   build:
     runs-on: ubuntu-latest
