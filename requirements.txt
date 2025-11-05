@@ -8,6 +8,9 @@ sentence-transformers>=2.0.0
 PyYAML>=6.0.0
 numpy>=1.21.0
 
+# Security dependencies
+python-dotenv>=1.0.0
+
 # Trading and data dependencies
 alpaca-py>=0.43.1
 

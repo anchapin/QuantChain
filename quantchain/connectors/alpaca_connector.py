@@ -23,6 +23,7 @@ from alpaca.trading.enums import AssetClass
 
 from .base_interface import DataFeedInterface
 from ..core.exceptions import DataSourceError, AuthenticationError, SymbolNotFoundError
+from ..core.security import SecureKeyManager, SecurityError
 
 
 class AlpacaDataConnector(DataFeedInterface):
@@ -44,14 +45,30 @@ class AlpacaDataConnector(DataFeedInterface):
         """Initialize Alpaca data connector.
 
         Args:
-            api_key: Alpaca API key
-            api_secret: Alpaca API secret
+            api_key: Alpaca API key (optional, will load from env if not provided)
+            api_secret: Alpaca API secret (optional, will load from env if not provided)
             **kwargs: Additional configuration
                 - use_paper: Whether to use paper trading (default: True)
                 - crypto_feed: Data feed for crypto (default: 'iex' for free tier)
                 - symbol_limit: Maximum number of symbols to return in
                   get_available_symbols (default: None, no limit)
         """
+        # Use SecureKeyManager to get API credentials if not provided
+        security_manager = (
+            getattr(self, "_security_manager", None) or SecureKeyManager()
+        )
+
+        if api_key is None:
+            api_key = security_manager.get_key("ALPACA_API_KEY", required=True)
+        if api_secret is None:
+            api_secret = security_manager.get_key("ALPACA_SECRET_KEY", required=True)
+
+        # Validate keys
+        if not security_manager.validate_key("ALPACA_API_KEY", api_key):
+            raise SecurityError("Invalid Alpaca API key format")
+        if not security_manager.validate_key("ALPACA_SECRET_KEY", api_secret):
+            raise SecurityError("Invalid Alpaca secret key format")
+
         super().__init__(api_key, api_secret, **kwargs)
 
         self.api_key = api_key
