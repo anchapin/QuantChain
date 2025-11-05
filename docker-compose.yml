@@ -6,9 +6,9 @@ services:
     container_name: quantchain
     volumes:
       - .:/app
-      - /app/__pycache__
     environment:
       - PYTHONPATH=/app
+      - PYTHONDONTWRITEBYTECODE=1
       # Add your API keys here or use .env file
       # - ALPACA_API_KEY=your_key
       # - ALPACA_API_SECRET=your_secret

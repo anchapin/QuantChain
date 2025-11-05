@@ -116,7 +116,6 @@ jobs:
         docker buildx build \
           --load \
           --memory=2g \
-          --cpus=2 \
           -t quantchain:test \
           . || {
           echo "Docker build failed, checking disk space..."
