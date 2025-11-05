@@ -133,7 +133,6 @@ jobs:
         if docker buildx build \
           --load \
           --memory=1g \
-          --cpus=2 \
           --progress=plain \
           -t quantchain:test \
           --file Dockerfile.ci \

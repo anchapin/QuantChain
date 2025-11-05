@@ -38,7 +38,6 @@ USER quantchain
 
 # Update PATH to include user local packages
 ENV PATH=/home/quantchain/.local/bin:$PATH
-ENV PYTHONPATH=/home/quantchain/.local/lib/python3.12/site-packages:/usr/local/lib/python3.12/site-packages:$PYTHONPATH
 
 # Default command
-CMD ["python", "-c", "import quantchain; print('QuantChain ready!')"]
+CMD ["python", "-c", "import yaml, numpy; print('QuantChain CI ready!')"]
