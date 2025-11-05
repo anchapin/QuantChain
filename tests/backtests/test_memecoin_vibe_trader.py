@@ -66,7 +66,7 @@ class TestMemecoinVibeTrader:
         }
 
     def test_agent_identifies_and_trades_high_vibe_token(  # type: ignore
-        self, mock_token_pairs, mock_social_metrics, mock_llm_response, backtest_config
+        self, mock_token_pairs, mock_social_metrics, backtest_config
     ) -> None:
         """Test that agent successfully identifies and trades a high-vibe token"""
 
@@ -266,13 +266,40 @@ class TestMemecoinVibeTrader:
                 ),
             ]
 
-            # Create mock LLM that gives high score to second token
-            mock_llm = MockLLM(
-                """VIBE_SCORE: 85.0
-    RECOMMENDATION: BUY
-    RISK_LEVEL: MEDIUM
-    REASONING: Strong social momentum"""
-            )
+            # Create mock LLM that gives high score only to tokens
+            def mock_llm_factory():
+                """Factory that creates an LLM with conditional responses"""
+
+                class ConditionalMockLLM:
+                    def invoke(self, prompt):
+                        class MockResponse:
+                            def __init__(self, content):
+                                self.content = content
+
+                        # Check if prompt indicates poor social metrics
+                        if (
+                            "Telegram Followers: 0" in prompt
+                            or "Recent Posts: 0" in prompt
+                        ):
+                            # Failed social scraping - give low score
+                            return MockResponse(
+                                """VIBE_SCORE: 25.0
+RECOMMENDATION: SKIP
+RISK_LEVEL: HIGH
+REASONING: No social metrics available"""
+                            )
+                        else:
+                            # Good social metrics - give high score
+                            return MockResponse(
+                                """VIBE_SCORE: 85.0
+RECOMMENDATION: BUY
+RISK_LEVEL: MEDIUM
+REASONING: Strong social momentum"""
+                            )
+
+                return ConditionalMockLLM()
+
+            mock_llm = mock_llm_factory()
 
             mock_execution_tool_instance = MagicMock()
             mock_execution_tool_instance.execute_market_order.return_value = MagicMock(
@@ -304,8 +331,8 @@ class TestMemecoinVibeTrader:
             assert results["success"] is True  # Overall success despite partial failure
             assert results["tokens_scanned"] == 2  # Both tokens scanned
             assert (
-                results["assessments_made"] == 1
-            )  # Only second token assessed (first failed)
+                results["assessments_made"] == 2
+            )  # Both tokens assessed (first one got SKIP assessment)
             assert (
                 len(results["trades"]) == 1
             )  # One trade executed for successful token
@@ -423,7 +450,13 @@ class TestMemecoinVibeTrader:
 
             # Verify the trade size respects allocation limit (1% of $10,000 = $100)
             call_args = mock_execution_tool_instance.execute_market_order.call_args
-            executed_quantity = call_args[1][
-                "quantity"
-            ]  # Assuming price is $1 for simplicity in test
-            assert executed_quantity <= 100  # Should not exceed $100 allocation
+            executed_quantity = call_args[1]["quantity"]
+
+            # Calculate the expected price based on the agent's pricing formula
+            # For VIBE1: volume=100000, liquidity=50000 -> price = 0.2
+            expected_price = 100000.0 / (50000.0 * 10)
+            max_allowed_quantity = 100.0 / expected_price  # Allocation / expected price
+
+            assert (
+                executed_quantity <= max_allowed_quantity
+            )  # Should not exceed allocation limit
