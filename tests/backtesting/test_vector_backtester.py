@@ -243,7 +243,7 @@ class TestVectorizedPositionManager:
         prices = pd.Series([100, 101, 102, 103, 104])
         signals = pd.Series([1, 0, 0, 0, -1])  # Buy first, sell last
 
-        positions, trades = manager.process_signals(prices, signals)
+        positions, trades, final_cash = manager.process_signals(prices, signals)
 
         assert isinstance(positions, pd.Series)
         assert isinstance(trades, pd.DataFrame)
@@ -280,7 +280,7 @@ class TestVectorizedPositionManager:
         prices = pd.Series([100, 105, 95, 110, 90])
         signals = pd.Series([1, -1, 1, -1, 1])  # Multiple trades
 
-        positions, trades = manager.process_signals(prices, signals)
+        positions, trades, final_cash = manager.process_signals(prices, signals)
 
         assert isinstance(positions, pd.Series)
         assert isinstance(trades, pd.DataFrame)
@@ -302,7 +302,7 @@ class TestVectorizedPositionManager:
         prices = pd.Series([100, 105])
         signals = pd.Series([1, -1])  # Buy and sell
 
-        positions, trades = manager.process_signals(prices, signals)
+        positions, trades, final_cash = manager.process_signals(prices, signals)
 
         # Should account for costs in trade details
         assert len(trades) == 2  # Buy and sell trades
@@ -319,7 +319,7 @@ class TestVectorizedPositionManager:
         prices = pd.Series([1000, 2000, 3000])
         signals = pd.Series([1, 1, 1])  # Try to buy at each point
 
-        positions, trades = manager.process_signals(prices, signals)
+        positions, trades, final_cash = manager.process_signals(prices, signals)
 
         # Should handle insufficient cash gracefully
         # (either no positions or scaled positions)
