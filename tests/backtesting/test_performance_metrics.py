@@ -467,27 +467,6 @@ class TestComprehensiveMetrics:
 
         metrics_result = metrics.calculate_all_metrics(equity_curve, trades)
 
-        # Check all expected fields are present
-        required_fields = [
-            "total_return",
-            "annualized_return",
-            "sharpe_ratio",
-            "sortino_ratio",
-            "calmar_ratio",
-            "max_drawdown",
-            "max_drawdown_duration",
-            "volatility",
-            "win_rate",
-            "profit_factor",
-            "total_trades",
-            "winning_trades",
-            "losing_trades",
-            "avg_win",
-            "avg_loss",
-            "best_trade",
-            "worst_trade",
-        ]
-
         # All required fields should be present
         assert hasattr(metrics_result, "total_return"), "Missing field: total_return"
         assert hasattr(metrics_result, "sharpe_ratio"), "Missing field: sharpe_ratio"
