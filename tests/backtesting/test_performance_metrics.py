@@ -489,10 +489,8 @@ class TestComprehensiveMetrics:
         ]
 
         # All required fields should be present
-        missing_fields = [
-            field for field in required_fields if not hasattr(metrics_result, field)
-        ]
-        assert not missing_fields, f"Missing fields: {missing_fields}"
+        for field in required_fields:
+            assert hasattr(metrics_result, field), f"Missing field: {field}"
 
         # Validate logical constraints
         assert 0 <= metrics_result.win_rate <= 1

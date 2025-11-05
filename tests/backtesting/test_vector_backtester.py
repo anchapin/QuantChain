@@ -514,14 +514,19 @@ class TestVectorBacktesterIntegration:
             price = data.iloc[i]["close"]
             signal = signals.iloc[i]
 
-            # Process signal
-            if signal == 1 and positions == 0:  # Buy
-                shares = int(cash / price)
-                positions = shares
-                cash = cash - (shares * price)
-            elif signal == -1 and positions > 0:  # Sell
-                cash = cash + (positions * price)
-                positions = 0
+            # Process signal using arithmetic instead of conditionals
+            buy_condition = (signal == 1) * (positions == 0)
+            sell_condition = (signal == -1) * (positions > 0)
+            
+            # Execute buy
+            shares_to_buy = int(cash / price) * buy_condition
+            cash = cash - (shares_to_buy * price)
+            positions = positions + shares_to_buy
+            
+            # Execute sell
+            sell_proceeds = (positions * price) * sell_condition
+            cash = cash + sell_proceeds
+            positions = positions * (1 - sell_condition)
 
             # Calculate equity
             equity_value = cash + (positions * price)
