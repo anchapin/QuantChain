@@ -151,7 +151,7 @@ jobs:
       run: |
         echo "=== Verifying built image ==="
         docker images quantchain:test
-        docker run --rm quantchain:test python -c "import yaml, numpy; print('CI dependencies imported successfully')"
+        docker run --rm quantchain:test bash -c "cd /app && python -c \"import yaml, numpy; print('CI dependencies imported successfully')\""
 
     - name: Post-build cleanup
       run: |

@@ -16,16 +16,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Set working directory
 WORKDIR /app
 
+# Install Python dependencies with optimizations
+RUN pip install --no-cache-dir --no-deps -r requirements.txt || \
+    (echo "Installing with dependency resolution..." && \
+     pip install --no-cache-dir -r requirements.txt)
+
 # Create non-root user with home directory first
 RUN useradd --create-home --shell /bin/bash quantchain
-
-# Copy requirements first for better caching
-COPY requirements.txt .
-
-# Install Python dependencies with optimizations
-RUN pip install --no-cache-dir --user --no-deps -r requirements.txt || \
-    (echo "Installing with dependency resolution..." && \
-     pip install --no-cache-dir --user -r requirements.txt)
 
 # Copy source code
 COPY . .
