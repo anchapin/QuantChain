@@ -218,23 +218,17 @@ class MemecoinVibeTrader:
             final_state = self.workflow.invoke(initial_state)
 
             # Return summary
-            error_msg = getattr(final_state, "error_message", None)
-            # LangGraph returns state as dict, so access with dict.get
-            tokens = (
-                final_state.get("tokens", [])
-                if isinstance(final_state, dict)
-                else getattr(final_state, "tokens", [])
-            )
-            assessments = (
-                final_state.get("assessments", [])
-                if isinstance(final_state, dict)
-                else getattr(final_state, "assessments", [])
-            )
-            trades = (
-                final_state.get("trades_executed", [])
-                if isinstance(final_state, dict)
-                else getattr(final_state, "trades_executed", [])
-            )
+            # Normalize state access - handle both dict and AgentState returns
+            if isinstance(final_state, dict):
+                error_msg = final_state.get("error_message")
+                tokens = final_state.get("tokens", [])
+                assessments = final_state.get("assessments", [])
+                trades = final_state.get("trades_executed", [])
+            else:
+                error_msg = getattr(final_state, "error_message", None)
+                tokens = getattr(final_state, "tokens", [])
+                assessments = getattr(final_state, "assessments", [])
+                trades = getattr(final_state, "trades_executed", [])
 
             return {
                 "success": error_msg is None,
@@ -414,9 +408,13 @@ class MemecoinVibeTrader:
                     position_value = (
                         portfolio_value * self.config.max_allocation_per_trade
                     )
-                    # Assume $1 per token for simplicity
-                    # (would need price lookup in real impl)
-                    quantity = position_value / 1.0
+                    # TODO: Get actual token price from price oracle or DEX data
+                    # For now, estimate token price based on liquidity/volume ratio
+                    # This is a simplified approach for backtesting
+                    estimated_price = self._estimate_token_price(assessment.token)
+                    quantity = (
+                        position_value / estimated_price if estimated_price > 0 else 0
+                    )
 
                     # Execute buy order (Alpaca format)
                     order_result = self.execution_tool.execute_market_order(
@@ -561,3 +559,27 @@ REASONING: [Your detailed analysis in 2-3 sentences]
             risk_level=risk_level,
             reasoning=reasoning,
         )
+
+    def _estimate_token_price(self, token: TokenPair) -> float:
+        """Estimate token price based on liquidity and volume data.
+
+        This is a simplified approach for backtesting purposes.
+        In production, you would use a price oracle or DEX data.
+
+        Args:
+            token: The token pair to estimate price for
+
+        Returns:
+            Estimated price in USD (defaults to 1.0 if calculation fails)
+        """
+        try:
+            # Simple heuristic: price = volume / (liquidity * 10)
+            # This assumes most tokens have reasonable volume relative to liquidity
+            # The factor of 10 is arbitrary to keep prices in a reasonable range
+            if token.volume_24h > 0 and token.liquidity > 0:
+                return min(
+                    token.volume_24h / (token.liquidity * 10), 100.0
+                )  # Cap at $100
+            return 1.0  # Default to $1 if no data
+        except Exception:
+            return 1.0  # Default to $1 on error

@@ -1,16 +1,13 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from datetime import datetime, timedelta
-from typing import List
 
 from quantchain.agents.memecoin_vibe_trader import (
     MemecoinVibeTrader,
     MemecoinVibeTraderConfig,
     MockLLM,
 )
-from quantchain.connectors.dexscreener_connector import DexscreenerDataConnector
-from quantchain.tools.social_media_scraper import SocialMediaScraper, SocialMetrics
-from quantchain.tools.execution import AlpacaExecutionTool
+from quantchain.tools.social_media_scraper import SocialMetrics
 
 
 class TestMemecoinVibeTrader:
@@ -163,9 +160,12 @@ class TestMemecoinVibeTrader:
             mock_dex_instance = mock_dex_connector.return_value
             mock_dex_instance.get_new_token_pairs.return_value = mock_token_pairs
 
-            # This test is placeholder - actual implementation needs to mock LLM properly
+            # This test is placeholder - actual implementation needs to mock LLM
+            # properly
             # TODO: Implement proper LLM mocking for low vibe scores
-            pass  # Placeholder until implementation exists
+            pytest.skip(
+                "Test not yet implemented - needs LLM mocking for low vibe scores"
+            )
 
     def test_agent_handles_dexscreener_api_failure(self, backtest_config):
         """Test that agent gracefully handles Dexscreener API failures"""
@@ -180,7 +180,7 @@ class TestMemecoinVibeTrader:
             )
 
             # TODO: Implement proper test for API failure handling
-            pass  # Placeholder until implementation exists
+            pytest.skip("Test not yet implemented - needs API failure handling")
 
     def test_agent_handles_social_scraping_failure(self, backtest_config):
         """Test that agent continues processing when social media scraping fails"""
@@ -203,7 +203,9 @@ class TestMemecoinVibeTrader:
             ]
 
             # TODO: Implement proper test for social scraping failure handling
-            pass  # Placeholder until implementation exists
+            pytest.skip(
+                "Test not yet implemented - needs social scraping failure handling"
+            )
 
     def test_agent_respects_risk_limits(self, backtest_config):
         """Test that agent respects position limits and allocation constraints"""
@@ -216,4 +218,4 @@ class TestMemecoinVibeTrader:
         # TODO: Implement test when agent exists
         # Multiple high-vibe tokens should only result in 1 trade
         # Trade size should be limited to 1% of portfolio
-        pass  # Placeholder until implementation exists
+        pytest.skip("Test not yet implemented - needs agent exists check")

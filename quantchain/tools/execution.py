@@ -55,11 +55,12 @@ class AlpacaExecutionTool:
             ExecutionError: If order execution fails
         """
         # Validate side
-        if side.lower() not in ["buy", "sell"]:
+        normalized_side = side.strip().lower()
+        if normalized_side not in ["buy", "sell"]:
             raise ValueError(f"Invalid side: {side}. Must be 'buy' or 'sell'")
 
         # Convert to enum
-        order_side = OrderSide.BUY if side.lower() == "buy" else OrderSide.SELL
+        order_side = OrderSide.BUY if normalized_side == "buy" else OrderSide.SELL
 
         # Create order request
         order_request = OrderRequest(
