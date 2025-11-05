@@ -70,9 +70,9 @@ class VolumeSlippage(SlippageModel):
         slippage_amount = market_price * (slippage_percent / 100)
 
         if order.side == OrderSide.BUY:
-            return market_price + slippage_amount
+            return float(market_price + slippage_amount)
         else:
-            return market_price - slippage_amount
+            return float(market_price - slippage_amount)
 
 
 @dataclass
@@ -114,31 +114,32 @@ class ImmediateFill(FillModel):
             if order.price is None:
                 return False
             if order.side == OrderSide.BUY:
-                return market_price <= order.price
+                return market_price <= order.price  # type: ignore[no-any-return]
             else:
-                return market_price >= order.price
+                return market_price >= order.price  # type: ignore[no-any-return]
         elif order.order_type == OrderType.STOP:
             if order.stop_price is None:
                 return False
             if order.side == OrderSide.BUY:
-                return market_price >= order.stop_price
+                return market_price >= order.stop_price  # type: ignore[no-any-return]
             else:
-                return market_price <= order.stop_price
+                return market_price <= order.stop_price  # type: ignore[no-any-return]
         elif order.order_type == OrderType.STOP_LIMIT:
             # First check stop condition
             if order.stop_price is None or order.price is None:
                 return False
-            if order.side == OrderSide.BUY:
-                if market_price < order.stop_price:
-                    return False
-            else:
-                if market_price > order.stop_price:
-                    return False
+            if (
+                order.side == OrderSide.BUY
+                and market_price < order.stop_price
+                or order.side != OrderSide.BUY
+                and market_price > order.stop_price
+            ):
+                return False
             # Then check limit condition
             if order.side == OrderSide.BUY:
-                return market_price <= order.price
+                return market_price <= order.price  # type: ignore[no-any-return]
             else:
-                return market_price >= order.price
+                return market_price >= order.price  # type: ignore[no-any-return]
 
         return False
 
@@ -491,22 +492,20 @@ class PaperTradingExecutor(TradingExecutionInterface):
         """Export complete trade history."""
         orders = self.get_order_history()
 
-        data = []
-        for order in orders:
-            data.append(
-                {
-                    "timestamp": order.timestamp,
-                    "order_id": order.order_id,
-                    "symbol": order.symbol,
-                    "side": order.side.value,
-                    "order_type": order.order_type.value,
-                    "quantity": order.quantity,
-                    "filled_quantity": order.filled_quantity,
-                    "avg_fill_price": order.avg_fill_price,
-                    "status": order.status.value,
-                }
-            )
-
+        data = [
+            {
+                "timestamp": order.timestamp,
+                "order_id": order.order_id,
+                "symbol": order.symbol,
+                "side": order.side.value,
+                "order_type": order.order_type.value,
+                "quantity": order.quantity,
+                "filled_quantity": order.filled_quantity,
+                "avg_fill_price": order.avg_fill_price,
+                "status": order.status.value,
+            }
+            for order in orders
+        ]
         return pd.DataFrame(data)
 
     def reset(self) -> None:

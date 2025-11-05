@@ -13,8 +13,7 @@ class TestExecutionFactory:
     @pytest.fixture
     def mock_config(self):
         """Create a mock QuantChainConfig."""
-        config = Mock(spec=QuantChainConfig)
-        return config
+        return Mock(spec=QuantChainConfig)
 
     def test_create_alpaca_paper_trading(self, mock_config):
         """Test creating Alpaca connector in paper trading mode."""
@@ -64,9 +63,7 @@ class TestExecutionFactory:
         """Test creating standalone paper trading executor."""
 
         def mock_get(key, default=None):
-            if key == "trading.default_broker":
-                return "paper"
-            return default
+            return "paper" if key == "trading.default_broker" else default
 
         mock_config.get.side_effect = mock_get
 

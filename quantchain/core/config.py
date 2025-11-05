@@ -109,14 +109,14 @@ class QuantChainConfig:
                 except yaml.YAMLError as e:
                     raise ValueError(
                         f"Invalid YAML in configuration file {config_file}: {e}"
-                    )
+                    ) from e
             else:
                 try:
                     file_config = json.load(f)
                 except json.JSONDecodeError as e:
                     raise ValueError(
                         f"Invalid JSON in configuration file {config_file}: {e}"
-                    )
+                    ) from e
 
         # Deep merge file config with default config
         self._deep_merge(self._config, file_config)

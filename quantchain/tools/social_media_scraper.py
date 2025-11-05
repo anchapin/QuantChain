@@ -2,7 +2,7 @@
 
 import logging
 import time
-from typing import Dict, Any, Optional, TYPE_CHECKING
+from typing import Dict, Any, Optional
 from dataclasses import dataclass
 
 try:
@@ -16,20 +16,12 @@ from ..core.retry import RetryHandler
 
 def _get_beautiful_soup() -> Any:
     """Get BeautifulSoup class or None if not available."""
-    if TYPE_CHECKING:
-        try:
-            from bs4 import BeautifulSoup
+    try:
+        from bs4 import BeautifulSoup
 
-            return BeautifulSoup
-        except ImportError:
-            return None
-    else:
-        try:
-            from bs4 import BeautifulSoup
-
-            return BeautifulSoup
-        except ImportError:
-            return None
+        return BeautifulSoup
+    except ImportError:
+        return None
 
 
 # Make BeautifulSoup available at module level
@@ -214,10 +206,7 @@ class SocialMediaScraper:
             # Rate limiting
             self._rate_limit()
 
-            # Try to find official token account
-            account_data = self._find_twitter_account(token_symbol)
-
-            if account_data:
+            if account_data := self._find_twitter_account(token_symbol):
                 # Get recent tweets and engagement
                 recent_activity = self._get_twitter_recent_activity(
                     account_data.get("username", "")

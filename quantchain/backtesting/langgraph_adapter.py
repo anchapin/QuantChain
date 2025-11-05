@@ -250,7 +250,7 @@ class DeterministicLLMWrapper:
             with open(scenario_path, "r") as f:
                 self.response_rules = json.load(f)
         except Exception as e:
-            raise ScenarioLoadError(f"Failed to load scenario: {e}")
+            raise ScenarioLoadError(f"Failed to load scenario: {e}") from e
 
     def save_scenario(self, scenario_path: str) -> None:
         """
@@ -266,7 +266,7 @@ class DeterministicLLMWrapper:
             with open(scenario_path, "w") as f:
                 json.dump(self.response_rules, f, indent=2)
         except Exception as e:
-            raise DeterministicRuleError(f"Failed to save scenario: {e}")
+            raise DeterministicRuleError(f"Failed to save scenario: {e}") from e
 
 
 class LangGraphBacktestAdapter:
@@ -398,10 +398,8 @@ class AgentStrategy:
                 # Set timeout if configured
                 timeout = self.adapter.config.get("timeout", 30.0)  # 30 seconds default
 
-                if timeout > 0:
-                    # For simplicity, we'll simulate timeout with time check
-                    if time.time() - start_time > timeout:
-                        raise TimeoutError("Agent execution timeout")
+                if timeout > 0 and time.time() - start_time > timeout:
+                    raise TimeoutError("Agent execution timeout")
 
                 result_state = self.adapter.agent_graph.invoke(new_state.__dict__)
 
@@ -415,9 +413,9 @@ class AgentStrategy:
 
             except Exception as e:
                 if "timeout" in str(e).lower():
-                    raise TimeoutError(f"Agent execution timeout: {e}")
+                    raise TimeoutError(f"Agent execution timeout: {e}") from e
                 else:
-                    raise AgentExecutionError(f"Agent execution failed: {e}")
+                    raise AgentExecutionError(f"Agent execution failed: {e}") from e
 
             # Capture reasoning
             execution_time = (time.time() - start_time) * 1000  # Convert to ms
@@ -436,7 +434,7 @@ class AgentStrategy:
         except Exception as e:
             if isinstance(e, (AgentExecutionError, TimeoutError)):
                 raise
-            raise AgentExecutionError(f"Strategy execution failed: {e}")
+            raise AgentExecutionError(f"Strategy execution failed: {e}") from e
 
     def _execute_trade(self, signal: str, bar: Dict[str, Any]) -> None:
         """
@@ -513,8 +511,7 @@ def bar_to_agent_state(
     # Calculate equity with current bar price
     current_price = bar.get("close", 0)
     if current_price > 0:
-        symbol = bar.get("symbol")
-        if symbol:
+        if symbol := bar.get("symbol"):
             current_prices = {symbol: current_price}
             new_state.equity = position_manager.calculate_equity(current_prices)
         else:
@@ -551,8 +548,7 @@ def agent_state_to_signal(agent_state: AgentState) -> Optional[str]:
         return None
 
     if signal == "sell":
-        symbol = agent_state.current_bar.get("symbol")
-        if symbol:
+        if symbol := agent_state.current_bar.get("symbol"):
             current_position = agent_state.positions.get(symbol, 0)
             if current_position <= 0:
                 return None

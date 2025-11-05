@@ -5,4 +5,4 @@ useDefault = true
 id = "generic-api-key"
 description = "Ignore test API keys in test files"
 path = "tests/"
-regex = "sk-test.*|AAAAAAAAAAAAAAAAAAAAA|wJalrXUtnFEMI.*EXAMPLE.*"
+regex = "sk-test.*|DUMMY_ALPACA_KEY.*|DUMMY_SECRET.*"

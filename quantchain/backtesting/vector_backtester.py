@@ -206,17 +206,14 @@ class VectorizedPositionManager:
         if self.trade_log is not None and not self.trade_log.empty:
             # Manually update cash at each trade timestamp and forward fill
             for _, trade in self.trade_log.iterrows():
-                timestamp = trade["timestamp"]
                 cash_after = trade["cash_after"]
+                timestamp = trade["timestamp"]
                 # Update all entries from this timestamp forward
                 mask = prices.index >= timestamp
                 cash_series[mask] = cash_after
-        else:
-            # If no trade log and positions are non-zero, assume all cash was used
-            # This handles cases where positions are manually set
-            if len(positions) > 0 and positions.iloc[0] > 0:
-                # All cash was used to buy initial position
-                cash_series[:] = 0.0
+        elif len(positions) > 0 and positions.iloc[0] > 0:
+            # All cash was used to buy initial position
+            cash_series[:] = 0.0
 
         # Calculate position value and total equity using vectorized operations
         position_values = positions * prices

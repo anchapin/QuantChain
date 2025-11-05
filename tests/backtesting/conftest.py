@@ -24,9 +24,7 @@ def sample_ohlcv_data():
     returns = np.random.normal(0.0005, 0.02, 500)  # Daily returns
     prices = [initial_price]
 
-    for ret in returns[1:]:
-        prices.append(prices[-1] * (1 + ret))
-
+    prices.extend(prices[-1] * (1 + ret) for ret in returns[1:])
     prices = np.array(prices)
 
     # Generate OHLCV from close prices
@@ -36,7 +34,7 @@ def sample_ohlcv_data():
     open_price[0] = prices[0]
     volume = np.random.randint(100000, 1000000, 500)
 
-    data = pd.DataFrame(
+    return pd.DataFrame(
         {
             "open": open_price,
             "high": high,
@@ -46,8 +44,6 @@ def sample_ohlcv_data():
         },
         index=dates,
     )
-
-    return data
 
 
 @pytest.fixture
@@ -64,9 +60,7 @@ def sample_multibar_data():
         returns = np.random.normal(0.0005, 0.02, 100)
         prices = [initial_price]
 
-        for ret in returns[1:]:
-            prices.append(prices[-1] * (1 + ret))
-
+        prices.extend(prices[-1] * (1 + ret) for ret in returns[1:])
         prices = np.array(prices)
 
         high = prices * (1 + np.abs(np.random.normal(0, 0.01, 100)))
@@ -242,12 +236,8 @@ def sample_equity_curve():
 
     # Create equity series
     equity = [initial_equity]
-    for ret in daily_returns:
-        equity.append(equity[-1] * (1 + ret))
-
-    equity_series = pd.Series(equity[1:], index=dates)
-
-    return equity_series
+    equity.extend(equity[-1] * (1 + ret) for ret in daily_returns)
+    return pd.Series(equity[1:], index=dates)
 
 
 @pytest.fixture
@@ -265,12 +255,8 @@ def volatile_equity_curve():
     daily_returns[100:120] = np.random.normal(-0.02, 0.01, 20)
 
     equity = [initial_equity]
-    for ret in daily_returns:
-        equity.append(equity[-1] * (1 + ret))
-
-    equity_series = pd.Series(equity[1:], index=dates)
-
-    return equity_series
+    equity.extend(equity[-1] * (1 + ret) for ret in daily_returns)
+    return pd.Series(equity[1:], index=dates)
 
 
 @pytest.fixture
@@ -372,7 +358,7 @@ def sample_benchmark_returns():
 def generate_synthetic_market_data(
     start_date="2023-01-01",
     periods=100,
-    symbols=["AAPL"],
+    symbols=None,
     initial_price=100.0,
     trend=0.0005,
     volatility=0.02,
@@ -393,6 +379,8 @@ def generate_synthetic_market_data(
     Returns:
         pd.DataFrame with OHLCV data
     """
+    if symbols is None:
+        symbols = ["AAPL"]
     np.random.seed(int(datetime.now().timestamp()))  # Random seed
 
     dates = pd.date_range(start=start_date, periods=periods, freq="D")
@@ -403,9 +391,7 @@ def generate_synthetic_market_data(
         returns = np.random.normal(trend, volatility, periods)
         prices = [initial_price]
 
-        for ret in returns[1:]:
-            prices.append(prices[-1] * (1 + ret))
-
+        prices.extend(prices[-1] * (1 + ret) for ret in returns[1:])
         prices = np.array(prices)
 
         # Generate OHLCV

@@ -102,9 +102,7 @@ class DexscreenerDataConnector(DataFeedInterface):
                 self._token_cache = {}
                 if "pairs" in data:
                     for pair in data["pairs"][:100]:  # Limit to top 100 for cache
-                        # Use pair address as key, but also store symbol info
-                        pair_address = pair.get("pairAddress", "")
-                        if pair_address:
+                        if pair_address := pair.get("pairAddress", ""):
                             self._token_cache[pair_address] = pair
 
                 self._cache_timestamp = now
@@ -142,10 +140,11 @@ class DexscreenerDataConnector(DataFeedInterface):
             for pair_data in self._token_cache.values():
                 base_token = pair_data.get("baseToken", {}).get("symbol", "").upper()
                 quote_token = pair_data.get("quoteToken", {}).get("symbol", "").upper()
-                if (
-                    symbol_upper in [base_token, quote_token]
-                    or symbol_upper == f"{base_token}/{quote_token}"
-                ):
+                if symbol_upper in [
+                    base_token,
+                    quote_token,
+                    f"{base_token}/{quote_token}",
+                ]:
                     return pair_data
         except Exception:
             pass
@@ -208,9 +207,7 @@ class DexscreenerDataConnector(DataFeedInterface):
             # Use current timestamp
             timestamp = datetime.now(timezone.utc)
 
-            # For historical requests, we can only provide current data
-            # In a real implementation, integrate with another historical data source
-            df = pd.DataFrame(
+            return pd.DataFrame(
                 [
                     {
                         "timestamp": timestamp,
@@ -222,8 +219,6 @@ class DexscreenerDataConnector(DataFeedInterface):
                     }
                 ]
             )
-            return df
-
         except SymbolNotFoundError:
             raise
         except Exception as e:
@@ -234,19 +229,19 @@ class DexscreenerDataConnector(DataFeedInterface):
     def get_real_time_data(self, symbol: str) -> Dict[str, Any]:
         """Fetch real-time price data for a token pair."""
         try:
-            pair_data = self._find_pair_by_symbol(symbol)
-            if not pair_data:
-                raise SymbolNotFoundError(f"Token pair not found: {symbol}")
+            if pair_data := self._find_pair_by_symbol(symbol):
+                return {
+                    "timestamp": datetime.now(timezone.utc),
+                    "price": float(pair_data.get("priceUsd", 0)),
+                    "bid": float(
+                        pair_data.get("priceUsd", 0)
+                    ),  # Dexscreener doesn't provide bid/ask
+                    "ask": float(pair_data.get("priceUsd", 0)),
+                    "volume": float(pair_data.get("volume", {}).get("h24", 0)),
+                }
 
-            return {
-                "timestamp": datetime.now(timezone.utc),
-                "price": float(pair_data.get("priceUsd", 0)),
-                "bid": float(
-                    pair_data.get("priceUsd", 0)
-                ),  # Dexscreener doesn't provide bid/ask
-                "ask": float(pair_data.get("priceUsd", 0)),
-                "volume": float(pair_data.get("volume", {}).get("h24", 0)),
-            }
+            else:
+                raise SymbolNotFoundError(f"Token pair not found: {symbol}")
 
         except SymbolNotFoundError:
             raise
@@ -279,7 +274,9 @@ class DexscreenerDataConnector(DataFeedInterface):
         except SymbolNotFoundError:
             raise
         except Exception as e:
-            raise DataSourceError(f"Failed to fetch quote for {symbol}: {str(e)}")
+            raise DataSourceError(
+                f"Failed to fetch quote for {symbol}: {str(e)}"
+            ) from e
 
     def get_available_symbols(
         self, market: Optional[str] = None, limit: Optional[int] = None
@@ -359,28 +356,24 @@ class DexscreenerDataConnector(DataFeedInterface):
             data = self._make_request("dex/tokens")  # type: ignore[no-any-return]
             pairs = data.get("pairs", [])[:limit]
 
-            trending = []
-            for pair in pairs:
-                trending.append(
-                    {
-                        "symbol": (
-                            f"{pair.get('baseToken', {}).get('symbol', '')}/"
-                            f"{pair.get('quoteToken', {}).get('symbol', '')}:"
-                            f"{pair.get('pairAddress', '')}"
-                        ),
-                        "price": float(pair.get("priceUsd", 0)),
-                        "volume_24h": float(pair.get("volume", {}).get("h24", 0)),
-                        "liquidity": float(pair.get("liquidity", {}).get("usd", 0)),
-                        "price_change_24h": float(
-                            pair.get("priceChange", {}).get("h24", 0)
-                        ),
-                        "dex": pair.get("dexId", ""),
-                        "pair_address": pair.get("pairAddress", ""),
-                    }
-                )
-
-            return trending
-
+            return [
+                {
+                    "symbol": (
+                        f"{pair.get('baseToken', {}).get('symbol', '')}/"
+                        f"{pair.get('quoteToken', {}).get('symbol', '')}:"
+                        f"{pair.get('pairAddress', '')}"
+                    ),
+                    "price": float(pair.get("priceUsd", 0)),
+                    "volume_24h": float(pair.get("volume", {}).get("h24", 0)),
+                    "liquidity": float(pair.get("liquidity", {}).get("usd", 0)),
+                    "price_change_24h": float(
+                        pair.get("priceChange", {}).get("h24", 0)
+                    ),
+                    "dex": pair.get("dexId", ""),
+                    "pair_address": pair.get("pairAddress", ""),
+                }
+                for pair in pairs
+            ]
         except Exception as e:
             raise DataSourceError(f"Failed to fetch trending pairs: {str(e)}") from e
 
@@ -391,25 +384,21 @@ class DexscreenerDataConnector(DataFeedInterface):
             data = self._make_request("dex/search", {"q": query})
             pairs = data.get("pairs", [])
 
-            results = []
-            for pair in pairs:
-                results.append(
-                    {
-                        "symbol": (
-                            f"{pair.get('baseToken', {}).get('symbol', '')}/"
-                            f"{pair.get('quoteToken', {}).get('symbol', '')}:"
-                            f"{pair.get('pairAddress', '')}"
-                        ),
-                        "price": float(pair.get("priceUsd", 0)),
-                        "volume_24h": float(pair.get("volume", {}).get("h24", 0)),
-                        "liquidity": float(pair.get("liquidity", {}).get("usd", 0)),
-                        "dex": pair.get("dexId", ""),
-                        "pair_address": pair.get("pairAddress", ""),
-                    }
-                )
-
-            return results
-
+            return [
+                {
+                    "symbol": (
+                        f"{pair.get('baseToken', {}).get('symbol', '')}/"
+                        f"{pair.get('quoteToken', {}).get('symbol', '')}:"
+                        f"{pair.get('pairAddress', '')}"
+                    ),
+                    "price": float(pair.get("priceUsd", 0)),
+                    "volume_24h": float(pair.get("volume", {}).get("h24", 0)),
+                    "liquidity": float(pair.get("liquidity", {}).get("usd", 0)),
+                    "dex": pair.get("dexId", ""),
+                    "pair_address": pair.get("pairAddress", ""),
+                }
+                for pair in pairs
+            ]
         except Exception as e:
             raise DataSourceError(
                 f"Failed to search pairs for '{query}': {str(e)}"

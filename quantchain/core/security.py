@@ -62,23 +62,22 @@ class APISecurityManager:
                 with open(self.env_file, "r", encoding="utf-8") as f:
                     for line in f:
                         line = line.strip()
-                        if line and not line.startswith("#"):
-                            if "=" in line:
-                                key, value = line.split("=", 1)
-                                key = key.strip()
-                                value = value.strip().strip('"').strip("'")
+                        if line and not line.startswith("#") and "=" in line:
+                            key, value = line.split("=", 1)
+                            key = key.strip()
+                            value = value.strip().strip('"').strip("'")
 
-                                # Parse service and type from key
-                                if key.endswith("_API_KEY"):
-                                    service = key[:-8].lower()  # Remove _API_KEY
-                                    if service not in self._credentials:
-                                        self._credentials[service] = {}
-                                    self._credentials[service]["key"] = value
-                                elif key.endswith("_API_SECRET"):
-                                    service = key[:-11].lower()  # Remove _API_SECRET
-                                    if service not in self._credentials:
-                                        self._credentials[service] = {}
-                                    self._credentials[service]["secret"] = value
+                            # Parse service and type from key
+                            if key.endswith("_API_KEY"):
+                                service = key[:-8].lower()  # Remove _API_KEY
+                                if service not in self._credentials:
+                                    self._credentials[service] = {}
+                                self._credentials[service]["key"] = value
+                            elif key.endswith("_API_SECRET"):
+                                service = key[:-11].lower()  # Remove _API_SECRET
+                                if service not in self._credentials:
+                                    self._credentials[service] = {}
+                                self._credentials[service]["secret"] = value
             except Exception as e:
                 logger.warning(f"Failed to load .env file {self.env_file}: {e}")
 
@@ -171,9 +170,12 @@ class APISecurityManager:
             return False
 
         # Validate secret if required and provided
-        if "secret_pattern" in patterns and test_secret:
-            if not re.match(patterns["secret_pattern"], test_secret):
-                return False
+        if (
+            "secret_pattern" in patterns
+            and test_secret
+            and not re.match(patterns["secret_pattern"], test_secret)
+        ):
+            return False
 
         return True
 
@@ -205,14 +207,14 @@ class APISecurityManager:
             with open(self.env_file, "r", encoding="utf-8") as f:
                 env_lines = f.readlines()
 
-        # Remove existing service entries
-        filtered_lines = []
-        for line in env_lines:
-            if not any(
-                f"{service.upper()}_API" in line for service in self._credentials.keys()
-            ):
-                filtered_lines.append(line)
-
+        filtered_lines = [
+            line
+            for line in env_lines
+            if all(
+                f"{service.upper()}_API" not in line
+                for service in self._credentials.keys()
+            )
+        ]
         # Add current credentials
         for service, creds in self._credentials.items():
             filtered_lines.append(f'{service.upper()}_API_KEY="{creds["key"]}"\n')

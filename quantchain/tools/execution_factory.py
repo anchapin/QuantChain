@@ -28,17 +28,15 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
         api_key = config.get_api_key("alpaca")
         api_secret = config.get_api_key("alpaca_secret")
 
-        if paper_trading:
-            # For paper trading, check for credentials or raise proper error
-            if not api_key or not api_secret:
+        # For paper trading, check for credentials or raise proper error
+        if not api_key or not api_secret:
+            if paper_trading:
                 raise AuthenticationError(
                     "Alpaca API credentials required for paper trading. "
                     "Set ALPACA_API_KEY and ALPACA_API_SECRET environment variables, "
                     "or configure them in your config file."
                 )
-        else:
-            # For live trading, ensure we have real credentials
-            if not api_key or not api_secret:
+            else:
                 raise AuthenticationError(
                     "Alpaca API key and secret required for live trading. "
                     "Set ALPACA_API_KEY and ALPACA_API_SECRET environment variables."
@@ -58,5 +56,5 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
 
     else:
         raise ConfigurationError(
-            "Unsupported broker: " + broker + ". Supported: alpaca, paper"
+            f"Unsupported broker: {broker}. Supported: alpaca, paper"
         )

@@ -96,10 +96,9 @@ class PerformanceMetrics:
             raise InsufficientDataError("Equity curve must have at least 2 points")
 
         try:
-            returns = equity_curve.pct_change().dropna()
-            return returns
+            return equity_curve.pct_change().dropna()
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate returns: {e}")
+            raise MetricsCalculationError(f"Failed to calculate returns: {e}") from e
 
     def calculate_total_return(self, equity_curve: pd.Series) -> float:
         """
@@ -121,7 +120,9 @@ class PerformanceMetrics:
                 )
             return float(equity_curve.iloc[-1] / equity_curve.iloc[0]) - 1
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate total return: {e}")
+            raise MetricsCalculationError(
+                f"Failed to calculate total return: {e}"
+            ) from e
 
     def calculate_annualized_return(
         self, returns: pd.Series, frequency: str = "1d"
@@ -150,7 +151,9 @@ class PerformanceMetrics:
 
             return float((1 + total_return) ** (1 / time_period) - 1)
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate annualized return: {e}")
+            raise MetricsCalculationError(
+                f"Failed to calculate annualized return: {e}"
+            ) from e
 
     def calculate_sharpe_ratio(
         self, returns: pd.Series, frequency: str = "1d"
@@ -190,7 +193,9 @@ class PerformanceMetrics:
         except Exception as e:
             if isinstance(e, (InvalidFrequencyError, MetricsCalculationError)):
                 raise
-            raise MetricsCalculationError(f"Failed to calculate Sharpe ratio: {e}")
+            raise MetricsCalculationError(
+                f"Failed to calculate Sharpe ratio: {e}"
+            ) from e
 
     def calculate_sortino_ratio(
         self, returns: pd.Series, frequency: str = "1d"
@@ -235,7 +240,9 @@ class PerformanceMetrics:
         except Exception as e:
             if isinstance(e, (InvalidFrequencyError, MetricsCalculationError)):
                 raise
-            raise MetricsCalculationError(f"Failed to calculate Sortino ratio: {e}")
+            raise MetricsCalculationError(
+                f"Failed to calculate Sortino ratio: {e}"
+            ) from e
 
     def calculate_max_drawdown(self, equity_curve: pd.Series) -> Dict[str, Any]:
         """
@@ -285,9 +292,7 @@ class PerformanceMetrics:
                 drawdown_periods.append((start_idx or 0, end_idx, duration))
 
             # Find max duration
-            max_duration = (
-                max([d[2] for d in drawdown_periods]) if drawdown_periods else 0
-            )
+            max_duration = max((d[2] for d in drawdown_periods), default=0)
 
             # Find dates for max drawdown
             max_dd_idx = drawdown.idxmin()
@@ -311,7 +316,9 @@ class PerformanceMetrics:
                 "max_drawdown_end": max_dd_end_date,
             }
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate max drawdown: {e}")
+            raise MetricsCalculationError(
+                f"Failed to calculate max drawdown: {e}"
+            ) from e
 
     def calculate_calmar_ratio(self, returns: pd.Series, max_drawdown: float) -> float:
         """
@@ -331,7 +338,9 @@ class PerformanceMetrics:
             annual_return = self.calculate_annualized_return(returns)
             return annual_return / max_drawdown
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate Calmar ratio: {e}")
+            raise MetricsCalculationError(
+                f"Failed to calculate Calmar ratio: {e}"
+            ) from e
 
     def calculate_win_rate(self, trades: pd.DataFrame) -> float:
         """
@@ -353,7 +362,7 @@ class PerformanceMetrics:
             winning_trades = trades[trades["pnl"] > 0]
             return len(winning_trades) / len(trades)
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate win rate: {e}")
+            raise MetricsCalculationError(f"Failed to calculate win rate: {e}") from e
 
     def calculate_profit_factor(self, trades: pd.DataFrame) -> float:
         """
@@ -377,7 +386,9 @@ class PerformanceMetrics:
 
             return gross_profit / gross_loss if gross_loss > 0 else float("inf")
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate profit factor: {e}")
+            raise MetricsCalculationError(
+                f"Failed to calculate profit factor: {e}"
+            ) from e
 
     def generate_tear_sheet(
         self, results: "BacktestResult", save_path: Optional[str] = None
@@ -419,7 +430,7 @@ class PerformanceMetrics:
         except Exception as e:
             if isinstance(e, LibraryImportError):
                 raise
-            raise MetricsCalculationError(f"Failed to generate tear sheet: {e}")
+            raise MetricsCalculationError(f"Failed to generate tear sheet: {e}") from e
 
     def calculate_empyrical_metrics(self, returns: pd.Series) -> Dict[str, float]:
         """
@@ -461,7 +472,9 @@ class PerformanceMetrics:
         except Exception as e:
             if isinstance(e, LibraryImportError):
                 raise
-            raise MetricsCalculationError(f"Failed to calculate Empyrical metrics: {e}")
+            raise MetricsCalculationError(
+                f"Failed to calculate Empyrical metrics: {e}"
+            ) from e
 
     def calculate_all_metrics(
         self, equity_curve: pd.Series, trades: pd.DataFrame, frequency: str = "1d"
@@ -595,4 +608,6 @@ class PerformanceMetrics:
         except Exception as e:
             if isinstance(e, MetricsCalculationError):
                 raise
-            raise MetricsCalculationError(f"Failed to calculate all metrics: {e}")
+            raise MetricsCalculationError(
+                f"Failed to calculate all metrics: {e}"
+            ) from e

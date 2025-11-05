@@ -43,10 +43,9 @@ class TestAPISecurityManager:
     def test_set_and_get_api_secret(self):
         """Test setting and retrieving an API secret."""
         manager = APISecurityManager()
-        test_key = (
-            "AAAAAAAAAAAAAAAAAAAAA"  # Mock Alpaca key format (21 chars starting with A)
-        )
-        test_secret = "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY123456789"  # 50 chars
+        test_key = "DUMMY_ALPACA_KEY_21_CHARS"  # Mock Alpaca key format
+        # (21 chars starting with A)
+        test_secret = "DUMMY_SECRET_50_CHARS_FOR_TESTING_VALIDATION_ONLY"  # 50 chars
 
         manager.set_api_key("alpaca", test_key, test_secret)
         retrieved_secret = manager.get_api_secret("alpaca")
@@ -66,8 +65,8 @@ class TestAPISecurityManager:
     def test_validate_alpaca_credentials_valid(self):
         """Test validation of valid Alpaca credentials."""
         manager = APISecurityManager()
-        valid_key = "AAAAAAAAAAAAAAAAAAAAA"  # 21 chars starting with A
-        valid_secret = "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY123456789"  # 50 chars
+        valid_key = "DUMMY_ALPACA_KEY_21_CHARS"  # 21 chars starting with A
+        valid_secret = "DUMMY_SECRET_50_CHARS_FOR_TESTING_VALIDATION_ONLY"  # 50 chars
 
         manager.set_api_key("alpaca", valid_key, valid_secret)
         assert manager.validate_credentials("alpaca") is True

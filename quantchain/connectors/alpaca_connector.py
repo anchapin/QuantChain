@@ -214,20 +214,17 @@ class AlpacaDataConnector(DataFeedInterface):
             if not data:
                 raise SymbolNotFoundError(f"No data found for symbol: {symbol}")
 
-            # Convert to DataFrame
-            records = []
-            for bar in data:
-                records.append(
-                    {
-                        "timestamp": bar.timestamp,
-                        "open": float(bar.open),
-                        "high": float(bar.high),
-                        "low": float(bar.low),
-                        "close": float(bar.close),
-                        "volume": int(bar.volume),
-                    }
-                )
-
+            records = [
+                {
+                    "timestamp": bar.timestamp,
+                    "open": float(bar.open),
+                    "high": float(bar.high),
+                    "low": float(bar.low),
+                    "close": float(bar.close),
+                    "volume": int(bar.volume),
+                }
+                for bar in data
+            ]
             df = pd.DataFrame(records)
             df["timestamp"] = pd.to_datetime(df["timestamp"])
             df = df.sort_values("timestamp").reset_index(drop=True)
@@ -331,21 +328,17 @@ class AlpacaDataConnector(DataFeedInterface):
         }
 
         if market_type == "crypto":
-            base_data.update(
-                {
-                    "last_price": float(
-                        quote.ask_price
-                    ),  # Use ask as last price for crypto
-                    "last_size": float(quote.ask_size),
-                }
-            )
+            base_data |= {
+                "last_price": float(
+                    quote.ask_price
+                ),  # Use ask as last price for crypto
+                "last_size": float(quote.ask_size),
+            }
         else:  # equity
-            base_data.update(
-                {
-                    "last_price": (float(quote.bid_price) + float(quote.ask_price)) / 2,
-                    "last_size": min(float(quote.bid_size), float(quote.ask_size)),
-                }
-            )
+            base_data |= {
+                "last_price": (float(quote.bid_price) + float(quote.ask_price)) / 2,
+                "last_size": min(float(quote.bid_size), float(quote.ask_size)),
+            }
 
         return base_data
 
