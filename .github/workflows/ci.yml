@@ -87,7 +87,7 @@ jobs:
         pip install -r requirements.txt
 
     - name: Build package
-      run: python setup.py sdist bdist_wheel
+      run: python -m build
 
     - name: Test Docker build
       run: docker build -t quantchain:test .
