@@ -517,12 +517,12 @@ class TestVectorBacktesterIntegration:
             # Process signal using arithmetic instead of conditionals
             buy_condition = (signal == 1) * (positions == 0)
             sell_condition = (signal == -1) * (positions > 0)
-            
+
             # Execute buy
             shares_to_buy = int(cash / price) * buy_condition
             cash = cash - (shares_to_buy * price)
             positions = positions + shares_to_buy
-            
+
             # Execute sell
             sell_proceeds = (positions * price) * sell_condition
             cash = cash + sell_proceeds
