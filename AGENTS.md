@@ -21,6 +21,7 @@ Based on the Product Requirements Document (PRD), the following tech stack is re
 - **Type Checking**: `mypy` for static type analysis.
 - **CI/CD**: GitHub Actions for automated testing, linting, and quality checks.
 - **Development Approach**: Test-Driven Development (TDD) or Spec-Driven Development (SDD), with specifications in `/specs/` and tests in `/tests/`.
+- **Fast Parallel Testing**: All tests must support parallel execution with intelligent caching to ensure rapid feedback cycles during development.
 
 ### Core Frameworks & Libraries
 - **Agentic Framework**: LangGraph (within LangChain ecosystem) for stateful agent reasoning, memory, and reflection.
@@ -132,6 +133,12 @@ Before writing any code, create a simple specification file in the `/specs` dire
 
 ### Step 2: Write the Failing Test
 Create a test file in the `/tests` directory that implements the specification. Use `pytest` fixtures and mocking libraries (`pytest-mock`) to isolate the component. The test should fail because the implementation doesn't exist yet.
+
+**Testing Requirements:**
+- **Parallel Execution**: All tests must be designed to run in parallel without race conditions or shared state issues.
+- **Caching Support**: Tests should leverage pytest's caching mechanisms to avoid redundant computations and network calls.
+- **Isolation**: Each test must be completely independent with proper setup/teardown using fixtures.
+- **Performance**: Fast execution is critical - tests should complete quickly to enable rapid development cycles.
 
 **Example: `tests/tools/test_technical_analysis.py`**
 ```python
@@ -286,10 +293,17 @@ To maintain organization and avoid sprawl:
 
 Integrate with GitHub Actions for automated quality checks:
 
-* Run tests on every PR.
+* Run tests on every PR using parallel execution for fast feedback.
+* Implement intelligent caching for dependencies and test artifacts to reduce build times.
 * Check code coverage and fail if below 80%.
 * Lint and format code automatically.
 * Require PR reviews before merging.
+
+**Testing Performance Requirements:**
+* Full test suite must complete in under 5 minutes with parallel execution.
+* Use pytest-xdist for parallel test execution.
+* Cache pytest data between test runs to avoid redundant work.
+* Monitor and optimize slow tests to maintain development velocity.
 
 ## 8. Git Workflow and Branching Strategy
 
