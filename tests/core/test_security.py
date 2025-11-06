@@ -320,12 +320,20 @@ class TestAPISecurityManager:
 
     def test_list_services_empty(self):
         """Test listing services when environment variables are set."""
-        manager = APISecurityManager()
-        services = manager.list_services()
+        with patch.dict(
+            os.environ,
+            {
+                "OPENAI_API_KEY": "sk-test1234567890abcdef",
+                "ALPACA_API_KEY": "AAAAAAAAAAAAAAAAAAA",
+                "ALPACA_API_SECRET": "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY123456789",
+            },
+        ):
+            manager = APISecurityManager()
+            services = manager.list_services()
 
-        # Should list services that have environment variables set
-        expected_services = {"openai", "alpaca"}
-        assert set(services) == expected_services
+            # Should list services that have environment variables set
+            expected_services = {"openai", "alpaca"}
+            assert set(services) == expected_services
 
     def test_list_services_after_setting_keys(self):
         """Test listing services after setting some API keys."""
@@ -463,7 +471,7 @@ class TestAPISecurityManager:
             with patch.dict(os.environ, {}, clear=True):
                 manager = APISecurityManager(env_file_path)
                 manager.set_api_key(
-                    "alpaca", "AAAAAAAAAAAAAAAAAAA"
+                    "alpaca", "AAAAAAAAAAAAAAAAAAA", "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY123456789"
                 )  # Different service
 
                 manager.save_to_env_file()
@@ -522,8 +530,9 @@ class TestAPISecurityManager:
     def test_validation_with_none_credentials(self):
         """Test validation behavior with None credentials."""
         # Clear environment variables and mock .env file to be empty
-        with patch.dict(os.environ, {}, clear=True), \
-             patch('quantchain.core.security.Path.exists', return_value=False):
+        with patch.dict(os.environ, {}, clear=True), patch(
+            "quantchain.core.security.Path.exists", return_value=False
+        ):
             manager = APISecurityManager()
             # Test validation when no credentials are stored - should return False
             assert manager.validate_credentials("openai") is False

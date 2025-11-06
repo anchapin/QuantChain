@@ -171,26 +171,31 @@ class APISecurityManager:
         if test_key is None and test_secret is None and key is None and secret is None:
             return False
 
-        # If key is explicitly None (but secret is provided), only validate secret (for testing secret format)
+        # If key is explicitly None (but secret is provided), only validate secret
         if key is None and secret is not None:
-            # Empty string should be treated as not provided for services that don't require secrets
+            # Empty string should be treated as not provided for services w/o secrets
             if "secret_pattern" not in patterns:
                 return True  # No secret required for this service
-            
-            # For services that require secrets, validate if provided
-            return not test_secret or bool(re.match(patterns["secret_pattern"], test_secret))
+
+            # For services that require secrets, secret must be provided and valid
+            if test_secret is None:
+                return False  # Secret is required but not provided
+                
+            return bool(re.match(patterns["secret_pattern"], test_secret))
 
         # Validate key
         if not test_key or not re.match(patterns["key_pattern"], test_key):
             return False
 
-        # Validate secret if required and provided
-        # Empty string should be treated as not provided for services that don't require secrets
+        # Validate secret if required
         if "secret_pattern" not in patterns:
             return True  # No secret required for this service
-        
-        # For services that require secrets, validate if provided
-        return not test_secret or bool(re.match(patterns["secret_pattern"], test_secret))
+
+        # For services that require secrets, secret must be provided and valid
+        if test_secret is None:
+            return False  # Secret is required but not provided
+            
+        return bool(re.match(patterns["secret_pattern"], test_secret))
 
     def list_services(self) -> List[str]:
         """List all configured services.
