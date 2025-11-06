@@ -353,13 +353,13 @@ class TestSocialMediaScraper:
         mock_response.json.return_value = {"data": "test"}
         mock_response.raise_for_status.return_value = None
 
-        with patch.object(scraper.session, "get", return_value=mock_response):
+        with patch.object(
+            scraper.session, "get", return_value=mock_response
+        ) as mock_get:
             result = scraper._make_request("https://example.com")
 
             assert result == {"data": "test"}
-            scraper.session.get.assert_called_once_with(
-                "https://example.com", timeout=10
-            )
+            mock_get.assert_called_once_with("https://example.com", timeout=10)
 
     def test_make_request_retry_on_error(self) -> None:
         """Test HTTP request retry on error."""
@@ -376,12 +376,14 @@ class TestSocialMediaScraper:
             mock_response,
         ]
 
-        with patch.object(scraper.session, "get", side_effect=error_side_effects):
+        with patch.object(
+            scraper.session, "get", side_effect=error_side_effects
+        ) as mock_get:
             result = scraper._make_request("https://example.com")
 
             assert result == {"data": "test"}
             # Should have called get 3 times (2 failures + 1 success)
-            assert scraper.session.get.call_count == 3
+            assert mock_get.call_count == 3
 
     def test_get_beautiful_soup_available(self) -> None:
         """Test BeautifulSoup function when available."""
