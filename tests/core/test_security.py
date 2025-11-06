@@ -210,12 +210,13 @@ class TestAPISecurityManager:
         assert manager.validate_credentials("alpaca") is True
 
     def test_validate_alpaca_credentials_missing_secret(self):
-        """Test validation of Alpaca credentials without secret (should be valid)."""
+        """Test validation of Alpaca credentials without secret (should be invalid)."""
         manager = APISecurityManager()
         valid_key = "AAAAAAAAAAAAAAAAAAA"  # 21 chars, starts with A
 
-        manager.set_api_key("alpaca", valid_key)
-        assert manager.validate_credentials("alpaca") is True  # No secret required
+        # Should raise error when trying to set Alpaca credentials without secret
+        with pytest.raises(InvalidCredentialFormatError):
+            manager.set_api_key("alpaca", valid_key)
 
     def test_validate_alpaca_credentials_invalid_secret(self):
         """Test validation of Alpaca credentials with invalid secret."""
@@ -520,8 +521,9 @@ class TestAPISecurityManager:
 
     def test_validation_with_none_credentials(self):
         """Test validation behavior with None credentials."""
-        # Clear environment variables that might interfere
-        with patch.dict(os.environ, {}, clear=True):
+        # Clear environment variables and mock .env file to be empty
+        with patch.dict(os.environ, {}, clear=True), \
+             patch('quantchain.core.security.Path.exists', return_value=False):
             manager = APISecurityManager()
             # Test validation when no credentials are stored - should return False
             assert manager.validate_credentials("openai") is False

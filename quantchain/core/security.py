@@ -167,16 +167,30 @@ class APISecurityManager:
             else self._credentials.get(service, {}).get("secret")
         )
 
+        # If no credentials are stored and none are provided, return False
+        if test_key is None and test_secret is None and key is None and secret is None:
+            return False
+
+        # If key is explicitly None (but secret is provided), only validate secret (for testing secret format)
+        if key is None and secret is not None:
+            # Empty string should be treated as not provided for services that don't require secrets
+            if "secret_pattern" not in patterns:
+                return True  # No secret required for this service
+            
+            # For services that require secrets, validate if provided
+            return not test_secret or bool(re.match(patterns["secret_pattern"], test_secret))
+
         # Validate key
         if not test_key or not re.match(patterns["key_pattern"], test_key):
             return False
 
         # Validate secret if required and provided
-        return bool(
-            "secret_pattern" not in patterns
-            or not test_secret
-            or re.match(patterns["secret_pattern"], test_secret)
-        )
+        # Empty string should be treated as not provided for services that don't require secrets
+        if "secret_pattern" not in patterns:
+            return True  # No secret required for this service
+        
+        # For services that require secrets, validate if provided
+        return not test_secret or bool(re.match(patterns["secret_pattern"], test_secret))
 
     def list_services(self) -> List[str]:
         """List all configured services.
