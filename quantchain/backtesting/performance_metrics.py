@@ -96,7 +96,7 @@ class PerformanceMetrics:
             raise InsufficientDataError("Equity curve must have at least 2 points")
 
         try:
-            return equity_curve.pct_change().dropna()
+            return equity_curve.pct_change(fill_method=None).dropna()
         except Exception as e:
             raise MetricsCalculationError(f"Failed to calculate returns: {e}") from e
 

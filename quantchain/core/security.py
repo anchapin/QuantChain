@@ -46,17 +46,7 @@ class APISecurityManager:
 
     def _load_credentials(self) -> None:
         """Load credentials from environment variables and .env file."""
-        # Load from environment variables first (highest priority)
-        for service in API_KEY_PATTERNS.keys():
-            key_env = f"{service.upper()}_API_KEY"
-            secret_env = f"{service.upper()}_API_SECRET"
-
-            if key_env in os.environ:
-                self._credentials[service] = {"key": os.environ[key_env]}
-                if secret_env in os.environ:
-                    self._credentials[service]["secret"] = os.environ[secret_env]
-
-        # Load from .env file if it exists (lower priority)
+        # Load from .env file first (lower priority)
         if self.env_file.exists():
             try:
                 with open(self.env_file, "r", encoding="utf-8") as f:
@@ -80,6 +70,18 @@ class APISecurityManager:
                                 self._credentials[service]["secret"] = value
             except Exception as e:
                 logger.warning(f"Failed to load .env file {self.env_file}: {e}")
+
+        # Load from environment variables last (highest priority)
+        for service in API_KEY_PATTERNS.keys():
+            key_env = f"{service.upper()}_API_KEY"
+            secret_env = f"{service.upper()}_API_SECRET"
+
+            if key_env in os.environ:
+                if service not in self._credentials:
+                    self._credentials[service] = {}
+                self._credentials[service]["key"] = os.environ[key_env]
+                if secret_env in os.environ:
+                    self._credentials[service]["secret"] = os.environ[secret_env]
 
     def set_api_key(self, service: str, key: str, secret: Optional[str] = None) -> None:
         """Store API key for a service.

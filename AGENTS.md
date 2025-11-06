@@ -1,5 +1,39 @@
 # Agent & Component Development Guide (AGENTS.md)
 
+**Last Updated: November 2025**
+*This document is current as of November 2025. AI coding agents should use this as the reference point for all temporal assumptions and avoid outdated information from 2024 or earlier.*
+
+## Table of Contents
+
+0. [Important: AI Coding Agent Guidelines](#0-important-ai-coding-agent-guidelines)
+1. [Core Principle: Test-Driven and Spec-Driven Development](#1-core-principle-test-driven-and-spec-driven-development)
+2. [Tech Stack](#2-tech-stack)
+3. [Workflow for New Components](#3-workflow-for-new-components)
+4. [Workflow for New Agents](#4-workflow-for-new-agents)
+5. [Code Quality Standards](#5-code-quality-standards)
+5.1. [Implemented Agents](#51-implemented-agents)
+6. [Anti-Slop Code Quality Guidelines](#6-anti-slop-code-quality-guidelines)
+7. [Project Structure](#7-project-structure)
+7.1. [CI/CD Integration](#71-cicd-integration)
+8. [Git Workflow and Branching Strategy](#8-git-workflow-and-branching-strategy)
+8.1. [Agent Implementation Guidelines for Git Operations](#81-agent-implementation-guidelines-for-git-operations)
+9. [Code Review Process](#9-code-review-process)
+
+*New Sections (To Be Added)*
+10. [Agent Monitoring and Observability](#10-agent-monitoring-and-observability)
+11. [Error Handling and Recovery Strategies](#11-error-handling-and-recovery-strategies)
+12. [Performance Guidelines](#12-performance-guidelines)
+13. [Compliance and Security Framework](#13-compliance-and-security-framework)
+
+## 0. Important: AI Coding Agent Guidelines
+
+**CRITICAL FOR AI CODING AGENTS:**
+- Always use `python3` command explicitly - never use just `python` or `python3.11` or other version-specific commands
+- Always create virtual environment with: `python3 -m venv venv`
+- Always activate with: `source venv/bin/activate`
+- When running Python commands, always prefix with `python3 -m` (e.g., `python3 -m pytest`, `python3 -m black`)
+- This ensures compatibility across all development environments and prevents version conflicts
+
 ## 1. Core Principle: Test-Driven and Spec-Driven Development
 
 Welcome to QuantChain! To ensure the reliability and robustness of this financial framework, all contributions **must** follow a Test-Driven Development (TDD) or Spec-Driven Development (SDD) approach. This means that for any new feature, tool, or agent, a corresponding test or specification must be written *before* the implementation code. This ensures clarity of purpose, correctness, and makes future maintenance easier.
@@ -11,7 +45,7 @@ Our testing framework of choice is `pytest`.
 Based on the Product Requirements Document (PRD), the following tech stack is recommended for the QuantChain project.
 
 ### Programming Language
-- **Python**: The primary language for all components.
+- **Python 3**: The primary language for all components. AI coding agents should always use `python3` command explicitly.
 
 ### Development Workflow & Quality Assurance
 - **Testing Framework**: `pytest` for unit, integration, and backtesting tests.
@@ -109,6 +143,50 @@ ALPACA_API_KEY=A-your-key
 ALPACA_API_SECRET=your-secret
 ```
 
+**Implementation Status Legend**:
+- ✅ **Implemented**: Fully functional and tested
+- 🔄 **In Development**: Partially implemented
+- 📅 **Planned**: Scheduled for future development
+- ❌ **Not Planned**: Removed from roadmap
+
+### Core Frameworks & Libraries
+- **Agentic Framework**: LangGraph (within LangChain ecosystem) ✅
+- **Local LLM Serving** 📅:
+  - vLLM for high-throughput, multi-agent batching 📅
+  - Ollama (with `llama.cpp`/`GGUF`) for low-latency quantized models 📅
+- **Backtesting Engine**: Custom vector-based implementation ✅
+- **Reinforcement Learning Integration**: `FinRL` environment 📅
+- **Model Fine-Tuning**: Parameter-efficient fine-tuning (PEFT) with `QLoRA`, and post-training quantization to `GPTQ` or `GGUF` formats 📅
+
+### Data & Execution
+- **Data Connectors**:
+  - Equities/Forex: `Alpha Vantage` 📅, `Polygon.io` 📅
+  - Cryptocurrency: `Alpaca` ✅, `Dexscreener` ✅, `ccxt` 🔄
+  - Alternative Data: Custom scrapers for financial news and social media (Telegram, Discord) 🔄
+- **Execution Tools**:
+  - `Alpaca` ✅ for paper and live trading.
+  - `Interactive Brokers` via `ib_async` 📅
+- **Technical Analysis Tools**: Pre-built functions like `get_technical_indicator` 📅, `get_news_sentiment` 📅, `analyze_on_chain_data` 📅
+
+### Storage & Caching
+- **Vector Store (RAG)**: Local vector store for retrieval-augmented generation (e.g., `ChromaDB` or `FAISS` for market data and news sentiment caching) 📅.
+- **Caching**: Market-state-aware caching system to minimize LLM inference calls 📅.
+
+### Web Dashboard & Visualization
+- **Web Framework**: `Streamlit` or `Plotly Dash` for the user interface 📅.
+- **Visualization**: `Plotly` for interactive charts, equity curves, and performance metrics 📅.
+- **Monitoring**: Live reasoning log, multi-agent visualization, and real-time P/L tracking 📅.
+
+### Deployment & Environment
+- **Containerization**: `Docker` and `docker-compose` for reproducible deployments ✅.
+- **GPU Support**: NVIDIA container toolkit (CUDA) for GPU-accelerated LLM serving 📅.
+- **Environment Management**: `conda` or `venv` for virtual environments ✅.
+- **Hardware Guidelines**: Documentation for VRAM requirements with common quantized models (e.g., 4-bit/8-bit `DeepSeek-R1-0528`, `Qwen3-235B-Instruct-2507`) 📅.
+
+### Security
+- **Secret Management**: `python-dotenv` for environment variables, with recommendations for `Vault` or cloud secret managers (AWS/GCP) in production ✅.
+- **API Key Management**: Dedicated secure module for handling broker and data feed credentials ✅.
+
 ## 3. Workflow for New Components (Tools, Data Connectors, etc.)
 
 Components are the building blocks of our agents, as defined in the PRD (e.g., `get_technical_indicator`, `AlpacaDataConnector`).
@@ -143,21 +221,26 @@ Create a test file in the `/tests` directory that implements the specification. 
 **Example: `tests/tools/test_technical_analysis.py`**
 ```python
 import pytest
-from unittest.mock import MagicMock
-# from quantchain.tools.technical_analysis import get_technical_indicator # This will fail initially
+from unittest.mock import MagicMock, Mock
+from typing import Optional, Dict, Any
+import pandas as pd
 
-def test_get_rsi_indicator():
+def test_get_rsi_indicator() -> None:
+    """Test RSI indicator calculation with mocked data source."""
     # Arrange
-    mock_data_source = MagicMock()
-    # Mock the return of a pandas DataFrame with price data
-    mock_data_source.get_historical_data.return_value = ... # Mocked data that results in a known RSI
+    mock_data_source: Mock = MagicMock()
+    # Mock realistic price data
+    mock_prices = pd.DataFrame({
+        'close': [100, 102, 101, 103, 102, 104, 103, 105, 104, 106, 105, 107, 106, 108, 107]
+    })
+    mock_data_source.get_historical_data.return_value = mock_prices
 
-    # Act
+    # Act - Uncomment when implementation exists
     # rsi_value = get_technical_indicator('BTC-USD', 'RSI', data_source=mock_data_source)
 
-    # Assert
-    # assert rsi_value == 68.5 # Known expected value
-    pass # Placeholder until implementation exists
+    # Assert - Update with actual expected value when implemented
+    # assert rsi_value == pytest.approx(65.2, abs=0.1)
+    pytest.skip("Implementation pending - get_technical_indicator not yet available")
 ```
 
 ### Step 3: Implement the Code
@@ -189,24 +272,53 @@ Create a backtest file in `/tests/backtests/`. This test will use the realistic 
 **Example: `tests/backtests/test_memecoin_vibe_trader.py`**
 ```python
 import pytest
-# from quantchain.backtester import Backtester
-# from quantchain.agents.memecoin_vibe_trader import MemecoinVibeTrader
+from unittest.mock import MagicMock, Mock
+from typing import Dict, Any, List
+import pandas as pd
+from dataclasses import dataclass
 
-def test_memecoin_vibe_trader_identifies_and_trades_target():
+@dataclass
+class MockBacktestResults:
+    total_trades: int
+    final_equity: float
+    initial_equity: float
+    profit_loss: float
+
+def test_memecoin_vibe_trader_identifies_and_trades_target() -> None:
+    """Test that memecoin vibe trader identifies and trades a target token."""
     # Arrange: Setup the backtester with mock data
     # Mock Dexscreener to return a specific "hyped" token
+    mock_dex_connector: Mock = MagicMock()
+    mock_dex_connector.get_new_tokens.return_value = [
+        {"symbol": "HYPE-USD", "liquidity": 50000, "volume": 10000}
+    ]
+    
     # Mock the LLM to return a deterministic "BUY" decision for that token
+    mock_llm: Mock = MagicMock()
+    mock_llm.analyze_vibe_score.return_value = {"HYPE-USD": 85}
+    
     # Mock the Alpaca executor to confirm the order
-    backtest_config = { ... }
-    # backtester = Backtester(config=backtest_config)
+    mock_executor: Mock = MagicMock()
+    mock_executor.execute_trade.return_value = {"status": "filled", "quantity": 100}
+    
+    # Setup backtest configuration
+    backtest_config: Dict[str, Any] = {
+        "initial_equity": 10000.0,
+        "start_date": "2025-01-01",
+        "end_date": "2025-01-02",
+        "max_positions": 5
+    }
 
-    # Act
+    # Act - Uncomment when implementation exists
+    # from quantchain.backtester import Backtester
+    # from quantchain.agents.memecoin_vibe_trader import MemecoinVibeTrader
+    # backtester = Backtester(config=backtest_config)
     # results = backtester.run(MemecoinVibeTrader)
 
-    # Assert
+    # Assert - Expected behavior when implementation is ready
     # assert results.total_trades == 1
     # assert results.final_equity > results.initial_equity
-    pass # Placeholder
+    pytest.skip("Implementation pending - full backtester integration not yet available")
 ```
 
 ### Step 3: Implement the Agent
@@ -214,7 +326,7 @@ Build the agent using the core agentic framework (`LangGraph`), connecting the r
 
 ---
 
-## 4.5. Implemented Agents
+## 5.1. Implemented Agents
 
 The following agents have been implemented following the TDD/SDD workflow:
 
@@ -257,13 +369,42 @@ class MemecoinVibeTraderConfig:
 **Usage Example**:
 ```python
 from quantchain.agents.memecoin_vibe_trader import MemecoinVibeTrader, MemecoinVibeTraderConfig
+from typing import Optional
 
-config = MemecoinVibeTraderConfig()
-agent = MemecoinVibeTrader(config, dex_connector, social_scraper, execution_tool)
-results = agent.run_cycle()
+async def main() -> None:
+    """Main execution function for the memecoin vibe trader."""
+    # Initialize configuration
+    config = MemecoinVibeTraderConfig(
+        scan_interval=3600,  # Scan every hour
+        max_positions=3,     # Limit to 3 concurrent positions
+        max_allocation_per_trade=0.02,  # 2% per trade
+        min_vibe_score_threshold=75,    # Higher threshold for quality
+    )
+    
+    # Initialize the agent with required components
+    agent = MemecoinVibeTrader(
+        config=config,
+        dex_connector=dex_connector,
+        social_scraper=social_scraper,
+        execution_tool=execution_tool,
+    )
+    
+    # Run the trading cycle
+    results: Optional[dict] = await agent.run_cycle()
+    
+    if results:
+        print(f"Trading cycle completed. Total trades: {results.get('total_trades', 0)}")
+        print(f"Final equity: ${results.get('final_equity', 0):,.2f}")
+    else:
+        print("No trading opportunities found this cycle")
+
+# Run the agent
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
 ```
 
-## 5. Code Quality Standards
+## 6. Code Quality Standards
 
 To prevent code sprawl, duplication, and maintainability issues, all contributions must adhere to these standards:
 
@@ -274,7 +415,67 @@ To prevent code sprawl, duplication, and maintainability issues, all contributio
 * **Documentation:** Update inline documentation, specs, README.md, and other associated documentation for any changes. Ensure README.md and documentation are updated on every commit, PR creation, or merge. Use docstrings for all public functions.
 * **Security:** Follow the Security section in the Tech Stack: Never hardcode secrets; use environment variables via `python-dotenv`, with recommendations for `Vault` or cloud secret managers in production.
 
-## 6. Project Structure
+## 7. Anti-Slop Code Quality Guidelines
+
+**MANDATORY CLEANUP BEFORE CRITICAL MILESTONES:**
+
+All code contributions must be thoroughly cleaned of "vibe coding slop" before commits, pull request creation, and pull request merges. This is a non-negotiable requirement to maintain code quality and prevent feature creep.
+
+### Definition of "Vibe Coding Slop"
+
+**"Vibe coding slop"** refers to any code that exhibits one or more of the following characteristics:
+
+1. **Over-engineering**: Code that exceeds the requirements outlined in the issue or PRD without clear justification
+2. **Functionality Duplication**: Code that duplicates existing functionality already present in the codebase
+3. **Unnecessary Features**: Features, methods, or classes that were not explicitly requested or specified
+4. **Excessive Abstraction**: Overly complex abstractions that don't provide clear value
+5. **Premature Optimization**: Code optimized for hypothetical future scenarios rather than current requirements
+6. **Scope Creep**: Implementation that goes beyond the defined scope of work
+
+### Cleanup Requirements
+
+Before any critical milestone, agents MUST perform the following cleanup:
+
+#### Pre-Commit Cleanup Checklist
+- [ ] **Requirement Verification**: Every line of code must correspond to a specific requirement in the issue or PRD
+- [ ] **Duplicate Detection**: Search the codebase for existing implementations of the same functionality
+- [ ] **Complexity Audit**: Ensure abstractions serve a clear, documented purpose
+- [ ] **Documentation Alignment**: Verify all code changes are reflected in documentation
+- [ ] **Test Coverage**: Remove or update tests for any removed or modified functionality
+
+#### Pre-PR Cleanup Checklist
+- [ ] **Scope Verification**: Confirm the implementation matches the original issue/PRD requirements exactly
+- [ ] **Code Review Preparation**: Prepare clear justification for any non-trivial implementation decisions
+- [ ] **Dependency Audit**: Remove any unnecessary dependencies or imports
+- [ ] **Configuration Cleanup**: Remove debug code, TODO comments, or temporary configurations
+
+#### Pre-Merge Cleanup Checklist
+- [ ] **Final Sanity Check**: Verify no "vibe" features or over-engineering have crept in
+- [ ] **Performance Review**: Ensure no performance regressions from unnecessary complexity
+- [ ] **Maintainability Assessment**: Confirm the code is as simple and maintainable as possible
+
+### Enforcement Mechanisms
+
+**Agents are required to:**
+
+1. **Self-Assessment**: Before any git operation, agents must honestly assess whether their code contains "vibe coding slop"
+2. **Refactoring on Demand**: Remove any identified slop immediately, even if it means more work
+3. **Documentation Justification**: If keeping non-essential code, provide clear written justification in comments
+4. **Peer Review**: Be prepared to defend every line of code during review
+
+**Automated Checks:**
+
+- Pre-commit hooks should flag potential over-engineering patterns
+- Linting rules should catch unnecessary complexity
+- Code coverage should not be artificially inflated with unnecessary tests
+
+### Philosophy
+
+The QuantChain codebase must remain **minimal, focused, and strictly aligned with documented requirements**. Every piece of code should serve a clear, documented purpose. If you find yourself adding features "because they might be useful someday," remove them. If you discover existing functionality that duplicates your implementation, use the existing code instead.
+
+**Remember**: Clean, minimal code is not only easier to maintain and test—it's more reliable, more performant, and easier for other developers to understand and extend.
+
+## 8. Project Structure
 
 To maintain organization and avoid sprawl:
 
@@ -289,7 +490,7 @@ To maintain organization and avoid sprawl:
 * `/docs/` - Documentation, including deployment guides
 * `/examples/` - Sample agents and configurations
 
-## 7. CI/CD Integration
+## 8.1. CI/CD Integration
 
 Integrate with GitHub Actions for automated quality checks:
 
@@ -305,7 +506,7 @@ Integrate with GitHub Actions for automated quality checks:
 * Cache pytest data between test runs to avoid redundant work.
 * Monitor and optimize slow tests to maintain development velocity.
 
-## 8. Git Workflow and Branching Strategy
+## 9. Git Workflow and Branching Strategy
 
 To maintain a clean and organized repository and prevent accidental commits to the main branch:
 
@@ -341,9 +542,11 @@ To maintain a clean and organized repository and prevent accidental commits to t
 
 - **Automatic Protection:** CI/CD workflows should include checks that prevent direct merges to main without PR review.
 
-## 8.1. Agent Implementation Guidelines for Git Operations
+## 9.1. Agent Implementation Guidelines for Git Operations
 
 # Make sure you are in your project's root directory
+# Ensure you're using Python 3 - create and activate virtual environment explicitly
+python3 -m venv venv
 source venv/bin/activate
 
 ### Critical Safety Protocol for All Agents
@@ -426,7 +629,7 @@ fi
 - [ ] Ensure no code paths bypass the main branch check
 - [ ] Add logging for all branch verification attempts
 
-## 9. Code Review Process
+## 10. Code Review Process
 
 * All changes require a PR with detailed description.
 * At least one reviewer must approve.
@@ -434,3 +637,425 @@ fi
 * Address any duplication or maintainability concerns raised.
 
 By following this process, we ensure that every piece of `QuantChain` is verifiable, documented by its tests, and robust enough for financial applications.
+
+## 10. Agent Monitoring and Observability
+
+### 10.1 Required Observability Stack
+
+All production agents must implement comprehensive monitoring:
+
+- **Metrics Collection**: Performance, accuracy, reliability, and cost metrics
+- **Distributed Tracing**: Request flow across agent networks using OpenTelemetry
+- **Log Aggregation**: Centralized logging with correlation IDs
+- **Alert Management**: Intelligent alerting with escalation policies
+
+### 10.2 Required Metrics
+
+**Agent Performance Metrics**:
+```python
+from dataclasses import dataclass
+from typing import Dict, Any
+import time
+from datetime import datetime
+
+@dataclass
+class AgentMetrics:
+    decision_accuracy: float  # Historical performance tracking
+    response_time_ms: int     # Latency measurements
+    resource_utilization: Dict[str, float]  # CPU, memory, cost
+    success_rate: float       # Task completion and error rates
+    last_updated: datetime
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "decision_accuracy": self.decision_accuracy,
+            "response_time_ms": self.response_time_ms,
+            "resource_utilization": self.resource_utilization,
+            "success_rate": self.success_rate,
+            "last_updated": self.last_updated.isoformat()
+        }
+```
+
+**Usage Example**:
+```python
+from quantchain.core.monitoring import AgentMonitor
+
+class MonitoredAgent:
+    def __init__(self, agent_id: str):
+        self.agent_id = agent_id
+        self.monitor = AgentMonitor(agent_id)
+    
+    async def make_decision(self, context: dict) -> dict:
+        start_time = time.time()
+        try:
+            # Agent decision logic here
+            decision = await self._internal_decision_logic(context)
+            
+            # Record success metrics
+            self.monitor.record_success(
+                response_time_ms=int((time.time() - start_time) * 1000),
+                decision_quality=self._evaluate_decision_quality(decision)
+            )
+            return decision
+            
+        except Exception as e:
+            self.monitor.record_error(str(e))
+            raise
+```
+
+### 10.3 Logging Standards
+
+**Required Log Fields**:
+- `correlation_id`: Unique identifier for request tracing
+- `agent_id`: Identifier of the agent making the decision
+- `decision_type`: Type of decision made
+- `confidence_score`: Agent's confidence in the decision
+- `execution_time_ms`: Time taken to make decision
+- `input_context`: Relevant context (sanitized for PII)
+
+**Example**:
+```python
+import structlog
+from quantchain.core.logging import get_logger
+
+logger = get_logger(__name__)
+
+async def log_agent_decision(agent_id: str, decision: dict, context: dict):
+    logger.info(
+        "agent_decision_made",
+        agent_id=agent_id,
+        decision_type=decision.get("type"),
+        confidence_score=decision.get("confidence"),
+        correlation_id=context.get("correlation_id")
+    )
+```
+
+### 10.4 Alerting Requirements
+
+**Critical Alerts** (Immediate Response):
+- Agent response time > 5 seconds
+- Decision accuracy drops below 70%
+- Agent fails to respond for > 2 minutes
+- Resource utilization > 90%
+
+**Warning Alerts** (Monitor Closely):
+- Response time > 2 seconds
+- Decision accuracy 70-80%
+- Error rate > 5%
+- Cost per decision > threshold
+
+
+## 11. Error Handling and Recovery Strategies
+
+### 11.1 Error Classification
+
+**Critical Errors** (System Level):
+- Data feed failures
+- LLM service unavailability
+- Trading execution failures
+- Database connectivity issues
+
+**Non-Critical Errors** (Agent Level):
+- Individual decision failures
+- Optional data source timeouts
+- Non-essential feature failures
+
+### 11.2 Resilience Patterns
+
+**Circuit Breaker Pattern**:
+```python
+from quantchain.core.resilience import CircuitBreaker
+
+class ResilientAgent:
+    def __init__(self):
+        self.data_circuit_breaker = CircuitBreaker(
+            failure_threshold=5,
+            recovery_timeout=60,
+            expected_exception=DataFeedError
+        )
+        self.llm_circuit_breaker = CircuitBreaker(
+            failure_threshold=3,
+            recovery_timeout=30,
+            expected_exception=LLMServiceError
+        )
+    
+    @self.data_circuit_breaker
+    async def fetch_market_data(self, symbol: str):
+        # Data fetching logic with automatic circuit breaking
+        pass
+    
+    @self.llm_circuit_breaker
+    async def make_llm_decision(self, prompt: str):
+        # LLM decision logic with automatic circuit breaking
+        pass
+```
+
+**Graceful Degradation**:
+```python
+async def make_decision_with_fallback(self, context: dict) -> dict:
+    try:
+        # Primary LLM-based decision
+        return await self.primary_decision_engine(context)
+    except LLMServiceError:
+        # Fallback to rule-based decision
+        return await self.fallback_decision_engine(context)
+    except Exception:
+        # Final fallback to safe default
+        return await self.safe_default_decision(context)
+```
+
+### 11.3 Recovery Strategies
+
+**Automatic Recovery**:
+- Retry with exponential backoff for transient failures
+- Switch to backup data sources when primary fails
+- Reduce complexity when resources are constrained
+- Enter safe mode when multiple systems fail
+
+**Manual Recovery Procedures**:
+- Clear agent memory/state when decisions become inconsistent
+- Reset connections to external services
+- Restore from last known good state
+- Escalate to human operators for critical failures
+## 12. Performance Guidelines
+
+### 12.1 Performance Benchmarks
+
+**Required Performance Targets**:
+- **Decision Latency**: < 500ms for standard operations
+- **Memory Usage**: < 2GB per agent instance
+- **CPU Utilization**: < 80% sustained
+- **Throughput**: > 100 decisions/minute per agent
+- **Startup Time**: < 30 seconds from cold start
+
+### 12.2 Optimization Strategies
+
+**Caching Architecture**:
+```python
+from quantchain.core.cache import MultiLevelCache
+
+class OptimizedAgent:
+    def __init__(self):
+        # L1: In-memory cache (fastest)
+        # L2: Redis cache (fast)
+        # L3: Database cache (persistent)
+        self.cache = MultiLevelCache(
+            l1_size="100MB",
+            l2_ttl=3600,  # 1 hour
+            l3_ttl=86400  # 24 hours
+        )
+    
+    async def get_cached_analysis(self, symbol: str) -> dict:
+        cache_key = f"analysis:{symbol}"
+        
+        # Try L1 cache first
+        result = await self.cache.get_l1(cache_key)
+        if result:
+            return result
+        
+        # Try L2 cache
+        result = await self.cache.get_l2(cache_key)
+        if result:
+            await self.cache.set_l1(cache_key, result)
+            return result
+        
+        # Compute and cache at all levels
+        result = await self._compute_analysis(symbol)
+        await self.cache.set_all(cache_key, result, ttl=3600)
+        return result
+```
+
+**Resource Management**:
+```python
+import psutil
+from quantchain.core.resource_manager import ResourceManager
+
+class ResourceAwareAgent:
+    def __init__(self):
+        self.resource_manager = ResourceManager()
+    
+    async def make_decision(self, context: dict) -> dict:
+        # Check available resources before making decision
+        if not self.resource_manager.has_sufficient_resources(
+            min_memory_gb=1.0,
+            min_cpu_percent=50.0
+        ):
+            # Defer decision or use lightweight processing
+            return await self.make_lightweight_decision(context)
+        
+        # Proceed with full decision logic
+        return await self._full_decision_logic(context)
+```
+
+### 12.3 Performance Monitoring
+
+**Required Performance Metrics**:
+- P50, P95, P99 response times
+- Memory usage patterns
+- CPU utilization over time
+- Cache hit rates
+- Error rates by operation type
+
+**Performance Testing Requirements**:
+- Load testing: 10x expected peak load
+- Stress testing: Until system failure
+- Soak testing: 24+ hour continuous operation
+- Spike testing: Sudden load increases
+## 13. Compliance and Security Framework
+
+### 13.1 Regulatory Compliance
+
+**Financial Regulations**:
+- **SOX Compliance**: Audit trail for all financial decisions
+- **MiFID II**: Transaction reporting and best execution
+- **PCI-DSS**: If handling payment data
+- **GDPR**: Data protection and privacy
+
+**Required Audit Trail**:
+```python
+from quantchain.core.audit import AuditLogger
+from datetime import datetime
+import uuid
+
+class CompliantAgent:
+    def __init__(self, agent_id: str):
+        self.agent_id = agent_id
+        self.audit_logger = AuditLogger(agent_id)
+    
+    async def make_trading_decision(self, context: dict) -> dict:
+        # Create audit entry
+        audit_id = str(uuid.uuid4())
+        
+        try:
+            # Log decision input
+            await self.audit_logger.log_input(
+                audit_id=audit_id,
+                timestamp=datetime.utcnow(),
+                input_data=self._sanitize_input(context),
+                decision_basis="LLM analysis with risk metrics"
+            )
+            
+            # Make decision
+            decision = await self._execute_decision_logic(context)
+            
+            # Log decision output
+            await self.audit_logger.log_output(
+                audit_id=audit_id,
+                timestamp=datetime.utcnow(),
+                output_data=self._sanitize_output(decision),
+                confidence_score=decision.get("confidence"),
+                execution_time_ms=decision.get("execution_time")
+            )
+            
+            return decision
+            
+        except Exception as e:
+            # Log error
+            await self.audit_logger.log_error(
+                audit_id=audit_id,
+                timestamp=datetime.utcnow(),
+                error_type=type(e).__name__,
+                error_message=str(e)
+            )
+            raise
+```
+
+### 13.2 Zero-Trust Security Model
+
+**Identity Verification**:
+```python
+from quantchain.core.security import IdentityVerifier
+
+class SecureAgent:
+    def __init__(self, agent_id: str, api_key: str):
+        self.agent_id = agent_id
+        self.identity_verifier = IdentityVerifier(agent_id, api_key)
+        self.permissions = self._get_required_permissions()
+    
+    async def verify_identity(self) -> bool:
+        """Verify agent identity and permissions."""
+        is_valid = await self.identity_verifier.verify()
+        if not is_valid:
+            raise SecurityError(f"Agent {self.agent_id} identity verification failed")
+        
+        # Verify permissions for each operation
+        for permission in self.permissions:
+            if not await self.identity_verifier.has_permission(permission):
+                raise PermissionError(f"Agent lacks permission: {permission}")
+        
+        return True
+    
+    async def _secure_operation(self, operation: str, data: dict) -> dict:
+        await self.verify_identity()
+        
+        # Encrypt sensitive data
+        encrypted_data = await self.identity_verifier.encrypt_sensitive_data(data)
+        
+        # Execute operation with audit trail
+        result = await self._execute_operation(operation, encrypted_data)
+        
+        # Decrypt results
+        return await self.identity_verifier.decrypt_sensitive_data(result)
+```
+
+### 13.3 Data Protection
+
+**Encryption Requirements**:
+- **At Rest**: AES-256 encryption for all stored data
+- **In Transit**: TLS 1.3 for all communications
+- **In Memory**: Secure memory handling for sensitive data
+
+**Data Classification**:
+- **Public**: Non-sensitive operational data
+- **Internal**: Business logic and configuration
+- **Confidential**: Market data and trading signals
+- **Restricted**: Personal data and API keys
+
+```python
+from quantchain.core.data_classification import DataClassifier, ClassificationLevel
+
+class DataProtectionMixin:
+    def __init__(self):
+        self.classifier = DataClassifier()
+    
+    def classify_and_protect(self, data: dict) -> dict:
+        """Classify data and apply appropriate protection."""
+        classification = self.classifier.classify(data)
+        
+        protected_data = data.copy()
+        
+        if classification.level >= ClassificationLevel.CONFIDENTIAL:
+            protected_data = self._encrypt_sensitive_fields(protected_data)
+        
+        if classification.contains_pii:
+            protected_data = self._anonymize_pii(protected_data)
+        
+        return protected_data
+```
+
+### 13.4 Compliance Monitoring
+
+**Automated Compliance Checks**:
+```python
+class ComplianceMonitor:
+    def __init__(self):
+        self.rules_engine = ComplianceRulesEngine()
+        self.violation_tracker = ViolationTracker()
+    
+    async def check_compliance(self, operation: dict) -> ComplianceResult:
+        """Check operation against compliance rules."""
+        violations = await self.rules_engine.check(operation)
+        
+        if violations:
+            await self.violation_tracker.record_violations(violations)
+            return ComplianceResult(compliant=False, violations=violations)
+        
+        return ComplianceResult(compliant=True)
+```
+
+**Required Compliance Metrics**:
+- Audit trail completeness: 100%
+- Data encryption coverage: 100%
+- Identity verification success rate: >99%
+- Compliance violation rate: 0%
+- Incident response time: <1 hour
