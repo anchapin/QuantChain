@@ -10,6 +10,7 @@ from quantchain.core.security import (
 )
 
 
+@pytest.mark.unit
 class TestAPISecurityManager:
     """Test the API Security Manager."""
 

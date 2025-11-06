@@ -9,6 +9,7 @@ from unittest.mock import patch
 from quantchain.core.config import QuantChainConfig, get_config, reload_config
 
 
+@pytest.mark.unit
 class TestQuantChainConfig:
     """Test QuantChainConfig class."""
 

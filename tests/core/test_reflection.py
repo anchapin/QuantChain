@@ -12,6 +12,7 @@ from quantchain.core.reflection import (
 )
 
 
+@pytest.mark.unit
 class TestAgentAction:
     """Test AgentAction dataclass."""
 
@@ -49,6 +50,7 @@ class TestAgentAction:
         assert action.reward == 0.0
 
 
+@pytest.mark.unit
 class TestPerformanceMetrics:
     """Test PerformanceMetrics dataclass."""
 
@@ -90,6 +92,7 @@ class TestPerformanceMetrics:
         assert metrics.action_type_breakdown == {}
 
 
+@pytest.mark.unit
 class TestReflectionReport:
     """Test ReflectionReport dataclass."""
 
@@ -112,6 +115,7 @@ class TestReflectionReport:
         assert report.recommendations == ["Continue strategy"]
 
 
+@pytest.mark.unit
 class TestReflectionEngine:
     """Test ReflectionEngine."""
 

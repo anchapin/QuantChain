@@ -13,6 +13,7 @@ from quantchain.core.llm_providers import (
 )
 
 
+@pytest.mark.unit
 class TestLLMResponse:
     """Test LLMResponse dataclass."""
 
@@ -32,6 +33,7 @@ class TestLLMResponse:
         assert response.finish_reason is None
 
 
+@pytest.mark.unit
 class TestOpenAIProvider:
     """Test OpenAI provider."""
 
@@ -100,6 +102,7 @@ class TestOpenAIProvider:
         assert provider.get_model_name() == "gpt-3.5-turbo"
 
 
+@pytest.mark.unit
 class TestAnthropicProvider:
     """Test Anthropic provider."""
 
@@ -169,6 +172,7 @@ class TestAnthropicProvider:
         assert provider.get_model_name() == "claude-3-haiku"
 
 
+@pytest.mark.unit
 class TestOllamaProvider:
     """Test Ollama provider."""
 
@@ -219,6 +223,7 @@ class TestOllamaProvider:
         assert provider.get_model_name() == "codellama:13b"
 
 
+@pytest.mark.unit
 class TestVLLMProvider:
     """Test VLLM provider."""
 
@@ -240,6 +245,7 @@ class TestVLLMProvider:
         assert provider.get_model_name() == "test-model"
 
 
+@pytest.mark.unit
 class TestCreateLLMProvider:
     """Test create_llm_provider function."""
 
