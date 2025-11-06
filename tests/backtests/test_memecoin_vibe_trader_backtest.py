@@ -14,7 +14,7 @@ from quantchain.tools.social_media_scraper import SocialMediaScraper
 from quantchain.tools.execution import AlpacaExecutionTool
 
 
-class TestMemecoinVibeTrader:
+class TestMemecoinVibeTraderBacktest:
     """Test suite for MemecoinVibeTrader agent backtesting."""
 
     @pytest.fixture

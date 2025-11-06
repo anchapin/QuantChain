@@ -404,10 +404,46 @@ class AgentStrategy:
                 result_state = self.adapter.agent_graph.invoke(new_state.__dict__)
 
                 # Update current state with results
+                # Define valid AgentState fields to filter out mock attributes
+                valid_agent_state_fields = {
+                    "current_bar",
+                    "market_data",
+                    "cash",
+                    "positions",
+                    "equity",
+                    "observations",
+                    "reasoning",
+                    "decisions",
+                    "signal",
+                    "signal_confidence",
+                    "quantity",
+                    "risk_assessment",
+                    "position_sizing",
+                    "order_details",
+                    "timestamp",
+                    "step_count",
+                }
+
                 if isinstance(result_state, dict):
-                    self.current_state = AgentState(**result_state)
+                    # Filter out mock and private attributes before creating AgentState
+                    filtered_dict = {
+                        k: v
+                        for k, v in result_state.items()
+                        if k in valid_agent_state_fields
+                    }
+                    # Update current_state by merging new_state and result_state
+                    merged_dict = {**new_state.__dict__, **filtered_dict}
+                    self.current_state = AgentState(**merged_dict)
                 elif hasattr(result_state, "__dict__"):
-                    self.current_state = AgentState(**result_state.__dict__)
+                    # Filter out mock and private attributes from object dict
+                    filtered_dict = {
+                        k: v
+                        for k, v in result_state.__dict__.items()
+                        if k in valid_agent_state_fields
+                    }
+                    # Update current_state by merging new_state and result_state
+                    merged_dict = {**new_state.__dict__, **filtered_dict}
+                    self.current_state = AgentState(**merged_dict)
                 else:
                     raise AgentExecutionError("Invalid agent state returned")
 
@@ -510,7 +546,7 @@ def bar_to_agent_state(
 
     # Calculate equity with current bar price
     current_price = bar.get("close", 0)
-    if current_price > 0:
+    if current_price is not None and current_price > 0:
         if symbol := bar.get("symbol"):
             current_prices = {symbol: current_price}
             new_state.equity = position_manager.calculate_equity(current_prices)

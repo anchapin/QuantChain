@@ -523,6 +523,14 @@ class TestLangGraphWorkflowEdgeCases:
     def test_workflow_with_nested_decisions(self):
         """Test workflow with nested decision points."""
         mock_graph = Mock()
+        # Set return value to include required signal field
+        mock_graph.invoke.return_value = {
+            "signal": "hold",
+            "signal_confidence": 0.5,
+            "decisions": [],
+            "observations": [],
+            "reasoning": [],
+        }
         adapter = LangGraphBacktestAdapter(mock_graph)
 
         # Create deterministic responses for complex workflow
@@ -537,6 +545,15 @@ class TestLangGraphWorkflowEdgeCases:
 
         initial_state = {"cash": 100000, "risk_assessment": {"trend": "up"}}
         strategy = adapter.create_strategy(initial_state)
+
+        # Set the mock to return a valid signal after deterministic processing
+        mock_graph.invoke.return_value = {
+            "signal": "buy",  # Use a valid signal instead of "hold"
+            "signal_confidence": 0.8,
+            "decisions": ["buy_signal"],
+            "observations": ["market_analysis"],
+            "reasoning": ["strong_buy_signal"],
+        }
 
         # Simulate complex multi-bar sequence
         bars = [
@@ -562,8 +579,9 @@ class TestLangGraphWorkflowEdgeCases:
 
         for bar in bars:
             signal = strategy.next(bar)
-            # Should get different deterministic responses at each step
-            assert signal is not None
+            # Should get deterministic "hold" signal for each step
+            assert signal is not None  # Should return a signal
+            assert signal in ["hold", "buy", "sell"]  # Should be a valid signal
 
     def test_workflow_with_timeout_handling(self):
         """Test workflow timeout handling and recovery."""
