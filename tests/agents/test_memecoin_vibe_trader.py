@@ -516,7 +516,9 @@ class TestWorkflowSteps:
             "portfolio_value": 10000
         }
         agent.execution_tool.get_positions.return_value = []
-        agent.execution_tool.execute_market_order.return_value = MagicMock(order_id="order123")
+        agent.execution_tool.execute_market_order.return_value = MagicMock(
+            order_id="order123"
+        )
 
         result_state = agent._execute_trades(state)
 
@@ -603,10 +605,10 @@ class TestWorkflowConditions:
             execution_tool=execution_tool,
             llm=llm_mock,
         )
-        
+
         # Mock the workflow after creation
         agent.workflow = MagicMock()
-        
+
         return agent
 
     def test_should_continue_after_scan_continue(self, agent_setup):
@@ -835,10 +837,10 @@ class TestLLMPromptAndParsing:
             execution_tool=execution_tool,
             llm=llm_mock,
         )
-        
+
         # Mock the workflow after creation
         agent.workflow = MagicMock()
-        
+
         return agent
 
     def test_create_assessment_prompt(self, agent_setup):
@@ -1322,11 +1324,11 @@ class TestRunCycleIntegration:
             execution_tool=execution_tool,
             llm=llm_mock,
         )
-        
+
         # Mock the workflow after creation
         workflow_mock = MagicMock()
         agent.workflow = workflow_mock
-        
+
         return agent
 
     def test_run_cycle_success_case(self, complete_agent_setup):
@@ -1345,24 +1347,28 @@ class TestRunCycleIntegration:
         # Mock workflow to return successful state
         mock_state = {
             "error_message": None,
-            "tokens": [{
-                "address": "0x123",
-                "symbol": "PEPE",
-                "name": "PepeCoin",
-                "liquidity": 50000,
-                "volume_24h": 100000,
-                "created_at": datetime.now(),
-                "dex": "Uniswap",
-            }],
+            "tokens": [
+                {
+                    "address": "0x123",
+                    "symbol": "PEPE",
+                    "name": "PepeCoin",
+                    "liquidity": 50000,
+                    "volume_24h": 100000,
+                    "created_at": datetime.now(),
+                    "dex": "Uniswap",
+                }
+            ],
             "assessments": [MagicMock()],
-            "trades_executed": [{
-                "token": "PEPE",
-                "order_id": "test_order_123",
-                "quantity": 100.0,
-                "vibe_score": 85.0,
-                "timestamp": datetime.now().isoformat(),
-            }],
-            "current_step": "complete"
+            "trades_executed": [
+                {
+                    "token": "PEPE",
+                    "order_id": "test_order_123",
+                    "quantity": 100.0,
+                    "vibe_score": 85.0,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            ],
+            "current_step": "complete",
         }
         agent.workflow.invoke.return_value = mock_state
 
@@ -1392,7 +1398,7 @@ class TestRunCycleIntegration:
             "tokens": [],
             "assessments": [],
             "trades_executed": [],
-            "current_step": "complete"
+            "current_step": "complete",
         }
         agent.workflow.invoke.return_value = mock_state
 
@@ -1421,18 +1427,20 @@ class TestRunCycleIntegration:
         # Mock workflow to return successful state with assessments but no trades
         mock_state = {
             "error_message": None,
-            "tokens": [{
-                "address": "0x123",
-                "symbol": "PEPE",
-                "name": "PepeCoin",
-                "liquidity": 50000,
-                "volume_24h": 100000,
-                "created_at": datetime.now(),
-                "dex": "Uniswap",
-            }],
+            "tokens": [
+                {
+                    "address": "0x123",
+                    "symbol": "PEPE",
+                    "name": "PepeCoin",
+                    "liquidity": 50000,
+                    "volume_24h": 100000,
+                    "created_at": datetime.now(),
+                    "dex": "Uniswap",
+                }
+            ],
             "assessments": [MagicMock()],
             "trades_executed": [],
-            "current_step": "complete"
+            "current_step": "complete",
         }
         agent.workflow.invoke.return_value = mock_state
 

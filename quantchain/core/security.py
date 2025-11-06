@@ -180,7 +180,7 @@ class APISecurityManager:
             # For services that require secrets, secret must be provided and valid
             if test_secret is None:
                 return False  # Secret is required but not provided
-                
+
             return bool(re.match(patterns["secret_pattern"], test_secret))
 
         # Validate key
@@ -194,7 +194,7 @@ class APISecurityManager:
         # For services that require secrets, secret must be provided and valid
         if test_secret is None:
             return False  # Secret is required but not provided
-            
+
         return bool(re.match(patterns["secret_pattern"], test_secret))
 
     def list_services(self) -> List[str]:

@@ -426,15 +426,17 @@ class MemecoinVibeTrader:
                     position_value = (
                         portfolio_value * self.config.max_allocation_per_trade
                     )
-                    
-                    # Skip trade if portfolio value is zero or position value is too small
+
+                    # Skip trade if portfolio value is zero or position value is
+                    # too small
                     if portfolio_value <= 0 or position_value <= 0:
                         self.logger.info(
                             f"Skipping trade for {assessment.token.symbol}: "
-                            f"portfolio_value={portfolio_value}, position_value={position_value}"
+                            f"portfolio_value={portfolio_value}, "
+                            f"position_value={position_value}"
                         )
                         continue
-                    
+
                     # TODO: Get actual token price from price oracle or DEX data
                     # For now, estimate token price based on liquidity/volume ratio
                     # This is a simplified approach for backtesting
@@ -442,7 +444,7 @@ class MemecoinVibeTrader:
                     quantity = (
                         position_value / estimated_price if estimated_price > 0 else 0
                     )
-                    
+
                     # Skip trade if quantity is zero or too small
                     if quantity <= 0:
                         self.logger.info(

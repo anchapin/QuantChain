@@ -471,7 +471,9 @@ class TestAPISecurityManager:
             with patch.dict(os.environ, {}, clear=True):
                 manager = APISecurityManager(env_file_path)
                 manager.set_api_key(
-                    "alpaca", "AAAAAAAAAAAAAAAAAAA", "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY123456789"
+                    "alpaca",
+                    "AAAAAAAAAAAAAAAAAAA",
+                    "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY123456789",
                 )  # Different service
 
                 manager.save_to_env_file()
