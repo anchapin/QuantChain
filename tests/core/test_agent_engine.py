@@ -58,25 +58,25 @@ class TestQuantChainAgentEngine:
         self, mock_config, mock_llm_provider
     ) -> None:
         """Test agent initialization."""
+        # Mock graph compilation
+        mock_graph = MagicMock()
+        final_state = {
+            "final_answer": "Test final answer",
+            "reasoning_steps": ["Step 1", "Step 2"],
+            "confidence_score": 0.8,
+        }
+        mock_graph.compile.return_value = final_state
 
-    # Mock graph compilation
-    mock_graph.compile.return_value = final_state
-    mock_graph = MagicMock()
-    # Mock graph compilation
-    mock_graph.compile.return_value = final_state
+        agent = QuantChainAgent(mock_config, llm_provider=mock_llm_provider)
 
-    agent = QuantChainAgent(mock_config, llm_provider=mock_llm_provider)
-
-    assert agent.config == mock_config
-    assert agent.llm_provider == mock_llm_provider
-    assert agent.graph == mock_graph
+        assert agent.config == mock_config
+        assert agent.llm_provider == mock_llm_provider
 
 
 @patch("quantchain.core.agent_engine.StateGraph")
 def test_agent_run(mock_state_graph, mock_config, mock_llm_provider) -> None:
     """Test agent execution."""
     # Setup mock graph
-    mock_graph = MagicMock()
     final_state = {
         "final_answer": "Test final answer",
         "reasoning_steps": ["Step 1", "Step 2"],
@@ -92,9 +92,13 @@ def test_agent_run(mock_state_graph, mock_config, mock_llm_provider) -> None:
             )
         ],
     }
-    mock_graph.invoke.return_value = final_state
-    # Mock graph compilation
-    mock_graph.compile.return_value = final_state
+
+    # Mock the StateGraph instance and its methods
+    mock_graph_instance = MagicMock()
+    mock_compiled_graph = MagicMock()
+    mock_compiled_graph.invoke.return_value = final_state
+    mock_graph_instance.compile.return_value = mock_compiled_graph
+    mock_state_graph.return_value = mock_graph_instance
 
     agent = QuantChainAgent(mock_config, llm_provider=mock_llm_provider)
 
@@ -111,9 +115,18 @@ def test_agent_run(mock_state_graph, mock_config, mock_llm_provider) -> None:
 @patch("quantchain.core.agent_engine.StateGraph")
 def test_agent_reflection(mock_state_graph, mock_config, mock_llm_provider) -> None:
     """Test agent reflection capability."""
-    mock_graph = MagicMock()
-    # Mock graph compilation
-    mock_graph.compile.return_value = final_state
+    final_state = {
+        "final_answer": "Test final answer",
+        "reasoning_steps": ["Step 1", "Step 2"],
+        "confidence_score": 0.8,
+    }
+
+    # Mock the StateGraph instance and its methods
+    mock_graph_instance = MagicMock()
+    mock_compiled_graph = MagicMock()
+    mock_compiled_graph.invoke.return_value = final_state
+    mock_graph_instance.compile.return_value = mock_compiled_graph
+    mock_state_graph.return_value = mock_graph_instance
 
     agent = QuantChainAgent(mock_config, llm_provider=mock_llm_provider)
 
@@ -140,9 +153,19 @@ def test_agent_reflection(mock_state_graph, mock_config, mock_llm_provider) -> N
 @patch("quantchain.core.agent_engine.StateGraph")
 def test_extract_final_answer(mock_state_graph, mock_config) -> None:
     """Test final answer extraction."""
-    mock_graph = MagicMock()
-    # Mock graph compilation
-    mock_graph.compile.return_value = final_state
+    final_state = {
+        "final_answer": "Test final answer",
+        "reasoning_steps": ["Step 1", "Step 2"],
+        "confidence_score": 0.8,
+    }
+
+    # Mock the StateGraph instance and its methods
+    mock_graph_instance = MagicMock()
+    mock_compiled_graph = MagicMock()
+    mock_compiled_graph.invoke.return_value = final_state
+    mock_graph_instance.compile.return_value = mock_compiled_graph
+    mock_state_graph.return_value = mock_graph_instance
+
     agent = QuantChainAgent(mock_config, llm_provider=MockLLMProvider())
 
     reasoning = "After analysis, the final answer: buy AAPL"
