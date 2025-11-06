@@ -98,7 +98,7 @@ class TestLangGraphBacktestAdapter:
         adapter.reset_state()
 
         assert len(adapter.reasoning_log) == 0
-        assert adapter.current_state == {}
+        assert not adapter.current_state
 
 
 class TestAgentStrategy:

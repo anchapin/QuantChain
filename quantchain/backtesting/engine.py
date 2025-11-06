@@ -74,9 +74,8 @@ class BacktestConfig:
             raise ConfigurationError(f"Invalid latency_model: {self.latency_model}")
 
         # Validate date consistency
-        if self.start_date and self.end_date:
-            if self.start_date >= self.end_date:
-                raise ConfigurationError("end_date must be after start_date")
+        if self.start_date and self.end_date and self.start_date >= self.end_date:
+            raise ConfigurationError("end_date must be after start_date")
 
 
 @dataclass
@@ -179,19 +178,17 @@ def validate_ohlcv_data(data: pd.DataFrame) -> None:
         raise DataValidationError("Data cannot be empty")
 
     required_columns = ["open", "high", "low", "close", "volume"]
-    missing_columns = [col for col in required_columns if col not in data.columns]
-
-    if missing_columns:
+    if missing_columns := [col for col in required_columns if col not in data.columns]:
         raise DataValidationError(f"Missing required columns: {missing_columns}")
 
     # Validate data types
-    if not all(
-        data[col].dtype in ["float64", "int64", "float32", "int32"]
+    if any(
+        data[col].dtype not in ["float64", "int64", "float32", "int32"]
         for col in ["open", "high", "low", "close"]
     ):
         raise DataValidationError("OHLC columns must be numeric")
 
-    if not data["volume"].dtype in ["float64", "int64", "float32", "int32"]:
+    if data["volume"].dtype not in ["float64", "int64", "float32", "int32"]:
         raise DataValidationError("Volume column must be numeric")
 
     # Validate logical consistency

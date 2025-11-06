@@ -148,22 +148,34 @@ class ReflectionEngine:
 
     def update_strategy(self, insights: List[str]) -> List[str]:
         """Generate strategy recommendations based on insights."""
-        recommendations = []
+        recommendations: List[str] = []
 
         for insight in insights:
             if "low win rate" in insight.lower():
-                recommendations.append("Implement more conservative thresholds")
-                recommendations.append("Add additional validation steps")
+                recommendations.extend(
+                    (
+                        "Implement more conservative thresholds",
+                        "Add additional validation steps",
+                    )
+                )
             elif "low confidence" in insight.lower():
-                recommendations.append("Increase data gathering phase")
-                recommendations.append("Implement ensemble decision making")
+                recommendations.extend(
+                    (
+                        "Increase data gathering phase",
+                        "Implement ensemble decision making",
+                    )
+                )
             elif "negative p&l" in insight.lower():
-                recommendations.append("Reduce position sizes")
-                recommendations.append("Add stop-loss mechanisms")
+                recommendations.extend(
+                    ("Reduce position sizes", "Add stop-loss mechanisms")
+                )
             elif "limited action diversity" in insight.lower():
-                recommendations.append("Expand available action types")
-                recommendations.append("Encourage exploration in safe environments")
-
+                recommendations.extend(
+                    (
+                        "Expand available action types",
+                        "Encourage exploration in safe environments",
+                    )
+                )
         if not recommendations:
             recommendations.append(
                 "Continue current strategy - performance is satisfactory"

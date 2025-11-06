@@ -97,16 +97,11 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
 
     def _normalize_symbol(self, symbol: str) -> str:
         """Normalize symbol to Alpaca format."""
-        if self._is_crypto_symbol(symbol):
-            # Convert 'BTC-USD' to 'BTC/USD' for Alpaca
-            return symbol.replace("-", "/")
-        return symbol
+        return symbol.replace("-", "/") if self._is_crypto_symbol(symbol) else symbol
 
     def _get_asset_class(self, symbol: str) -> str:
         """Determine asset class for symbol."""
-        if self._is_crypto_symbol(symbol):
-            return "crypto"
-        return "equity"
+        return "crypto" if self._is_crypto_symbol(symbol) else "equity"
 
     def _convert_order_status(self, alpaca_status: str) -> OrderStatus:
         """Convert Alpaca order status to standard OrderStatus."""
@@ -177,9 +172,7 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
         try:
             # Try to get asset information
             request = GetAssetsRequest()
-            assets = self.client.get_all_assets(request)
-
-            if assets:
+            if assets := self.client.get_all_assets(request):
                 asset = assets[0] if isinstance(assets, list) else assets
                 asset_class = getattr(asset, "asset_class", "equity")
                 if hasattr(asset_class, "value"):
@@ -420,9 +413,7 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
 
             # Get market clock
             clock = self.client.get_clock()
-            is_open = getattr(clock, "is_open", False)
-            return is_open
-
+            return getattr(clock, "is_open", False)
         except Exception as e:
             raise ExecutionError(f"Failed to check market status: {str(e)}") from e
 
@@ -487,12 +478,12 @@ class AlpacaExecutionConnector(TradingExecutionInterface):
             )
 
         # For equities, validate order type
-        if symbol_info.get("asset_class") == "equity":
-            if order.order_type == OrderType.STOP_LIMIT:
-                # Alpaca doesn't support stop limit for equities
-                raise ValidationError("Stop limit orders not supported for equities")
+        if (
+            symbol_info.get("asset_class") == "equity"
+            and order.order_type == OrderType.STOP_LIMIT
+        ):
+            raise ValidationError("Stop limit orders not supported for equities")
 
         # For crypto, additional validation
-        if self._is_crypto_symbol(order.symbol):
-            if order.quantity < 1e-8:  # Minimum crypto quantity
-                raise ValidationError("Crypto order quantity too small")
+        if self._is_crypto_symbol(order.symbol) and order.quantity < 1e-8:
+            raise ValidationError("Crypto order quantity too small")

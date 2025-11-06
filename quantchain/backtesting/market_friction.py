@@ -134,12 +134,14 @@ class TieredCommission(CommissionModel):
         if trade_value < 0:
             trade_value = abs(trade_value)
 
-        applicable_rate = self.base_rate
-        for threshold, rate in reversed(self.tiers):
-            if monthly_volume >= threshold:
-                applicable_rate = rate
-                break
-
+        applicable_rate = next(
+            (
+                rate
+                for threshold, rate in reversed(self.tiers)
+                if monthly_volume >= threshold
+            ),
+            self.base_rate,
+        )
         return trade_value * applicable_rate
 
 

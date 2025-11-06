@@ -110,7 +110,7 @@ class BacktestingPyEngine(BacktestEngine):
         try:
             bt_data = self._convert_data_format(data)
         except Exception as e:
-            raise ConversionError(f"Failed to convert data format: {e}")
+            raise ConversionError(f"Failed to convert data format: {e}") from e
 
         # Create Backtest instance
         self._backtest = Backtest(
@@ -130,7 +130,7 @@ class BacktestingPyEngine(BacktestEngine):
             self._results = self._convert_results(stats)
             return self._results
         except Exception as e:
-            raise BacktestingPyError(f"Backtest execution failed: {e}")
+            raise BacktestingPyError(f"Backtest execution failed: {e}") from e
 
     def get_results(self) -> Optional[BacktestResult]:
         """Get results of the last backtest."""
@@ -162,8 +162,9 @@ class BacktestingPyEngine(BacktestEngine):
         required_columns = ["open", "high", "low", "close", "volume"]
         data_columns = data.columns.str.lower()
 
-        missing_columns = [col for col in required_columns if col not in data_columns]
-        if missing_columns:
+        if missing_columns := [
+            col for col in required_columns if col not in data_columns
+        ]:
             raise ConversionError(f"Missing required columns: {missing_columns}")
 
         # Standardize column names

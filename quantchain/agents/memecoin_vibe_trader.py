@@ -217,18 +217,22 @@ class MemecoinVibeTrader:
             # Run the workflow
             final_state = self.workflow.invoke(initial_state)
 
-            # Return summary
-            # Normalize state access - handle both dict and AgentState returns
-            if isinstance(final_state, dict):
-                error_msg = final_state.get("error_message")
-                tokens = final_state.get("tokens", [])
-                assessments = final_state.get("assessments", [])
-                trades = final_state.get("trades_executed", [])
-            else:
-                error_msg = getattr(final_state, "error_message", None)
-                tokens = getattr(final_state, "tokens", [])
-                assessments = getattr(final_state, "assessments", [])
-                trades = getattr(final_state, "trades_executed", [])
+            # Normalize final_state to dict for consistent access
+            if not isinstance(final_state, dict):
+                # Convert AgentState or other object to dict
+                final_state = {
+                    "error_message": getattr(final_state, "error_message", None),
+                    "tokens": getattr(final_state, "tokens", []),
+                    "assessments": getattr(final_state, "assessments", []),
+                    "trades_executed": getattr(final_state, "trades_executed", []),
+                    "current_step": getattr(final_state, "current_step", "unknown"),
+                }
+
+            # Extract values from normalized dict
+            error_msg = final_state.get("error_message")
+            tokens = final_state.get("tokens", [])
+            assessments = final_state.get("assessments", [])
+            trades = final_state.get("trades_executed", [])
 
             return {
                 "success": error_msg is None,
@@ -250,6 +254,34 @@ class MemecoinVibeTrader:
                 "trades": [],
             }
 
+    def _filter_and_convert_tokens(
+        self, raw_pairs: List[Dict[str, Any]]
+    ) -> List[TokenPair]:
+        """Filter and convert raw token pair data to TokenPair objects.
+
+        Args:
+                raw_pairs: Raw token pair data from Dexscreener
+
+        Returns:
+        List of TokenPair objects that meet liquidity requirements
+        """
+        tokens = []
+        for pair_data in raw_pairs:
+            if pair_data["liquidity"] >= self.config.min_liquidity_threshold:
+                token = TokenPair(
+                    address=pair_data["address"],
+                    symbol=pair_data["symbol"],
+                    name=pair_data["name"],
+                    liquidity=pair_data["liquidity"],
+                    volume_24h=pair_data["volume_24h"],
+                    created_at=pair_data["created_at"],
+                    dex=pair_data["dex"],
+                    base_token_address=pair_data.get("base_token_address"),
+                    quote_token_address=pair_data.get("quote_token_address"),
+                )
+                tokens.append(token)
+        return tokens
+
     def _scan_tokens(self, state: AgentState) -> AgentState:
         """Scan for new token pairs."""
         try:
@@ -260,22 +292,8 @@ class MemecoinVibeTrader:
                 time_window=self.config.time_window
             )
 
-            # Convert to TokenPair objects and filter by liquidity
-            tokens = []
-            for pair_data in raw_pairs:
-                if pair_data["liquidity"] >= self.config.min_liquidity_threshold:
-                    token = TokenPair(
-                        address=pair_data["address"],
-                        symbol=pair_data["symbol"],
-                        name=pair_data["name"],
-                        liquidity=pair_data["liquidity"],
-                        volume_24h=pair_data["volume_24h"],
-                        created_at=pair_data["created_at"],
-                        dex=pair_data["dex"],
-                        base_token_address=pair_data.get("base_token_address"),
-                        quote_token_address=pair_data.get("quote_token_address"),
-                    )
-                    tokens.append(token)
+            # Filter and convert to TokenPair objects
+            tokens = self._filter_and_convert_tokens(raw_pairs)
 
             state.tokens = tokens
             state.current_step = "scan"
@@ -532,24 +550,38 @@ REASONING: [Your detailed analysis in 2-3 sentences]
         risk_level = "MEDIUM"
         reasoning = "LLM assessment parsing failed"
 
+        import re
+
+        # Regex patterns for robust parsing
+        vibe_score_pattern = re.compile(
+            r"^VIBE_SCORE:\s*(\d+(?:\.\d+)?)", re.IGNORECASE
+        )
+        recommendation_pattern = re.compile(
+            r"^RECOMMENDATION:\s*(BUY|SELL|HOLD|SKIP)", re.IGNORECASE
+        )
+        risk_level_pattern = re.compile(
+            r"^RISK_LEVEL:\s*(LOW|MEDIUM|HIGH)", re.IGNORECASE
+        )
+        reasoning_pattern = re.compile(r"^REASONING:\s*(.+)", re.IGNORECASE | re.DOTALL)
+
         for line in lines:
             line = line.strip()
-            if line.startswith("VIBE_SCORE:"):
+
+            if vibe_match := vibe_score_pattern.match(line):
                 try:
-                    vibe_score = float(line.split(":")[1].strip())
-                    vibe_score = max(0, min(100, vibe_score))  # Clamp to 0-100
+                    score = float(vibe_match.group(1))
+                    vibe_score = max(0, min(100, score))  # Clamp to 0-100
                 except ValueError:
                     pass
-            elif line.startswith("RECOMMENDATION:"):
-                rec = line.split(":")[1].strip().upper()
-                if rec in ["BUY", "HOLD", "SKIP"]:
-                    recommendation = rec
-            elif line.startswith("RISK_LEVEL:"):
-                risk = line.split(":")[1].strip().upper()
-                if risk in ["LOW", "MEDIUM", "HIGH"]:
-                    risk_level = risk
-            elif line.startswith("REASONING:"):
-                reasoning = line.split(":", 1)[1].strip()
+
+            if rec_match := recommendation_pattern.match(line):
+                recommendation = rec_match.group(1).upper()
+
+            if risk_match := risk_level_pattern.match(line):
+                risk_level = risk_match.group(1).upper()
+
+            if reason_match := reasoning_pattern.match(line):
+                reasoning = reason_match.group(1).strip()
 
         return VibeAssessment(
             token=token,

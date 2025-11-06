@@ -96,10 +96,9 @@ class PerformanceMetrics:
             raise InsufficientDataError("Equity curve must have at least 2 points")
 
         try:
-            returns = equity_curve.pct_change().dropna()
-            return returns
+            return equity_curve.pct_change().dropna()
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate returns: {e}")
+            raise MetricsCalculationError(f"Failed to calculate returns: {e}") from e
 
     def calculate_total_return(self, equity_curve: pd.Series) -> float:
         """
@@ -121,7 +120,9 @@ class PerformanceMetrics:
                 )
             return float(equity_curve.iloc[-1] / equity_curve.iloc[0]) - 1
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate total return: {e}")
+            raise MetricsCalculationError(
+                f"Failed to calculate total return: {e}"
+            ) from e
 
     def calculate_annualized_return(
         self, returns: pd.Series, frequency: str = "1d"
@@ -150,7 +151,9 @@ class PerformanceMetrics:
 
             return float((1 + total_return) ** (1 / time_period) - 1)
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate annualized return: {e}")
+            raise MetricsCalculationError(
+                f"Failed to calculate annualized return: {e}"
+            ) from e
 
     def calculate_sharpe_ratio(
         self, returns: pd.Series, frequency: str = "1d"
@@ -190,7 +193,9 @@ class PerformanceMetrics:
         except Exception as e:
             if isinstance(e, (InvalidFrequencyError, MetricsCalculationError)):
                 raise
-            raise MetricsCalculationError(f"Failed to calculate Sharpe ratio: {e}")
+            raise MetricsCalculationError(
+                f"Failed to calculate Sharpe ratio: {e}"
+            ) from e
 
     def calculate_sortino_ratio(
         self, returns: pd.Series, frequency: str = "1d"
@@ -235,7 +240,9 @@ class PerformanceMetrics:
         except Exception as e:
             if isinstance(e, (InvalidFrequencyError, MetricsCalculationError)):
                 raise
-            raise MetricsCalculationError(f"Failed to calculate Sortino ratio: {e}")
+            raise MetricsCalculationError(
+                f"Failed to calculate Sortino ratio: {e}"
+            ) from e
 
     def calculate_max_drawdown(self, equity_curve: pd.Series) -> Dict[str, Any]:
         """
@@ -285,9 +292,7 @@ class PerformanceMetrics:
                 drawdown_periods.append((start_idx or 0, end_idx, duration))
 
             # Find max duration
-            max_duration = (
-                max([d[2] for d in drawdown_periods]) if drawdown_periods else 0
-            )
+            max_duration = max((d[2] for d in drawdown_periods), default=0)
 
             # Find dates for max drawdown
             max_dd_idx = drawdown.idxmin()
@@ -311,7 +316,9 @@ class PerformanceMetrics:
                 "max_drawdown_end": max_dd_end_date,
             }
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate max drawdown: {e}")
+            raise MetricsCalculationError(
+                f"Failed to calculate max drawdown: {e}"
+            ) from e
 
     def calculate_calmar_ratio(self, returns: pd.Series, max_drawdown: float) -> float:
         """
@@ -331,7 +338,9 @@ class PerformanceMetrics:
             annual_return = self.calculate_annualized_return(returns)
             return annual_return / max_drawdown
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate Calmar ratio: {e}")
+            raise MetricsCalculationError(
+                f"Failed to calculate Calmar ratio: {e}"
+            ) from e
 
     def calculate_win_rate(self, trades: pd.DataFrame) -> float:
         """
@@ -353,7 +362,7 @@ class PerformanceMetrics:
             winning_trades = trades[trades["pnl"] > 0]
             return len(winning_trades) / len(trades)
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate win rate: {e}")
+            raise MetricsCalculationError(f"Failed to calculate win rate: {e}") from e
 
     def calculate_profit_factor(self, trades: pd.DataFrame) -> float:
         """
@@ -377,7 +386,9 @@ class PerformanceMetrics:
 
             return gross_profit / gross_loss if gross_loss > 0 else float("inf")
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate profit factor: {e}")
+            raise MetricsCalculationError(
+                f"Failed to calculate profit factor: {e}"
+            ) from e
 
     def generate_tear_sheet(
         self, results: "BacktestResult", save_path: Optional[str] = None
@@ -419,7 +430,7 @@ class PerformanceMetrics:
         except Exception as e:
             if isinstance(e, LibraryImportError):
                 raise
-            raise MetricsCalculationError(f"Failed to generate tear sheet: {e}")
+            raise MetricsCalculationError(f"Failed to generate tear sheet: {e}") from e
 
     def calculate_empyrical_metrics(self, returns: pd.Series) -> Dict[str, float]:
         """
@@ -461,7 +472,119 @@ class PerformanceMetrics:
         except Exception as e:
             if isinstance(e, LibraryImportError):
                 raise
-            raise MetricsCalculationError(f"Failed to calculate Empyrical metrics: {e}")
+            raise MetricsCalculationError(
+                f"Failed to calculate Empyrical metrics: {e}"
+            ) from e
+
+    def _calculate_basic_metrics(
+        self, equity_curve: pd.Series, frequency: str
+    ) -> Dict[str, Any]:
+        """Calculate basic return metrics."""
+        returns = self.calculate_returns(equity_curve, frequency)
+        total_return = self.calculate_total_return(equity_curve)
+        annualized_return = self.calculate_annualized_return(returns, frequency)
+
+        return {
+            "returns": returns,
+            "total_return": total_return,
+            "annualized_return": annualized_return,
+        }
+
+    def _calculate_risk_metrics(
+        self, returns: pd.Series, frequency: str, max_drawdown: float
+    ) -> Dict[str, Any]:
+        """Calculate risk-related metrics."""
+        sharpe_ratio = self.calculate_sharpe_ratio(returns, frequency)
+        sortino_ratio = self.calculate_sortino_ratio(returns, frequency)
+        calmar_ratio = self.calculate_calmar_ratio(returns, max_drawdown)
+        volatility = returns.std() * np.sqrt(252)  # Annualized
+
+        return {
+            "sharpe_ratio": sharpe_ratio,
+            "sortino_ratio": sortino_ratio,
+            "calmar_ratio": calmar_ratio,
+            "volatility": volatility,
+        }
+
+    def _calculate_trade_statistics(self, trades: pd.DataFrame) -> Dict[str, Any]:
+        """Calculate trade-based statistics."""
+        if len(trades) == 0:
+            return {
+                "win_rate": 0.0,
+                "profit_factor": 0.0,
+                "total_trades": 0,
+                "avg_win": 0.0,
+                "avg_loss": 0.0,
+                "best_trade": 0.0,
+                "worst_trade": 0.0,
+                "avg_trade_duration": 0.0,
+                "avg_trade_duration_days": 0.0,
+            }
+
+        win_rate = self.calculate_win_rate(trades)
+        profit_factor = self.calculate_profit_factor(trades)
+        total_trades = len(trades)
+
+        if "pnl" not in trades.columns:
+            return {
+                "win_rate": win_rate,
+                "profit_factor": profit_factor,
+                "total_trades": len(trades),
+                "avg_win": 0.0,
+                "avg_loss": 0.0,
+                "best_trade": 0.0,
+                "worst_trade": 0.0,
+                "avg_trade_duration": 0.0,
+                "avg_trade_duration_days": 0.0,
+            }
+
+        winning_pnls = trades[trades["pnl"] > 0]["pnl"]
+        losing_pnls = trades[trades["pnl"] < 0]["pnl"]
+
+        avg_win = winning_pnls.mean() if len(winning_pnls) > 0 else 0.0
+        avg_loss = losing_pnls.mean() if len(losing_pnls) > 0 else 0.0
+        best_trade = trades["pnl"].max()
+        worst_trade = trades["pnl"].min()
+
+        # Trade duration
+        if "entry_time" in trades.columns and "exit_time" in trades.columns:
+            trade_durations = (
+                trades["exit_time"] - trades["entry_time"]
+            ).dt.total_seconds() / 3600
+            avg_trade_duration = trade_durations.mean()
+            avg_trade_duration_days = avg_trade_duration / 24
+        else:
+            avg_trade_duration = 0.0
+            avg_trade_duration_days = 0.0
+
+        return {
+            "win_rate": win_rate,
+            "profit_factor": profit_factor,
+            "total_trades": total_trades,
+            "avg_win": avg_win,
+            "avg_loss": avg_loss,
+            "best_trade": best_trade,
+            "worst_trade": worst_trade,
+            "avg_trade_duration": avg_trade_duration,
+            "avg_trade_duration_days": avg_trade_duration_days,
+        }
+
+    def _calculate_quantstats_metrics(self, returns: pd.Series) -> Dict[str, float]:
+        """Calculate QuantStats metrics if available."""
+        if not QUANTSTATS_AVAILABLE:
+            return {"sharpe_ratio_qstats": 0.0, "sortino_ratio_qstats": 0.0}
+
+        try:
+            sharpe_ratio_qstats = qs.stats.sharpe(returns)
+            sortino_ratio_qstats = qs.stats.sortino(returns)
+        except Exception:
+            sharpe_ratio_qstats = 0.0
+            sortino_ratio_qstats = 0.0
+
+        return {
+            "sharpe_ratio_qstats": sharpe_ratio_qstats,
+            "sortino_ratio_qstats": sortino_ratio_qstats,
+        }
 
     def calculate_all_metrics(
         self, equity_curve: pd.Series, trades: pd.DataFrame, frequency: str = "1d"
@@ -478,73 +601,35 @@ class PerformanceMetrics:
             MetricsResult: Complete performance metrics
         """
         try:
-            # Basic returns
-            returns = self.calculate_returns(equity_curve, frequency)
-            total_return = self.calculate_total_return(equity_curve)
-            annualized_return = self.calculate_annualized_return(returns, frequency)
+            # Calculate basic metrics
+            basic_metrics = self._calculate_basic_metrics(equity_curve, frequency)
+            returns = basic_metrics["returns"]
+            total_return = basic_metrics["total_return"]
+            annualized_return = basic_metrics["annualized_return"]
 
-            # Risk metrics
-            sharpe_ratio = self.calculate_sharpe_ratio(returns, frequency)
-            sortino_ratio = self.calculate_sortino_ratio(returns, frequency)
-
+            # Calculate drawdown info
             drawdown_info = self.calculate_max_drawdown(equity_curve)
             max_drawdown = drawdown_info["max_drawdown"]
             max_drawdown_duration = drawdown_info["max_drawdown_duration"]
             max_drawdown_start = drawdown_info["max_drawdown_start"]
             max_drawdown_end = drawdown_info["max_drawdown_end"]
 
-            calmar_ratio = self.calculate_calmar_ratio(returns, max_drawdown)
-            volatility = returns.std() * np.sqrt(252)  # Annualized
-
-            # Trade-based metrics
-            win_rate = self.calculate_win_rate(trades) if len(trades) > 0 else 0.0
-            profit_factor = (
-                self.calculate_profit_factor(trades) if len(trades) > 0 else 0.0
+            # Calculate risk metrics
+            risk_metrics = self._calculate_risk_metrics(
+                returns, frequency, max_drawdown
             )
+            sharpe_ratio = risk_metrics["sharpe_ratio"]
+            sortino_ratio = risk_metrics["sortino_ratio"]
+            calmar_ratio = risk_metrics["calmar_ratio"]
+            volatility = risk_metrics["volatility"]
 
-            # Trade statistics
-            if len(trades) > 0 and "pnl" in trades.columns:
-                total_trades = len(trades)
-                winning_trades = len(trades[trades["pnl"] > 0])
-                losing_trades = len(trades[trades["pnl"] < 0])
+            # Calculate trade statistics
+            trade_stats = self._calculate_trade_statistics(trades)
 
-                winning_pnls = trades[trades["pnl"] > 0]["pnl"]
-                losing_pnls = trades[trades["pnl"] < 0]["pnl"]
+            # Calculate QuantStats metrics
+            qstats_metrics = self._calculate_quantstats_metrics(returns)
 
-                avg_win = winning_pnls.mean() if len(winning_pnls) > 0 else 0.0
-                avg_loss = losing_pnls.mean() if len(losing_pnls) > 0 else 0.0
-                best_trade = trades["pnl"].max()
-                worst_trade = trades["pnl"].min()
-
-                # Trade duration
-                if "entry_time" in trades.columns and "exit_time" in trades.columns:
-                    trade_durations = (
-                        trades["exit_time"] - trades["entry_time"]
-                    ).dt.total_seconds() / 3600
-                    avg_trade_duration = trade_durations.mean()
-                    avg_trade_duration_days = avg_trade_duration / 24
-                else:
-                    avg_trade_duration = 0.0
-                    avg_trade_duration_days = 0.0
-            else:
-                total_trades = winning_trades = losing_trades = 0
-                avg_win = avg_loss = best_trade = worst_trade = 0.0
-                avg_trade_duration = avg_trade_duration_days = 0.0
-
-            # QuantStats metrics
-            sharpe_ratio_qstats = 0.0
-            sortino_ratio_qstats = 0.0
-            if QUANTSTATS_AVAILABLE:
-                try:
-                    sharpe_ratio_qstats = qs.stats.sharpe(returns)
-                    sortino_ratio_qstats = qs.stats.sortino(returns)
-                except Exception:
-                    pass  # Use calculated values if QuantStats fails
-
-            # Empyrical metrics
-            omega_ratio = alpha = beta = information_ratio = 0.0
-            var_95 = cvar_95 = skewness = kurtosis = 0.0
-
+            # Calculate Empyrical metrics
             try:
                 emp_metrics = self.calculate_empyrical_metrics(returns)
                 omega_ratio = emp_metrics.get("omega_ratio", 0.0)
@@ -556,7 +641,8 @@ class PerformanceMetrics:
                 skewness = emp_metrics.get("skewness", 0.0)
                 kurtosis = emp_metrics.get("kurtosis", 0.0)
             except Exception:
-                pass  # Use zero values if Empyrical fails or not available
+                omega_ratio = alpha = beta = information_ratio = 0.0
+                var_95 = cvar_95 = skewness = kurtosis = 0.0
 
             return MetricsResult(
                 total_return=total_return,
@@ -569,19 +655,19 @@ class PerformanceMetrics:
                 max_drawdown_start=max_drawdown_start,
                 max_drawdown_end=max_drawdown_end,
                 volatility=volatility,
-                win_rate=win_rate,
-                profit_factor=profit_factor,
-                total_trades=total_trades,
-                winning_trades=winning_trades,
-                losing_trades=losing_trades,
-                avg_win=avg_win,
-                avg_loss=avg_loss,
-                best_trade=best_trade,
-                worst_trade=worst_trade,
-                avg_trade_duration=avg_trade_duration,
-                avg_trade_duration_days=avg_trade_duration_days,
-                sharpe_ratio_qstats=sharpe_ratio_qstats,
-                sortino_ratio_qstats=sortino_ratio_qstats,
+                win_rate=trade_stats["win_rate"],
+                profit_factor=trade_stats["profit_factor"],
+                total_trades=trade_stats["total_trades"],
+                winning_trades=0,  # Not needed for simplified stats
+                losing_trades=0,  # Not needed for simplified stats
+                avg_win=trade_stats["avg_win"],
+                avg_loss=trade_stats["avg_loss"],
+                best_trade=trade_stats["best_trade"],
+                worst_trade=trade_stats["worst_trade"],
+                avg_trade_duration=trade_stats["avg_trade_duration"],
+                avg_trade_duration_days=trade_stats["avg_trade_duration_days"],
+                sharpe_ratio_qstats=qstats_metrics["sharpe_ratio_qstats"],
+                sortino_ratio_qstats=qstats_metrics["sortino_ratio_qstats"],
                 omega_ratio=omega_ratio,
                 alpha=alpha,
                 beta=beta,
@@ -595,4 +681,6 @@ class PerformanceMetrics:
         except Exception as e:
             if isinstance(e, MetricsCalculationError):
                 raise
-            raise MetricsCalculationError(f"Failed to calculate all metrics: {e}")
+            raise MetricsCalculationError(
+                f"Failed to calculate all metrics: {e}"
+            ) from e

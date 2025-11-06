@@ -1,7 +1,7 @@
 """Alpaca data connector for equity and crypto data."""
 
 import pandas as pd
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Tuple
 from datetime import datetime, timezone
 import time
 from alpaca.data import (
@@ -22,7 +22,12 @@ from alpaca.trading.requests import GetAssetsRequest
 from alpaca.trading.enums import AssetClass
 
 from .base_interface import DataFeedInterface
-from ..core.exceptions import DataSourceError, AuthenticationError, SymbolNotFoundError
+from ..core.exceptions import (
+    DataSourceError,
+    AuthenticationError,
+    RateLimitError,
+    SymbolNotFoundError,
+)
 
 
 class AlpacaDataConnector(DataFeedInterface):
@@ -51,6 +56,7 @@ class AlpacaDataConnector(DataFeedInterface):
                 - crypto_feed: Data feed for crypto (default: 'iex' for free tier)
                 - symbol_limit: Maximum number of symbols to return in
                   get_available_symbols (default: None, no limit)
+                - cache_ttl: Symbol cache time-to-live in seconds (default: 3600)
         """
         super().__init__(api_key, api_secret, **kwargs)
 
@@ -59,6 +65,7 @@ class AlpacaDataConnector(DataFeedInterface):
         self.use_paper = kwargs.get("use_paper", True)
         self.crypto_feed = kwargs.get("crypto_feed", DataFeed.IEX)
         self.symbol_limit = kwargs.get("symbol_limit", None)
+        self._cache_ttl = kwargs.get("cache_ttl", 3600)  # 1 hour default
 
         try:
             # Initialize clients
@@ -71,7 +78,6 @@ class AlpacaDataConnector(DataFeedInterface):
             # Cache for symbol information
             self._symbol_cache: Dict[str, Dict[str, Any]] = {}
             self._cache_timestamp: Optional[float] = None
-            self._cache_ttl = 3600  # 1 hour
 
         except Exception as e:
             raise AuthenticationError(
@@ -139,9 +145,24 @@ class AlpacaDataConnector(DataFeedInterface):
                 self._cache_timestamp = now
 
             except Exception as e:
+                # Check for rate limit indicators in error message
+                error_msg = str(e).lower()
+                if (
+                    "rate limit" in error_msg
+                    or "429" in error_msg
+                    or "too many requests" in error_msg
+                ):
+                    raise RateLimitError(
+                        "Rate limit exceeded while refreshing symbol cache"
+                    ) from e
                 raise DataSourceError(
                     f"Failed to refresh symbol cache: {str(e)}"
                 ) from e
+
+    def invalidate_symbol_cache(self) -> None:
+        """Manually invalidate the symbol cache to force refresh on next access."""
+        self._cache_timestamp = None
+        self._symbol_cache.clear()
 
     def get_historical_data(
         self,
@@ -193,20 +214,17 @@ class AlpacaDataConnector(DataFeedInterface):
             if not data:
                 raise SymbolNotFoundError(f"No data found for symbol: {symbol}")
 
-            # Convert to DataFrame
-            records = []
-            for bar in data:
-                records.append(
-                    {
-                        "timestamp": bar.timestamp,
-                        "open": float(bar.open),
-                        "high": float(bar.high),
-                        "low": float(bar.low),
-                        "close": float(bar.close),
-                        "volume": int(bar.volume),
-                    }
-                )
-
+            records = [
+                {
+                    "timestamp": bar.timestamp,
+                    "open": float(bar.open),
+                    "high": float(bar.high),
+                    "low": float(bar.low),
+                    "close": float(bar.close),
+                    "volume": int(bar.volume),
+                }
+                for bar in data
+            ]
             df = pd.DataFrame(records)
             df["timestamp"] = pd.to_datetime(df["timestamp"])
             df = df.sort_values("timestamp").reset_index(drop=True)
@@ -216,14 +234,24 @@ class AlpacaDataConnector(DataFeedInterface):
         except Exception as e:
             if isinstance(e, (SymbolNotFoundError, ValueError)):
                 raise
+            # Check for rate limit indicators in error message
+            error_msg = str(e).lower()
+            if (
+                "rate limit" in error_msg
+                or "429" in error_msg
+                or "too many requests" in error_msg
+            ):
+                raise RateLimitError(
+                    f"Rate limit exceeded while fetching historical data for {symbol}"
+                ) from e
             raise DataSourceError(
                 f"Failed to fetch historical data for {symbol}: {str(e)}"
             ) from e
 
-    def get_real_time_data(self, symbol: str) -> Dict[str, Any]:
-        """Fetch real-time price data for a symbol."""
+    def _get_quote_data(self, symbol: str, is_crypto: bool) -> Tuple[Any, str]:
+        """Get quote data for a symbol, handling both crypto and equity."""
         try:
-            if self._is_crypto_symbol(symbol):
+            if is_crypto:
                 # Crypto latest quote
                 normalized_symbol = self._normalize_crypto_symbol(symbol)
                 crypto_request = CryptoLatestQuoteRequest(
@@ -234,14 +262,7 @@ class AlpacaDataConnector(DataFeedInterface):
                 if normalized_symbol not in quotes:
                     raise SymbolNotFoundError(f"Crypto symbol not found: {symbol}")
 
-                quote = quotes[normalized_symbol]
-                return {
-                    "timestamp": quote.timestamp,
-                    "price": float(quote.ask_price),
-                    "bid": float(quote.bid_price),
-                    "ask": float(quote.ask_price),
-                    "volume": 0,  # Crypto quotes don't include volume
-                }
+                return quotes[normalized_symbol], "crypto"
             else:
                 # Equity latest quote
                 stock_request = StockLatestQuoteRequest(symbol_or_symbols=[symbol])
@@ -250,69 +271,76 @@ class AlpacaDataConnector(DataFeedInterface):
                 if symbol not in quotes:
                     raise SymbolNotFoundError(f"Equity symbol not found: {symbol}")
 
-                quote = quotes[symbol]
-                return {
-                    "timestamp": quote.timestamp,
-                    "price": float((quote.bid_price + quote.ask_price) / 2),
-                    "bid": float(quote.bid_price),
-                    "ask": float(quote.ask_price),
-                    "volume": 0,  # Latest quote doesn't include volume
-                }
-
+                return quotes[symbol], "equity"
         except Exception as e:
+            if isinstance(e, SymbolNotFoundError):
+                raise
+            # Check for rate limit indicators in error message
+            error_msg = str(e).lower()
+            if (
+                "rate limit" in error_msg
+                or "429" in error_msg
+                or "too many requests" in error_msg
+            ):
+                raise RateLimitError(
+                    f"Rate limit exceeded while fetching quote data for {symbol}"
+                ) from e
             raise DataSourceError(
-                f"Failed to fetch real-time data for {symbol}: {str(e)}"
+                f"Failed to fetch quote data for {symbol}: {str(e)}"
             ) from e
+
+    def get_real_time_data(self, symbol: str) -> Dict[str, Any]:
+        """Fetch real-time price data for a symbol."""
+        quote, market_type = self._get_quote_data(
+            symbol, self._is_crypto_symbol(symbol)
+        )
+
+        if market_type == "crypto":
+            return {
+                "timestamp": quote.timestamp,
+                "price": float(quote.ask_price),
+                "bid": float(quote.bid_price),
+                "ask": float(quote.ask_price),
+                "volume": 0,  # Crypto quotes don't include volume
+            }
+        else:  # equity
+            return {
+                "timestamp": quote.timestamp,
+                "price": float((quote.bid_price + quote.ask_price) / 2),
+                "bid": float(quote.bid_price),
+                "ask": float(quote.ask_price),
+                "volume": 0,  # Latest quote doesn't include volume
+            }
 
     def get_quote(self, symbol: str) -> Dict[str, Any]:
         """Get current quote for a symbol."""
-        try:
-            if self._is_crypto_symbol(symbol):
-                # Crypto quote
-                normalized_symbol = self._normalize_crypto_symbol(symbol)
-                crypto_request = CryptoLatestQuoteRequest(
-                    symbol_or_symbols=[normalized_symbol]
-                )
-                quotes = self.crypto_client.get_crypto_latest_quote(crypto_request)
+        quote, market_type = self._get_quote_data(
+            symbol, self._is_crypto_symbol(symbol)
+        )
 
-                if normalized_symbol not in quotes:
-                    raise SymbolNotFoundError(f"Crypto symbol not found: {symbol}")
+        base_data = {
+            "symbol": symbol,
+            "timestamp": quote.timestamp,
+            "bid_price": float(quote.bid_price),
+            "ask_price": float(quote.ask_price),
+            "bid_size": float(quote.bid_size),
+            "ask_size": float(quote.ask_size),
+        }
 
-                quote = quotes[normalized_symbol]
-                return {
-                    "symbol": symbol,
-                    "timestamp": quote.timestamp,
-                    "bid_price": float(quote.bid_price),
-                    "ask_price": float(quote.ask_price),
-                    "bid_size": float(quote.bid_size),
-                    "ask_size": float(quote.ask_size),
-                    "last_price": float(
-                        quote.ask_price
-                    ),  # Use ask as last price for crypto
-                    "last_size": float(quote.ask_size),
-                }
-            else:
-                # Equity quote
-                stock_request = StockLatestQuoteRequest(symbol_or_symbols=[symbol])
-                quotes = self.stock_client.get_stock_latest_quote(stock_request)
+        if market_type == "crypto":
+            base_data |= {
+                "last_price": float(
+                    quote.ask_price
+                ),  # Use ask as last price for crypto
+                "last_size": float(quote.ask_size),
+            }
+        else:  # equity
+            base_data |= {
+                "last_price": (float(quote.bid_price) + float(quote.ask_price)) / 2,
+                "last_size": min(float(quote.bid_size), float(quote.ask_size)),
+            }
 
-                if symbol not in quotes:
-                    raise SymbolNotFoundError(f"Equity symbol not found: {symbol}")
-
-                quote = quotes[symbol]
-                return {
-                    "symbol": symbol,
-                    "timestamp": quote.timestamp,
-                    "bid_price": float(quote.bid_price),
-                    "ask_price": float(quote.ask_price),
-                    "bid_size": float(quote.bid_size),
-                    "ask_size": float(quote.ask_size),
-                    "last_price": (float(quote.bid_price) + float(quote.ask_price)) / 2,
-                    "last_size": min(float(quote.bid_size), float(quote.ask_size)),
-                }
-
-        except Exception as e:
-            raise DataSourceError(f"Failed to fetch quote for {symbol}: {str(e)}")
+        return base_data
 
     def get_available_symbols(
         self, market: Optional[str] = None, limit: Optional[int] = None

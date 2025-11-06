@@ -381,7 +381,9 @@ class TestAlpacaDataConnector:
                 # Return empty dict to simulate missing symbol
                 mock_quote.return_value = {}
 
-                with pytest.raises(DataSourceError, match="Equity symbol not found"):
+                with pytest.raises(
+                    SymbolNotFoundError, match="Equity symbol not found"
+                ):
                     connector.get_real_time_data("MISSING")
 
     def test_get_quote_missing_crypto_symbol(
@@ -395,7 +397,9 @@ class TestAlpacaDataConnector:
                 # Return empty dict to simulate missing symbol
                 mock_quote.return_value = {}
 
-                with pytest.raises(DataSourceError, match="Crypto symbol not found"):
+                with pytest.raises(
+                    SymbolNotFoundError, match="Crypto symbol not found"
+                ):
                     connector.get_quote("MISSING/USD")
 
     def test_authentication_error_handling(self) -> None:

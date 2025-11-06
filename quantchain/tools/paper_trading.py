@@ -70,9 +70,9 @@ class VolumeSlippage(SlippageModel):
         slippage_amount = market_price * (slippage_percent / 100)
 
         if order.side == OrderSide.BUY:
-            return market_price + slippage_amount
+            return float(market_price + slippage_amount)
         else:
-            return market_price - slippage_amount
+            return float(market_price - slippage_amount)
 
 
 @dataclass
@@ -114,31 +114,32 @@ class ImmediateFill(FillModel):
             if order.price is None:
                 return False
             if order.side == OrderSide.BUY:
-                return market_price <= order.price
+                return market_price <= order.price  # type: ignore[no-any-return]
             else:
-                return market_price >= order.price
+                return market_price >= order.price  # type: ignore[no-any-return]
         elif order.order_type == OrderType.STOP:
             if order.stop_price is None:
                 return False
             if order.side == OrderSide.BUY:
-                return market_price >= order.stop_price
+                return market_price >= order.stop_price  # type: ignore[no-any-return]
             else:
-                return market_price <= order.stop_price
+                return market_price <= order.stop_price  # type: ignore[no-any-return]
         elif order.order_type == OrderType.STOP_LIMIT:
             # First check stop condition
             if order.stop_price is None or order.price is None:
                 return False
-            if order.side == OrderSide.BUY:
-                if market_price < order.stop_price:
-                    return False
-            else:
-                if market_price > order.stop_price:
-                    return False
+            if (
+                order.side == OrderSide.BUY
+                and market_price < order.stop_price
+                or order.side != OrderSide.BUY
+                and market_price > order.stop_price
+            ):
+                return False
             # Then check limit condition
             if order.side == OrderSide.BUY:
-                return market_price <= order.price
+                return market_price <= order.price  # type: ignore[no-any-return]
             else:
-                return market_price >= order.price
+                return market_price >= order.price  # type: ignore[no-any-return]
 
         return False
 
@@ -244,6 +245,45 @@ class PaperTradingExecutor(TradingExecutionInterface):
             self.market_prices[symbol] = 100.0 + random.uniform(-10, 10)
         return self.market_prices[symbol]
 
+    def _create_pending_order(self, order: OrderRequest, order_id: str) -> OrderResult:
+        """Create a pending order result."""
+        return OrderResult(
+            order_id=order_id,
+            client_order_id=order.client_order_id,
+            symbol=order.symbol,
+            side=order.side,
+            order_type=order.order_type,
+            quantity=order.quantity,
+            filled_quantity=0.0,
+            price=order.price,
+            stop_price=order.stop_price,
+            avg_fill_price=None,
+            status=OrderStatus.PENDING,
+            timestamp=datetime.now(timezone.utc),
+        )
+
+    def _create_filled_order(
+        self, order: OrderRequest, fill_price: float, commission: float
+    ) -> OrderResult:
+        """Create a filled order result."""
+        order_id = self._generate_order_id()
+        filled_quantity = order.quantity
+
+        return OrderResult(
+            order_id=order_id,
+            client_order_id=order.client_order_id,
+            symbol=order.symbol,
+            side=order.side,
+            order_type=order.order_type,
+            quantity=order.quantity,
+            filled_quantity=filled_quantity,
+            price=order.price,
+            stop_price=order.stop_price,
+            avg_fill_price=fill_price,
+            status=OrderStatus.FILLED,
+            timestamp=datetime.now(timezone.utc),
+        )
+
     def place_order(self, order: OrderRequest) -> OrderResult:
         """Place a trading order in paper trading."""
         try:
@@ -255,114 +295,27 @@ class PaperTradingExecutor(TradingExecutionInterface):
 
             # Check if order should fill based on original market price
             if not self.fill_model.should_fill(order, market_price):
-                # Return pending order
                 order_id = self._generate_order_id()
-                result = OrderResult(
-                    order_id=order_id,
-                    client_order_id=order.client_order_id,
-                    symbol=order.symbol,
-                    side=order.side,
-                    order_type=order.order_type,
-                    quantity=order.quantity,
-                    filled_quantity=0.0,
-                    price=order.price,
-                    stop_price=order.stop_price,
-                    avg_fill_price=None,
-                    status=OrderStatus.PENDING,
-                    timestamp=datetime.now(timezone.utc),
-                )
+                result = self._create_pending_order(order, order_id)
                 self.orders[order_id] = result
                 return result
 
-            # Apply slippage only for filled orders
+            # Process filled order
             fill_price = self.slippage_model.apply_slippage(order, market_price)
-
-            # Calculate commission
             commission = self._calculate_commission(order)
 
-            # Calculate total cost
-            total_cost = fill_price * order.quantity + commission
-
-            # Check sufficient funds for buy orders
+            # Process buy order
             if order.side == OrderSide.BUY:
-                if self.cash < total_cost:
-                    raise ExecutionError(
-                        f"Insufficient funds: need {total_cost:.2f}, "
-                        f"have {self.cash:.2f}"
-                    )
+                self._process_buy_order(order, fill_price, commission)
 
-                # Update cash and position
-                self.cash -= total_cost
+            # Process sell order
+            else:
+                self._process_sell_order(order, fill_price, commission)
 
-                # Update or create position
-                if order.symbol in self.positions:
-                    pos = self.positions[order.symbol]
-                    new_quantity = pos.quantity + order.quantity
-                    new_cost_basis = (pos.avg_entry_price * pos.quantity) + (
-                        fill_price * order.quantity
-                    )
-                    pos.avg_entry_price = new_cost_basis / new_quantity
-                    pos.quantity = new_quantity
-                else:
-                    self.positions[order.symbol] = Position(
-                        symbol=order.symbol,
-                        quantity=order.quantity,
-                        avg_entry_price=fill_price,
-                        current_price=fill_price,
-                        market_value=fill_price * order.quantity,
-                        unrealized_pnl=0.0,
-                        unrealized_pnl_percent=0.0,
-                    )
-
-            else:  # SELL order
-                # Check if we have position to sell
-                if (
-                    order.symbol not in self.positions
-                    or self.positions[order.symbol].quantity < order.quantity
-                ):
-                    raise ExecutionError(f"Insufficient position for {order.symbol}")
-
-                # Update position
-                pos = self.positions[order.symbol]
-                remaining_quantity = pos.quantity - order.quantity
-
-                # Calculate realized P&L
-                realized_pnl = (fill_price - pos.avg_entry_price) * order.quantity
-                self.cash += (fill_price * order.quantity) - commission
-
-                if remaining_quantity < 1e-10:  # Position closed
-                    del self.positions[order.symbol]
-                    # Update performance metrics
-                    self.performance_metrics.update_metrics(
-                        realized_pnl, self.equity_curve
-                    )
-                else:
-                    pos.quantity = remaining_quantity
-
-            # Create order result
-            order_id = self._generate_order_id()
-            result = OrderResult(
-                order_id=order_id,
-                client_order_id=order.client_order_id,
-                symbol=order.symbol,
-                side=order.side,
-                order_type=order.order_type,
-                quantity=order.quantity,
-                filled_quantity=order.quantity,
-                price=order.price,
-                stop_price=order.stop_price,
-                avg_fill_price=fill_price,
-                status=OrderStatus.FILLED,
-                timestamp=datetime.now(timezone.utc),
-            )
-
-            self.orders[order_id] = result
-
-            # Update equity curve
-            portfolio_value = self.cash + sum(
-                pos.market_value for pos in self.positions.values()
-            )
-            self.equity_curve.append(portfolio_value)
+            # Create filled order result and update equity
+            result = self._create_filled_order(order, fill_price, commission)
+            self.orders[result.order_id] = result
+            self._update_equity_curve()
 
             return result
 
@@ -370,6 +323,69 @@ class PaperTradingExecutor(TradingExecutionInterface):
             if isinstance(e, (ValidationError, ExecutionError)):
                 raise
             raise ExecutionError(f"Failed to place order: {str(e)}") from e
+
+    def _process_buy_order(
+        self, order: OrderRequest, fill_price: float, commission: float
+    ) -> None:
+        """Process a buy order and update positions/cash."""
+        total_cost = fill_price * order.quantity + commission
+
+        if self.cash < total_cost:
+            raise ExecutionError(
+                f"Insufficient funds: need {total_cost:.2f}, have {self.cash:.2f}"
+            )
+
+        self.cash -= total_cost
+
+        # Update or create position
+        if order.symbol in self.positions:
+            pos = self.positions[order.symbol]
+            new_quantity = pos.quantity + order.quantity
+            new_cost_basis = (pos.avg_entry_price * pos.quantity) + (
+                fill_price * order.quantity
+            )
+            pos.avg_entry_price = new_cost_basis / new_quantity
+            pos.quantity = new_quantity
+        else:
+            self.positions[order.symbol] = Position(
+                symbol=order.symbol,
+                quantity=order.quantity,
+                avg_entry_price=fill_price,
+                current_price=fill_price,
+                market_value=fill_price * order.quantity,
+                unrealized_pnl=0.0,
+                unrealized_pnl_percent=0.0,
+            )
+
+    def _process_sell_order(
+        self, order: OrderRequest, fill_price: float, commission: float
+    ) -> None:
+        """Process a sell order and update positions/cash."""
+        if (
+            order.symbol not in self.positions
+            or self.positions[order.symbol].quantity < order.quantity
+        ):
+            raise ExecutionError(f"Insufficient position for {order.symbol}")
+
+        pos = self.positions[order.symbol]
+        remaining_quantity = pos.quantity - order.quantity
+
+        # Calculate realized P&L
+        realized_pnl = (fill_price - pos.avg_entry_price) * order.quantity
+        self.cash += (fill_price * order.quantity) - commission
+
+        if remaining_quantity < 1e-10:  # Position closed
+            del self.positions[order.symbol]
+            self.performance_metrics.update_metrics(realized_pnl, self.equity_curve)
+        else:
+            pos.quantity = remaining_quantity
+
+    def _update_equity_curve(self) -> None:
+        """Update equity curve with current portfolio value."""
+        portfolio_value = self.cash + sum(
+            pos.market_value for pos in self.positions.values()
+        )
+        self.equity_curve.append(portfolio_value)
 
     def cancel_order(self, order_id: str) -> OrderResult:
         """Cancel an existing order."""
@@ -491,22 +507,20 @@ class PaperTradingExecutor(TradingExecutionInterface):
         """Export complete trade history."""
         orders = self.get_order_history()
 
-        data = []
-        for order in orders:
-            data.append(
-                {
-                    "timestamp": order.timestamp,
-                    "order_id": order.order_id,
-                    "symbol": order.symbol,
-                    "side": order.side.value,
-                    "order_type": order.order_type.value,
-                    "quantity": order.quantity,
-                    "filled_quantity": order.filled_quantity,
-                    "avg_fill_price": order.avg_fill_price,
-                    "status": order.status.value,
-                }
-            )
-
+        data = [
+            {
+                "timestamp": order.timestamp,
+                "order_id": order.order_id,
+                "symbol": order.symbol,
+                "side": order.side.value,
+                "order_type": order.order_type.value,
+                "quantity": order.quantity,
+                "filled_quantity": order.filled_quantity,
+                "avg_fill_price": order.avg_fill_price,
+                "status": order.status.value,
+            }
+            for order in orders
+        ]
         return pd.DataFrame(data)
 
     def reset(self) -> None:

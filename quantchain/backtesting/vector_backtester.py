@@ -58,9 +58,123 @@ class VectorizedPositionManager:
         self.equity_curve = None
         self.trade_log = None
 
+    def _process_buy_signal(
+        self,
+        timestamp: Any,
+        price: float,
+        signal: float,
+        current_position: float,
+        current_cash: float,
+    ) -> Tuple[float, float, Dict[str, Any]]:
+        """Process a buy signal and return updated position, cash, and trade record."""
+        if signal > 0 and current_position == 0:
+            execution_price = price * (1 + self.slippage_rate)
+            shares_to_buy = current_cash / execution_price
+            cost = shares_to_buy * execution_price
+            commission = cost * self.commission_rate
+            total_cost = cost + commission
+
+            if cost <= current_cash + 0.01:  # Small tolerance
+                cash_before = current_cash
+                current_cash -= total_cost
+                current_position += shares_to_buy
+
+                trade = {
+                    "timestamp": timestamp,
+                    "signal": signal,
+                    "price": execution_price,
+                    "shares": shares_to_buy,
+                    "commission": commission,
+                    "slippage": cost * self.slippage_rate,
+                    "cash_before": cash_before,
+                    "cash_after": current_cash,
+                    "position": current_position,
+                }
+            else:
+                trade = {}
+        else:
+            trade = {}
+
+        return current_position, current_cash, trade
+
+    def _process_sell_signal_long(
+        self,
+        timestamp: Any,
+        price: float,
+        signal: float,
+        current_position: float,
+        current_cash: float,
+    ) -> Tuple[float, float, Dict[str, Any]]:
+        """Process a sell signal for closing long position."""
+        if signal < 0 and current_position > 0:
+            execution_price = price * (1 - self.slippage_rate)
+            proceeds = current_position * execution_price
+            commission = proceeds * self.commission_rate
+            net_proceeds = proceeds - commission
+
+            cash_before = current_cash
+            current_cash += net_proceeds
+
+            trade = {
+                "timestamp": timestamp,
+                "signal": signal,
+                "price": execution_price,
+                "shares": -current_position,
+                "commission": commission,
+                "slippage": proceeds * self.slippage_rate,
+                "cash_before": cash_before,
+                "cash_after": current_cash,
+                "position": 0.0,
+            }
+            current_position = 0.0
+        else:
+            current_position = current_position
+            current_cash = current_cash
+            trade = {}
+
+        return current_position, current_cash, trade
+
+    def _process_sell_signal_short(
+        self,
+        timestamp: Any,
+        price: float,
+        signal: float,
+        current_position: float,
+        current_cash: float,
+    ) -> Tuple[float, float, Dict[str, Any]]:
+        """Process a sell signal for covering short position."""
+        if signal < 0 and current_position < 0:
+            execution_price = price * (1 + self.slippage_rate)
+            cost_to_cover = abs(current_position) * execution_price
+            commission = cost_to_cover * self.commission_rate
+            total_cost = cost_to_cover + commission
+
+            if total_cost <= current_cash + 0.01:
+                cash_before = current_cash
+                current_cash -= total_cost
+                current_position = 0.0
+
+                trade = {
+                    "timestamp": timestamp,
+                    "signal": signal,
+                    "price": execution_price,
+                    "shares": abs(current_position),
+                    "commission": commission,
+                    "slippage": cost_to_cover * self.slippage_rate,
+                    "cash_before": cash_before,
+                    "cash_after": current_cash,
+                    "position": current_position,
+                }
+            else:
+                trade = {}
+        else:
+            trade = {}
+
+        return current_position, current_cash, trade
+
     def process_signals(
         self, prices: pd.Series, signals: pd.Series
-    ) -> Tuple[pd.Series, pd.DataFrame]:
+    ) -> Tuple[pd.Series, pd.DataFrame, float]:
         """
         Process trading signals and calculate positions and trades.
 
@@ -84,96 +198,38 @@ class VectorizedPositionManager:
         current_position = 0.0
         current_cash = self.initial_cash
 
+        # Process all signals
         for i, (timestamp, price, signal) in enumerate(
             zip(prices.index, prices, signals)
         ):
             if signal != 0:
-                # Calculate trade size (full position for buy/sell signals)
-                if signal > 0 and current_position == 0:  # Buy signal
-                    # Apply slippage to price
-                    execution_price = price * (1 + self.slippage_rate)
-
-                    # Calculate shares - use all cash for shares (test expectation)
-                    # Commission is paid separately from remaining cash
-                    shares_to_buy = current_cash / execution_price
-                    cost = shares_to_buy * execution_price
-                    commission = cost * self.commission_rate
-                    total_cost = cost + commission
-
-                    # Allow overdraft for commission (test expects this behavior)
-                    if (
-                        cost <= current_cash + 0.01
-                    ):  # Small tolerance for floating point
-                        cash_before = current_cash
-                        current_cash -= total_cost
-                        current_position += shares_to_buy
-
-                        trades.append(
-                            {
-                                "timestamp": timestamp,
-                                "signal": signal,
-                                "price": execution_price,
-                                "shares": shares_to_buy,
-                                "commission": commission,
-                                "slippage": cost * self.slippage_rate,
-                                "cash_before": cash_before,
-                                "cash_after": current_cash,
-                                "position": current_position,
-                            }
-                        )
-
-                elif signal < 0 and current_position > 0:  # Sell signal (close long)
-                    # Apply slippage to price
-                    execution_price = price * (1 - self.slippage_rate)
-                    proceeds = current_position * execution_price
-                    commission = proceeds * self.commission_rate
-                    net_proceeds = proceeds - commission
-
-                    cash_before = current_cash
-                    current_cash += net_proceeds
-
-                    trades.append(
-                        {
-                            "timestamp": timestamp,
-                            "signal": signal,
-                            "price": execution_price,
-                            "shares": -current_position,
-                            "commission": commission,
-                            "slippage": proceeds * self.slippage_rate,
-                            "cash_before": cash_before,
-                            "cash_after": current_cash,
-                            "position": 0.0,
-                        }
+                # Process buy signal
+                if signal > 0 and current_position == 0:
+                    current_position, current_cash, trade = self._process_buy_signal(
+                        timestamp, price, signal, current_position, current_cash
                     )
+                    if trade:
+                        trades.append(trade)
 
-                    current_position = 0.0
-                elif signal < 0 and current_position < 0:  # Cover short position
-                    # Apply slippage to price
-                    execution_price = price * (1 + self.slippage_rate)  # Buy to cover
-                    cost_to_cover = abs(current_position) * execution_price
-                    commission = cost_to_cover * self.commission_rate
-                    total_cost = cost_to_cover + commission
-
-                    if (
-                        total_cost <= current_cash + 0.01
-                    ):  # Small tolerance for floating point
-                        cash_before = current_cash
-                        current_cash -= total_cost
-                        current_position = 0.0  # Close short position
-
-                        trades.append(
-                            {
-                                "timestamp": timestamp,
-                                "signal": signal,
-                                "price": execution_price,
-                                "shares": abs(current_position),
-                                "commission": commission,
-                                "slippage": cost_to_cover * self.slippage_rate,
-                                "cash_before": cash_before,
-                                "cash_after": current_cash,
-                                "position": current_position,
-                            }
+                # Process sell signal for long position
+                elif signal < 0 and current_position > 0:
+                    current_position, current_cash, trade = (
+                        self._process_sell_signal_long(
+                            timestamp, price, signal, current_position, current_cash
                         )
+                    )
+                    if trade:
+                        trades.append(trade)
+
+                # Process sell signal for short position
+                elif signal < 0 and current_position < 0:
+                    current_position, current_cash, trade = (
+                        self._process_sell_signal_short(
+                            timestamp, price, signal, current_position, current_cash
+                        )
+                    )
+                    if trade:
+                        trades.append(trade)
 
             positions.iloc[i] = current_position
 
@@ -181,7 +237,7 @@ class VectorizedPositionManager:
         self.trade_log = pd.DataFrame(trades) if trades else pd.DataFrame()
         self.current_cash = current_cash
 
-        return positions, self.trade_log
+        return positions, self.trade_log, self.current_cash
 
     def calculate_equity(self, prices: pd.Series, positions: pd.Series) -> pd.Series:
         """
@@ -206,17 +262,14 @@ class VectorizedPositionManager:
         if self.trade_log is not None and not self.trade_log.empty:
             # Manually update cash at each trade timestamp and forward fill
             for _, trade in self.trade_log.iterrows():
-                timestamp = trade["timestamp"]
                 cash_after = trade["cash_after"]
+                timestamp = trade["timestamp"]
                 # Update all entries from this timestamp forward
                 mask = prices.index >= timestamp
                 cash_series[mask] = cash_after
-        else:
-            # If no trade log and positions are non-zero, assume all cash was used
-            # This handles cases where positions are manually set
-            if len(positions) > 0 and positions.iloc[0] > 0:
-                # All cash was used to buy initial position
-                cash_series[:] = 0.0
+        elif len(positions) > 0 and positions.iloc[0] > 0:
+            # All cash was used to buy initial position
+            cash_series[:] = 0.0
 
         # Calculate position value and total equity using vectorized operations
         position_values = positions * prices
@@ -287,7 +340,9 @@ class VectorBacktester:
         prices = data["close"]
 
         # Process signals and calculate positions
-        positions, trades = self.position_manager.process_signals(prices, signals)
+        positions, trades, final_cash = self.position_manager.process_signals(
+            prices, signals
+        )
 
         # Note: Market friction already applied in process_signals
         # via commission and slippage rates

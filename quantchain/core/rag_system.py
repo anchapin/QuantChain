@@ -9,7 +9,6 @@ import numpy as np
 
 if TYPE_CHECKING:
     import chromadb
-    from sentence_transformers import SentenceTransformer
 
 try:
     import chromadb  # noqa: F811

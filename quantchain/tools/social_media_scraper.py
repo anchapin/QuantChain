@@ -2,7 +2,7 @@
 
 import logging
 import time
-from typing import Dict, Any, Optional, TYPE_CHECKING
+from typing import Dict, Any, Optional
 from dataclasses import dataclass
 
 try:
@@ -13,23 +13,17 @@ except ImportError:
 from ..core.exceptions import DataSourceError
 from ..core.retry import RetryHandler
 
+logger = logging.getLogger(__name__)
+
 
 def _get_beautiful_soup() -> Any:
     """Get BeautifulSoup class or None if not available."""
-    if TYPE_CHECKING:
-        try:
-            from bs4 import BeautifulSoup
+    try:
+        from bs4 import BeautifulSoup
 
-            return BeautifulSoup
-        except ImportError:
-            return None
-    else:
-        try:
-            from bs4 import BeautifulSoup
-
-            return BeautifulSoup
-        except ImportError:
-            return None
+        return BeautifulSoup
+    except ImportError:
+        return None
 
 
 # Make BeautifulSoup available at module level
@@ -101,6 +95,36 @@ class SocialMediaScraper:
         self._last_request_time: float = 0
         self._min_request_interval = 1.0  # 1 second between requests
 
+    def _aggregate_social_metrics(
+        self, telegram_data: Dict[str, Any], twitter_data: Dict[str, Any]
+    ) -> SocialMetrics:
+        """Aggregate social metrics from different sources.
+
+        Args:
+            telegram_data: Metrics from Telegram scraping
+            twitter_data: Metrics from Twitter scraping
+
+        Returns:
+            Aggregated SocialMetrics object
+        """
+        metrics = SocialMetrics()
+
+        # Get Telegram metrics
+        metrics.telegram_followers = telegram_data.get("followers", 0)
+        metrics.recent_posts = telegram_data.get("recent_posts", 0)
+
+        # Get Twitter metrics
+        metrics.twitter_followers = twitter_data.get("followers", 0)
+        metrics.engagement_rate = twitter_data.get("engagement_rate", 0.0)
+        metrics.sentiment_score = twitter_data.get("sentiment_score", 0.5)
+
+        # Update recent posts from Twitter if more active
+        twitter_posts = twitter_data.get("recent_posts", 0)
+        if twitter_posts > metrics.recent_posts:
+            metrics.recent_posts = twitter_posts
+
+        return metrics
+
     def get_social_metrics(
         self, token_symbol: str, token_address: str
     ) -> SocialMetrics:
@@ -120,30 +144,16 @@ class SocialMediaScraper:
             raise DataSourceError("requests library not available")
 
         try:
-            metrics = SocialMetrics()
-
-            # Get Telegram metrics
+            # Get metrics from different sources
             telegram_data = self._get_telegram_metrics(token_symbol)
-            metrics.telegram_followers = telegram_data.get("followers", 0)
-            metrics.recent_posts = telegram_data.get("recent_posts", 0)
-
-            # Get Twitter metrics
             twitter_data = self._get_twitter_metrics(token_symbol)
-            metrics.twitter_followers = twitter_data.get("followers", 0)
-            metrics.engagement_rate = twitter_data.get("engagement_rate", 0.0)
-            metrics.sentiment_score = twitter_data.get("sentiment_score", 0.5)
 
-            # Update recent posts from Twitter if more active
-            twitter_posts = twitter_data.get("recent_posts", 0)
-            if twitter_posts > metrics.recent_posts:
-                metrics.recent_posts = twitter_posts
-
-            return metrics
+            # Aggregate metrics from all sources
+            return self._aggregate_social_metrics(telegram_data, twitter_data)
 
         except Exception as e:
-            raise DataSourceError(
-                f"Failed to scrape social metrics for {token_symbol}: {str(e)}"
-            ) from e
+            logger.error(f"Failed to scrape metrics for {token_symbol}: {e}")
+            raise DataSourceError(f"Social media scraping failed: {e}") from e
 
     def _get_telegram_metrics(self, token_symbol: str) -> Dict[str, Any]:
         """Scrape Telegram metrics for a token.
@@ -214,10 +224,7 @@ class SocialMediaScraper:
             # Rate limiting
             self._rate_limit()
 
-            # Try to find official token account
-            account_data = self._find_twitter_account(token_symbol)
-
-            if account_data:
+            if account_data := self._find_twitter_account(token_symbol):
                 # Get recent tweets and engagement
                 recent_activity = self._get_twitter_recent_activity(
                     account_data.get("username", "")

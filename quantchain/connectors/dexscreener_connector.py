@@ -76,13 +76,14 @@ class DexscreenerDataConnector(DataFeedInterface):
         def _request() -> Dict[str, Any]:
             response = self.session.get(url, params=params, timeout=self.timeout)
             response.raise_for_status()
-            result = response.json()
-            return result  # type: ignore[no-any-return]
+            return response.json()  # type: ignore[no-any-return]
 
-        result = self._retry_handler.execute(
-            _request, exceptions=(requests.exceptions.RequestException,)
+        return cast(
+            Dict[str, Any],
+            self._retry_handler.execute(
+                _request, exceptions=(requests.exceptions.RequestException,)
+            ),
         )
-        return result  # type: ignore[no-any-return]
 
     def _normalize_pair_address(self, symbol: str) -> str:
         """Extract pair address from symbol format like 'TOKEN/USD:ADDRESS'."""
@@ -102,9 +103,7 @@ class DexscreenerDataConnector(DataFeedInterface):
                 self._token_cache = {}
                 if "pairs" in data:
                     for pair in data["pairs"][:100]:  # Limit to top 100 for cache
-                        # Use pair address as key, but also store symbol info
-                        pair_address = pair.get("pairAddress", "")
-                        if pair_address:
+                        if pair_address := pair.get("pairAddress", ""):
                             self._token_cache[pair_address] = pair
 
                 self._cache_timestamp = now
@@ -142,10 +141,11 @@ class DexscreenerDataConnector(DataFeedInterface):
             for pair_data in self._token_cache.values():
                 base_token = pair_data.get("baseToken", {}).get("symbol", "").upper()
                 quote_token = pair_data.get("quoteToken", {}).get("symbol", "").upper()
-                if (
-                    symbol_upper in [base_token, quote_token]
-                    or symbol_upper == f"{base_token}/{quote_token}"
-                ):
+                if symbol_upper in [
+                    base_token,
+                    quote_token,
+                    f"{base_token}/{quote_token}",
+                ]:
                     return pair_data
         except Exception:
             pass
@@ -208,9 +208,7 @@ class DexscreenerDataConnector(DataFeedInterface):
             # Use current timestamp
             timestamp = datetime.now(timezone.utc)
 
-            # For historical requests, we can only provide current data
-            # In a real implementation, integrate with another historical data source
-            df = pd.DataFrame(
+            return pd.DataFrame(
                 [
                     {
                         "timestamp": timestamp,
@@ -222,8 +220,6 @@ class DexscreenerDataConnector(DataFeedInterface):
                     }
                 ]
             )
-            return df
-
         except SymbolNotFoundError:
             raise
         except Exception as e:
@@ -234,19 +230,19 @@ class DexscreenerDataConnector(DataFeedInterface):
     def get_real_time_data(self, symbol: str) -> Dict[str, Any]:
         """Fetch real-time price data for a token pair."""
         try:
-            pair_data = self._find_pair_by_symbol(symbol)
-            if not pair_data:
-                raise SymbolNotFoundError(f"Token pair not found: {symbol}")
+            if pair_data := self._find_pair_by_symbol(symbol):
+                return {
+                    "timestamp": datetime.now(timezone.utc),
+                    "price": float(pair_data.get("priceUsd", 0)),
+                    "bid": float(
+                        pair_data.get("priceUsd", 0)
+                    ),  # Dexscreener doesn't provide bid/ask
+                    "ask": float(pair_data.get("priceUsd", 0)),
+                    "volume": float(pair_data.get("volume", {}).get("h24", 0)),
+                }
 
-            return {
-                "timestamp": datetime.now(timezone.utc),
-                "price": float(pair_data.get("priceUsd", 0)),
-                "bid": float(
-                    pair_data.get("priceUsd", 0)
-                ),  # Dexscreener doesn't provide bid/ask
-                "ask": float(pair_data.get("priceUsd", 0)),
-                "volume": float(pair_data.get("volume", {}).get("h24", 0)),
-            }
+            else:
+                raise SymbolNotFoundError(f"Token pair not found: {symbol}")
 
         except SymbolNotFoundError:
             raise
@@ -279,7 +275,9 @@ class DexscreenerDataConnector(DataFeedInterface):
         except SymbolNotFoundError:
             raise
         except Exception as e:
-            raise DataSourceError(f"Failed to fetch quote for {symbol}: {str(e)}")
+            raise DataSourceError(
+                f"Failed to fetch quote for {symbol}: {str(e)}"
+            ) from e
 
     def get_available_symbols(
         self, market: Optional[str] = None, limit: Optional[int] = None
@@ -359,28 +357,24 @@ class DexscreenerDataConnector(DataFeedInterface):
             data = self._make_request("dex/tokens")  # type: ignore[no-any-return]
             pairs = data.get("pairs", [])[:limit]
 
-            trending = []
-            for pair in pairs:
-                trending.append(
-                    {
-                        "symbol": (
-                            f"{pair.get('baseToken', {}).get('symbol', '')}/"
-                            f"{pair.get('quoteToken', {}).get('symbol', '')}:"
-                            f"{pair.get('pairAddress', '')}"
-                        ),
-                        "price": float(pair.get("priceUsd", 0)),
-                        "volume_24h": float(pair.get("volume", {}).get("h24", 0)),
-                        "liquidity": float(pair.get("liquidity", {}).get("usd", 0)),
-                        "price_change_24h": float(
-                            pair.get("priceChange", {}).get("h24", 0)
-                        ),
-                        "dex": pair.get("dexId", ""),
-                        "pair_address": pair.get("pairAddress", ""),
-                    }
-                )
-
-            return trending
-
+            return [
+                {
+                    "symbol": (
+                        f"{pair.get('baseToken', {}).get('symbol', '')}/"
+                        f"{pair.get('quoteToken', {}).get('symbol', '')}:"
+                        f"{pair.get('pairAddress', '')}"
+                    ),
+                    "price": float(pair.get("priceUsd", 0)),
+                    "volume_24h": float(pair.get("volume", {}).get("h24", 0)),
+                    "liquidity": float(pair.get("liquidity", {}).get("usd", 0)),
+                    "price_change_24h": float(
+                        pair.get("priceChange", {}).get("h24", 0)
+                    ),
+                    "dex": pair.get("dexId", ""),
+                    "pair_address": pair.get("pairAddress", ""),
+                }
+                for pair in pairs
+            ]
         except Exception as e:
             raise DataSourceError(f"Failed to fetch trending pairs: {str(e)}") from e
 
@@ -391,35 +385,43 @@ class DexscreenerDataConnector(DataFeedInterface):
             data = self._make_request("dex/search", {"q": query})
             pairs = data.get("pairs", [])
 
-            results = []
-            for pair in pairs:
-                results.append(
-                    {
-                        "symbol": (
-                            f"{pair.get('baseToken', {}).get('symbol', '')}/"
-                            f"{pair.get('quoteToken', {}).get('symbol', '')}:"
-                            f"{pair.get('pairAddress', '')}"
-                        ),
-                        "price": float(pair.get("priceUsd", 0)),
-                        "volume_24h": float(pair.get("volume", {}).get("h24", 0)),
-                        "liquidity": float(pair.get("liquidity", {}).get("usd", 0)),
-                        "dex": pair.get("dexId", ""),
-                        "pair_address": pair.get("pairAddress", ""),
-                    }
-                )
-
-            return results
-
+            return [
+                {
+                    "symbol": (
+                        f"{pair.get('baseToken', {}).get('symbol', '')}/"
+                        f"{pair.get('quoteToken', {}).get('symbol', '')}:"
+                        f"{pair.get('pairAddress', '')}"
+                    ),
+                    "price": float(pair.get("priceUsd", 0)),
+                    "volume_24h": float(pair.get("volume", {}).get("h24", 0)),
+                    "liquidity": float(pair.get("liquidity", {}).get("usd", 0)),
+                    "dex": pair.get("dexId", ""),
+                    "pair_address": pair.get("pairAddress", ""),
+                }
+                for pair in pairs
+            ]
         except Exception as e:
             raise DataSourceError(
                 f"Failed to search pairs for '{query}': {str(e)}"
             ) from e
 
-    def get_new_token_pairs(self, time_window: str = "1h") -> List[Dict[str, Any]]:
+    def get_new_token_pairs(
+        self,
+        time_window: str = "1h",
+        min_liquidity_usd: float = 50000.0,
+        min_volume_usd: float = 0.0,
+        require_metadata: bool = False,
+    ) -> List[Dict[str, Any]]:
         """Fetch newly created token pairs within the specified time window.
 
         Args:
             time_window: Time window to look back (e.g., '1h', '24h', '7d')
+            min_liquidity_usd: Minimum liquidity in USD for a pair to be considered new
+                              (default: 50000)
+            min_volume_usd: Minimum volume in USD for a pair to be considered
+                            (default: 0)
+            require_metadata: If True, only include pairs with token metadata
+                              (default: False)
 
         Returns:
             List of new token pair dictionaries with basic metrics
@@ -463,11 +465,22 @@ class DexscreenerDataConnector(DataFeedInterface):
                     liquidity = float(pair_detail.get("liquidity", {}).get("usd", 0))
                     volume_24h = float(pair_detail.get("volume", {}).get("h24", 0))
 
-                    # Heuristic: Consider pairs "new" if they have low liquidity
-                    # (< $50k) and reasonable volume (indicating recent activity)
-                    if liquidity < 50000 and volume_24h > 1000:
-                        base_token = pair_detail.get("baseToken", {})
-                        quote_token = pair_detail.get("quoteToken", {})
+                    # Extract token info for filtering
+                    base_token = pair_detail.get("baseToken", {})
+                    quote_token = pair_detail.get("quoteToken", {})
+
+                    # Apply configurable filters for new pair detection
+                    liquidity_ok = liquidity >= min_liquidity_usd
+                    volume_ok = volume_24h >= min_volume_usd
+
+                    # Check metadata requirement if specified
+                    metadata_ok = True
+                    if require_metadata:
+                        metadata_ok = bool(base_token.get("name")) and bool(
+                            base_token.get("symbol")
+                        )
+
+                    if liquidity_ok and volume_ok and metadata_ok:
 
                         new_pair = {
                             "address": pair_address,

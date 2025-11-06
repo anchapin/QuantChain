@@ -215,9 +215,11 @@ class TestVectorBacktester:
 
         # Should handle both positive and negative positions
         positions = result.trade_log.get("position", pd.Series())
-        if len(positions) > 0:
-            assert positions.min() <= 0  # Should have some short positions
-            assert positions.max() >= 0  # Should have some long positions
+
+        # With our test data, we should have positions to test
+        assert len(positions) > 0, "Test should generate positions"
+        assert positions.min() <= 0  # Should have some short positions
+        assert positions.max() >= 0  # Should have some long positions
 
 
 @pytest.mark.unit
@@ -241,7 +243,7 @@ class TestVectorizedPositionManager:
         prices = pd.Series([100, 101, 102, 103, 104])
         signals = pd.Series([1, 0, 0, 0, -1])  # Buy first, sell last
 
-        positions, trades = manager.process_signals(prices, signals)
+        positions, trades, final_cash = manager.process_signals(prices, signals)
 
         assert isinstance(positions, pd.Series)
         assert isinstance(trades, pd.DataFrame)
@@ -278,7 +280,7 @@ class TestVectorizedPositionManager:
         prices = pd.Series([100, 105, 95, 110, 90])
         signals = pd.Series([1, -1, 1, -1, 1])  # Multiple trades
 
-        positions, trades = manager.process_signals(prices, signals)
+        positions, trades, final_cash = manager.process_signals(prices, signals)
 
         assert isinstance(positions, pd.Series)
         assert isinstance(trades, pd.DataFrame)
@@ -300,14 +302,14 @@ class TestVectorizedPositionManager:
         prices = pd.Series([100, 105])
         signals = pd.Series([1, -1])  # Buy and sell
 
-        positions, trades = manager.process_signals(prices, signals)
+        positions, trades, final_cash = manager.process_signals(prices, signals)
 
         # Should account for costs in trade details
         assert len(trades) == 2  # Buy and sell trades
 
         # Commission should be calculated for both trades
-        if "commission" in trades.columns:
-            assert (trades["commission"] > 0).all()
+        assert "commission" in trades.columns, "Trades should have commission column"
+        assert (trades["commission"] > 0).all()
 
     def test_vectorized_position_manager_insufficient_cash(self):
         """Test handling insufficient cash for positions."""
@@ -317,7 +319,7 @@ class TestVectorizedPositionManager:
         prices = pd.Series([1000, 2000, 3000])
         signals = pd.Series([1, 1, 1])  # Try to buy at each point
 
-        positions, trades = manager.process_signals(prices, signals)
+        positions, trades, final_cash = manager.process_signals(prices, signals)
 
         # Should handle insufficient cash gracefully
         # (either no positions or scaled positions)
@@ -428,16 +430,19 @@ class TestVectorBacktesterIntegration:
         assert result is not None
 
         # Check position tracking in trade log
-        if len(result.trade_log) > 0:
-            # Should have entries for each signal
-            trade_count = len(result.trade_log)
-            assert trade_count >= 4  # At least 4 trades
+        assert len(result.trade_log) > 0, "Should have trade log entries"
 
-            # Check that positions are tracked correctly
-            if "position" in result.trade_log.columns:
-                positions = result.trade_log["position"].values
-                assert positions[0] > 0  # First buy
-                assert positions[-1] == 0  # Final sell (flat position)
+        # Should have entries for each signal
+        trade_count = len(result.trade_log)
+        assert trade_count >= 4  # At least 4 trades
+
+        # Check that positions are tracked correctly
+        assert (
+            "position" in result.trade_log.columns
+        ), "Trade log should have position column"
+        positions = result.trade_log["position"].values
+        assert positions[0] > 0  # First buy
+        assert positions[-1] == 0  # Final sell (flat position)
 
     def test_vector_backtester_error_handling_invalid_signals(self, sample_ohlcv_data):
         """Test error handling with invalid signals."""
@@ -509,14 +514,19 @@ class TestVectorBacktesterIntegration:
             price = data.iloc[i]["close"]
             signal = signals.iloc[i]
 
-            # Process signal
-            if signal == 1 and positions == 0:  # Buy
-                shares = int(cash / price)
-                positions = shares
-                cash = cash - (shares * price)
-            elif signal == -1 and positions > 0:  # Sell
-                cash = cash + (positions * price)
-                positions = 0
+            # Process signal using arithmetic instead of conditionals
+            buy_condition = (signal == 1) * (positions == 0)
+            sell_condition = (signal == -1) * (positions > 0)
+
+            # Execute buy
+            shares_to_buy = int(cash / price) * buy_condition
+            cash = cash - (shares_to_buy * price)
+            positions = positions + shares_to_buy
+
+            # Execute sell
+            sell_proceeds = (positions * price) * sell_condition
+            cash = cash + sell_proceeds
+            positions = positions * (1 - sell_condition)
 
             # Calculate equity
             equity_value = cash + (positions * price)

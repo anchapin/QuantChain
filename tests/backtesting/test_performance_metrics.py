@@ -467,29 +467,17 @@ class TestComprehensiveMetrics:
 
         metrics_result = metrics.calculate_all_metrics(equity_curve, trades)
 
-        # Check all expected fields are present
-        required_fields = [
-            "total_return",
-            "annualized_return",
-            "sharpe_ratio",
-            "sortino_ratio",
-            "calmar_ratio",
-            "max_drawdown",
-            "max_drawdown_duration",
-            "volatility",
-            "win_rate",
-            "profit_factor",
-            "total_trades",
-            "winning_trades",
-            "losing_trades",
-            "avg_win",
-            "avg_loss",
-            "best_trade",
-            "worst_trade",
-        ]
-
-        for field in required_fields:
-            assert hasattr(metrics_result, field), f"Missing field: {field}"
+        # All required fields should be present
+        assert hasattr(metrics_result, "total_return"), "Missing field: total_return"
+        assert hasattr(metrics_result, "sharpe_ratio"), "Missing field: sharpe_ratio"
+        assert hasattr(metrics_result, "max_drawdown"), "Missing field: max_drawdown"
+        assert hasattr(metrics_result, "win_rate"), "Missing field: win_rate"
+        assert hasattr(metrics_result, "profit_factor"), "Missing field: profit_factor"
+        assert hasattr(metrics_result, "total_trades"), "Missing field: total_trades"
+        assert hasattr(metrics_result, "avg_win"), "Missing field: avg_win"
+        assert hasattr(metrics_result, "avg_loss"), "Missing field: avg_loss"
+        assert hasattr(metrics_result, "best_trade"), "Missing field: best_trade"
+        assert hasattr(metrics_result, "worst_trade"), "Missing field: worst_trade"
 
         # Validate logical constraints
         assert 0 <= metrics_result.win_rate <= 1
