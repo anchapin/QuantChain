@@ -429,20 +429,32 @@ class AgentStrategy:
                     filtered_dict = {
                         k: v
                         for k, v in result_state.items()
-                        if k in valid_agent_state_fields
+                        if k in valid_agent_state_fields and not k.startswith("_")
+                    }
+                    # Also filter new_state dict to remove mock attributes
+                    filtered_new_state = {
+                        k: v
+                        for k, v in new_state.__dict__.items()
+                        if k in valid_agent_state_fields and not k.startswith("_")
                     }
                     # Update current_state by merging new_state and result_state
-                    merged_dict = {**new_state.__dict__, **filtered_dict}
+                    merged_dict = {**filtered_new_state, **filtered_dict}
                     self.current_state = AgentState(**merged_dict)
                 elif hasattr(result_state, "__dict__"):
                     # Filter out mock and private attributes from object dict
                     filtered_dict = {
                         k: v
                         for k, v in result_state.__dict__.items()
-                        if k in valid_agent_state_fields
+                        if k in valid_agent_state_fields and not k.startswith("_")
+                    }
+                    # Also filter new_state dict to remove mock attributes
+                    filtered_new_state = {
+                        k: v
+                        for k, v in new_state.__dict__.items()
+                        if k in valid_agent_state_fields and not k.startswith("_")
                     }
                     # Update current_state by merging new_state and result_state
-                    merged_dict = {**new_state.__dict__, **filtered_dict}
+                    merged_dict = {**filtered_new_state, **filtered_dict}
                     self.current_state = AgentState(**merged_dict)
                 else:
                     raise AgentExecutionError("Invalid agent state returned")
