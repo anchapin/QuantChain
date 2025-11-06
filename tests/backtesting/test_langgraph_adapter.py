@@ -535,7 +535,7 @@ class TestLangGraphWorkflowEdgeCases:
 
         adapter.set_deterministic_llm(deterministic_responses)
 
-        initial_state = {"cash": 100000, "market_analysis": {"trend": "up"}}
+        initial_state = {"cash": 100000, "risk_assessment": {"trend": "up"}}
         strategy = adapter.create_strategy(initial_state)
 
         # Simulate complex multi-bar sequence
@@ -602,7 +602,7 @@ class TestLangGraphWorkflowEdgeCases:
         mock_graph = Mock()
         adapter = LangGraphBacktestAdapter(mock_graph)
 
-        initial_state = {"cash": 100000, "position_history": []}
+        initial_state = {"cash": 100000, "decisions": []}
         strategy = adapter.create_strategy(initial_state)
 
         bars = [
@@ -795,6 +795,56 @@ class TestLangGraphComplexScenarios:
                     "risk" in entry.get("decision", "").lower() for entry in log[-3:]
                 )
 
+    def test_market_regime_detection(self):
+        """Test market regime detection and adaptation."""
+        mock_graph = Mock()
+        mock_graph.invoke.return_value = {
+            "signal": "hold",
+            "signal_confidence": 0.5,
+            "decisions": [],
+            "observations": [],
+            "reasoning": [],
+        }
+        _adapter = LangGraphBacktestAdapter(mock_graph)
+
+        regime_responses = {
+            "bull_market": "BULL_REGIME_DETECTED",
+            "bear_market": "BEAR_REGIME_DETECTED",
+            "sideways": "SIDEWAYS_REGIME_DETECTED",
+            "transitional": "REGIME_TRANSITION",
+        }
+        _adapter.set_deterministic_llm(regime_responses)
+
+        initial_state = {"cash": 100000}
+        strategy = _adapter.create_strategy(initial_state)
+
+        # Simulate different regime conditions
+        market_conditions = [
+            {"trend": "strong_up", "volatility": "low", "volume": "high"},
+            {"trend": "down", "volatility": "high", "volume": "moderate"},
+            {"trend": "sideways", "volatility": "low", "volume": "low"},
+            {"trend": "transitional", "volatility": "extreme", "volume": "irregular"},
+        ]
+
+        for i, condition in enumerate(market_conditions):
+            bar = {
+                "timestamp": datetime.now(),
+                "symbol": "AAPL",
+                "close": 150.0 + (i * 0.5),
+                "volume": 1000,
+                **condition,
+            }
+            _ = strategy.next(bar)
+
+            # Every few bars, check regime detection in reasoning
+            if i % 3 == 2:
+                log = _adapter.get_reasoning_log()
+                recent_entries = log[-3:]
+                assert any(
+                    "regime" in entry.get("analysis", "").lower()
+                    for entry in recent_entries
+                )
+
     def test_complex_order_management(self):
         """Test complex order management scenarios."""
         mock_graph = Mock()
@@ -841,55 +891,7 @@ class TestLangGraphComplexScenarios:
                 assert "order" in str(signal).lower()
 
 
-def test_market_regime_detection(self):
-    """Test market regime detection and adaptation."""
-    mock_graph = Mock()
-    mock_graph.invoke.return_value = {
-        "signal": "hold",
-        "signal_confidence": 0.5,
-        "decisions": [],
-        "observations": [],
-        "reasoning": [],
-    }
-    _adapter = LangGraphBacktestAdapter(mock_graph)
 
-    regime_responses = {
-        "bull_market": "BULL_REGIME_DETECTED",
-        "bear_market": "BEAR_REGIME_DETECTED",
-        "sideways": "SIDEWAYS_REGIME_DETECTED",
-        "transitional": "REGIME_TRANSITION",
-    }
-    _adapter.set_deterministic_llm(regime_responses)
-
-    initial_state = {"cash": 100000}
-    strategy = _adapter.create_strategy(initial_state)
-
-    # Simulate different regime conditions
-    market_conditions = [
-        {"trend": "strong_up", "volatility": "low", "volume": "high"},
-        {"trend": "down", "volatility": "high", "volume": "moderate"},
-        {"trend": "sideways", "volatility": "low", "volume": "low"},
-        {"trend": "transitional", "volatility": "extreme", "volume": "irregular"},
-    ]
-
-    for i, condition in enumerate(market_conditions):
-        bar = {
-            "timestamp": datetime.now(),
-            "symbol": "AAPL",
-            "close": 150.0 + (i * 0.5),
-            "volume": 1000,
-            **condition,
-        }
-        _ = strategy.next(bar)
-
-        # Every few bars, check regime detection in reasoning
-        if i % 3 == 2:
-            log = _adapter.get_reasoning_log()
-            recent_entries = log[-3:]
-            assert any(
-                "regime" in entry.get("analysis", "").lower()
-                for entry in recent_entries
-            )
 
 
 class TestLangGraphErrorHandling:
