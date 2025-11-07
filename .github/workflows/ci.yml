@@ -32,6 +32,15 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
+        # Install fine-tuning dependencies after PyTorch is available
+        # Temporarily skip auto-gptq due to CUDA extension build issues in CI
+        if [ -f requirements-finetuning.txt ]; then
+          # Install everything except auto-gptq
+          grep -v "auto-gptq" requirements-finetuning.txt > /tmp/finetuning-deps.txt
+          if [ -s /tmp/finetuning-deps.txt ]; then
+            pip install -r /tmp/finetuning-deps.txt
+          fi
+        fi
 
     - name: Run Black (code formatting)
       run: black --check --diff quantchain tests
@@ -71,10 +80,19 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
+        # Install fine-tuning dependencies after PyTorch is available
+        # Temporarily skip auto-gptq due to CUDA extension build issues in CI
+        if [ -f requirements-finetuning.txt ]; then
+          # Install everything except auto-gptq
+          grep -v "auto-gptq" requirements-finetuning.txt > /tmp/finetuning-deps.txt
+          if [ -s /tmp/finetuning-deps.txt ]; then
+            pip install -r /tmp/finetuning-deps.txt
+          fi
+        fi
 
-    - name: Run unit tests in parallel
+    - name: Run unit tests
       run: |
-        python -m pytest -n auto -m "not slow and not integration" --cov=quantchain --cov-report=xml --cov-report=term
+        python -m pytest -m "not slow and not integration" --cov=quantchain --cov-report=xml --cov-report=term --timeout=240
 
     - name: Upload coverage reports
       uses: codecov/codecov-action@9cc74bf7e13a810454a28846494ddbc3795eb693
@@ -111,12 +129,21 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
+        # Install fine-tuning dependencies after PyTorch is available
+        # Temporarily skip auto-gptq due to CUDA extension build issues in CI
+        if [ -f requirements-finetuning.txt ]; then
+          # Install everything except auto-gptq
+          grep -v "auto-gptq" requirements-finetuning.txt > /tmp/finetuning-deps.txt
+          if [ -s /tmp/finetuning-deps.txt ]; then
+            pip install -r /tmp/finetuning-deps.txt
+          fi
+        fi
         # Install optional dependencies for integration tests
         pip install -e .[backtesting,data,llm]
 
-    - name: Run integration tests in parallel
+    - name: Run integration tests
       run: |
-        python -m pytest -n auto -m "integration and not slow" --cov=quantchain --cov-report=xml --cov-report=term
+        python -m pytest -m "integration and not slow" --cov=quantchain --cov-report=xml --cov-report=term
 
     - name: Upload coverage reports
       uses: codecov/codecov-action@9cc74bf7e13a810454a28846494ddbc3795eb693
@@ -154,12 +181,21 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
+        # Install fine-tuning dependencies after PyTorch is available
+        # Temporarily skip auto-gptq due to CUDA extension build issues in CI
+        if [ -f requirements-finetuning.txt ]; then
+          # Install everything except auto-gptq
+          grep -v "auto-gptq" requirements-finetuning.txt > /tmp/finetuning-deps.txt
+          if [ -s /tmp/finetuning-deps.txt ]; then
+            pip install -r /tmp/finetuning-deps.txt
+          fi
+        fi
         # Install all optional dependencies for slow tests
         pip install -e .[full]
 
-    - name: Run slow tests in parallel
+    - name: Run slow tests
       run: |
-        python -m pytest -n auto -m "slow" --cov=quantchain --cov-report=xml --cov-report=term
+        python -m pytest -m "slow" --cov=quantchain --cov-report=xml --cov-report=term
 
     - name: Upload coverage reports
       uses: codecov/codecov-action@9cc74bf7e13a810454a28846494ddbc3795eb693
