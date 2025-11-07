@@ -30,7 +30,7 @@ from .paper_trading import (
 
 from .tutorial_mode import (
     TutorialExecutor,
-    TrainingSession,
+    TutorialSession,
     MarketDriverAnalysis,
     MistakeTracker,
     ConfidenceMetrics,
@@ -64,7 +64,7 @@ __all__ = [
     "ImmediateFill",
     "PerformanceMetrics",
     "TutorialExecutor",
-    "TrainingSession",
+    "TutorialSession",
     "MarketDriverAnalysis",
     "MistakeTracker",
     "ConfidenceMetrics",
