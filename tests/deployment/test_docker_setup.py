@@ -268,7 +268,7 @@ class TestDeploymentDocumentation:
         hw_doc = docs_dir / "hardware-requirements.md"
         assert hw_doc.exists(), "Hardware requirements documentation should exist"
 
-        content = hw_doc.read_text()
+        content = hw_doc.read_text(encoding="utf-8")
         required_sections = [
             "VRAM Required",
             "GPU Recommendations",
