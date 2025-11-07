@@ -16,37 +16,69 @@ A financial framework for building quantitative trading agents using LangGraph a
 
 ### Prerequisites
 
-- Python 3.9+
+- Python 3.10+ (3.12 recommended)
 - Git
+- Docker & Docker Compose v2
 - (Optional) CUDA-compatible GPU for LLM acceleration
 
-### Setup
+### Quick Start with Docker (Recommended)
 
-1. Clone the repository:
+1. **Clone the repository:**
 ```bash
 git clone https://github.com/anchapin/QuantChain.git
 cd QuantChain
 ```
 
-2. Install dependencies:
+2. **Setup Docker environment:**
+   - **For GPU support:** See [Environment Setup Guide](docs/environment-setup.md#1-install-nvidia-container-toolkit-linux)
+   - **For CPU only:** Skip GPU setup and proceed to step 3
+
+3. **Configure environment:**
 ```bash
+cp config.example.yaml config.yaml
+cp .env.example .env
+# Edit .env with your API keys
+```
+
+4. **Run with GPU support:**
+```bash
+docker compose -f docker-compose.gpu.yml up --build -d
+```
+
+5. **Run with CPU only:**
+```bash
+docker compose up --build -d
+```
+
+For detailed setup instructions, troubleshooting, and alternative configurations, see the [Environment Setup Guide](docs/environment-setup.md).
+
+### Local Development Setup
+
+For detailed local development setup instructions, see the [Environment Setup Guide](docs/environment-setup.md#local-development-setup).
+
+**Quick start:**
+```bash
+python3 -m venv venv
+source venv/bin/activate  # Linux/macOS
 pip install -r requirements.txt
 ```
 
-3. (Optional) Install additional dependencies for specific features:
-```bash
-# For backtesting
-pip install backtesting
+## Hardware Requirements
 
-# For LLM serving
-pip install vllm ollama
+QuantChain supports a wide range of hardware configurations. See [Hardware Requirements Matrix](docs/hardware-requirements.md) for detailed recommendations:
 
-# For data connectors
-pip install alpaca-py ccxt
+| Model Size | VRAM Required | Recommended GPU |
+|-------------|---------------|-----------------|
+| Small (7B) | 5-8GB | RTX 3060+ |
+| Medium (34B) | 15-25GB | RTX 3080+ |
+| Large (70B) | 35-45GB | RTX 3090+ |
 
-# For web dashboard
-pip install streamlit plotly
-```
+### Quick Recommendations
+- **Budget Setup**: RTX 3060 12GB, 32GB RAM, 1TB NVMe SSD
+- **Mid-Range**: RTX 3080/4080 16GB, 64GB RAM, 2TB NVMe SSD  
+- **Professional**: RTX 3090/4090 24GB, 128GB RAM, 4TB NVMe SSD
+
+For complete hardware guidance and cloud alternatives, see [Deployment Guide](docs/environment-setup.md).
 
 ## Configuration
 
