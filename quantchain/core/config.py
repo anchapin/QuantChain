@@ -60,6 +60,18 @@ class QuantChainConfig:
                 "vector_store_type": "chromadb",
                 "embedding_model": "all-MiniLM-L6-v2",
                 "persist_directory": "./data/chroma_db",
+                "enabled": False,  # Disabled by default
+            },
+            # Tutorial Mode Configuration
+            "tutorial": {
+                "enabled": False,
+                "session_duration": 3600,  # 1 hour default
+                "learning_objectives": [],
+                "feedback_level": "detailed",  # basic, detailed, comprehensive
+                "track_mistakes": True,
+                "analyze_market_drivers": True,
+                "confidence_threshold": 0.75,
+                "max_mistakes_per_session": 10
             },
             # Logging
             "logging": {
@@ -88,6 +100,14 @@ class QuantChainConfig:
             self._config["trading"]["paper_trading"] = (
                 os.environ["QUANTCHAIN_PAPER_TRADING"].lower() == "true"
             )
+        
+        # Tutorial mode settings
+        if "QUANTCHAIN_TUTORIAL_ENABLED" in os.environ:
+            self._config["tutorial"]["enabled"] = (
+                os.environ["QUANTCHAIN_TUTORIAL_ENABLED"].lower() == "true"
+            )
+        if "QUANTCHAIN_TUTORIAL_FEEDBACK_LEVEL" in os.environ:
+            self._config["tutorial"]["feedback_level"] = os.environ["QUANTCHAIN_TUTORIAL_FEEDBACK_LEVEL"]
 
         # API Keys (loaded but not stored in config for security)
         self._api_keys = {

@@ -10,6 +10,8 @@ A financial framework for building quantitative trading agents using LangGraph a
 - **Reflective Performance Analysis**: Agent self-analysis and strategy optimization
 - **Comprehensive Data Connectors**: Alpaca, Alpha Vantage, Polygon.io, Dexscreener, CCXT
 - **Backtesting Engine**: Vector-based backtesting with FinRL integration
+- **Tutorial Mode**: Human learning-focused trading simulation with educational feedback and mistake tracking
+- **Paper Trading**: Risk-free strategy testing with realistic market simulation
 - **Production Ready**: Docker deployment, GPU support, secure API key management
 
 ## Installation
@@ -97,6 +99,31 @@ Set the following environment variables for API access:
 export ALPACA_API_KEY="your_alpaca_key"
 export ALPACA_API_SECRET="your_alpaca_secret"
 export ALPHA_VANTAGE_API_KEY="your_alpha_vantage_key"
+
+# Optional: Tutorial mode settings
+export QUANTCHAIN_TUTORIAL_ENABLED="true"
+export QUANTCHAIN_TUTORIAL_FEEDBACK_LEVEL="detailed"
+```
+
+### Training Mode Configuration
+
+Enable tutorial mode in your `config.yaml`:
+
+```yaml
+# Tutorial mode for human learning-focused trading simulation
+# Different from paper trading - provides educational feedback and mistake tracking
+tutorial:
+  enabled: true
+  session_duration: 3600  # 1 hour
+  learning_objectives:
+    - "Understand market drivers"
+    - "Practice risk management"
+    - "Learn from mistakes"
+  feedback_level: detailed  # basic, detailed, comprehensive
+  track_mistakes: true
+  analyze_market_drivers: true
+  confidence_threshold: 0.75
+  max_mistakes_per_session: 10
 ```
 
 ## Project Structure
@@ -285,6 +312,69 @@ result = executor.place_order(order)
 metrics = executor.get_performance_metrics()
 print(f"Total Return: {metrics.total_return:.2f}%")
 ```
+
+### Training Mode
+- **Learning-Focused Simulation**: Educational feedback and mistake tracking for skill development
+- **Market Driver Analysis**: Explains underlying market factors and decision context
+- **Mistake Tracking**: Identifies, categorizes, and analyzes trading mistakes with learning recommendations
+- **Confidence Metrics**: Tracks confidence building and readiness assessment for live trading
+- **Session-Based Learning**: Manages training sessions with clear objectives and progress tracking
+
+```python
+from quantchain.tools import TutorialExecutor
+from quantchain.core.config import get_config
+
+# Create tutorial executor
+config = get_config("config.yaml")
+tutorial_executor = TutorialExecutor(
+    initial_cash=100000.0,
+    config=config,
+    learning_objectives=[
+        "Understand market drivers",
+        "Practice risk management"
+    ]
+)
+
+# Start tutorial session
+session = tutorial_executor.start_tutorial_session(
+    symbols=["AAPL", "MSFT"],
+    duration=3600
+)
+
+# Make trades with feedback
+order = OrderRequest(
+    symbol="AAPL",
+    side=OrderSide.BUY,
+    order_type=OrderType.MARKET,
+    quantity=10
+)
+result = tutorial_executor.place_order(order)
+
+# Get tutorial feedback
+feedback = tutorial_executor.get_tutorial_feedback()
+print(f"Decision quality: {feedback.decision_quality}")
+print(f"Market drivers: {feedback.market_drivers}")
+
+# End session and get report
+report = tutorial_executor.end_tutorial_session()
+print(f"Confidence score: {report['final_feedback'].confidence_score}")
+print(f"Mistakes: {len(report['final_feedback'].mistakes)}")
+print(f"Ready for live trading: {report['ready_for_live']}")
+```
+
+#### Training Mode vs. Paper Trading vs. Live Trading
+
+| Feature | Tutorial Mode | Paper Trading | Live Trading |
+|----------|----------------|----------------|--------------|
+| **Primary Goal** | Human Learning & Education | Strategy Validation | Real Profit |
+| **Feedback Level** | Detailed Educational | Basic Performance | None |
+| **Mistake Tracking** | Yes, with Learning Points | No | No |
+| **Market Driver Analysis** | Yes, with Explanations | No | No |
+| **Confidence Metrics** | Yes, with Readiness Assessment | No | No |
+| **Risk Management** | Educational Focus | Realistic Simulation | Real Risk |
+| **Market Data** | Simulated | Real | Real |
+| **Execution Delay** | None | Realistic | Real |
+| **Cost** | Free (Learning) | Free (Simulation) | Real Commissions |
 
 ### Standardized Interface
 All execution interfaces implement the `TradingExecutionInterface`:

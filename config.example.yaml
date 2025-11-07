@@ -13,11 +13,37 @@ trading:
   default_broker: alpaca
   paper_trading: true
   max_position_size: 0.1
+  initial_cash: 100000.0
+
+rag:
+  vector_store_type: chromadb
+  embedding_model: all-MiniLM-L6-v2
+  persist_directory: ./data/chroma_db
+  enabled: false
+
+tutorial:
+  # Tutorial mode for human learning-focused trading simulation
+  # Different from paper trading - provides educational feedback and mistake tracking
+  enabled: false
+  session_duration: 3600  # 1 hour
+  learning_objectives:
+    - "Understand market drivers"
+    - "Practice risk management"
+    - "Learn from mistakes"
+  feedback_level: detailed  # basic, detailed, comprehensive
+  track_mistakes: true
+  analyze_market_drivers: true
+  confidence_threshold: 0.75
+  max_mistakes_per_session: 10
 
 backtesting:
   default_engine: backtesting.py
   initial_balance: 10000
   commission: 0.001
+
+agent:
+  max_iterations: 5
+  reflection_interval: 10
 
 logging:
   level: INFO
