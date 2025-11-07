@@ -1,18 +1,52 @@
 """
 Model Fine-Tuning Module for QuantChain
 
-Provides parameter-efficient fine-tuning (PEFT) capabilities for financial language models
-using QLoRA techniques and post-training quantization workflows.
+Provides parameter-efficient fine-tuning (PEFT) capabilities for financial language
+models using QLoRA techniques and post-training quantization workflows.
 """
 
-import json
 import logging
 import os
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List
 
 import torch
+
+# Optional imports for fine-tuning dependencies
+# These are imported lazily to allow the module to load without all dependencies
+try:
+    from transformers import (
+        AutoModelForCausalLM,
+        AutoTokenizer,
+        TrainingArguments as TransformersTrainingArguments,
+        Trainer,
+        BitsAndBytesConfig,
+        DataCollatorForLanguageModeling,
+    )
+except ImportError:
+    AutoModelForCausalLM = None
+    AutoTokenizer = None
+    TransformersTrainingArguments = None
+    Trainer = None
+    BitsAndBytesConfig = None
+    DataCollatorForLanguageModeling = None
+
+try:
+    from datasets import load_dataset
+except ImportError:
+    load_dataset = None
+
+try:
+    from peft import (
+        LoraConfig,
+        get_peft_model,
+        prepare_model_for_kbit_training,
+    )
+except ImportError:
+    LoraConfig = None
+    get_peft_model = None
+    prepare_model_for_kbit_training = None
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -71,7 +105,7 @@ class FineTuningConfig:
     device_map: str = "auto"
     torch_dtype: str = "float16"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate configuration parameters."""
         if self.lora_r <= 0:
             raise ValueError("lora_r must be positive")
@@ -143,12 +177,13 @@ def setup_fine_tuning_environment(
     Initializes fine-tuning environment with necessary configurations for PEFT/QLoRA.
 
     Args:
-        model_name: The target model (e.g., 'deepseek-r1-0528', 'qwen3-235b-instruct-2507')
+        model_name: The target model (e.g., 'deepseek-r1-0528',
+                   'qwen3-235b-instruct-2507')
         base_model_path: Local path or HuggingFace model identifier
         output_dir: Directory to save fine-tuned models and checkpoints
 
     Returns:
-        FineTuningConfig object with model, tokenizer, and training configuration
+        FineTuningConfig object with model, tokenizer, and training config
 
     Raises:
         ValueError: If model is unsupported
@@ -246,7 +281,7 @@ def prepare_financial_dataset(
     try:
         # Try to import datasets library
         try:
-            from datasets import Dataset, load_dataset
+            from datasets import load_dataset  # noqa: F401
         except ImportError:
             raise DatasetError(
                 "datasets library not available. Install with: pip install datasets"
@@ -267,7 +302,7 @@ def prepare_financial_dataset(
         else:
             raise DatasetError(f"Dataset path not found: {dataset_path}")
 
-        def tokenize_function(examples):
+        def tokenize_function(examples: dict) -> dict[str, Any]:
             """Tokenize and format dataset."""
             # Handle different data formats
             if "text" in examples:
@@ -282,7 +317,8 @@ def prepare_financial_dataset(
                 ]
             else:
                 raise DatasetError(
-                    "Unsupported data format. Expected 'text' or 'prompt'/'completion' fields."
+                    "Unsupported data format. Expected 'text' or 'prompt'/'completion' "
+                    "fields."
                 )
 
             # Tokenize the text
@@ -297,7 +333,7 @@ def prepare_financial_dataset(
             # Create labels for language modeling (same as input_ids)
             tokenized["labels"] = tokenized["input_ids"].clone()
 
-            return tokenized
+            return tokenized  # type: ignore
 
         # Apply tokenization to dataset
         tokenized_dataset = dataset.map(
@@ -494,10 +530,11 @@ def _quantize_to_gguf(
     try:
         # Check if llama-cpp-python is available
         try:
-            from llama_cpp import Llama
+            import llama_cpp  # type: ignore  # noqa: F401
         except ImportError:
             raise QuantizationError(
-                "llama-cpp-python not available. Install with: pip install llama-cpp-python"
+                "llama-cpp-python not available. Install with: "
+                "pip install llama-cpp-python"
             )
 
         # Create output directory
@@ -538,7 +575,7 @@ def _quantize_to_gptq(
     try:
         # Check if auto-gptq is available
         try:
-            from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
+            import auto_gptq  # type: ignore  # noqa: F401
         except ImportError:
             raise QuantizationError(
                 "auto-gptq not available. Install with: pip install auto-gptq"
