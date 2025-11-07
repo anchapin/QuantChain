@@ -15,6 +15,14 @@ alpaca-py>=0.43.1
 types-requests
 types-PyYAML
 
+# Fine-tuning dependencies
+transformers>=4.35.0
+peft>=0.6.0
+bitsandbytes>=0.41.0
+datasets>=2.14.0
+auto-gptq>=0.7.0
+llama-cpp-python>=0.2.0
+
 # Optional dependencies (uncomment as needed)
 # backtesting>=0.35.0
 # vllm>=0.3.0
