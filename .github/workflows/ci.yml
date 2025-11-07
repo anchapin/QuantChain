@@ -33,8 +33,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
         # Install fine-tuning dependencies after PyTorch is available
+        # Temporarily skip auto-gptq due to CUDA extension build issues in CI
         if [ -f requirements-finetuning.txt ]; then
-          pip install -r requirements-finetuning.txt
+          # Install everything except auto-gptq
+          grep -v "auto-gptq" requirements-finetuning.txt | pip install -r /dev/stdin
         fi
 
     - name: Run Black (code formatting)
@@ -76,8 +78,10 @@ jobs:
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
         # Install fine-tuning dependencies after PyTorch is available
+        # Temporarily skip auto-gptq due to CUDA extension build issues in CI
         if [ -f requirements-finetuning.txt ]; then
-          pip install -r requirements-finetuning.txt
+          # Install everything except auto-gptq
+          grep -v "auto-gptq" requirements-finetuning.txt | pip install -r /dev/stdin
         fi
 
     - name: Run unit tests in parallel
@@ -120,8 +124,10 @@ jobs:
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
         # Install fine-tuning dependencies after PyTorch is available
+        # Temporarily skip auto-gptq due to CUDA extension build issues in CI
         if [ -f requirements-finetuning.txt ]; then
-          pip install -r requirements-finetuning.txt
+          # Install everything except auto-gptq
+          grep -v "auto-gptq" requirements-finetuning.txt | pip install -r /dev/stdin
         fi
         # Install optional dependencies for integration tests
         pip install -e .[backtesting,data,llm]
@@ -167,8 +173,10 @@ jobs:
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
         # Install fine-tuning dependencies after PyTorch is available
+        # Temporarily skip auto-gptq due to CUDA extension build issues in CI
         if [ -f requirements-finetuning.txt ]; then
-          pip install -r requirements-finetuning.txt
+          # Install everything except auto-gptq
+          grep -v "auto-gptq" requirements-finetuning.txt | pip install -r /dev/stdin
         fi
         # Install all optional dependencies for slow tests
         pip install -e .[full]
