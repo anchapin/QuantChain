@@ -160,7 +160,7 @@ ignore_errors = true
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "-ra -q --cov=quantchain --cov-report=html --cov-report=term-missing -n auto --dist loadfile --timeout=300"
+addopts = "-ra -q --cov=quantchain --cov-report=html --cov-report=term-missing --timeout=300"
 testpaths = [
     "tests",
 ]
