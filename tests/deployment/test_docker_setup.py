@@ -3,6 +3,7 @@
 import pytest
 import subprocess
 import os
+import yaml
 from pathlib import Path
 from typing import Dict, Any
 
@@ -64,10 +65,13 @@ class TestDockerConfiguration:
 
     def test_docker_compose_services(self, docker_compose_gpu_path: Path) -> None:
         """Test required services are defined in docker-compose."""
-        content = docker_compose_gpu_path.read_text()
+        with open(docker_compose_gpu_path, "r") as f:
+            docker_compose = yaml.safe_load(f)
+
+        services = docker_compose.get("services", {})
         required_services = ["quantchain-gpu", "chromadb", "redis"]
         for service in required_services:
-            assert service in content, f"Service {service} should be defined"
+            assert service in services, f"Service {service} should be defined"
 
     def test_gpu_dockerfile_health_check(self, dockerfile_gpu_path: Path) -> None:
         """Test that GPU Dockerfile includes health check."""
@@ -171,59 +175,84 @@ class TestDockerComposeValidation:
     """Test docker-compose configuration validation."""
 
     @pytest.fixture
-    def docker_compose_content(self) -> Dict[str, Any]:
+    def docker_compose_config(self) -> Dict[str, Any]:
         """Load and parse docker-compose configuration."""
         project_root = Path(__file__).parent.parent.parent
         compose_file = project_root / "docker-compose.gpu.yml"
-        content = compose_file.read_text()
 
-        # Simple parsing for basic validation
-        # Note: For production, use pyyaml for proper YAML parsing
-        return {"content": content, "lines": content.splitlines()}
+        with open(compose_file, "r") as f:
+            config = yaml.safe_load(f)
 
-    def test_version_specified(self, docker_compose_content: Dict[str, Any]) -> None:
+        return config
+
+    def test_version_specified(self, docker_compose_config: Dict[str, Any]) -> None:
         """Test that docker-compose version is specified."""
-        content = docker_compose_content["content"]
-        assert "version:" in content, "Should specify docker-compose version"
-        assert "'3.8'" in content or '"3.8"' in content, "Should use version 3.8"
+        assert (
+            "version" in docker_compose_config
+        ), "Should specify docker-compose version"
+        assert docker_compose_config["version"] == "3.8", "Should use version 3.8"
 
-    def test_network_configuration(
-        self, docker_compose_content: Dict[str, Any]
-    ) -> None:
+    def test_network_configuration(self, docker_compose_config: Dict[str, Any]) -> None:
         """Test network configuration."""
-        content = docker_compose_content["content"]
-        assert "networks:" in content, "Should define networks"
-        assert "default:" in content, "Should have default network"
-        assert "driver: bridge" in content, "Should use bridge driver"
+        assert "networks" in docker_compose_config, "Should define networks"
+        networks = docker_compose_config["networks"]
+        assert "default" in networks, "Should have default network"
+        assert networks["default"]["driver"] == "bridge", "Should use bridge driver"
 
-    def test_volume_configuration(self, docker_compose_content: Dict[str, Any]) -> None:
+    def test_volume_configuration(self, docker_compose_config: Dict[str, Any]) -> None:
         """Test volume configuration."""
-        content = docker_compose_content["content"]
-        assert "volumes:" in content, "Should define volumes"
-        assert "chroma_data:" in content, "Should define chroma_data volume"
-        assert "redis_data:" in content, "Should define redis_data volume"
+        assert "volumes" in docker_compose_config, "Should define volumes"
+        volumes = docker_compose_config["volumes"]
+        assert "chroma_data" in volumes, "Should define chroma_data volume"
+        assert "redis_data" in volumes, "Should define redis_data volume"
 
-    def test_environment_variables(
-        self, docker_compose_content: Dict[str, Any]
-    ) -> None:
+    def test_environment_variables(self, docker_compose_config: Dict[str, Any]) -> None:
         """Test environment variable configuration."""
-        content = docker_compose_content["content"]
-        env_vars = ["CUDA_VISIBLE_DEVICES", "PYTHONPATH", "MODEL_TYPE", "QUANTIZATION"]
+        services = docker_compose_config.get("services", {})
+        quantchain_service = services.get("quantchain-gpu", {})
+        env_vars = quantchain_service.get("environment", [])
 
-        for var in env_vars:
-            assert var in content, f"Should define {var} environment variable"
+        required_vars = [
+            "CUDA_VISIBLE_DEVICES",
+            "PYTHONPATH",
+            "MODEL_TYPE",
+            "QUANTIZATION",
+        ]
 
-    def test_port_configuration(self, docker_compose_content: Dict[str, Any]) -> None:
+        for var in required_vars:
+            # Check if variable is in environment list
+            var_found = any(var in str(env_item) for env_item in env_vars)
+            assert var_found, f"Should define {var} environment variable"
+
+    def test_port_configuration(self, docker_compose_config: Dict[str, Any]) -> None:
         """Test port configuration."""
-        content = docker_compose_content["content"]
-        assert "8501:8501" in content, "Should expose Streamlit port"
-        assert "8001:8000" in content, "Should expose ChromaDB port"
-        assert "6379:6379" in content, "Should expose Redis port"
+        services = docker_compose_config.get("services", {})
 
-    def test_restart_policies(self, docker_compose_content: Dict[str, Any]) -> None:
+        # Check main service ports
+        quantchain_service = services.get("quantchain-gpu", {})
+        quantchain_ports = quantchain_service.get("ports", [])
+
+        chromadb_service = services.get("chromadb", {})
+        chromadb_ports = chromadb_service.get("ports", [])
+
+        redis_service = services.get("redis", {})
+        redis_ports = redis_service.get("ports", [])
+
+        assert "8501:8501" in quantchain_ports, "Should expose Streamlit port"
+        assert "8001:8000" in chromadb_ports, "Should expose ChromaDB port"
+        assert "6379:6379" in redis_ports, "Should expose Redis port"
+
+    def test_restart_policies(self, docker_compose_config: Dict[str, Any]) -> None:
         """Test restart policies."""
-        content = docker_compose_content["content"]
-        assert "restart: unless-stopped" in content, "Should define restart policy"
+        services = docker_compose_config.get("services", {})
+
+        # Check that main services have restart policies
+        for service_name in ["quantchain-gpu", "chromadb", "redis"]:
+            service = services.get(service_name, {})
+            restart_policy = service.get("restart")
+            assert (
+                restart_policy == "unless-stopped"
+            ), f"Service {service_name} should define restart policy"
 
 
 class TestDeploymentDocumentation:

@@ -2,6 +2,8 @@
 
 This guide provides comprehensive instructions for setting up QuantChain in various environments, from local development to production deployment.
 
+For a quick overview and basic commands, see the [README](../README.md#quick-start-with-docker-recommended).
+
 ## Prerequisites
 
 ### System Requirements
@@ -33,7 +35,7 @@ sudo apt-get install -y nvidia-container-toolkit
 sudo systemctl restart docker
 
 # Verify installation
-sudo docker run --rm --gpus all nvidia/cuda:12.1-runtime-ubuntu22.0 nvidia-smi
+sudo docker run --rm --gpus all nvidia/cuda:12.1-runtime-ubuntu22.04 nvidia-smi
 ```
 
 ### 2. Clone and Setup QuantChain

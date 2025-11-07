@@ -29,18 +29,9 @@ git clone https://github.com/anchapin/QuantChain.git
 cd QuantChain
 ```
 
-2. **Setup NVIDIA Container Toolkit (Linux with GPU):**
-```bash
-# Add NVIDIA package repositories
-curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
-curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
-    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
-    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
-
-# Install and restart Docker
-sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
-sudo systemctl restart docker
-```
+2. **Setup Docker environment:**
+   - **For GPU support:** See [Environment Setup Guide](docs/environment-setup.md#1-install-nvidia-container-toolkit-linux)
+   - **For CPU only:** Skip GPU setup and proceed to step 3
 
 3. **Configure environment:**
 ```bash
@@ -59,38 +50,17 @@ docker compose -f docker-compose.gpu.yml up --build -d
 docker compose up --build -d
 ```
 
+For detailed setup instructions, troubleshooting, and alternative configurations, see the [Environment Setup Guide](docs/environment-setup.md).
+
 ### Local Development Setup
 
-1. **Create virtual environment:**
+For detailed local development setup instructions, see the [Environment Setup Guide](docs/environment-setup.md#local-development-setup).
+
+**Quick start:**
 ```bash
 python3 -m venv venv
 source venv/bin/activate  # Linux/macOS
-# venv\Scripts\activate  # Windows
-```
-
-2. **Install dependencies:**
-```bash
 pip install -r requirements.txt
-```
-
-3. **Install CUDA support (GPU systems):**
-```bash
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-```
-
-4. **Optional dependencies:**
-```bash
-# For backtesting
-pip install backtesting
-
-# For LLM serving
-pip install vllm ollama
-
-# For data connectors
-pip install alpaca-py ccxt
-
-# For web dashboard
-pip install streamlit plotly
 ```
 
 ## Hardware Requirements
