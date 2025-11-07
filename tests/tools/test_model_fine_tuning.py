@@ -246,14 +246,14 @@ class TestFineTuneModelQLoRA:
             side_effect=TrainingError("No package metadata was found for bitsandbytes"),
         ) as mock_fine_tune:
             from quantchain.tools.model_fine_tuning import fine_tune_model_qlora
-            
+
             # Should raise the mocked TrainingError
             with pytest.raises(
                 TrainingError,
                 match="No package metadata was found for bitsandbytes",
             ):
                 fine_tune_model_qlora(config, mock_dataset, training_args)
-            
+
             # Verify the mock was called
             mock_fine_tune.assert_called_once_with(config, mock_dataset, training_args)
 
@@ -270,16 +270,21 @@ class TestFineTuneModelQLoRA:
         # Mock the function to simulate model loading failure
         with patch(
             "quantchain.tools.model_fine_tuning.fine_tune_model_qlora",
-            side_effect=TrainingError("Failed to load model/tokenizer: No model found at test-org/test-model"),
+            side_effect=TrainingError(
+                "Failed to load model/tokenizer: No model found at test-org/test-model"
+            ),
         ) as mock_fine_tune:
             from quantchain.tools.model_fine_tuning import fine_tune_model_qlora
-            
+
             with pytest.raises(
                 TrainingError,
-                match="Failed to load model/tokenizer: No model found at test-org/test-model",
+                match=(
+                    "Failed to load model/tokenizer: No model found at "
+                    "test-org/test-model"
+                ),
             ):
                 fine_tune_model_qlora(config, mock_dataset, training_args)
-            
+
             # Verify mock was called
             mock_fine_tune.assert_called_once_with(config, mock_dataset, training_args)
 
