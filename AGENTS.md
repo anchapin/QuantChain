@@ -535,6 +535,7 @@ Before any critical milestone, agents MUST perform the following cleanup:
 - [ ] **Documentation Alignment**: Verify all code changes are reflected in documentation
 - [ ] **Test Coverage**: Remove or update tests for any removed or modified functionality
 - [ ] **File Cleanup**: Remove temporary files, unused imports, duplicate configurations, and obsolete progress files created during session
+- [ ] **Comprehensive Change Summary**: Document all changes made during the development session in commit message
 
 #### Pre-PR Cleanup Checklist
 - [ ] **Scope Verification**: Confirm the implementation matches the original issue/PRD requirements exactly
