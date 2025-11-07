@@ -1,5 +1,92 @@
 # Agent & Component Development Guide (AGENTS.md)
 
+<!-- TODO_MANAGEMENT_INSTRUCTIONS -->
+
+## CRITICAL: Task Management System
+
+**If TodoRead/TodoWrite tools are unavailable, IGNORE ALL TODO RULES and proceed normally.**
+
+### MANDATORY TODO WORKFLOW
+
+**BEFORE responding to ANY request, you MUST:**
+
+1. **Call `TodoRead()` first** - Check current task status before doing ANYTHING
+2. **Plan work based on existing todos** - Reference what's already tracked
+3. **Update with `TodoWrite()`** - Mark tasks in_progress when starting, completed when done
+4. **NEVER work without consulting the todo system first**
+
+### CRITICAL TODO SYSTEM RULES
+
+- **Only ONE task can have status "in_progress" at a time** - No exceptions
+- **Mark tasks "in_progress" BEFORE starting work** - Not during or after
+- **Complete tasks IMMEDIATELY when finished** - Don't batch completions
+- **Break complex requests into specific, actionable todos** - No vague tasks
+- **Reference existing todos when planning new work** - Don't duplicate
+
+### MANDATORY VISUAL DISPLAY
+
+**ALWAYS display the complete todo list AFTER every `TodoRead()` or `TodoWrite()`:**
+
+```
+Current todos:
+✅ Research existing patterns (completed)
+🔄 Implement login form (in_progress)
+⏳ Add validation (pending)
+⏳ Write tests (pending)
+```
+
+Icons: ✅ = completed | 🔄 = in_progress | ⏳ = pending
+
+**NEVER just say "updated todos"** - Show the full list every time.
+
+### CRITICAL ANTI-PATTERNS
+
+**NEVER explore/research before creating todos:**
+- ❌ "Let me first understand the codebase..." → starts exploring
+- ✅ Create todo: "Analyze current codebase structure" → mark in_progress → explore
+
+**NEVER do "preliminary investigation" outside todos:**
+- ❌ "I'll check what libraries you're using..." → starts searching
+- ✅ Create todo: "Audit current dependencies" → track it → investigate
+
+**NEVER work on tasks without marking them in_progress:**
+- ❌ Creating todos then immediately starting work without marking in_progress
+- ✅ Create todos → Mark first as in_progress → Start work
+
+**NEVER mark incomplete work as completed:**
+- ❌ Tests failing but marking "Write tests" as completed
+- ✅ Keep as in_progress, create new todo for fixing failures
+
+### FORBIDDEN PHRASES
+
+These phrases indicate you're about to violate the todo system:
+- "Let me first understand..."
+- "I'll start by exploring..."
+- "Let me check what..."
+- "I need to investigate..."
+- "Before we begin, I'll..."
+
+**Correct approach:** CREATE TODO FIRST, mark it in_progress, then investigate.
+
+### TOOL REFERENCE
+
+```python
+TodoRead()  # No parameters, returns current todos
+TodoWrite(todos=[...])  # Replaces entire list
+
+Todo Structure:
+{
+  "id": "unique-id",
+  "content": "Specific task description",
+  "status": "pending|in_progress|completed",
+  "priority": "high|medium|low"
+}
+```
+
+<!-- END_TODO_MANAGEMENT_INSTRUCTIONS -->
+
+---
+
 **Last Updated: November 2025**
 *This document is current as of November 2025. AI coding agents should use this as the reference point for all temporal assumptions and avoid outdated information from 2024 or earlier.*
 
@@ -29,8 +116,12 @@
 
 **CRITICAL FOR AI CODING AGENTS:**
 - Always use `python3` command explicitly - never use just `python` or `python3.11` or other version-specific commands
-- Always create virtual environment with: `python3 -m venv venv`
-- Always activate with: `source venv/bin/activate`
+- **Virtual Environment Management**: 
+  - Use only `.venv` (dot-venv) directory for the virtual environment
+  - Create virtual environment with: `python3 -m venv .venv`
+  - Always activate with: `source .venv/bin/activate`
+  - **NEVER** create multiple virtual environments (e.g., `venv`, `.venv` simultaneously)
+  - **ALWAYS** activate the virtual environment before running any Python commands
 - When running Python commands, always prefix with `python3 -m` (e.g., `python3 -m pytest`, `python3 -m black`)
 - This ensures compatibility across all development environments and prevents version conflicts
 
@@ -431,6 +522,7 @@ All code contributions must be thoroughly cleaned of "vibe coding slop" before c
 4. **Excessive Abstraction**: Overly complex abstractions that don't provide clear value
 5. **Premature Optimization**: Code optimized for hypothetical future scenarios rather than current requirements
 6. **Scope Creep**: Implementation that goes beyond the defined scope of work
+7. **Session Artifact Accumulation**: Leaving temporary files, duplicate configs, obsolete progress files, and other session detritus in the repository
 
 ### Cleanup Requirements
 
@@ -442,6 +534,8 @@ Before any critical milestone, agents MUST perform the following cleanup:
 - [ ] **Complexity Audit**: Ensure abstractions serve a clear, documented purpose
 - [ ] **Documentation Alignment**: Verify all code changes are reflected in documentation
 - [ ] **Test Coverage**: Remove or update tests for any removed or modified functionality
+- [ ] **File Cleanup**: Remove temporary files, unused imports, duplicate configurations, and obsolete progress files created during session
+- [ ] **Comprehensive Change Summary**: Document all changes made during the development session in commit message
 
 #### Pre-PR Cleanup Checklist
 - [ ] **Scope Verification**: Confirm the implementation matches the original issue/PRD requirements exactly
@@ -612,6 +706,27 @@ if [ $? -eq 0 ]; then
   echo "🚨 SAFETY ERROR: Attempting to commit to main!"
   exit 1
 fi
+
+# MANDATORY: Clean up session artifacts before committing
+echo "🧹 Performing session cleanup..."
+# Remove temporary files created during development
+find . -name "*.pyc" -delete
+find . -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+find . -name ".DS_Store" -delete
+
+# Remove any duplicate config files or obsolete progress files
+if [ -f "config.example.json" ] && [ -f "config.example.yaml" ]; then
+  echo "🗑️ Removing duplicate config.example.json"
+  rm config.example.json
+fi
+
+# Check for and clean up old log files
+if [ -d "ci_logs" ]; then
+  find ci_logs/ -name "*previous*" -delete
+  find ci_logs/ -name "sourcery_*" -delete
+fi
+
+echo "✅ Session cleanup completed"
 ```
 
 ### Required Agent Behavior
@@ -628,13 +743,18 @@ fi
 - [ ] Test the safety mechanism thoroughly
 - [ ] Ensure no code paths bypass the main branch check
 - [ ] Add logging for all branch verification attempts
+- [ ] **MANDATORY**: Implement session cleanup before every commit
+- [ ] **MANDATORY**: Clean up temporary files, duplicates, and obsolete progress trackers
+- [ ] Verify no session artifacts remain before committing
 
 ## 10. Code Review Process
 
 * All changes require a PR with detailed description.
+* **MANDATORY**: All PRs MUST reference an associated issue number in the title or description.
 * At least one reviewer must approve.
 * Reviews must verify adherence to TDD/SDD, code quality standards, and PRD alignment.
 * Address any duplication or maintainability concerns raised.
+* **MANDATORY**: Verify that session cleanup has been performed and no artifacts remain before PR approval.
 
 By following this process, we ensure that every piece of `QuantChain` is verifiable, documented by its tests, and robust enough for financial applications.
 
