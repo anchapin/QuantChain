@@ -14,14 +14,9 @@ from .trading_execution import (
     Position,
     AccountInfo,
 )
-from .paper_trading import PaperTradingExecutor
+from .paper_trading import PaperTradingExecutor, PerformanceMetrics
 from ..core.reflection import ReflectionEngine, AgentAction
 from ..core.config import QuantChainConfig
-from ..core.rag_system import (
-    MarketDataRAG,
-    SentenceTransformerProvider,
-    ChromaVectorStore,
-)
 
 
 @dataclass
@@ -158,10 +153,10 @@ class TutorialFeedback:
 class MarketDriverAnalysis:
     """Analyzes market drivers for educational feedback."""
 
-    def __init__(self, rag_system=None):
+    def __init__(self, rag_system: Optional[Any] = None) -> None:
         """Initialize market driver analysis."""
         self.rag_system = rag_system
-        self.drivers_cache = {}
+        self.drivers_cache: Dict[str, List[str]] = {}
 
     def analyze_market_drivers(self, symbol: str, order: OrderResult) -> List[str]:
         """Analyze market drivers for a trade decision."""
@@ -176,7 +171,9 @@ class MarketDriverAnalysis:
         if self.rag_system:
             try:
                 query = f"Market analysis for {symbol} trading decision"
-                relevant_data = self.rag_system.retrieve_relevant_data(query, limit=3)
+                relevant_data = self.rag_system.retrieve_relevant_data(  # type: ignore
+                    query, limit=3
+                )
 
                 for data in relevant_data:
                     if data.data_type == "technical" and symbol == data.symbol:
@@ -269,7 +266,7 @@ class MarketDriverAnalysis:
 class MistakeTracker:
     """Tracks and categorizes trading mistakes."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize mistake tracker."""
         self.mistakes: List[TradingMistake] = []
         self.mistake_patterns: Dict[str, int] = {}
@@ -436,7 +433,7 @@ class MistakeTracker:
 class ConfidenceMetrics:
     """Tracks confidence building metrics for tutorial mode."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize confidence metrics."""
         self.decisions: List[Dict[str, Any]] = []
         self.performance_history: List[float] = []
@@ -445,7 +442,7 @@ class ConfidenceMetrics:
         self,
         decision_quality: float,
         risk_assessment: str,
-        consistency_score: float = None,
+        consistency_score: Optional[float] = None,
     ) -> None:
         """Record a trading decision with quality metrics."""
         self.decisions.append(
@@ -476,7 +473,7 @@ class ConfidenceMetrics:
         weighted_score = sum(q * w for q, w in zip(quality_scores, weights)) / sum(
             weights
         )
-        return weighted_score
+        return weighted_score  # type: ignore
 
     def calculate_consistency_score(self) -> float:
         """Calculate decision consistency score (0-1)."""
@@ -494,7 +491,7 @@ class ConfidenceMetrics:
         consistency = max(
             0.0, 1.0 - (std_dev / 0.5)
         )  # Normalize assuming 0.5 as max std_dev
-        return consistency
+        return consistency  # type: ignore
 
     def calculate_risk_management_score(self) -> float:
         """Calculate risk management adherence score (0-1)."""
@@ -997,7 +994,7 @@ class TutorialExecutor(TradingExecutionInterface):
         """Update market data."""
         self.paper_executor.update_market_data(symbols)
 
-    def get_performance_metrics(self):
+    def get_performance_metrics(self) -> PerformanceMetrics:
         """Get paper trading performance metrics."""
         return self.paper_executor.get_performance_metrics()
 

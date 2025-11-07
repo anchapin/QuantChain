@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime, timezone
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
 import warnings
 
@@ -14,7 +14,7 @@ from .trading_execution import (
     Position,
     AccountInfo,
 )
-from .paper_trading import PaperTradingExecutor
+from .paper_trading import PaperTradingExecutor, PerformanceMetrics
 from ..core.reflection import ReflectionEngine, AgentAction
 from ..core.config import QuantChainConfig
 
@@ -153,10 +153,10 @@ class TrainingFeedback:
 class MarketDriverAnalysis:
     """Analyzes market drivers for educational feedback."""
 
-    def __init__(self, rag_system=None):
+    def __init__(self, rag_system: Optional[Any] = None) -> None:
         """Initialize market driver analysis."""
         self.rag_system = rag_system
-        self.drivers_cache = {}
+        self.drivers_cache: Dict[str, List[str]] = {}
 
     def analyze_market_drivers(self, symbol: str, order: OrderResult) -> List[str]:
         """Analyze market drivers for a trade decision."""
@@ -171,7 +171,9 @@ class MarketDriverAnalysis:
         if self.rag_system:
             try:
                 query = f"Market analysis for {symbol} trading decision"
-                relevant_data = self.rag_system.retrieve_relevant_data(query, limit=3)
+                relevant_data = self.rag_system.retrieve_relevant_data(  # type: ignore
+                    query, limit=3
+                )
 
                 for data in relevant_data:
                     if data.data_type == "technical" and symbol == data.symbol:
@@ -264,7 +266,7 @@ class MarketDriverAnalysis:
 class MistakeTracker:
     """Tracks and categorizes trading mistakes."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize mistake tracker."""
         self.mistakes: List[TradingMistake] = []
         self.mistake_patterns: Dict[str, int] = {}
@@ -345,7 +347,7 @@ class MistakeTracker:
 
     def _is_market_misread(self, order: OrderResult, context: Dict[str, Any]) -> bool:
         """Check if this is a market misread mistake."""
-        # Simple heuristic - if order is immediately filled but market moves against position
+        # Simple heuristic - if order fills immediately but market moves against
         immediate_move = context.get("immediate_price_move", 0)
         if abs(immediate_move) > 0.01:  # 1% immediate move
             # If market moved against the position immediately
@@ -371,10 +373,16 @@ class MistakeTracker:
         }
 
         learning_points = {
-            "timing": "Wait for clearer signals in volatile markets or use limit orders",
-            "sizing": "Consider position sizing rules (1-5% risk per trade)",
-            "risk_management": "Always use stop-losses and respect position size limits",
-            "market_misread": "Confirm market direction with multiple indicators before trading",
+            "timing": (
+                "Wait for clearer signals in volatile markets or use limit orders"
+            ),
+            "sizing": ("Consider position sizing rules (1-5% risk per trade)"),
+            "risk_management": (
+                "Always use stop-losses and respect position size limits"
+            ),
+            "market_misread": (
+                "Confirm market direction with multiple indicators before trading"
+            ),
         }
 
         return TradingMistake(
@@ -408,11 +416,13 @@ class MistakeTracker:
                     )
                 elif mistake_type == "sizing":
                     recommendations.append(
-                        "Review position sizing strategy - implement fixed percentage rules"
+                        "Review position sizing strategy - implement fixed "
+                        "percentage rules"
                     )
                 elif mistake_type == "risk_management":
                     recommendations.append(
-                        "Strengthen risk management - add stop-losses and position limits"
+                        "Strengthen risk management - add stop-losses "
+                        "and position limits"
                     )
                 elif mistake_type == "market_misread":
                     recommendations.append(
@@ -425,7 +435,7 @@ class MistakeTracker:
 class ConfidenceMetrics:
     """Tracks confidence building metrics for training."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize confidence metrics."""
         self.decisions: List[Dict[str, Any]] = []
         self.performance_history: List[float] = []
@@ -434,7 +444,7 @@ class ConfidenceMetrics:
         self,
         decision_quality: float,
         risk_assessment: str,
-        consistency_score: float = None,
+        consistency_score: Optional[float] = None,
     ) -> None:
         """Record a trading decision with quality metrics."""
         self.decisions.append(
@@ -465,7 +475,7 @@ class ConfidenceMetrics:
         weighted_score = sum(q * w for q, w in zip(quality_scores, weights)) / sum(
             weights
         )
-        return weighted_score
+        return weighted_score  # type: ignore
 
     def calculate_consistency_score(self) -> float:
         """Calculate decision consistency score (0-1)."""
@@ -477,14 +487,13 @@ class ConfidenceMetrics:
         # Calculate standard deviation
         import statistics
 
-        mean_score = statistics.mean(quality_scores)
         std_dev = statistics.stdev(quality_scores)
 
         # Convert to consistency score (lower std_dev = higher consistency)
         consistency = max(
             0.0, 1.0 - (std_dev / 0.5)
         )  # Normalize assuming 0.5 as max std_dev
-        return consistency
+        return consistency  # type: ignore
 
     def calculate_risk_management_score(self) -> float:
         """Calculate risk management adherence score (0-1)."""
@@ -769,7 +778,10 @@ class TrainingExecutor(TradingExecutionInterface):
 
             mistake = self.mistake_tracker.analyze_mistake(result, market_context)
             if mistake and self.feedback_level in ["detailed", "comprehensive"]:
-                analysis.educational_context += f"\n\nMISTAKE IDENTIFIED:\n{mistake.description}\n\nLEARNING POINT:\n{mistake.learning_point}"
+                analysis.educational_context += (
+                    f"\n\nMISTAKE IDENTIFIED:\n{mistake.description}"
+                    f"\n\nLEARNING POINT:\n{mistake.learning_point}"
+                )
 
         # Record for confidence metrics
         self.confidence_metrics.record_decision(
@@ -984,7 +996,7 @@ class TrainingExecutor(TradingExecutionInterface):
         """Update market data."""
         self.paper_executor.update_market_data(symbols)
 
-    def get_performance_metrics(self):
+    def get_performance_metrics(self) -> PerformanceMetrics:
         """Get paper trading performance metrics."""
         return self.paper_executor.get_performance_metrics()
 
