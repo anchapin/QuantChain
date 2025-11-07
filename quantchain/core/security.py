@@ -46,17 +46,7 @@ class APISecurityManager:
 
     def _load_credentials(self) -> None:
         """Load credentials from environment variables and .env file."""
-        # Load from environment variables first (highest priority)
-        for service in API_KEY_PATTERNS.keys():
-            key_env = f"{service.upper()}_API_KEY"
-            secret_env = f"{service.upper()}_API_SECRET"
-
-            if key_env in os.environ:
-                self._credentials[service] = {"key": os.environ[key_env]}
-                if secret_env in os.environ:
-                    self._credentials[service]["secret"] = os.environ[secret_env]
-
-        # Load from .env file if it exists (lower priority)
+        # Load from .env file first (lower priority)
         if self.env_file.exists():
             try:
                 with open(self.env_file, "r", encoding="utf-8") as f:
@@ -80,6 +70,18 @@ class APISecurityManager:
                                 self._credentials[service]["secret"] = value
             except Exception as e:
                 logger.warning(f"Failed to load .env file {self.env_file}: {e}")
+
+        # Load from environment variables last (highest priority)
+        for service in API_KEY_PATTERNS.keys():
+            key_env = f"{service.upper()}_API_KEY"
+            secret_env = f"{service.upper()}_API_SECRET"
+
+            if key_env in os.environ:
+                if service not in self._credentials:
+                    self._credentials[service] = {}
+                self._credentials[service]["key"] = os.environ[key_env]
+                if secret_env in os.environ:
+                    self._credentials[service]["secret"] = os.environ[secret_env]
 
     def set_api_key(self, service: str, key: str, secret: Optional[str] = None) -> None:
         """Store API key for a service.
@@ -165,16 +167,35 @@ class APISecurityManager:
             else self._credentials.get(service, {}).get("secret")
         )
 
+        # If no credentials are stored and none are provided, return False
+        if test_key is None and test_secret is None and key is None and secret is None:
+            return False
+
+        # If key is explicitly None (but secret is provided), only validate secret
+        if key is None and secret is not None:
+            # Empty string should be treated as not provided for services w/o secrets
+            if "secret_pattern" not in patterns:
+                return True  # No secret required for this service
+
+            # For services that require secrets, secret must be provided and valid
+            if test_secret is None:
+                return False  # Secret is required but not provided
+
+            return bool(re.match(patterns["secret_pattern"], test_secret))
+
         # Validate key
         if not test_key or not re.match(patterns["key_pattern"], test_key):
             return False
 
-        # Validate secret if required and provided
-        return bool(
-            "secret_pattern" not in patterns
-            or not test_secret
-            or re.match(patterns["secret_pattern"], test_secret)
-        )
+        # Validate secret if required
+        if "secret_pattern" not in patterns:
+            return True  # No secret required for this service
+
+        # For services that require secrets, secret must be provided and valid
+        if test_secret is None:
+            return False  # Secret is required but not provided
+
+        return bool(re.match(patterns["secret_pattern"], test_secret))
 
     def list_services(self) -> List[str]:
         """List all configured services.

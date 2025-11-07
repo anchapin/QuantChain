@@ -90,3 +90,6 @@ models/
 # Vector stores
 chroma/
 faiss_index/
+
+# MCP todo list
+.mcp-todos.json

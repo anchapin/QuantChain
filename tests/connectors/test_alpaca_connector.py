@@ -14,6 +14,7 @@ from quantchain.core.exceptions import (
 from alpaca.trading.enums import AssetClass
 
 
+@pytest.mark.unit
 class TestAlpacaDataConnector:
     """Test suite for AlpacaDataConnector."""
 

@@ -10,6 +10,7 @@ from quantchain.connectors.dexscreener_connector import DexscreenerDataConnector
 from quantchain.core.exceptions import DataSourceError, SymbolNotFoundError
 
 
+@pytest.mark.unit
 class TestDexscreenerDataConnector:
     """Test suite for DexscreenerDataConnector."""
 

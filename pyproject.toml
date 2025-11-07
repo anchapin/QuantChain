@@ -26,7 +26,6 @@ classifiers = [
 dependencies = [
     "langchain>=0.1.0",
 ]
-
 [project.optional-dependencies]
 # Core runtime dependencies
 core = [
@@ -41,12 +40,12 @@ core = [
     "requests>=2.25.0",
 ]
 
-# Testing dependencies
 test = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "pytest-mock>=3.10.0",
     "pytest-timeout>=2.1.0",
+    "pytest-xdist>=3.0.0",
 ]
 
 # Development and linting dependencies
@@ -109,14 +108,12 @@ web = [
     "plotly>=5.0.0",
 ]
 
-# Complete installation with all optional features
 full = [
     "langgraph>=0.1.0",
     "openai>=1.0.0",
     "anthropic>=0.20.0",
     "chromadb>=0.4.0",
     "sentence-transformers>=2.0.0",
-    "numpy>=1.21.0",
     "PyYAML>=6.0.0",
     "pandas>=1.21.0",
     "requests>=2.25.0",
@@ -163,7 +160,13 @@ ignore_errors = true
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "-ra -q --cov=quantchain --cov-report=html --cov-report=term-missing"
+addopts = "-ra -q --cov=quantchain --cov-report=html --cov-report=term-missing -n auto --dist loadfile"
 testpaths = [
     "tests",
+]
+markers = [
+    "unit: mark test as a unit test (fast, isolated)",
+    "integration: mark test as an integration test (component interaction)",
+    "slow: mark test as slow running (backtesting, complex scenarios)",
+    "requires_backtestingpy: mark test that requires Backtesting.py",
 ]

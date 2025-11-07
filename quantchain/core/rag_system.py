@@ -17,7 +17,8 @@ except ImportError:
 
 try:
     from sentence_transformers import SentenceTransformer  # noqa: F811
-except ImportError:
+except (ImportError, RuntimeError):
+    # Handle RuntimeError from torch conflicts
     SentenceTransformer = None  # type: ignore[assignment,misc]
 
 

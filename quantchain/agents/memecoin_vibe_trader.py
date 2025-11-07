@@ -426,6 +426,17 @@ class MemecoinVibeTrader:
                     position_value = (
                         portfolio_value * self.config.max_allocation_per_trade
                     )
+
+                    # Skip trade if portfolio value is zero or position value is
+                    # too small
+                    if portfolio_value <= 0 or position_value <= 0:
+                        self.logger.info(
+                            f"Skipping trade for {assessment.token.symbol}: "
+                            f"portfolio_value={portfolio_value}, "
+                            f"position_value={position_value}"
+                        )
+                        continue
+
                     # TODO: Get actual token price from price oracle or DEX data
                     # For now, estimate token price based on liquidity/volume ratio
                     # This is a simplified approach for backtesting
@@ -433,6 +444,14 @@ class MemecoinVibeTrader:
                     quantity = (
                         position_value / estimated_price if estimated_price > 0 else 0
                     )
+
+                    # Skip trade if quantity is zero or too small
+                    if quantity <= 0:
+                        self.logger.info(
+                            f"Skipping trade for {assessment.token.symbol}: "
+                            f"quantity={quantity}, estimated_price={estimated_price}"
+                        )
+                        continue
 
                     # Execute buy order (Alpaca format)
                     order_result = self.execution_tool.execute_market_order(
@@ -554,13 +573,13 @@ REASONING: [Your detailed analysis in 2-3 sentences]
 
         # Regex patterns for robust parsing
         vibe_score_pattern = re.compile(
-            r"^VIBE_SCORE:\s*(\d+(?:\.\d+)?)", re.IGNORECASE
+            r"^VIBE_SCORE:\s*(-?\d+(?:\.\d+)?)", re.IGNORECASE
         )
         recommendation_pattern = re.compile(
             r"^RECOMMENDATION:\s*(BUY|SELL|HOLD|SKIP)", re.IGNORECASE
         )
         risk_level_pattern = re.compile(
-            r"^RISK_LEVEL:\s*(LOW|MEDIUM|HIGH)", re.IGNORECASE
+            r"^RISK_LEVEL:\s*(LOW|MEDIUM|HIGH|VERY_HIGH)", re.IGNORECASE
         )
         reasoning_pattern = re.compile(r"^REASONING:\s*(.+)", re.IGNORECASE | re.DOTALL)
 

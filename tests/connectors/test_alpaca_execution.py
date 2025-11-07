@@ -24,6 +24,7 @@ from quantchain.tools.trading_execution import (
 )
 
 
+@pytest.mark.unit
 class TestAlpacaExecutionConnector:
     """Test cases for AlpacaExecutionConnector."""
 

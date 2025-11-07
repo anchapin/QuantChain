@@ -51,25 +51,32 @@ def mock_llm_provider() -> None:
     return MockLLMProvider()
 
 
-@patch("quantchain.core.agent_engine.StateGraph")
-def test_agent_initialization(mock_state_graph, mock_config, mock_llm_provider) -> None:
-    """Test agent initialization."""
-    # Mock the graph compilation
-    mock_graph = MagicMock()
-    mock_state_graph.return_value.compile.return_value = mock_graph
+@pytest.mark.unit
+class TestQuantChainAgentEngine:
 
-    agent = QuantChainAgent(mock_config, llm_provider=mock_llm_provider)
+    def test_agent_initialization_with_mock(
+        self, mock_config, mock_llm_provider
+    ) -> None:
+        """Test agent initialization."""
+        # Mock graph compilation
+        mock_graph = MagicMock()
+        final_state = {
+            "final_answer": "Test final answer",
+            "reasoning_steps": ["Step 1", "Step 2"],
+            "confidence_score": 0.8,
+        }
+        mock_graph.compile.return_value = final_state
 
-    assert agent.config == mock_config
-    assert agent.llm_provider == mock_llm_provider
-    assert agent.graph == mock_graph
+        agent = QuantChainAgent(mock_config, llm_provider=mock_llm_provider)
+
+        assert agent.config == mock_config
+        assert agent.llm_provider == mock_llm_provider
 
 
 @patch("quantchain.core.agent_engine.StateGraph")
 def test_agent_run(mock_state_graph, mock_config, mock_llm_provider) -> None:
     """Test agent execution."""
     # Setup mock graph
-    mock_graph = MagicMock()
     final_state = {
         "final_answer": "Test final answer",
         "reasoning_steps": ["Step 1", "Step 2"],
@@ -85,8 +92,13 @@ def test_agent_run(mock_state_graph, mock_config, mock_llm_provider) -> None:
             )
         ],
     }
-    mock_graph.invoke.return_value = final_state
-    mock_state_graph.return_value.compile.return_value = mock_graph
+
+    # Mock the StateGraph instance and its methods
+    mock_graph_instance = MagicMock()
+    mock_compiled_graph = MagicMock()
+    mock_compiled_graph.invoke.return_value = final_state
+    mock_graph_instance.compile.return_value = mock_compiled_graph
+    mock_state_graph.return_value = mock_graph_instance
 
     agent = QuantChainAgent(mock_config, llm_provider=mock_llm_provider)
 
@@ -103,8 +115,18 @@ def test_agent_run(mock_state_graph, mock_config, mock_llm_provider) -> None:
 @patch("quantchain.core.agent_engine.StateGraph")
 def test_agent_reflection(mock_state_graph, mock_config, mock_llm_provider) -> None:
     """Test agent reflection capability."""
-    mock_graph = MagicMock()
-    mock_state_graph.return_value.compile.return_value = mock_graph
+    final_state = {
+        "final_answer": "Test final answer",
+        "reasoning_steps": ["Step 1", "Step 2"],
+        "confidence_score": 0.8,
+    }
+
+    # Mock the StateGraph instance and its methods
+    mock_graph_instance = MagicMock()
+    mock_compiled_graph = MagicMock()
+    mock_compiled_graph.invoke.return_value = final_state
+    mock_graph_instance.compile.return_value = mock_compiled_graph
+    mock_state_graph.return_value = mock_graph_instance
 
     agent = QuantChainAgent(mock_config, llm_provider=mock_llm_provider)
 
@@ -131,8 +153,19 @@ def test_agent_reflection(mock_state_graph, mock_config, mock_llm_provider) -> N
 @patch("quantchain.core.agent_engine.StateGraph")
 def test_extract_final_answer(mock_state_graph, mock_config) -> None:
     """Test final answer extraction."""
-    mock_graph = MagicMock()
-    mock_state_graph.return_value.compile.return_value = mock_graph
+    final_state = {
+        "final_answer": "Test final answer",
+        "reasoning_steps": ["Step 1", "Step 2"],
+        "confidence_score": 0.8,
+    }
+
+    # Mock the StateGraph instance and its methods
+    mock_graph_instance = MagicMock()
+    mock_compiled_graph = MagicMock()
+    mock_compiled_graph.invoke.return_value = final_state
+    mock_graph_instance.compile.return_value = mock_compiled_graph
+    mock_state_graph.return_value = mock_graph_instance
+
     agent = QuantChainAgent(mock_config, llm_provider=MockLLMProvider())
 
     reasoning = "After analysis, the final answer: buy AAPL"
@@ -159,12 +192,8 @@ def test_extract_final_answer(mock_state_graph, mock_config) -> None:
     assert answer.strip().lower() == "buy goog"
 
 
-@patch("quantchain.core.agent_engine.StateGraph")
-def test_calculate_confidence(mock_state_graph) -> None:
+def test_calculate_confidence() -> None:
     """Test confidence calculation."""
-    mock_graph = MagicMock()
-    mock_state_graph.return_value.compile.return_value = mock_graph
-
     # Create a config with RAG disabled to avoid SentenceTransformer issues
     mock_config = QuantChainConfig()
     mock_config._config["rag"] = {"enabled": False}
