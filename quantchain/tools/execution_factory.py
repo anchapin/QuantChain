@@ -24,24 +24,28 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
     broker = config.get("trading.default_broker", "alpaca")
     paper_trading = config.get("trading.paper_trading", True)
     tutorial_mode = config.get("tutorial.enabled", False)
-    
+
     # Tutorial mode takes precedence
     if tutorial_mode or broker == "tutorial":
         # Get tutorial configuration
         initial_cash = config.get("trading.initial_cash", 100000.0)
-        
+
         # Tutorial mode configuration options
         tutorial_config = {
             "learning_objectives": config.get("tutorial.learning_objectives", []),
             "session_duration": config.get("tutorial.session_duration", 3600),
             "feedback_level": config.get("tutorial.feedback_level", "detailed"),
             "track_mistakes": config.get("tutorial.track_mistakes", True),
-            "analyze_market_drivers": config.get("tutorial.analyze_market_drivers", True),
+            "analyze_market_drivers": config.get(
+                "tutorial.analyze_market_drivers", True
+            ),
             "commission_per_trade": config.get("trading.commission_per_trade", 0.0),
             "commission_per_share": config.get("trading.commission_per_share", 0.0),
         }
-        
-        return TutorialExecutor(initial_cash=initial_cash, config=config, **tutorial_config)
+
+        return TutorialExecutor(
+            initial_cash=initial_cash, config=config, **tutorial_config
+        )
 
     if broker == "alpaca":
         # Get API credentials

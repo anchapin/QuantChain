@@ -174,7 +174,8 @@ class TestMistakeTracker:
         if mistake:
             assert mistake.mistake_type == "timing"
             assert mistake.severity == "moderate"
-            assert "timing" in mistake.description.lower()
+            # Check that the description matches what's expected for timing mistakes
+            assert mistake.description == "Order placed at suboptimal time considering market conditions"
 
     def test_sizing_mistake_detection(self):
         """Test sizing mistake detection."""
@@ -276,18 +277,16 @@ class TestTutorialExecutor:
             analyze_market_drivers=True,
         )
 
-    def test_executor_initialization(self, mock_config):
+    def test_executor_initialization(self, tutorial_executor):
         """Test tutorial executor initialization."""
-        executor = TutorialExecutor(config=mock_config)
-
-        assert executor.paper_executor is not None
-        assert executor.reflection_engine is not None
-        assert executor.market_driver_analysis is not None
-        assert executor.mistake_tracker is not None
-        assert executor.confidence_metrics is not None
-        assert executor.learning_objectives == ["Practice trading", "Understand risk"]
-        assert executor.track_mistakes is True
-        assert executor.analyze_market_drivers is True
+        assert tutorial_executor.paper_executor is not None
+        assert tutorial_executor.reflection_engine is not None
+        assert tutorial_executor.market_driver_analysis is not None
+        assert tutorial_executor.mistake_tracker is not None
+        assert tutorial_executor.confidence_metrics is not None
+        assert tutorial_executor.learning_objectives == ["Practice trading", "Understand risk"]
+        assert tutorial_executor.track_mistakes is True
+        assert tutorial_executor.analyze_market_drivers is True
 
     def test_start_tutorial_session(self, tutorial_executor):
         """Test starting a tutorial session."""
@@ -300,7 +299,7 @@ class TestTutorialExecutor:
 
         assert session is not None
         assert session.symbols == symbols
-        assert objectives in session.learning_objectives
+        assert all(obj in session.learning_objectives for obj in objectives)
         assert session.duration_seconds == 1800
         assert session.is_active is True
 
@@ -455,27 +454,21 @@ class TestTutorialExecutor:
 class TestTutorialExecutorFactoryIntegration:
     """Test tutorial executor integration with factory."""
 
-    @patch("quantchain.tools.tutorial_mode.ChromaVectorStore")
-    @patch("quantchain.tools.tutorial_mode.SentenceTransformerProvider")
-    @patch("quantchain.tools.tutorial_mode.MarketDataRAG")
-    def test_tutorial_executor_with_rag(
-        self, mock_rag_class, mock_provider_class, mock_store_class
-    ):
+    def test_tutorial_executor_with_rag(self):
         """Test tutorial executor with RAG system enabled."""
         mock_config = Mock(spec=QuantChainConfig)
         mock_config.get.side_effect = lambda key, default=None: {
             "rag.enabled": True,
             "rag.persist_directory": "./test_db",
-            "rag.embedding_model": "test-model",
+            "rag.embedding_model": "all-MiniLM-L6-v2",
         }.get(key, default)
 
         executor = TutorialExecutor(config=mock_config)
 
-        # Should attempt to initialize RAG
+        # Should initialize RAG system when enabled
         assert executor is not None
-        mock_store_class.assert_called_once()
-        mock_provider_class.assert_called_once()
-        mock_rag_class.assert_called_once()
+        assert executor.rag_system is not None
+        assert executor.market_driver_analysis.rag_system is executor.rag_system
 
     def test_tutorial_executor_without_rag(self):
         """Test tutorial executor without RAG system."""

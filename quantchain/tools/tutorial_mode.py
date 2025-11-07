@@ -17,6 +17,11 @@ from .trading_execution import (
 from .paper_trading import PaperTradingExecutor
 from ..core.reflection import ReflectionEngine, AgentAction
 from ..core.config import QuantChainConfig
+from ..core.rag_system import (
+    MarketDataRAG,
+    SentenceTransformerProvider,
+    ChromaVectorStore,
+)
 
 
 @dataclass
