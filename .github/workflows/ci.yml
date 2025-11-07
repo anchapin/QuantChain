@@ -32,6 +32,10 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
+        # Install fine-tuning dependencies after PyTorch is available
+        if [ -f requirements-finetuning.txt ]; then
+          pip install -r requirements-finetuning.txt
+        fi
 
     - name: Run Black (code formatting)
       run: black --check --diff quantchain tests
@@ -71,6 +75,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
+        # Install fine-tuning dependencies after PyTorch is available
+        if [ -f requirements-finetuning.txt ]; then
+          pip install -r requirements-finetuning.txt
+        fi
 
     - name: Run unit tests in parallel
       run: |
@@ -111,6 +119,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
+        # Install fine-tuning dependencies after PyTorch is available
+        if [ -f requirements-finetuning.txt ]; then
+          pip install -r requirements-finetuning.txt
+        fi
         # Install optional dependencies for integration tests
         pip install -e .[backtesting,data,llm]
 
@@ -154,6 +166,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
+        # Install fine-tuning dependencies after PyTorch is available
+        if [ -f requirements-finetuning.txt ]; then
+          pip install -r requirements-finetuning.txt
+        fi
         # Install all optional dependencies for slow tests
         pip install -e .[full]
 

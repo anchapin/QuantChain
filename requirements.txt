@@ -22,8 +22,10 @@ transformers>=4.35.0
 peft>=0.6.0
 bitsandbytes>=0.41.0
 datasets>=2.14.0
-auto-gptq>=0.7.0
 llama-cpp-python>=0.2.0
+
+# Note: auto-gptq requires manual installation due to PyTorch dependency order
+# Install with: pip install auto-gptq>=0.7.0
 
 # Optional dependencies (uncomment as needed)
 # backtesting>=0.35.0

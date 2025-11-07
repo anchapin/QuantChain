@@ -1,0 +1,5 @@
+# Fine-tuning specific dependencies
+# Install after main requirements with: pip install -r requirements-finetuning.txt
+
+# These require PyTorch to be installed first
+auto-gptq>=0.7.0
