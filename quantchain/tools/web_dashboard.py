@@ -93,7 +93,7 @@ class AgentConfig:
 class MonitoringService:
     """Service for monitoring agents and system health."""
 
-    def __init__(self, agent_registry=None):
+    def __init__(self, agent_registry: Optional[Any] = None) -> None:
         """Initialize monitoring service."""
         self.agent_registry = agent_registry
 
@@ -110,7 +110,8 @@ class MonitoringService:
         # If agent_registry is provided, use it; otherwise use mock data
         if self.agent_registry:
             try:
-                return self.agent_registry.get_agent_status(agent_id)
+                result = self.agent_registry.get_agent_status(agent_id)
+                return dict(result)  # Type cast to Dict[str, Any]
             except Exception as e:
                 raise Exception(f"Agent not found: {e}")
 
@@ -149,7 +150,8 @@ class MonitoringService:
         """
         # If agent_registry is provided, use it; otherwise use mock data
         if self.agent_registry:
-            return self.agent_registry.get_portfolio_metrics(agent_id)
+            result = self.agent_registry.get_portfolio_metrics(agent_id)
+            return dict(result)  # Type cast to Dict[str, Any]
 
         # Mock implementation
         return {
@@ -174,7 +176,8 @@ class MonitoringService:
         """
         # If agent_registry is provided, use it; otherwise use mock data
         if self.agent_registry:
-            return self.agent_registry.get_system_health()
+            result = self.agent_registry.get_system_health()
+            return dict(result)  # Type cast to Dict[str, Any]
 
         # Mock implementation
         return {
@@ -191,7 +194,8 @@ class MonitoringService:
         """Get list of all registered agents."""
         # If agent_registry is provided, use it; otherwise use mock data
         if self.agent_registry:
-            return self.agent_registry.get_all_agents()
+            result = self.agent_registry.get_all_agents()
+            return [dict(item) for item in result]  # Type cast to List[Dict[str, Any]]
 
         # Mock implementation
         return [
@@ -416,7 +420,7 @@ class VisualizationService:
 class ConfigurationWizard:
     """Service for agent configuration management."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize configuration wizard."""
         self.templates = {
             "memecoin_vibe_trader": {
@@ -459,7 +463,7 @@ class ConfigurationWizard:
         if agent_type not in self.templates:
             raise ValueError(f"Unknown agent type: {agent_type}")
 
-        return self.templates[agent_type].copy()
+        return dict(self.templates[agent_type].copy())
 
     def validate_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -471,8 +475,8 @@ class ConfigurationWizard:
         Returns:
             ValidationResult with any errors or warnings
         """
-        errors = []
-        warnings = []
+        errors: List[str] = []
+        warnings: List[str] = []
 
         # Required field validation
         required_fields = ["agent_id", "agent_type", "name", "description"]
@@ -556,7 +560,7 @@ class WebDashboardApp:
         self._setup_page_config()
         self._render_main_page()
 
-    def _setup_page_config(self):
+    def _setup_page_config(self) -> None:
         """Setup Streamlit page configuration."""
         st.set_page_config(
             page_title="QuantChain Dashboard",
@@ -565,7 +569,7 @@ class WebDashboardApp:
             initial_sidebar_state="expanded",
         )
 
-    def _render_main_page(self):
+    def _render_main_page(self) -> None:
         """Render the main dashboard page."""
         st.title("📈 QuantChain Dashboard")
         st.markdown("---")
@@ -585,7 +589,7 @@ class WebDashboardApp:
         elif page == "System Health":
             self._render_system_health_page()
 
-    def _render_overview_page(self):
+    def _render_overview_page(self) -> None:
         """Render the overview page."""
         st.header("System Overview")
 
@@ -673,7 +677,7 @@ class WebDashboardApp:
         else:
             st.info("No performance data available.")
 
-    def _render_agent_detail_page(self):
+    def _render_agent_detail_page(self) -> None:
         """Render the agent detail page."""
         st.header("Agent Details")
 
@@ -759,7 +763,7 @@ class WebDashboardApp:
         else:
             st.info("No recent trades.")
 
-    def _render_configuration_page(self):
+    def _render_configuration_page(self) -> None:
         """Render the configuration page."""
         st.header("Agent Configuration")
 
@@ -771,7 +775,7 @@ class WebDashboardApp:
         else:
             self._render_existing_config_editor()
 
-    def _render_new_config_wizard(self):
+    def _render_new_config_wizard(self) -> None:
         """Render the new configuration wizard."""
         st.subheader("Create New Agent Configuration")
 
@@ -847,7 +851,7 @@ class WebDashboardApp:
                     for error in validation_result["errors"]:
                         st.error(f"- {error}")
 
-    def _render_existing_config_editor(self):
+    def _render_existing_config_editor(self) -> None:
         """Render the existing configuration editor."""
         st.subheader("Edit Existing Configuration")
 
@@ -855,7 +859,7 @@ class WebDashboardApp:
             "Configuration loading from files will be implemented in a future version."
         )
 
-    def _render_system_health_page(self):
+    def _render_system_health_page(self) -> None:
         """Render the system health page."""
         st.header("System Health")
 
@@ -913,7 +917,7 @@ def create_dashboard(config: Optional[DashboardConfig] = None) -> WebDashboardAp
     return WebDashboardApp(config)
 
 
-def main():
+def main() -> None:
     """Main entry point for running the dashboard directly."""
     import sys
 
