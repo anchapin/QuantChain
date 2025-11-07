@@ -1,0 +1,153 @@
+# GPU-enabled Docker Compose configuration for QuantChain
+# Requires NVIDIA Docker runtime and nvidia-container-toolkit
+version: '3.8'
+
+services:
+  # Main QuantChain application with GPU support
+  quantchain-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    container_name: quantchain-gpu
+    runtime: nvidia
+    environment:
+      - CUDA_VISIBLE_DEVICES=all
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - PYTHONPATH=/app
+      - PYTHONDONTWRITEBYTECODE=1
+      - OMP_NUM_THREADS=4
+      # Add your API keys here or use .env file
+      # - ALPACA_API_KEY=your_key
+      # - ALPACA_API_SECRET=your_secret
+      # - OPENAI_API_KEY=your_key
+      # - ANTHROPIC_API_KEY=your_key
+      # Model configuration
+      - MODEL_TYPE=local
+      - MODEL_PATH=/app/models
+      - QUANTIZATION=4bit
+      # GPU memory management
+      - GPU_MEMORY_FRACTION=0.9
+      - MAX_BATCH_SIZE=32
+    volumes:
+      - .:/app
+      - ./models:/app/models:ro  # Mount models directory read-only
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ~/.cache:/home/quantchain/.cache  # Cache for huggingface models
+    ports:
+      - "8501:8501"  # Streamlit dashboard
+      - "8000:8000"  # API server (if applicable)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    command: python3 -m streamlit run /app/quantchain/dashboard/app.py --server.port=8501 --server.address=0.0.0.0
+    restart: unless-stopped
+    depends_on:
+      - chromadb
+      - redis
+
+  # Vector database for RAG and caching
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: quantchain-chromadb
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+      - ./chroma-config:/chroma/config
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+    restart: unless-stopped
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    container_name: quantchain-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+
+  # Optional: vLLM server for high-throughput inference
+  vllm-server:
+    image: vllm/vllm-openai:latest
+    container_name: quantchain-vllm
+    runtime: nvidia
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - MODEL_NAME=mistralai/Mistral-7B-Instruct-v0.2
+      - MAX_TOKENS=4096
+      - GPU_MEMORY_UTILIZATION=0.9
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./models:/app/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    command: >
+      bash -c "
+      python3 -m vllm.entrypoints.openai.api_server
+      --model ${MODEL_NAME}
+      --host 0.0.0.0
+      --port 8000
+      --trust-remote-code
+      --gpu-memory-utilization ${GPU_MEMORY_UTILIZATION}
+      --max-num-seqs 32
+      --max-num-batched-tokens 8192
+      "
+    restart: unless-stopped
+    profiles:
+      - vllm  # Optional service, use with: docker compose --profile vllm up
+
+  # Optional: Jupyter notebook for development
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    container_name: quantchain-jupyter
+    runtime: nvidia
+    environment:
+      - CUDA_VISIBLE_DEVICES=all
+      - PYTHONPATH=/app
+      - JUPYTER_ENABLE_LAB=yes
+    volumes:
+      - .:/app
+      - ./notebooks:/app/notebooks
+      - ~/.cache:/home/quantchain/.cache
+    ports:
+      - "8888:8888"
+    command: >
+      bash -c "
+      cd /app && 
+      python3 -m jupyter lab 
+      --ip=0.0.0.0 --port=8888 --no-browser --allow-root 
+      --NotebookApp.token='' --NotebookApp.password=''
+      "
+    restart: unless-stopped
+    profiles:
+      - jupyter  # Optional service, use with: docker compose --profile jupyter up
+
+volumes:
+  chroma_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  default:
+    driver: bridge
