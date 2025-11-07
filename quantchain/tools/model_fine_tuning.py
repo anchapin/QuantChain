@@ -7,7 +7,6 @@ models using QLoRA techniques and post-training quantization workflows.
 
 import logging
 import os
-import signal
 import threading
 import time
 from dataclasses import dataclass, field
@@ -59,15 +58,18 @@ logger = logging.getLogger(__name__)
 
 class TimeoutError(Exception):
     """Exception raised when operation times out."""
+
     pass
 
 
-def timeout_handler(func, args=(), kwargs={}, timeout_duration=30):
+def timeout_handler(
+    func: Any, args: tuple = (), kwargs: dict = {}, timeout_duration: int = 30
+) -> Any:
     """Execute a function with a timeout."""
     result = []
     exception = []
 
-    def target():
+    def target() -> None:
         try:
             result.append(func(*args, **kwargs))
         except Exception as e:
@@ -79,13 +81,14 @@ def timeout_handler(func, args=(), kwargs={}, timeout_duration=30):
     thread.join(timeout_duration)
 
     if thread.is_alive():
-        # In a real scenario, we'd want to terminate the thread, but Python doesn't support that
+        # In a real scenario, we'd want to terminate the thread,
+        # but Python doesn't support that
         # Instead, we'll raise an exception
         raise TimeoutError(f"Operation timed out after {timeout_duration} seconds")
-    
+
     if exception:
         raise exception[0]
-    
+
     return result[0]
 
 
@@ -430,18 +433,18 @@ def fine_tune_model_qlora(
 
         # Load model and tokenizer with timeout
         logger.info(f"Loading model from {config.model_path}")
-        
-        def load_model():
+
+        def load_model() -> Any:
             return AutoModelForCausalLM.from_pretrained(
                 config.model_path,
                 quantization_config=bnb_config,
                 device_map=config.device_map,
                 torch_dtype=config.torch_dtype,
             )
-        
-        def load_tokenizer():
+
+        def load_tokenizer() -> Any:
             return AutoTokenizer.from_pretrained(config.model_path)
-        
+
         try:
             model = timeout_handler(load_model, timeout_duration=30)
             tokenizer = timeout_handler(load_tokenizer, timeout_duration=30)
