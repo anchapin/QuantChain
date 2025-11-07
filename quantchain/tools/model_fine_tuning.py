@@ -11,9 +11,11 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List
 
-import torch
-
 # Optional imports for fine-tuning dependencies
+try:
+    import torch
+except ImportError:
+    torch = None
 # These are imported lazily to allow the module to load without all dependencies
 try:
     from transformers import (
