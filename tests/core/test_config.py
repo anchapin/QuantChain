@@ -162,11 +162,12 @@ class TestQuantChainConfig:
 
     def test_get_api_key_from_config(self) -> None:
         """Test getting API key from environment variables."""
-        config = QuantChainConfig()
+        with patch.dict("os.environ", {}, clear=True):
+            config = QuantChainConfig()
 
-        # Test API key that doesn't exist
-        api_key = config.get_api_key("alpaca")
-        assert api_key is None
+            # Test API key that doesn't exist
+            api_key = config.get_api_key("alpaca")
+            assert api_key is None
 
     @patch.dict(os.environ, {"ALPACA_API_KEY": "env_alpaca_key"})
     def test_get_api_key_from_environment(self) -> None:

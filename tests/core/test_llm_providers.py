@@ -67,8 +67,9 @@ class TestOpenAIProvider:
 
     def test_openai_provider_init_no_key(self) -> None:
         """Test OpenAI provider initialization without API key."""
-        with pytest.raises(ValueError, match="OpenAI API key required"):
-            OpenAIProvider()
+        with patch.dict("os.environ", {}, clear=True):
+            with pytest.raises(ValueError, match="OpenAI API key required"):
+                OpenAIProvider()
 
     @patch("quantchain.core.llm_providers.OpenAI")
     def test_openai_provider_generate(self, mock_openai) -> None:
