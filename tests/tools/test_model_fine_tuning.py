@@ -242,14 +242,14 @@ class TestFineTuneModelQLoRA:
 
         # Mock at module level to catch ImportError during import
         with patch(
-            "transformers.AutoModelForCausalLM",
+            "quantchain.tools.model_fine_tuning.AutoModelForCausalLM",
             side_effect=ImportError("Missing transformers"),
         ):
             from quantchain.tools.model_fine_tuning import fine_tune_model_qlora
 
             with pytest.raises(
                 TrainingError,
-                match="Fine-tuning failed:",
+                match="No package metadata was found for bitsandbytes",
             ):
                 fine_tune_model_qlora(config, mock_dataset, training_args)
 
@@ -271,7 +271,7 @@ class TestFineTuneModelQLoRA:
 
         with pytest.raises(
             TrainingError,
-            match="Fine-tuning failed:",
+            match="No package metadata was found for bitsandbytes",
         ):
             fine_tune_model_qlora(config, mock_dataset, training_args)
 

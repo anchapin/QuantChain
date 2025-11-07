@@ -7,6 +7,8 @@ models using QLoRA techniques and post-training quantization workflows.
 
 import logging
 import os
+import signal
+import threading
 import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List
@@ -53,6 +55,38 @@ except ImportError:
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+class TimeoutError(Exception):
+    """Exception raised when operation times out."""
+    pass
+
+
+def timeout_handler(func, args=(), kwargs={}, timeout_duration=30):
+    """Execute a function with a timeout."""
+    result = []
+    exception = []
+
+    def target():
+        try:
+            result.append(func(*args, **kwargs))
+        except Exception as e:
+            exception.append(e)
+
+    thread = threading.Thread(target=target)
+    thread.daemon = True
+    thread.start()
+    thread.join(timeout_duration)
+
+    if thread.is_alive():
+        # In a real scenario, we'd want to terminate the thread, but Python doesn't support that
+        # Instead, we'll raise an exception
+        raise TimeoutError(f"Operation timed out after {timeout_duration} seconds")
+    
+    if exception:
+        raise exception[0]
+    
+    return result[0]
 
 
 class FineTuningError(Exception):
@@ -394,16 +428,27 @@ def fine_tune_model_qlora(
             bnb_4bit_quant_type="nf4",
         )
 
-        # Load model and tokenizer
+        # Load model and tokenizer with timeout
         logger.info(f"Loading model from {config.model_path}")
-        model = AutoModelForCausalLM.from_pretrained(
-            config.model_path,
-            quantization_config=bnb_config,
-            device_map=config.device_map,
-            torch_dtype=config.torch_dtype,
-        )
-
-        tokenizer = AutoTokenizer.from_pretrained(config.model_path)
+        
+        def load_model():
+            return AutoModelForCausalLM.from_pretrained(
+                config.model_path,
+                quantization_config=bnb_config,
+                device_map=config.device_map,
+                torch_dtype=config.torch_dtype,
+            )
+        
+        def load_tokenizer():
+            return AutoTokenizer.from_pretrained(config.model_path)
+        
+        try:
+            model = timeout_handler(load_model, timeout_duration=30)
+            tokenizer = timeout_handler(load_tokenizer, timeout_duration=30)
+        except TimeoutError as e:
+            raise TrainingError(f"Model loading timed out: {e}")
+        except Exception as e:
+            raise TrainingError(f"Failed to load model/tokenizer: {e}")
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
 
