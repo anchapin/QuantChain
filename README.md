@@ -105,7 +105,7 @@ export QUANTCHAIN_TUTORIAL_ENABLED="true"
 export QUANTCHAIN_TUTORIAL_FEEDBACK_LEVEL="detailed"
 ```
 
-### Training Mode Configuration
+### Tutorial Mode Configuration
 
 Enable tutorial mode in your `config.yaml`:
 
@@ -313,7 +313,7 @@ metrics = executor.get_performance_metrics()
 print(f"Total Return: {metrics.total_return:.2f}%")
 ```
 
-### Training Mode
+### Tutorial Mode
 - **Learning-Focused Simulation**: Educational feedback and mistake tracking for skill development
 - **Market Driver Analysis**: Explains underlying market factors and decision context
 - **Mistake Tracking**: Identifies, categorizes, and analyzes trading mistakes with learning recommendations
@@ -362,7 +362,7 @@ print(f"Mistakes: {len(report['final_feedback'].mistakes)}")
 print(f"Ready for live trading: {report['ready_for_live']}")
 ```
 
-#### Training Mode vs. Paper Trading vs. Live Trading
+#### Tutorial Mode vs. Paper Trading vs. Live Trading
 
 | Feature | Tutorial Mode | Paper Trading | Live Trading |
 |----------|----------------|----------------|--------------|

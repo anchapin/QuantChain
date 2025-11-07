@@ -1,8 +1,8 @@
-# Training Mode Specification
+# Tutorial Mode Specification
 
 ## Overview
 
-The Training Mode is a learning-focused trading simulation system that provides enhanced feedback and educational features to help users understand market dynamics and improve their trading skills. It differs from paper trading in its educational focus - while paper trading simulates realistic market conditions for strategy validation, training mode focuses on learning, feedback loops, and confidence building.
+The Tutorial Mode is a learning-focused trading simulation system that provides enhanced feedback and educational features to help users understand market dynamics and improve their trading skills. It differs from paper trading in its educational focus - while paper trading simulates realistic market conditions for strategy validation, tutorial mode focuses on learning, feedback loops, and confidence building.
 
 ### Key Differentiators
 
@@ -10,17 +10,17 @@ The Training Mode is a learning-focused trading simulation system that provides 
 - **Mistake Tracking**: Identifies, categorizes, and analyzes trading mistakes with learning recommendations
 - **Market Driver Analysis**: Explains the underlying factors influencing market movements
 - **Confidence Metrics**: Tracks user confidence and readiness for live trading
-- **Session-Based Learning**: Manages training sessions with clear objectives and progress tracking
+- **Session-Based Learning**: Manages tutorial sessions with clear objectives and progress tracking
 
 ## Core Classes
 
-### TrainingExecutor
+### TutorialExecutor
 
-The main executor for training mode that extends the paper trading functionality with learning-focused features.
+The main executor for tutorial mode that extends the paper trading functionality with learning-focused features.
 
 ```python
-class TrainingExecutor(TradingExecutionInterface):
-    """Training executor for learning-focused trading simulation."""
+class TutorialExecutor(TradingExecutionInterface):
+    """Tutorial executor for learning-focused trading simulation."""
     
     def __init__(
         self,
@@ -31,21 +31,21 @@ class TrainingExecutor(TradingExecutionInterface):
 ```
 
 **Key Methods**:
-- `start_training_session(symbols, objectives, duration_seconds)`: Initialize new training session
+- `start_tutorial_session(symbols, objectives, duration_seconds)`: Initialize new tutorial session
 - `place_order(order)`: Execute order with enhanced feedback and learning analysis
 - `analyze_decision(order, result)`: Provide detailed analysis of trade decision
-- `get_training_feedback()`: Get comprehensive feedback on current session
-- `end_training_session()`: Finalize session with summary and recommendations
-- `export_training_report()`: Generate detailed training report
+- `get_tutorial_feedback()`: Get comprehensive feedback on current session
+- `end_tutorial_session()`: Finalize session with summary and recommendations
+- `export_tutorial_report()`: Generate detailed tutorial report
 
-### TrainingSession
+### TutorialSession
 
-Manages a single training session with metadata and progress tracking.
+Manages a single tutorial session with metadata and progress tracking.
 
 ```python
 @dataclass
-class TrainingSession:
-    """Manages a single training session."""
+class TutorialSession:
+    """Manages a single tutorial session."""
     
     session_id: str
     start_time: datetime
@@ -119,7 +119,7 @@ Tracks confidence building metrics and readiness assessment for live trading.
 
 ```python
 class ConfidenceMetrics:
-    """Tracks confidence building metrics for training."""
+    """Tracks confidence building metrics for tutorial."""
     
     def record_decision(self, decision_quality: float, risk_assessment: str, 
                        consistency_score: float = None) -> None:
@@ -139,8 +139,8 @@ class ConfidenceMetrics:
 
 ### 1. Session Initialization
 ```python
-# Start a new training session
-session = training_executor.start_training_session(
+# Start a new tutorial session
+session = tutorial_executor.start_tutorial_session(
     symbols=["AAPL", "MSFT"],
     objectives=["Understand market drivers", "Practice risk management"],
     duration_seconds=3600  # 1 hour
@@ -156,10 +156,10 @@ order = OrderRequest(
     order_type=OrderType.MARKET,
     quantity=100
 )
-result = training_executor.place_order(order)
+result = tutorial_executor.place_order(order)
 
 # Get detailed analysis
-analysis = training_executor.get_decision_history()[-1]
+analysis = tutorial_executor.get_decision_history()[-1]
 print(f"Decision quality: {analysis.decision_quality}")
 print(f"Market drivers: {analysis.market_drivers}")
 print(f"Educational context: {analysis.educational_context}")
@@ -168,20 +168,20 @@ print(f"Educational context: {analysis.educational_context}")
 ### 3. Tracking Progress
 ```python
 # Get comprehensive feedback
-feedback = training_executor.get_training_feedback()
+feedback = tutorial_executor.get_tutorial_feedback()
 print(f"Confidence score: {feedback.confidence_score}")
 print(f"Mistakes: {len(feedback.mistakes)}")
 print(f"Recommendations: {feedback.recommendations}")
 
 # Check readiness for live trading
-ready = training_executor.is_ready_for_live_trading()
+ready = tutorial_executor.is_ready_for_live_trading()
 print(f"Ready for live trading: {ready}")
 ```
 
 ### 4. Session Completion
 ```python
 # End session with comprehensive report
-report = training_executor.end_training_session()
+report = tutorial_executor.end_tutorial_session()
 print(f"Final confidence: {report['final_feedback'].confidence_score}")
 print(f"Learning objectives progress: {report['learning_progress']}")
 ```
@@ -295,10 +295,10 @@ Users are considered ready for live trading when:
 
 ## Configuration
 
-### Training Mode Settings
+### Tutorial Mode Settings
 
 ```yaml
-training:
+tutorial:
   enabled: false
   session_duration: 3600  # 1 hour
   learning_objectives:
@@ -314,7 +314,7 @@ training:
 
 ### Configuration Parameters
 
-- **enabled**: Enable/disable training mode
+- **enabled**: Enable/disable tutorial mode
 - **session_duration**: Default session length in seconds
 - **learning_objectives**: Default learning objectives for sessions
 - **feedback_level**: Verbosity of feedback (basic, detailed, comprehensive)
@@ -325,8 +325,8 @@ training:
 
 ### Environment Variables
 
-- `QUANTCHAIN_TRAINING_ENABLED`: Enable/disable training mode
-- `QUANTCHAIN_TRAINING_FEEDBACK_LEVEL`: Set feedback verbosity
+- `QUANTCHAIN_TUTORIAL_ENABLED`: Enable/disable tutorial mode
+- `QUANTCHAIN_TUTORIAL_FEEDBACK_LEVEL`: Set feedback verbosity
 
 ## Integration
 
@@ -339,21 +339,21 @@ Training mode wraps the paper trading executor, extending its functionality:
 
 ### With RAG System
 
-When RAG is enabled, training mode:
+When RAG is enabled, tutorial mode:
 - Retrieves historical market data for context
 - Identifies similar market conditions
 - Provides educational background from past scenarios
 
 ### With Reflection Engine
 
-Training mode integrates with reflection system to:
+Tutorial mode integrates with reflection system to:
 - Record actions for performance analysis
 - Generate insights from trading patterns
 - Create improvement recommendations
 
 ### With Agent Engine
 
-Training mode can be used with agent trading:
+Tutorial mode can be used with agent trading:
 - Agents receive enhanced feedback on decisions
 - Learning objectives guide agent behavior
 - Confidence metrics track agent performance
@@ -363,12 +363,12 @@ Training mode can be used with agent trading:
 ### Basic Training Session
 
 ```python
-from quantchain.tools import TrainingExecutor
+from quantchain.tools import TutorialExecutor
 from quantchain.core.config import get_config
 
-# Create training executor
+# Create tutorial executor
 config = get_config("config.yaml")
-training_executor = TrainingExecutor(
+tutorial_executor = TutorialExecutor(
     initial_cash=100000.0,
     config=config,
     learning_objectives=[
@@ -377,8 +377,8 @@ training_executor = TrainingExecutor(
     ]
 )
 
-# Start training session
-session = training_executor.start_training_session(
+# Start tutorial session
+session = tutorial_executor.start_tutorial_session(
     symbols=["AAPL", "MSFT"],
     duration=3600
 )
@@ -390,15 +390,15 @@ order = OrderRequest(
     order_type=OrderType.MARKET,
     quantity=10
 )
-result = training_executor.place_order(order)
+result = tutorial_executor.place_order(order)
 
-# Get training feedback
-feedback = training_executor.get_training_feedback()
+# Get tutorial feedback
+feedback = tutorial_executor.get_tutorial_feedback()
 print(f"Decision quality: {feedback.decision_quality}")
 print(f"Market drivers: {feedback.market_drivers}")
 
 # End session and get report
-report = training_executor.end_training_session()
+report = tutorial_executor.end_tutorial_session()
 print(f"Confidence score: {report['final_feedback'].confidence_score}")
 print(f"Ready for live trading: {report['ready_for_live']}")
 ```
@@ -407,30 +407,30 @@ print(f"Ready for live trading: {report['ready_for_live']}")
 
 ```python
 from quantchain.agents import MemecoinVibeTrader
-from quantchain.tools import TrainingExecutor
+from quantchain.tools import TutorialExecutor
 
-# Create training executor
-training_executor = TrainingExecutor(
+# Create tutorial executor
+tutorial_executor = TutorialExecutor(
     initial_cash=100000.0,
     feedback_level="comprehensive"
 )
 
-# Create agent with training mode
+# Create agent with tutorial mode
 agent = MemecoinVibeTrader(
     data_provider=mock_data_provider,
-    execution_tool=training_executor,
-    training_mode=True  # Enable training feedback
+    execution_tool=tutorial_executor,
+    tutorial_mode=True  # Enable tutorial feedback
 )
 
-# Start training session
-training_executor.start_training_session(
+# Start tutorial session
+tutorial_executor.start_tutorial_session(
     symbols=["BTC", "ETH"],
     objectives=["Understand crypto market dynamics"]
 )
 
-# Run agent cycle with training feedback
+# Run agent cycle with tutorial feedback
 results = agent.run_cycle()
-print(f"Training feedback: {results['training_feedback']}")
+print(f"Tutorial feedback: {results['tutorial_feedback']}")
 ```
 
 ## Best Practices

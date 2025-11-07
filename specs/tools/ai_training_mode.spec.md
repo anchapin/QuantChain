@@ -132,7 +132,7 @@ class ModelOptimizer:
 # Create AI agent
 agent = QuantChainAgent(model_name="llama2", config=config)
 
-# Create training mode
+# Create AI training mode
 training_mode = AgentTrainingMode(
     agent=agent,
     initial_cash=100000.0,
@@ -339,7 +339,7 @@ print(f"Improved agent saved: {improved_agent.filename}")
 
 ## Configuration
 
-### Training Mode Settings
+### AI Training Mode Settings
 ```yaml
 ai_training:
   enabled: true
@@ -469,7 +469,7 @@ from quantchain.tools import AgentTrainingMode
 from quantchain.agents import QuantChainAgent
 from quantchain.core.config import get_config
 
-# Create agent and training mode
+# Create agent and AI training mode
 config = get_config("config.yaml")
 agent = QuantChainAgent(config=config)
 

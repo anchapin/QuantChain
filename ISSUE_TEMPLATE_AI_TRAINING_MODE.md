@@ -1,6 +1,6 @@
 ---
 title: "[FEATURE] AI Model Training Mode - Risk-free Agent Performance Testing"
-description: "Implement training mode for AI agents to improve performance without real money risk"
+description: "Implement AI training mode for AI agents to improve performance without real money risk"
 labels: ["enhancement", "feature-request", "agent-improvement"]
 assignees: []
 ---
@@ -127,7 +127,7 @@ class AgentTrainingMode:
 
 ## Configuration Requirements
 
-### Training Mode Settings
+### AI Training Mode Settings
 ```yaml
 ai_training:
   enabled: true
@@ -194,7 +194,7 @@ ai_training:
 
 ## Next Steps
 
-1. **Design Architecture**: Detailed system design for training mode
+1. **Design Architecture**: Detailed system design for AI training mode
 2. **Create Specification**: Comprehensive technical specification
 3. **Implement Core**: Basic training functionality
 4. **Add Advanced**: ML/AI training algorithms
