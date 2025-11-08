@@ -496,40 +496,45 @@ class VulnerabilityScanner:
         for i, line in enumerate(lines):
             # Normalize the line
             line_clean = line.strip()
-            
+
             for func in critical_functions:
                 # Look for function declaration
                 if f"function {func}(" in line_clean:
                     # Check if function is public (either explicitly or by default)
-                    is_public = (
-                        "public" in line_clean or 
-                        ("private" not in line_clean and 
-                         "internal" not in line_clean and 
-                         "external" not in line_clean)
+                    is_public = "public" in line_clean or (
+                        "private" not in line_clean
+                        and "internal" not in line_clean
+                        and "external" not in line_clean
                     )
-                    
+
                     if is_public:
                         # Check if there's a modifier on the same or next line
                         has_modifier = False
                         # Check current line
-                        if ("onlyOwner" in line_clean or 
-                            "require(" in line_clean or 
-                            "isOwner" in line_clean or
-                            "msg.sender == owner" in line_clean):
+                        if (
+                            "onlyOwner" in line_clean
+                            or "require(" in line_clean
+                            or "isOwner" in line_clean
+                            or "msg.sender == owner" in line_clean
+                        ):
                             has_modifier = True
                         else:
                             # Check next few lines
                             for j in range(i + 1, min(i + 5, len(lines))):
                                 next_line = lines[j].strip()
-                                if ("onlyOwner" in next_line or 
-                                    "require(" in next_line or
-                                    "isOwner" in next_line or
-                                    "msg.sender == owner" in next_line):
+                                if (
+                                    "onlyOwner" in next_line
+                                    or "require(" in next_line
+                                    or "isOwner" in next_line
+                                    or "msg.sender == owner" in next_line
+                                ):
                                     has_modifier = True
                                     break
                                 # Stop if we hit another function or closing brace
-                                if (next_line.startswith("}") or 
-                                    "function " in next_line):
+                                if (
+                                    next_line.startswith("}")
+                                    or "function " in next_line
+                                ):
                                     break
 
                         if not has_modifier:
@@ -544,7 +549,8 @@ class VulnerabilityScanner:
                                     location=f"Line {i + 1}",
                                     code_snippet=line,
                                     recommendation=(
-                                        f"Add access control modifier to {func} function"
+                                        f"Add access control modifier to {func} "
+                                        f"function"
                                     ),
                                     cwe_id="CWE-284",
                                     cvss_score=7.5,
