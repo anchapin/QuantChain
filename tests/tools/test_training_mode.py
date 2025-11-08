@@ -24,10 +24,10 @@ from quantchain.core.config import QuantChainConfig
 
 
 class TestTutorialSession:
-    """Test training session management."""
+    """Test tutorial session management."""
 
     def test_session_initialization(self):
-        """Test training session initialization."""
+        """Test tutorial session initialization."""
         session_id = str(uuid.uuid4())
         start_time = datetime.now(timezone.utc)
         symbols = ["AAPL", "MSFT"]
@@ -507,7 +507,7 @@ class TestConfidenceMetrics:
 
 
 class TestTutorialExecutor:
-    """Test training executor functionality."""
+    """Test tutorial executor functionality."""
 
     @pytest.fixture
     def mock_config(self):
@@ -517,8 +517,8 @@ class TestTutorialExecutor:
         return config
 
     @pytest.fixture
-    def training_executor(self, mock_config):
-        """Create training executor for testing."""
+    def tutorial_executor(self, mock_config):
+        """Create tutorial executor for testing."""
         return TutorialExecutor(
             initial_cash=100000.0,
             config=mock_config,
@@ -527,26 +527,26 @@ class TestTutorialExecutor:
             analyze_market_drivers=True,
         )
 
-    def test_executor_initialization(self, training_executor):
-        """Test training executor initialization."""
-        assert training_executor.paper_executor is not None
-        assert training_executor.reflection_engine is not None
-        assert training_executor.market_driver_analysis is not None
-        assert training_executor.mistake_tracker is not None
-        assert training_executor.confidence_metrics is not None
-        assert training_executor.learning_objectives == [
+    def test_executor_initialization(self, tutorial_executor):
+        """Test tutorial executor initialization."""
+        assert tutorial_executor.paper_executor is not None
+        assert tutorial_executor.reflection_engine is not None
+        assert tutorial_executor.market_driver_analysis is not None
+        assert tutorial_executor.mistake_tracker is not None
+        assert tutorial_executor.confidence_metrics is not None
+        assert tutorial_executor.learning_objectives == [
             "Learn market drivers",
             "Practice risk management",
         ]
-        assert training_executor.track_mistakes is True
-        assert training_executor.analyze_market_drivers is True
+        assert tutorial_executor.track_mistakes is True
+        assert tutorial_executor.analyze_market_drivers is True
 
-    def test_start_training_session(self, training_executor):
-        """Test starting a training session."""
+    def test_start_tutorial_session(self, tutorial_executor):
+        """Test starting a tutorial session."""
         symbols = ["AAPL", "MSFT"]
         objectives = ["Understand technical analysis"]
 
-        session = training_executor.start_tutorial_session(
+        session = tutorial_executor.start_tutorial_session(
             symbols=symbols, objectives=objectives, duration_seconds=1800
         )
 
@@ -557,22 +557,22 @@ class TestTutorialExecutor:
         assert session.is_active is True
 
         # Check executor state
-        assert training_executor.current_session == session
+        assert tutorial_executor.current_session == session
 
-    def test_end_training_session(self, training_executor):
-        """Test ending a training session."""
+    def test_end_tutorial_session(self, tutorial_executor):
+        """Test ending a tutorial session."""
         # Start session first
-        training_executor.start_tutorial_session(["AAPL"])
+        tutorial_executor.start_tutorial_session(["AAPL"])
 
         # Place an order to create some data
         order = OrderRequest(
             symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
         )
-        training_executor.set_market_price("AAPL", 150.0)
-        training_executor.place_order(order)
+        tutorial_executor.set_market_price("AAPL", 150.0)
+        tutorial_executor.place_order(order)
 
         # End session
-        report = training_executor.end_tutorial_session()
+        report = tutorial_executor.end_tutorial_session()
 
         assert "session" in report
         assert "final_feedback" in report
@@ -581,34 +581,34 @@ class TestTutorialExecutor:
         assert "ready_for_live" in report
 
         # Session should be ended
-        assert training_executor.current_session.end_time is not None
+        assert tutorial_executor.current_session.end_time is not None
 
-    def test_order_placement_with_analysis(self, training_executor):
+    def test_order_placement_with_analysis(self, tutorial_executor):
         """Test order placement with decision analysis."""
         # Start session
-        training_executor.start_tutorial_session(["AAPL"])
+        tutorial_executor.start_tutorial_session(["AAPL"])
 
         order = OrderRequest(
             symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
         )
 
-        training_executor.set_market_price("AAPL", 150.0)
-        result = training_executor.place_order(order)
+        tutorial_executor.set_market_price("AAPL", 150.0)
+        result = tutorial_executor.place_order(order)
 
         # Order should be filled
         assert result.status == OrderStatus.FILLED
 
         # Should have decision analysis
-        assert len(training_executor.decision_history) == 1
-        analysis = training_executor.decision_history[0]
+        assert len(tutorial_executor.decision_history) == 1
+        analysis = tutorial_executor.decision_history[0]
         assert analysis.order.order_id == result.order_id
         assert 0.0 <= analysis.decision_quality <= 1.0
         assert analysis.market_drivers is not None
 
-    def test_training_feedback_generation(self, training_executor):
-        """Test training feedback generation."""
+    def test_tutorial_feedback_generation(self, tutorial_executor):
+        """Test tutorial feedback generation."""
         # Start session and make trades
-        training_executor.start_tutorial_session(["AAPL"])
+        tutorial_executor.start_tutorial_session(["AAPL"])
 
         for i in range(3):
             order = OrderRequest(
@@ -617,11 +617,11 @@ class TestTutorialExecutor:
                 order_type=OrderType.MARKET,
                 quantity=100,
             )
-            training_executor.set_market_price("AAPL", 150.0 + i)
-            training_executor.place_order(order)
+            tutorial_executor.set_market_price("AAPL", 150.0 + i)
+            tutorial_executor.place_order(order)
 
         # Get feedback
-        feedback = training_executor.get_tutorial_feedback()
+        feedback = tutorial_executor.get_tutorial_feedback()
 
         assert isinstance(feedback, TutorialFeedback)
         assert len(feedback.decision_analyses) > 0
@@ -630,13 +630,13 @@ class TestTutorialExecutor:
         assert 0.0 <= feedback.risk_management_score <= 1.0
         assert "learning_progress" in feedback.to_dict()
 
-    def test_confidence_score_tracking(self, training_executor):
+    def test_confidence_score_tracking(self, tutorial_executor):
         """Test confidence score tracking."""
-        confidence = training_executor.get_confidence_score()
+        confidence = tutorial_executor.get_confidence_score()
         assert 0.0 <= confidence <= 1.0
 
         # Make some trades to build confidence
-        training_executor.start_tutorial_session(["AAPL"])
+        tutorial_executor.start_tutorial_session(["AAPL"])
 
         for i in range(10):
             order = OrderRequest(
@@ -645,62 +645,62 @@ class TestTutorialExecutor:
                 order_type=OrderType.MARKET,
                 quantity=100,
             )
-            training_executor.set_market_price("AAPL", 150.0 + i)
-            training_executor.place_order(order)
+            tutorial_executor.set_market_price("AAPL", 150.0 + i)
+            tutorial_executor.place_order(order)
 
         # Confidence should change
-        new_confidence = training_executor.get_confidence_score()
+        new_confidence = tutorial_executor.get_confidence_score()
         assert isinstance(new_confidence, float)
         assert 0.0 <= new_confidence <= 1.0
 
-    def test_market_price_setting(self, training_executor):
+    def test_market_price_setting(self, tutorial_executor):
         """Test market price setting functionality."""
-        training_executor.set_market_price("AAPL", 150.0)
+        tutorial_executor.set_market_price("AAPL", 150.0)
 
         # Place order should use set price
         order = OrderRequest(
             symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
         )
 
-        result = training_executor.place_order(order)
+        result = tutorial_executor.place_order(order)
         assert result.avg_fill_price == 150.0
 
-    def test_delegate_methods(self, training_executor):
+    def test_delegate_methods(self, tutorial_executor):
         """Test that methods are properly delegated to paper executor."""
         # Account info
-        account = training_executor.get_account()
+        account = tutorial_executor.get_account()
         assert account.account_id == "PAPER_TRADING"
         assert account.cash == 100000.0
 
         # Market status
-        assert training_executor.is_market_open() is True
+        assert tutorial_executor.is_market_open() is True
 
         # Performance metrics
-        metrics = training_executor.get_performance_metrics()
+        metrics = tutorial_executor.get_performance_metrics()
         assert metrics is not None
 
-    def test_reset_functionality(self, training_executor):
+    def test_reset_functionality(self, tutorial_executor):
         """Test reset functionality."""
         # Start session and make trades
-        training_executor.start_tutorial_session(["AAPL"])
-        training_executor.set_market_price("AAPL", 150.0)
+        tutorial_executor.start_tutorial_session(["AAPL"])
+        tutorial_executor.set_market_price("AAPL", 150.0)
 
         order = OrderRequest(
             symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
         )
-        training_executor.place_order(order)
+        tutorial_executor.place_order(order)
 
         # Verify state exists
-        assert training_executor.current_session is not None
-        assert len(training_executor.decision_history) > 0
+        assert tutorial_executor.current_session is not None
+        assert len(tutorial_executor.decision_history) > 0
 
         # Reset
-        training_executor.reset()
+        tutorial_executor.reset()
 
         # Verify reset
-        assert training_executor.current_session is None
-        assert len(training_executor.decision_history) == 0
-        assert training_executor.get_account().cash == 100000.0
+        assert tutorial_executor.current_session is None
+        assert len(tutorial_executor.decision_history) == 0
+        assert tutorial_executor.get_account().cash == 100000.0
 
 
 class TestTutorialExecutorIntegration:
@@ -773,10 +773,10 @@ class TestTutorialExecutorIntegration:
 
 @pytest.mark.unit
 class TestTutorialExecutorFactoryIntegration:
-    """Test training executor integration with factory."""
+    """Test tutorial executor integration with factory."""
 
-    def test_training_executor_with_rag(self):
-        """Test training executor with RAG system enabled."""
+    def test_tutorial_executor_with_rag(self):
+        """Test tutorial executor with RAG system enabled."""
         mock_config = Mock(spec=QuantChainConfig)
         mock_config.get.side_effect = lambda key, default=None: {
             "rag.enabled": True,
@@ -793,8 +793,8 @@ class TestTutorialExecutorFactoryIntegration:
         if executor.rag_system is not None:
             assert executor.market_driver_analysis.rag_system is executor.rag_system
 
-    def test_training_executor_without_rag(self):
-        """Test training executor without RAG system."""
+    def test_tutorial_executor_without_rag(self):
+        """Test tutorial executor without RAG system."""
         mock_config = Mock(spec=QuantChainConfig)
         mock_config.get.side_effect = lambda key, default=None: {
             "rag.enabled": False
