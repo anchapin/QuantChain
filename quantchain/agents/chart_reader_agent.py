@@ -382,7 +382,9 @@ class PatternRecognizer:
                 analysis_text = response.text
             else:
                 logger.warning("Vision model not available, using text-based analysis")
-                analysis_text = "Vision analysis not available - please enable multimodal model"
+                analysis_text = (
+                    "Vision analysis not available - please enable multimodal model"
+                )
         except Exception as e:
             logger.error(f"Vision model call failed: {e}")
             # Fallback to text-only analysis
