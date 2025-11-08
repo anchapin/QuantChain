@@ -36,6 +36,47 @@ tutorial:
   confidence_threshold: 0.75
   max_mistakes_per_session: 10
 
+ai_training:
+  # AI Model Training Mode for agent performance improvement
+  # Uses simulated trades to train AI agents without risking real money
+  enabled: false
+  session_duration: 3600  # 1 hour
+  max_iterations: 1000  # Maximum training iterations per session
+  learning_rate: 0.001  # Learning rate for parameter optimization
+  optimization_strategy: bayesian  # bayesian, grid_search, gradient
+  track_performance: true  # Track performance metrics during training
+  optimize_parameters: true  # Enable automatic parameter optimization
+  learning_objectives:
+    - "Learn market drivers"
+    - "Improve decision quality"
+    - "Optimize risk management"
+    - "Maximize risk-adjusted returns"
+    - "Maintain consistency"
+  performance_targets:
+    min_win_rate: 0.55
+    min_sharpe_ratio: 1.0
+    max_max_drawdown: 0.2
+    min_profit_factor: 1.5
+    consistency_threshold: 0.7
+  agent_parameters:
+    model_type: "transformer"  # transformer, lstm, cnn, mlp
+    hidden_size: 256
+    num_layers: 6
+    num_heads: 8
+    dropout: 0.1
+    activation: "relu"
+  exploration:
+    strategy: "epsilon_greedy"  # epsilon_greedy, ucb, boltzmann
+    epsilon_start: 1.0
+    epsilon_end: 0.01
+    epsilon_decay: 0.995
+  memory:
+    type: "replay_buffer"
+    capacity: 100000
+    prioritized: true
+    alpha: 0.6
+    beta: 0.4
+
 backtesting:
   default_engine: backtesting.py
   initial_balance: 10000
