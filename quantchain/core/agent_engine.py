@@ -19,7 +19,6 @@ except ImportError:
 from .config import QuantChainConfig
 from .llm_providers import LLMProvider, create_llm_provider
 from .reflection import ReflectionEngine, AgentAction, ReflectionReport
-from .rag_system import MarketDataRAG
 
 
 @dataclass
@@ -58,7 +57,7 @@ class QuantChainAgent:
             raise ImportError("langgraph package not installed")
 
         self.config = config
-        self.rag_system: Optional[MarketDataRAG]
+        self.rag_system = None  # type: ignore[assignment]
         self.tools = tools or []
 
         # Initialize LLM provider
