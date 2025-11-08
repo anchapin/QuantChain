@@ -3,6 +3,7 @@ version: '3.8'
 services:
   quantchain:
     build: .
+    image: anchapin/quantchain:latest
     container_name: quantchain
     volumes:
       - .:/app

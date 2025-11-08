@@ -6,3 +6,9 @@ id = "generic-api-key"
 description = "Ignore test API keys in test files"
 path = "tests/"
 regex = "sk-test.*|A{21}|wJalrXUtnFEMIK.*|DUMMY_ALPACA_KEY.*|DUMMY_SECRET.*"
+
+[[rules]]
+id = "test-ethereum-addresses"
+description = "Ignore test Ethereum addresses in test files"
+path = "tests/"
+regex = "0x1234567890123456789012345678901234567890|0x[0]{40}"
