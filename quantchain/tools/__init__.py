@@ -28,6 +28,16 @@ from .paper_trading import (
     PerformanceMetrics,
 )
 
+from .tutorial_mode import (
+    TutorialExecutor,
+    TutorialSession,
+    MarketDriverAnalysis,
+    MistakeTracker,
+    ConfidenceMetrics,
+    TradingMistake,
+    DecisionAnalysis,
+    TutorialFeedback,
+)
 from .execution_factory import create_execution_interface
 
 __all__ = [
@@ -53,5 +63,13 @@ __all__ = [
     "FillModel",
     "ImmediateFill",
     "PerformanceMetrics",
+    "TutorialExecutor",
+    "TutorialSession",
+    "MarketDriverAnalysis",
+    "MistakeTracker",
+    "ConfidenceMetrics",
+    "TradingMistake",
+    "DecisionAnalysis",
+    "TutorialFeedback",
     "create_execution_interface",
 ]

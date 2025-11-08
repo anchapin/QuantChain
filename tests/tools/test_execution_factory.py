@@ -94,7 +94,13 @@ class TestExecutionFactory:
 
     def test_unsupported_broker(self, mock_config):
         """Test error for unsupported broker."""
-        mock_config.get.return_value = "unsupported_broker"
+
+        def mock_get(key, default=None):
+            if key == "trading.default_broker":
+                return "unsupported_broker"
+            return default
+
+        mock_config.get.side_effect = mock_get
 
         from quantchain.tools.execution_factory import create_execution_interface
 
