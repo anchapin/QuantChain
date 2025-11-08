@@ -207,18 +207,17 @@ class TestAgentExecutionWorkflow:
 
     def test_dexscreener_data_retrieval(self):
         """Test retrieving data from DexScreener."""
-        # Mock the connector entirely to avoid API calls
-        with patch(
-            "quantchain.connectors.dexscreener_connector.DexscreenerDataConnector"
-        ) as mock_class:
-            mock_connector = Mock()
-            mock_class.return_value = mock_connector
-
+        # Mock the HTTP request to avoid API calls
+        with patch("requests.get") as mock_get:
             # Mock successful response
-            mock_result = [
-                {"symbol": "TOK1/WETH", "price_usd": 1.5, "volume_24h": 150000}
-            ]
-            mock_connector.get_new_token_pairs.return_value = mock_result
+            mock_response = Mock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "pairs": [
+                    {"symbol": "TOK1/WETH", "price_usd": 1.5, "volume_24h": 150000}
+                ]
+            }
+            mock_get.return_value = mock_response
 
             # Execute data retrieval
             connector = DexscreenerDataConnector()
@@ -237,8 +236,8 @@ class TestAgentExecutionWorkflow:
         executor = AlpacaExecutionTool(connector=mock_connector)
 
         # Mock Alpaca API
-        with patch.object(executor.connector, "submit_order") as mock_submit:
-            mock_submit.return_value = {
+        with patch.object(executor.connector, "place_order") as mock_place_order:
+            mock_place_order.return_value = {
                 "id": "order_12345",
                 "status": "accepted",
                 "symbol": "TOK1/USD",
@@ -253,7 +252,7 @@ class TestAgentExecutionWorkflow:
 
             # Verify result
             assert isinstance(result, object)  # OrderResult object
-            mock_submit.assert_called_once()
+            mock_place_order.assert_called_once()
 
 
 class TestIntegratedWorkflow:
@@ -307,11 +306,16 @@ class TestIntegratedWorkflow:
                 config=BacktestConfig(),
             )
 
+            # Test data retrieval
+            connector = DexscreenerDataConnector()
+            token_data = connector.get_new_token_pairs("1h")
+
             # Run mock strategy
             result = mock_strategy(sample_ohlcv_data, BacktestConfig())
 
             # Verify backtest was executed
             assert result.summary_stats["total_return"] == 0.01
+            assert len(token_data) == 1
 
             # Simulate trading decision based on backtest results
             if result.summary_stats["total_return"] > 0:

@@ -395,7 +395,7 @@ class TestIntegratedWorkflow:
                 backtester = mock_backtester(sample_strategy_config)
 
                 # Run backtest
-                result = backtester.run(sample_ohlcv_data, BacktestConfig())
+                backtester.run(sample_ohlcv_data, BacktestConfig())
 
                 # Get token data from connector
                 token_data = mock_connector_instance.get_new_token_pairs()
