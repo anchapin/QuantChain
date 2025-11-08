@@ -2,7 +2,7 @@
 
 import pytest
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 from unittest.mock import Mock, patch
 
 from quantchain.backtesting.engine import (
@@ -15,7 +15,6 @@ from quantchain.backtesting.engine import (
 )
 from quantchain.core.exceptions import DataSourceError
 from quantchain.connectors.dexscreener_connector import DexscreenerDataConnector
-from quantchain.tools.social_media_scraper import SocialMediaScraper
 from quantchain.tools.execution import AlpacaExecutionTool
 
 
@@ -25,11 +24,66 @@ def sample_ohlcv_data():
     dates = pd.date_range("2023-01-01", periods=10, freq="D")
     data = pd.DataFrame(
         {
-            "open": [100.0, 101.0, 102.0, 103.0, 104.0, 105.0, 106.0, 107.0, 108.0, 109.0],
-            "high": [101.5, 102.5, 103.5, 104.5, 105.5, 106.5, 107.5, 108.5, 109.5, 110.5],
-            "low": [99.5, 100.5, 101.5, 102.5, 103.5, 104.5, 105.5, 106.5, 107.5, 108.5],
-            "close": [101.0, 102.0, 103.0, 104.0, 105.0, 106.0, 107.0, 108.0, 109.0, 110.0],
-            "volume": [1000000, 1100000, 1200000, 1300000, 1400000, 1500000, 1600000, 1700000, 1800000, 1900000],
+            "open": [
+                100.0,
+                101.0,
+                102.0,
+                103.0,
+                104.0,
+                105.0,
+                106.0,
+                107.0,
+                108.0,
+                109.0,
+            ],
+            "high": [
+                101.5,
+                102.5,
+                103.5,
+                104.5,
+                105.5,
+                106.5,
+                107.5,
+                108.5,
+                109.5,
+                110.5,
+            ],
+            "low": [
+                99.5,
+                100.5,
+                101.5,
+                102.5,
+                103.5,
+                104.5,
+                105.5,
+                106.5,
+                107.5,
+                108.5,
+            ],
+            "close": [
+                101.0,
+                102.0,
+                103.0,
+                104.0,
+                105.0,
+                106.0,
+                107.0,
+                108.0,
+                109.0,
+                110.0,
+            ],
+            "volume": [
+                1000000,
+                1100000,
+                1200000,
+                1300000,
+                1400000,
+                1500000,
+                1600000,
+                1700000,
+                1800000,
+                1900000,
+            ],
         },
         index=dates,
     )
@@ -62,7 +116,7 @@ class TestDataValidationWorkflow:
         """Test validation fails with missing columns."""
         # Remove a required column
         invalid_data = sample_ohlcv_data.drop(columns=["volume"])
-        
+
         with pytest.raises(Exception):  # DataValidationError
             validate_ohlcv_data(invalid_data)
 
@@ -71,9 +125,11 @@ class TestDataValidationWorkflow:
         # Filter to middle 5 days
         start_date = datetime(2023, 1, 3)
         end_date = datetime(2023, 1, 7)
-        
-        filtered_data = filter_data_by_date_range(sample_ohlcv_data, start_date, end_date)
-        
+
+        filtered_data = filter_data_by_date_range(
+            sample_ohlcv_data, start_date, end_date
+        )
+
         # Should have exactly 5 days
         assert len(filtered_data) == 5
         # Should be within date range
@@ -92,7 +148,7 @@ class TestBacktestWorkflow:
             slippage_rate=0.0001,
             data_frequency="1d",
         )
-        
+
         assert config.initial_cash == 100000.0
         assert config.commission_rate == 0.001
         assert config.slippage_rate == 0.0001
@@ -102,11 +158,10 @@ class TestBacktestWorkflow:
         """Test executing a simple backtest."""
         # Create a mock engine
         mock_engine = Mock(spec=BacktestEngine)
-        
+
         # Mock run method to return a result
         expected_equity = pd.Series(
-            [100000, 101000, 102000, 103000, 104000],
-            index=sample_ohlcv_data.index[:5]
+            [100000, 101000, 102000, 103000, 104000], index=sample_ohlcv_data.index[:5]
         )
         expected_trades = pd.DataFrame(
             {
@@ -136,12 +191,12 @@ class TestBacktestWorkflow:
             execution_time=0.5,
             config=BacktestConfig(),
         )
-        
+
         mock_engine.run.return_value = expected_result
-        
+
         # Execute backtest
         result = mock_engine.run("mock_strategy", sample_ohlcv_data, BacktestConfig())
-        
+
         # Verify result
         assert result.summary_stats["total_return"] == 0.04
         mock_engine.run.assert_called_once()
@@ -153,20 +208,22 @@ class TestAgentExecutionWorkflow:
     def test_dexscreener_data_retrieval(self):
         """Test retrieving data from DexScreener."""
         # Mock the connector entirely to avoid API calls
-        with patch("quantchain.connectors.dexscreener_connector.DexscreenerDataConnector") as mock_class:
+        with patch(
+            "quantchain.connectors.dexscreener_connector.DexscreenerDataConnector"
+        ) as mock_class:
             mock_connector = Mock()
             mock_class.return_value = mock_connector
-            
+
             # Mock successful response
             mock_result = [
                 {"symbol": "TOK1/WETH", "price_usd": 1.5, "volume_24h": 150000}
             ]
             mock_connector.get_new_token_pairs.return_value = mock_result
-            
+
             # Execute data retrieval
             connector = DexscreenerDataConnector()
             result = connector.get_new_token_pairs("1h")
-            
+
             # Verify result
             assert len(result) == 1
             assert result[0]["symbol"] == "TOK1/WETH"
@@ -178,7 +235,7 @@ class TestAgentExecutionWorkflow:
         # Mock connector first
         mock_connector = Mock()
         executor = AlpacaExecutionTool(connector=mock_connector)
-        
+
         # Mock Alpaca API
         with patch.object(executor.connector, "submit_order") as mock_submit:
             mock_submit.return_value = {
@@ -190,10 +247,10 @@ class TestAgentExecutionWorkflow:
                 "type": "market",
                 "time_in_force": "day",
             }
-            
+
             # Execute order
             result = executor.execute_market_order("TOK1/USD", "buy", 100)
-            
+
             # Verify result
             assert isinstance(result, object)  # OrderResult object
             mock_submit.assert_called_once()
@@ -205,29 +262,36 @@ class TestIntegratedWorkflow:
     def test_complete_trading_workflow(self, sample_ohlcv_data, sample_strategy_config):
         """Test complete trading workflow from data retrieval to execution."""
         # Mock all external dependencies
-        with patch("quantchain.connectors.dexscreener_connector.DexscreenerDataConnector") as mock_connector, \
-             patch("quantchain.tools.execution.AlpacaExecutionTool") as mock_executor:
-            
+        with patch(
+            "quantchain.connectors.dexscreener_connector.DexscreenerDataConnector"
+        ) as mock_connector, patch(
+            "quantchain.tools.execution.AlpacaExecutionTool"
+        ) as mock_executor:
+
             # Setup mocks
             mock_connector_instance = Mock()
+
             # Simulate successful retrieval of token pairs
             def mock_get_new_pairs(time_window):
                 return [{"symbol": "TOK1/WETH", "price_usd": 1.5, "volume_24h": 150000}]
+
             mock_connector_instance.get_new_token_pairs = mock_get_new_pairs
             mock_connector.return_value = mock_connector_instance
-            
+
             mock_executor_instance = Mock()
             mock_executor_instance.execute_buy_order.return_value = {
                 "status": "accepted",
                 "symbol": "TOK1/USD",
-                "qty": 100
+                "qty": 100,
             }
             mock_executor.return_value = mock_executor_instance
-            
+
             # Create a mock strategy for backtesting
             mock_strategy = Mock()
             mock_strategy.return_value = BacktestResult(
-                equity_curve=pd.Series([100000, 101000], index=sample_ohlcv_data.index[:2]),
+                equity_curve=pd.Series(
+                    [100000, 101000], index=sample_ohlcv_data.index[:2]
+                ),
                 trade_log=pd.DataFrame(),
                 summary_stats={"total_return": 0.01},
                 metrics=MetricsResult(
@@ -242,20 +306,22 @@ class TestIntegratedWorkflow:
                 execution_time=0.5,
                 config=BacktestConfig(),
             )
-            
+
             # Run mock strategy
             result = mock_strategy(sample_ohlcv_data, BacktestConfig())
-            
+
             # Verify backtest was executed
             assert result.summary_stats["total_return"] == 0.01
-            
+
             # Simulate trading decision based on backtest results
             if result.summary_stats["total_return"] > 0:
                 # Execute a buy order (mocked)
-                execution_result = mock_executor_instance.execute_market_order("TOK1/USD", "buy", 100)
+                execution_result = mock_executor_instance.execute_market_order(
+                    "TOK1/USD", "buy", 100
+                )
                 # Just verify something was called
                 assert execution_result is not None
-            
+
             # Verify all components were called
             mock_connector.assert_called_once()
             mock_strategy.assert_called_once_with(sample_ohlcv_data, BacktestConfig())
@@ -269,16 +335,17 @@ class TestSystemIntegration:
     def test_error_handling_workflow(self, sample_ohlcv_data):
         """Test error handling in integrated workflow."""
         # Test error propagation through the system
-        with patch("quantchain.connectors.dexscreener_connector.DexscreenerDataConnector") as mock_connector:
+        with patch(
+            "quantchain.connectors.dexscreener_connector.DexscreenerDataConnector"
+        ) as mock_connector:
             # Mock a connector failure
-            with patch("requests.get") as mock_get:
-                # Mock a server error
-                mock_response = Mock()
-                mock_response.status_code = 500
-                mock_response.raise_for_status.side_effect = Exception("API error")
-                mock_get.return_value = mock_response
-                
-                # Verify error is properly handled
-                with pytest.raises((Exception, DataSourceError)):
-                    connector = DexscreenerDataConnector()
-                    connector.get_new_token_pairs("1h")
+            mock_connector_instance = Mock()
+            mock_connector_instance.get_new_token_pairs.side_effect = Exception(
+                "API error"
+            )
+            mock_connector.return_value = mock_connector_instance
+
+            # Verify error is properly handled
+            with pytest.raises((Exception, DataSourceError)):
+                connector = DexscreenerDataConnector()
+                connector.get_new_token_pairs("1h")

@@ -380,7 +380,11 @@ class TestMonitoringServiceAdditional:
 
         mock_agent_registry = Mock()
         mock_agent_registry.get_all_agents.return_value = [
-            {"agent_id": "agent1", "agent_type": "memecoin_vibe_trader", "status": "RUNNING"},
+            {
+                "agent_id": "agent1",
+                "agent_type": "memecoin_vibe_trader",
+                "status": "RUNNING",
+            },
             {"agent_id": "agent2", "agent_type": "chart_reader", "status": "STOPPED"},
         ]
 
@@ -451,15 +455,17 @@ class TestVisualizationServiceAdditional:
         service = VisualizationService()
 
         # Create realistic portfolio data
-        portfolio_data = pd.DataFrame({
-            'timestamp': pd.date_range('2024-01-01', periods=30, freq='D'),
-            'total_value': [10000 + i * 100 + (i % 5) * 50 for i in range(30)]
-        }).to_dict('records')
+        portfolio_data = pd.DataFrame(
+            {
+                "timestamp": pd.date_range("2024-01-01", periods=30, freq="D"),
+                "total_value": [10000 + i * 100 + (i % 5) * 50 for i in range(30)],
+            }
+        ).to_dict("records")
 
         figure = service.create_equity_curve(portfolio_data)
 
         assert figure is not None
-        assert hasattr(figure, 'data')
+        assert hasattr(figure, "data")
         assert len(figure.data) > 0
         assert figure.layout.title.text == "Portfolio Equity Curve"
 
@@ -472,19 +478,49 @@ class TestVisualizationServiceAdditional:
         complex_reasoning = {
             "agent_id": "complex_agent",
             "decision_steps": [
-                {"step": "market_scan", "status": "completed", "output": "15 opportunities found", "duration_ms": 250},
-                {"step": "sentiment_analysis", "status": "completed", "output": "Positive sentiment detected", "duration_ms": 450},
-                {"step": "risk_assessment", "status": "completed", "output": "Risk score: 0.65", "duration_ms": 180},
-                {"step": "position_sizing", "status": "completed", "output": "Size: 2.5% of portfolio", "duration_ms": 120},
-                {"step": "order_placement", "status": "failed", "output": "Insufficient liquidity", "duration_ms": 320},
-                {"step": "retry_mechanism", "status": "completed", "output": "Order placed at revised price", "duration_ms": 200},
+                {
+                    "step": "market_scan",
+                    "status": "completed",
+                    "output": "15 opportunities found",
+                    "duration_ms": 250,
+                },
+                {
+                    "step": "sentiment_analysis",
+                    "status": "completed",
+                    "output": "Positive sentiment detected",
+                    "duration_ms": 450,
+                },
+                {
+                    "step": "risk_assessment",
+                    "status": "completed",
+                    "output": "Risk score: 0.65",
+                    "duration_ms": 180,
+                },
+                {
+                    "step": "position_sizing",
+                    "status": "completed",
+                    "output": "Size: 2.5% of portfolio",
+                    "duration_ms": 120,
+                },
+                {
+                    "step": "order_placement",
+                    "status": "failed",
+                    "output": "Insufficient liquidity",
+                    "duration_ms": 320,
+                },
+                {
+                    "step": "retry_mechanism",
+                    "status": "completed",
+                    "output": "Order placed at revised price",
+                    "duration_ms": 200,
+                },
             ],
         }
 
         figure = service.create_decision_flow_diagram(complex_reasoning)
 
         assert figure is not None
-        assert hasattr(figure, 'data')
+        assert hasattr(figure, "data")
 
     def test_create_performance_charts_with_edge_cases(self):
         """Test performance charts with edge case values."""
@@ -513,7 +549,7 @@ class TestVisualizationServiceAdditional:
         # Each chart should handle edge cases gracefully
         for chart_name, figure in charts.items():
             assert figure is not None
-            assert hasattr(figure, 'data')
+            assert hasattr(figure, "data")
 
 
 class TestConfigurationWizardAdditional:
@@ -526,7 +562,11 @@ class TestConfigurationWizardAdditional:
         wizard = ConfigurationWizard()
 
         # Test known agent types
-        for agent_type in ["memecoin_vibe_trader", "chart_reader", "smart_contract_auditor"]:
+        for agent_type in [
+            "memecoin_vibe_trader",
+            "chart_reader",
+            "smart_contract_auditor",
+        ]:
             try:
                 template = wizard.get_agent_template(agent_type)
                 assert template is not None
@@ -621,9 +661,9 @@ class TestWebDashboardAppAdditional:
         app = WebDashboardApp(config)
 
         # Test that services are initialized
-        assert hasattr(app, 'monitoring_service')
-        assert hasattr(app, 'visualization_service')
-        assert hasattr(app, 'config_wizard')
+        assert hasattr(app, "monitoring_service")
+        assert hasattr(app, "visualization_service")
+        assert hasattr(app, "config_wizard")
         assert app.monitoring_service is not None
         assert app.visualization_service is not None
         assert app.config_wizard is not None
@@ -648,9 +688,9 @@ class TestWebDashboardAppAdditional:
         app = WebDashboardApp(config)
 
         # Test service initialization
-        assert hasattr(app, 'monitoring_service')
-        assert hasattr(app, 'visualization_service')
-        assert hasattr(app, 'config_wizard')
+        assert hasattr(app, "monitoring_service")
+        assert hasattr(app, "visualization_service")
+        assert hasattr(app, "config_wizard")
         assert app.monitoring_service is not None
         assert app.visualization_service is not None
         assert app.config_wizard is not None
@@ -684,7 +724,7 @@ class TestDataStructures:
             theme="dark",
             default_agent_id="custom_agent",
             port=9000,
-            host="custom.host"
+            host="custom.host",
         )
 
         assert config.refresh_interval == 15

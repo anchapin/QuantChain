@@ -367,10 +367,12 @@ class TechnicalIndicatorCalculator:
             rs = gain / loss
             # Convert to list, handling if it's already a list
             rsi_calc = 100 - (100 / (1 + rs))
-            if hasattr(rsi_calc, 'tolist'):
+            if hasattr(rsi_calc, "tolist"):
                 rsi_values = rsi_calc.tolist()
             else:
-                rsi_values = [rsi_calc] if isinstance(rsi_calc, (int, float)) else list(rsi_calc)
+                rsi_values = (
+                    [rsi_calc] if isinstance(rsi_calc, (int, float)) else list(rsi_calc)
+                )
 
         # Determine signal based on RSI level
         last_rsi = rsi_values[-1] if rsi_values[-1] else 50
