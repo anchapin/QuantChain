@@ -297,10 +297,10 @@ class PolygonDataConnector(DataFeedInterface):
                 currencies = polygon_symbol[2:]  # Remove "C:" prefix
                 if len(currencies) >= 6:
                     base = currencies[:3]
-                    quote = currencies[3:6]
+                    quote_currency = currencies[3:6]
 
                     conversion = self.client.get_real_time_currency_conversion(
-                        from_=base, to=quote
+                        from_=base, to=quote_currency
                     )
 
                     return {
@@ -371,10 +371,10 @@ class PolygonDataConnector(DataFeedInterface):
                 currencies = polygon_symbol[2:]  # Remove "C:" prefix
                 if len(currencies) >= 6:
                     base = currencies[:3]
-                    quote = currencies[3:6]
+                    quote_currency = currencies[3:6]
 
                     conversion = self.client.get_real_time_currency_conversion(
-                        from_=base, to=quote
+                        from_=base, to=quote_currency
                     )
 
                     return {
@@ -530,9 +530,7 @@ class PolygonDataConnector(DataFeedInterface):
             # In tests, we might have _refresh_symbol_cache mocked, so we should
             # skip API call
             if hasattr(self, "_skip_api_calls_for_tests"):
-                raise SymbolNotFoundError(
-                    f"Symbol not found: {symbol}"
-                )
+                raise SymbolNotFoundError(f"Symbol not found: {symbol}")
 
             try:
                 ticker = self.client.get_ticker_details(polygon_symbol)
@@ -595,7 +593,7 @@ class PolygonDataConnector(DataFeedInterface):
             market_status = self.client.get_market_status()
 
             # Check if market is open
-            return market_status.market.lower() == "open"
+            return bool(market_status.market.lower() == "open")
 
         except Exception as e:
             error_msg = str(e).lower()
@@ -605,8 +603,7 @@ class PolygonDataConnector(DataFeedInterface):
                 or "too many requests" in error_msg
             ):
                 raise RateLimitError(f"Rate limit exceeded: {str(e)}") from e
-            else:
-                raise DataSourceError(f"Failed to check market status: {str(e)}") from e
+            raise DataSourceError(f"Failed to check market status: {str(e)}") from e
 
     def invalidate_cache(self) -> None:
         """Invalidate the symbol cache."""
