@@ -95,9 +95,7 @@ class TestContractRetriever:
                     "txns": [
                         {
                             "timeStamp": "1640995200",
-                            "contractCreator": (
-                                "0x" + "1" * 40
-                            ),
+                            "contractCreator": ("0x" + "1" * 40),
                         }
                     ]
                 }
@@ -112,20 +110,16 @@ class TestContractRetriever:
         # Mock the API responses
         import json
         from unittest.mock import MagicMock
+
         mock_response = MagicMock()
         mock_response.__enter__ = MagicMock(return_value=mock_response)
         mock_response.read.return_value = json.dumps(mock_response_data).encode()
         mock_response2 = MagicMock()
         mock_response2.__enter__ = MagicMock(return_value=mock_response2)
         mock_response2.read.return_value = json.dumps(mock_creation_response).encode()
-        mock_urlopen.side_effect = [
-            mock_response,
-            mock_response2
-        ]
+        mock_urlopen.side_effect = [mock_response, mock_response2]
 
-        contract = retriever.get_contract_source(
-            "0x" + "1" * 40, "ethereum"
-        )
+        contract = retriever.get_contract_source("0x" + "1" * 40, "ethereum")
 
         assert contract.address == "0x" + "1" * 40
         assert contract.chain == "ethereum"
@@ -473,9 +467,7 @@ class TestFinancialAnalyzer:
 
     def test_analyze_tokenomics(self, analyzer):
         """Test tokenomics analysis."""
-        analysis = analyzer.analyze_tokenomics(
-            "0x" + "1" * 40, "ethereum"
-        )
+        analysis = analyzer.analyze_tokenomics("0x" + "1" * 40, "ethereum")
 
         assert isinstance(analysis, TokenomicsAnalysis)
         assert analysis.token_address == "0x" + "1" * 40
@@ -487,9 +479,7 @@ class TestFinancialAnalyzer:
 
     def test_analyze_defi_protocol(self, analyzer):
         """Test DeFi protocol analysis."""
-        analysis = analyzer.analyze_defi_protocol(
-            "0x" + "1" * 40, "ethereum"
-        )
+        analysis = analyzer.analyze_defi_protocol("0x" + "1" * 40, "ethereum")
 
         assert isinstance(analysis, ProtocolAnalysis)
         assert analysis.protocol_address == "0x" + "1" * 40
@@ -510,7 +500,7 @@ class TestSmartContractAuditorAgent:
         # Configure mock to return proper values for LLM provider
         config.get.side_effect = lambda key, default=None: {
             "llm": {"provider": "openai", "model": "gpt-4"},
-            "rag": {"enabled": False}
+            "rag": {"enabled": False},
         }.get(key, default)
         config.get_api_key.return_value = "test_api_key"
         return config
@@ -543,30 +533,34 @@ class TestSmartContractAuditorAgent:
 
         # Create mock response objects
         mock_response1 = MagicMock()
-        mock_response1.read.return_value = json.dumps({
-            "status": "1",
-            "result": [
-                {
-                    "SourceCode": "pragma solidity ^0.8.0; contract Safe {}",
-                    "ABI": "[]",
-                    "ContractName": "Safe",
-                    "CompilerVersion": "v0.8.0",
-                    "OptimizationUsed": "1",
-                    "ByteCode": "0x123",
-                    "ConstructorArguments": "",
-                }
-            ],
-        }).encode()
+        mock_response1.read.return_value = json.dumps(
+            {
+                "status": "1",
+                "result": [
+                    {
+                        "SourceCode": "pragma solidity ^0.8.0; contract Safe {}",
+                        "ABI": "[]",
+                        "ContractName": "Safe",
+                        "CompilerVersion": "v0.8.0",
+                        "OptimizationUsed": "1",
+                        "ByteCode": "0x123",
+                        "ConstructorArguments": "",
+                    }
+                ],
+            }
+        ).encode()
         mock_response1.__enter__ = MagicMock(return_value=mock_response1)
         mock_response1.__exit__ = MagicMock(return_value=None)
 
         mock_response2 = MagicMock()
-        mock_response2.read.return_value = json.dumps({
-            "status": "1",
-            "result": [
-                {"txns": [{"timeStamp": "1640995200", "contractCreator": "0x123"}]}
-            ],
-        }).encode()
+        mock_response2.read.return_value = json.dumps(
+            {
+                "status": "1",
+                "result": [
+                    {"txns": [{"timeStamp": "1640995200", "contractCreator": "0x123"}]}
+                ],
+            }
+        ).encode()
         mock_response2.__enter__ = MagicMock(return_value=mock_response2)
         mock_response2.__exit__ = MagicMock(return_value=None)
 
@@ -574,6 +568,7 @@ class TestSmartContractAuditorAgent:
 
         # Mock the vulnerability scanner
         from quantchain.agents.smart_contract_auditor import VulnerabilityReport
+
         mock_vuln_report = VulnerabilityReport(
             contract_address="0x" + "1" * 40,
             chain="ethereum",
@@ -595,6 +590,7 @@ class TestSmartContractAuditorAgent:
 
         # Create a mock tokenomics object with proper attributes
         from quantchain.agents.smart_contract_auditor import TokenomicsAnalysis
+
         mock_tokenomics = TokenomicsAnalysis(
             token_address="0x" + "1" * 40,
             total_supply=1000000,
@@ -616,18 +612,13 @@ class TestSmartContractAuditorAgent:
         # Assign the mocked analyzer to the agent
         agent.financial_analyzer = mock_analyzer
 
-        result = agent.audit_contract(
-            "0x" + "1" * 40, "ethereum"
-        )
+        result = agent.audit_contract("0x" + "1" * 40, "ethereum")
 
         assert "contract" in result
         assert "security" in result
         assert "financial" in result
         assert "investment" in result
-        assert (
-            result["contract"]["address"]
-            == "0x" + "1" * 40
-        )
+        assert result["contract"]["address"] == "0x" + "1" * 40
         assert result["contract"]["chain"] == "ethereum"
 
     @patch("quantchain.agents.smart_contract_auditor.VulnerabilityScanner")
@@ -636,16 +627,11 @@ class TestSmartContractAuditorAgent:
         """Test contract audit with error."""
         mock_requests.get.side_effect = Exception("API Error")
 
-        result = agent.audit_contract(
-            "0x" + "1" * 40, "ethereum"
-        )
+        result = agent.audit_contract("0x" + "1" * 40, "ethereum")
 
         assert "error" in result
         assert "contract" in result
-        assert (
-            result["contract"]["address"]
-            == "0x" + "1" * 40
-        )
+        assert result["contract"]["address"] == "0x" + "1" * 40
 
     @patch("quantchain.agents.smart_contract_auditor.VulnerabilityScanner")
     def test_generate_investment_recommendation_erc20(self, mock_vulnerability, agent):

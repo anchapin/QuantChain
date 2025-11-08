@@ -13,9 +13,11 @@ try:
     import pandas as pd
     import matplotlib.pyplot as plt
     import mplfinance as mpf
+
     _PANDAS_AVAILABLE = True
 except Exception as e:
     import logging
+
     logger = logging.getLogger(__name__)
     logger.warning(f"Failed to import chart dependencies: {e}")
     pd = None

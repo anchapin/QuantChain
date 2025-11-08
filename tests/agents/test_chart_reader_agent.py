@@ -103,7 +103,9 @@ class TestTechnicalIndicatorCalculator:
         assert indicator.signal in ["OVERBOUGHT", "OVERSOLD", "NEUTRAL"]
 
         # RSI should be between 0 and 100
-        valid_values = [v for v in indicator.values if v is not None and not np.isnan(v)]
+        valid_values = [
+            v for v in indicator.values if v is not None and not np.isnan(v)
+        ]
         # Some values might be NaN during warmup period
         if valid_values:
             assert all(0 <= v <= 100 for v in valid_values)
@@ -208,7 +210,10 @@ class TestPatternRecognizer:
         )
 
         assert isinstance(analysis, PatternAnalysis)
-        assert "fallback" in analysis.reasoning.lower() or "without visual" in analysis.reasoning.lower()
+        assert (
+            "fallback" in analysis.reasoning.lower()
+            or "without visual" in analysis.reasoning.lower()
+        )
 
     def test_parse_patterns_from_response(self, pattern_recognizer):
         """Test pattern parsing from model response."""
@@ -317,14 +322,14 @@ class TestChartReaderAgent:
         config.vision_provider = "gpt-4-vision-preview"
         config.max_retries = 3
         config.retry_delay = 1
-        
+
         # Add get method for config
         def get_side_effect(key, default=None):
             if key == "rag":
                 return {
                     "enabled": config.enable_rag,
                     "persist_directory": config.vector_store_path,
-                    "embedding_model": "all-MiniLM-L6-v2"
+                    "embedding_model": "all-MiniLM-L6-v2",
                 }
             elif key == "agent_type":
                 return config.agent_type
@@ -339,7 +344,7 @@ class TestChartReaderAgent:
             elif key == "enable_reflection":
                 return config.enable_reflection
             return default
-        
+
         config.get = Mock(side_effect=get_side_effect)
         return config
 

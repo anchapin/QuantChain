@@ -1,5 +1,6 @@
 """Tests for RAG system."""
 
+import os
 import pytest
 from unittest.mock import MagicMock, patch
 from datetime import datetime
@@ -58,7 +59,9 @@ class TestChromaVectorStore:
 
         store = ChromaVectorStore()
 
-        mock_chromadb.PersistentClient.assert_called_once_with(path="./data/chroma_db")
+        # The constructor converts relative path to absolute path
+        expected_path = os.path.abspath("./data/chroma_db")
+        mock_chromadb.PersistentClient.assert_called_once_with(path=expected_path)
         mock_client.get_or_create_collection.assert_called_once_with("market_data")
         assert store.collection == mock_collection
 
