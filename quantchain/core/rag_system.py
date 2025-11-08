@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional, TYPE_CHECKING
 from dataclasses import dataclass
 import json
+import os
 from datetime import datetime
 import numpy as np
 
@@ -58,6 +59,11 @@ class ChromaVectorStore(VectorStore):
     def __init__(self, persist_directory: str = "./data/chroma_db"):
         if chromadb is None:
             raise ImportError("chromadb package not installed")
+        # Convert relative path to absolute path to avoid Windows path issues
+        if not os.path.isabs(persist_directory):
+            persist_directory = os.path.abspath(persist_directory)
+        # Create directory if it doesn't exist
+        os.makedirs(persist_directory, exist_ok=True)
         self.client = chromadb.PersistentClient(path=persist_directory)
         self.collection = self.client.get_or_create_collection("market_data")
 

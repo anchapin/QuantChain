@@ -8,15 +8,14 @@ from datetime import datetime
 import re
 
 # Required for blockchain interactions
+import urllib.request
+import urllib.parse
+import json as json_lib
+
 try:
     from web3 import Web3
-    import urllib.request
-    import urllib.parse
-    import json as json_lib
 except ImportError:
     Web3 = None  # type: ignore
-    urllib = None  # type: ignore
-    json_lib = None  # type: ignore
 
 from ..core.agent_engine import QuantChainAgent
 from ..core.config import QuantChainConfig
@@ -201,6 +200,9 @@ class ContractRetriever:
         }
 
         try:
+            # Ensure urllib module is available
+            if urllib is None or urllib.parse is None or urllib.request is None:
+                raise ImportError("urllib module not available")
             url = f"{explorer_url}?{urllib.parse.urlencode(source_params)}"
             with urllib.request.urlopen(url) as response:
                 data = json_lib.loads(response.read().decode())
@@ -316,12 +318,15 @@ class ContractRetriever:
 
     def _extract_inheritance(self, source_code: str) -> List[str]:
         """Extract inherited contracts from source code."""
-        inheritance_pattern = r"contract\s+\w+\s+is\s+([^{\s]+(?:\s*,\s*[^{\s]+)*)"
+        # Pattern to match: contract Name is Contract1, Contract2, Contract3 {
+        inheritance_pattern = r"contract\s+\w+\s+is\s+([^{\s]+(?:\s*,\s*[^{\s]+)*)\s*\{"
         matches = re.findall(inheritance_pattern, source_code)
 
         inherited = []
         for match in matches:
-            inherited.extend([c.strip() for c in match.split(",")])
+            # Split by commas and strip whitespace
+            contracts = [c.strip() for c in match.split(",")]
+            inherited.extend(contracts)
 
         return inherited
 
@@ -489,34 +494,63 @@ class VulnerabilityScanner:
 
         lines = contract.source_code.split("\n")
         for i, line in enumerate(lines):
+            # Normalize the line
+            line_clean = line.strip()
+            
             for func in critical_functions:
-                if f"function {func}(" in line and "public" in line:
-                    # Check if there's a modifier
-                    has_modifier = False
-                    for j in range(i, min(i + 5, len(lines))):
-                        if "onlyOwner" in lines[j] or "require(" in lines[j]:
+                # Look for function declaration
+                if f"function {func}(" in line_clean:
+                    # Check if function is public (either explicitly or by default)
+                    is_public = (
+                        "public" in line_clean or 
+                        ("private" not in line_clean and 
+                         "internal" not in line_clean and 
+                         "external" not in line_clean)
+                    )
+                    
+                    if is_public:
+                        # Check if there's a modifier on the same or next line
+                        has_modifier = False
+                        # Check current line
+                        if ("onlyOwner" in line_clean or 
+                            "require(" in line_clean or 
+                            "isOwner" in line_clean or
+                            "msg.sender == owner" in line_clean):
                             has_modifier = True
-                            break
+                        else:
+                            # Check next few lines
+                            for j in range(i + 1, min(i + 5, len(lines))):
+                                next_line = lines[j].strip()
+                                if ("onlyOwner" in next_line or 
+                                    "require(" in next_line or
+                                    "isOwner" in next_line or
+                                    "msg.sender == owner" in next_line):
+                                    has_modifier = True
+                                    break
+                                # Stop if we hit another function or closing brace
+                                if (next_line.startswith("}") or 
+                                    "function " in next_line):
+                                    break
 
-                    if not has_modifier:
-                        vulnerabilities.append(
-                            Vulnerability(
-                                vulnerability_type="Missing Access Control",
-                                severity="HIGH",
-                                description=(
-                                    f"Critical function {func} is public "
-                                    f"without access control"
-                                ),
-                                location=f"Line {i + 1}",
-                                code_snippet=line,
-                                recommendation=(
-                                    f"Add access control modifier to {func} function"
-                                ),
-                                cwe_id="CWE-284",
-                                cvss_score=7.5,
-                                confidence=85.0,
+                        if not has_modifier:
+                            vulnerabilities.append(
+                                Vulnerability(
+                                    vulnerability_type="Missing Access Control",
+                                    severity="HIGH",
+                                    description=(
+                                        f"Critical function {func} is public "
+                                        f"without access control"
+                                    ),
+                                    location=f"Line {i + 1}",
+                                    code_snippet=line,
+                                    recommendation=(
+                                        f"Add access control modifier to {func} function"
+                                    ),
+                                    cwe_id="CWE-284",
+                                    cvss_score=7.5,
+                                    confidence=85.0,
+                                )
                             )
-                        )
 
         return vulnerabilities
 

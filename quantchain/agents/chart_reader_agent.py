@@ -13,10 +13,15 @@ try:
     import pandas as pd
     import matplotlib.pyplot as plt
     import mplfinance as mpf
-except ImportError:
+    _PANDAS_AVAILABLE = True
+except Exception as e:
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Failed to import chart dependencies: {e}")
     pd = None
     plt = None
     mpf = None
+    _PANDAS_AVAILABLE = False
 
 from PIL import Image
 
@@ -73,7 +78,7 @@ class ChartImage:
 
     def to_base64(self) -> str:
         """Convert image to base64 string for API calls."""
-        return base64.b64encode(self.image_data).decode("utf-64")
+        return base64.b64encode(self.image_data).decode("utf-8")
 
     def to_pil_image(self) -> Optional["Image.Image"]:
         """Convert to PIL Image."""
@@ -262,7 +267,7 @@ class TechnicalIndicatorCalculator:
     @staticmethod
     def calculate_sma(data: OHLCVData, period: int = 20) -> TechnicalIndicator:
         """Calculate Simple Moving Average."""
-        if pd is None:
+        if not _PANDAS_AVAILABLE or pd is None:
             raise QuantChainError("pandas required for technical indicators")
 
         closes = pd.Series(data.closes)
@@ -291,7 +296,7 @@ class TechnicalIndicatorCalculator:
     @staticmethod
     def calculate_ema(data: OHLCVData, period: int = 20) -> TechnicalIndicator:
         """Calculate Exponential Moving Average."""
-        if pd is None:
+        if not _PANDAS_AVAILABLE or pd is None:
             raise QuantChainError("pandas required for technical indicators")
 
         closes = pd.Series(data.closes)
@@ -320,7 +325,7 @@ class TechnicalIndicatorCalculator:
     @staticmethod
     def calculate_rsi(data: OHLCVData, period: int = 14) -> TechnicalIndicator:
         """Calculate Relative Strength Index."""
-        if pd is None:
+        if not _PANDAS_AVAILABLE or pd is None:
             raise QuantChainError("pandas required for technical indicators")
 
         closes = pd.Series(data.closes)
@@ -671,6 +676,21 @@ class ChartReaderAgent(QuantChainAgent):
                 ohlcv_data = self._get_ohlcv_data(symbol, timeframe)
                 if not ohlcv_data:
                     logger.warning(f"No data available for {symbol} on {timeframe}")
+                    # Create a default analysis when no data is available
+                    results[timeframe] = PatternAnalysis(
+                        symbol=symbol,
+                        timeframe=timeframe,
+                        timestamp=datetime.now(),
+                        patterns=[],
+                        overall_sentiment="neutral",
+                        confluence_score=0.0,
+                        recommended_action="HOLD",
+                        entry_price=None,
+                        stop_loss=None,
+                        take_profit=[],
+                        reasoning="No data available",
+                        confidence=0.0,
+                    )
                     continue
 
                 # Calculate technical indicators
@@ -742,7 +762,7 @@ class ChartReaderAgent(QuantChainAgent):
 
         except Exception as e:
             logger.error(f"Error fetching OHLCV data: {e}")
-            return None
+            raise  # Re-raise to be caught by outer try-except
 
     def _calculate_indicators(self, data: OHLCVData) -> List[TechnicalIndicator]:
         """Calculate configured technical indicators."""
