@@ -208,10 +208,17 @@ class TestAgentExecutionWorkflow:
     def test_dexscreener_data_retrieval(self):
         """Test retrieving data from DexScreener."""
         # Mock connector's get_new_token_pairs method directly
-        with patch.object(DexscreenerDataConnector, 'get_new_token_pairs') as mock_get_pairs:
+        with patch.object(
+            DexscreenerDataConnector, "get_new_token_pairs"
+        ) as mock_get_pairs:
             # Mock successful response
             mock_get_pairs.return_value = [
-                {"symbol": "TOK1", "price_usd": 1.5, "volume_24h": 150000, "liquidity": 50000}
+                {
+                    "symbol": "TOK1",
+                    "price_usd": 1.5,
+                    "volume_24h": 150000,
+                    "liquidity": 50000,
+                }
             ]
 
             # Execute data retrieval
@@ -259,7 +266,7 @@ class TestIntegratedWorkflow:
         # Mock all external dependencies
         # Mock the get_new_token_pairs method directly
         with patch.object(
-            DexscreenerDataConnector, 'get_new_token_pairs'
+            DexscreenerDataConnector, "get_new_token_pairs"
         ) as mock_get_pairs, patch(
             "quantchain.tools.execution.AlpacaExecutionTool"
         ) as mock_executor:
@@ -277,7 +284,7 @@ class TestIntegratedWorkflow:
                 "qty": 100,
             }
             mock_executor.return_value = mock_executor_instance
-            
+
             executor = AlpacaExecutionTool(connector=mock_executor_instance)
 
             # Create a mock strategy for backtesting
@@ -315,9 +322,7 @@ class TestIntegratedWorkflow:
             # Simulate trading decision based on backtest results
             if result.summary_stats["total_return"] > 0:
                 # Execute a buy order (mocked)
-                execution_result = executor.execute_market_order(
-                    "TOK1/USD", "buy", 100
-                )
+                execution_result = executor.execute_market_order("TOK1/USD", "buy", 100)
                 # Just verify something was called
                 assert execution_result is not None
 
