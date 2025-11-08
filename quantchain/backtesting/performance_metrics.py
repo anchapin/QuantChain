@@ -96,6 +96,8 @@ class PerformanceMetrics:
             raise InsufficientDataError("Equity curve must have at least 2 points")
 
         try:
+            # Handle pandas version compatibility for pct_change
+            # In pandas 2.1.0+, fill_method is deprecated and should be None
             return equity_curve.pct_change(fill_method=None).dropna()
         except Exception as e:
             raise MetricsCalculationError(f"Failed to calculate returns: {e}") from e
