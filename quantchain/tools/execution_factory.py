@@ -24,6 +24,33 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
     broker = config.get("trading.default_broker", "alpaca")
     paper_trading = config.get("trading.paper_trading", True)
     tutorial_mode = config.get("tutorial.enabled", False)
+    ai_training = config.get("ai_training.enabled", False)
+
+    # AI training mode takes precedence
+    if ai_training or broker == "ai_training":
+        # Get AI training configuration
+        initial_cash = config.get("trading.initial_cash", 100000.0)
+
+        # AI training mode configuration options
+        ai_training_config = {
+            "learning_objectives": config.get("ai_training.learning_objectives", []),
+            "session_duration": config.get("ai_training.session_duration", 3600),
+            "max_iterations": config.get("ai_training.max_iterations", 1000),
+            "learning_rate": config.get("ai_training.learning_rate", 0.001),
+            "optimization_strategy": config.get(
+                "ai_training.optimization_strategy", "bayesian"
+            ),
+            "track_performance": config.get("ai_training.track_performance", True),
+            "optimize_parameters": config.get("ai_training.optimize_parameters", True),
+            "commission_per_trade": config.get("trading.commission_per_trade", 0.0),
+            "commission_per_share": config.get("trading.commission_per_share", 0.0),
+        }
+
+        from .agent_training_mode import AgentTrainingMode
+
+        return AgentTrainingMode(
+            initial_cash=initial_cash, config=config, **ai_training_config
+        )
 
     # Tutorial mode takes precedence
     if tutorial_mode or broker == "tutorial":
@@ -80,5 +107,8 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
 
     else:
         raise ConfigurationError(
-            f"Unsupported broker: {broker}. Supported: alpaca, paper, tutorial"
+            (
+                f"Unsupported broker: {broker}. "
+                "Supported: alpaca, paper, tutorial, ai_training"
+            )
         )

@@ -38,6 +38,13 @@ from .tutorial_mode import (
     DecisionAnalysis,
     TutorialFeedback,
 )
+from .agent_training_mode import (
+    AgentTrainingMode,
+    TrainingSession,
+    TrainingDecision,
+    PerformanceTracker,
+    ModelOptimizer,
+)
 from .execution_factory import create_execution_interface
 
 __all__ = [
@@ -71,5 +78,10 @@ __all__ = [
     "TradingMistake",
     "DecisionAnalysis",
     "TutorialFeedback",
+    "AgentTrainingMode",
+    "TrainingSession",
+    "TrainingDecision",
+    "PerformanceTracker",
+    "ModelOptimizer",
     "create_execution_interface",
 ]
