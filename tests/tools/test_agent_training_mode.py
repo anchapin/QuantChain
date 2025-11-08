@@ -704,6 +704,24 @@ class TestAgentTrainingMode:
 class TestAgentTrainingModeIntegration:
     """Integration tests for AI training mode."""
 
+    @pytest.fixture
+    def mock_config(self):
+        """Create mock configuration."""
+        config = Mock(spec=QuantChainConfig)
+        config.get.return_value = False
+        return config
+
+    @pytest.fixture
+    def training_executor(self, mock_config):
+        """Create training executor for testing."""
+        return AgentTrainingMode(
+            initial_cash=100000.0,
+            config=mock_config,
+            learning_objectives=["Improve decision quality", "Learn market drivers"],
+            track_performance=True,
+            optimize_parameters=True,
+        )
+
     def test_complete_training_workflow(self, training_executor):
         """Test complete training workflow."""
         # Start training session

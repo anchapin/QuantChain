@@ -307,7 +307,8 @@ class TestPolygonDataConnector:
         sample_ticker.market = "stocks"
 
         with patch.object(connector, "_refresh_symbol_cache"):
-            # Set cache after mocking _refresh_symbol_cache to prevent it from being cleared
+            # Set cache after mocking _refresh_symbol_cache to prevent it from
+            # being cleared
             connector._symbol_cache = {"AAPL": sample_ticker}
 
             symbols = connector.get_available_symbols("equity")
@@ -324,7 +325,8 @@ class TestPolygonDataConnector:
         forex_ticker.ticker = "C:EURUSD"
 
         with patch.object(connector, "_refresh_symbol_cache"):
-            # Set cache after mocking _refresh_symbol_cache to prevent it from being cleared
+            # Set cache after mocking _refresh_symbol_cache to prevent it from
+            # being cleared
             connector._symbol_cache = {"C:EURUSD": forex_ticker}
 
             symbols = connector.get_available_symbols("forex")
@@ -390,7 +392,8 @@ class TestPolygonDataConnector:
         connector._skip_api_calls_for_tests = True  # Skip API calls for this test
 
         with patch.object(connector, "_refresh_symbol_cache"):
-            # Set cache after mocking _refresh_symbol_cache to prevent it from being cleared
+            # Set cache after mocking _refresh_symbol_cache to prevent it from
+            # being cleared
             connector._symbol_cache = {"AAPL": sample_ticker}
 
             # First call should use cache

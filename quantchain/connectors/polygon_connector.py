@@ -527,9 +527,12 @@ class PolygonDataConnector(DataFeedInterface):
                     return cached_info
 
             # If not in cache, try to fetch directly
-            # In tests, we might have _refresh_symbol_cache mocked, so we should skip API call
+            # In tests, we might have _refresh_symbol_cache mocked, so we should
+            # skip API call
             if hasattr(self, "_skip_api_calls_for_tests"):
-                raise SymbolNotFoundError(f"Symbol not found: {symbol}")
+                raise SymbolNotFoundError(
+                    f"Symbol not found: {symbol}"
+                )
 
             try:
                 ticker = self.client.get_ticker_details(polygon_symbol)
