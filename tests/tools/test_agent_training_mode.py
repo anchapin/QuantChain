@@ -761,39 +761,3 @@ class TestAgentTrainingModeIntegration:
         assert report1["session"]["session_id"] == session1.session_id
         assert report2["session"]["session_id"] == session2.session_id
         assert session1.session_id != session2.session_id
-
-
-@pytest.mark.unit
-class TestAgentTrainingModeIntegration:
-    """Integration tests for AI training mode."""
-
-    @pytest.fixture
-    def training_executor(self, mock_config):
-        """Create training executor for integration tests."""
-        return AgentTrainingMode(
-            initial_cash=100000.0,
-            config=mock_config,
-            learning_objectives=["Improve decision quality", "Learn market drivers"],
-            track_performance=True,
-            optimize_parameters=True,
-        )
-
-
-@pytest.mark.unit
-class TestAgentTrainingModeFactoryIntegration:
-    """Test AI training mode integration with factory."""
-
-    def test_execution_factory_integration(self):
-        """Test that execution factory can create AI training mode."""
-        # This test verifies that the execution factory pattern
-        # could be extended to include AI training mode
-
-        mock_config = Mock(spec=QuantChainConfig)
-        mock_config.get.side_effect = lambda key, default=None: {
-            "ai_training.enabled": True,
-            "ai_training.initial_cash": 100000.0,
-        }.get(key, default)
-
-        # Note: This would require extending the factory to support ai_training
-        # This test documents the integration point
-        assert True  # Placeholder for factory integration test
