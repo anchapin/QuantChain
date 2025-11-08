@@ -5,7 +5,6 @@ from datetime import datetime, timezone, timedelta
 from unittest.mock import Mock
 import uuid
 
-from quantchain.tools import agent_training_mode
 from quantchain.tools.agent_training_mode import (
     AgentTrainingMode,
     TrainingSession,
@@ -14,7 +13,6 @@ from quantchain.tools.agent_training_mode import (
     ModelOptimizer,
 )
 from quantchain.tools.trading_execution import (
-    OrderRequest,
     OrderResult,
     OrderSide,
     OrderType,
@@ -122,7 +120,9 @@ class TestTrainingSession:
         session.update_parameters(new_params)
 
         assert session.current_parameters["learning_rate"] == 0.002
-        assert session.current_parameters["exploration_rate"] == 0.1  # Should remain unchanged
+        assert (
+            session.current_parameters["exploration_rate"] == 0.1
+        )  # Should remain unchanged
 
     def test_session_to_dict(self):
         """Test session dictionary conversion."""
@@ -158,9 +158,9 @@ class TestTrainingDecision:
             parameters={"symbol": "AAPL"},
             result="test_result",
             confidence_score=0.7,
-            success=True
+            success=True,
         )
-        
+
         order_result = OrderResult(
             order_id="test_order",
             client_order_id=None,
@@ -208,7 +208,7 @@ class TestTrainingDecision:
                 parameters={},
                 result="waiting",
                 confidence_score=0.5,
-                success=True
+                success=True,
             ),
             order=None,
             market_data={},
@@ -268,7 +268,7 @@ class TestPerformanceTracker:
                 parameters={},
                 result="analysis",
                 confidence_score=0.6,
-                success=True
+                success=True,
             ),
             order=None,
             market_data={},
@@ -299,7 +299,7 @@ class TestPerformanceTracker:
                     parameters={},
                     result="analysis",
                     confidence_score=0.6,
-                    success=True
+                    success=True,
                 ),
                 order=None,
                 market_data={},
@@ -314,7 +314,7 @@ class TestPerformanceTracker:
     def test_weakness_identification(self):
         """Test weakness identification functionality."""
         tracker = PerformanceTracker()
-        
+
         # Create decisions with poor quality
         for i in range(10):
             decision = TrainingDecision(
@@ -327,7 +327,7 @@ class TestPerformanceTracker:
                     parameters={},
                     result="analysis",
                     confidence_score=0.6,
-                    success=True
+                    success=True,
                 ),
                 order=None,
                 market_data={},
@@ -343,7 +343,7 @@ class TestPerformanceTracker:
     def test_current_metrics(self):
         """Test current metrics calculation."""
         tracker = PerformanceTracker()
-        
+
         # Add some decisions
         for i in range(5):
             decision = TrainingDecision(
@@ -356,7 +356,7 @@ class TestPerformanceTracker:
                     parameters={},
                     result="analysis",
                     confidence_score=0.6,
-                    success=True
+                    success=True,
                 ),
                 order=None,
                 market_data={},
@@ -398,7 +398,11 @@ class TestModelOptimizer:
 
         assert "learning_rate" in optimized_params
         assert "exploration_rate" in optimized_params
-        assert constraints["learning_rate"]["min"] <= optimized_params["learning_rate"] <= constraints["learning_rate"]["max"]
+        assert (
+            constraints["learning_rate"]["min"]
+            <= optimized_params["learning_rate"]
+            <= constraints["learning_rate"]["max"]
+        )
 
     def test_best_performance_tracking(self):
         """Test best performance tracking."""
@@ -463,7 +467,7 @@ class TestModelOptimizer:
         feedback = {"overall_score": 0.7}
 
         optimizer.optimize_parameters(params, feedback)
-        
+
         assert len(optimizer.optimization_history) == 1
         history_entry = optimizer.optimization_history[0]
         assert "timestamp" in history_entry
@@ -540,7 +544,7 @@ class TestAgentTrainingMode:
         )
 
         market_data = {"AAPL": {"price": 150.0, "volume": 1000}}
-        
+
         # Execute training
         results = training_executor.train_agent(
             market_data=market_data,
@@ -573,15 +577,15 @@ class TestAgentTrainingMode:
         """Test parameter fine-tuning functionality."""
         # Start session
         training_executor.start_training_session(["AAPL"])
-        
+
         # Mock evaluation results
         evaluation_results = {
             "bull_market": {"score": 0.8},
             "bear_market": {"score": 0.6},
         }
-        
+
         constraints = {"learning_rate": {"min": 0.0001, "max": 0.01}}
-        
+
         # Fine-tune parameters
         optimized_params = training_executor.fine_tune_parameters(
             evaluation_results,
@@ -590,12 +594,16 @@ class TestAgentTrainingMode:
 
         assert isinstance(optimized_params, dict)
         if "learning_rate" in optimized_params:
-            assert constraints["learning_rate"]["min"] <= optimized_params["learning_rate"] <= constraints["learning_rate"]["max"]
+            assert (
+                constraints["learning_rate"]["min"]
+                <= optimized_params["learning_rate"]
+                <= constraints["learning_rate"]["max"]
+            )
 
     def test_training_progress(self, training_executor):
         """Test training progress reporting."""
         # Start session and train
-        session = training_executor.start_training_session(["AAPL"], iterations=50)
+        training_executor.start_training_session(["AAPL"], iterations=50)
         training_executor.train_agent(iterations=20)
 
         progress = training_executor.get_training_progress()
@@ -609,7 +617,7 @@ class TestAgentTrainingMode:
     def test_export_improved_agent(self, training_executor):
         """Test exporting improved agent state."""
         # Start session and train
-        session = training_executor.start_training_session(["AAPL"])
+        training_executor.start_training_session(["AAPL"])
         training_executor.train_agent(iterations=10)
 
         # Export agent
@@ -683,14 +691,14 @@ class TestAgentTrainingMode:
         """Test error handling in training mode."""
         # Test error without session
         with pytest.raises(ValueError, match="No active training session"):
-            training_agent_mode.AgentTrainingMode().get_training_progress()
+            AgentTrainingMode().get_training_progress()
 
         with pytest.raises(ValueError, match="No active training session"):
-            training_agent_mode.AgentTrainingMode().end_training_session()
+            AgentTrainingMode().end_training_session()
 
         # Test error when no session to evaluate
         with pytest.raises(ValueError, match="No active training session"):
-            training_agent_mode.AgentTrainingMode().fine_tune_parameters({})
+            AgentTrainingMode().fine_tune_parameters({})
 
 
 class TestAgentTrainingModeIntegration:
@@ -709,10 +717,12 @@ class TestAgentTrainingModeIntegration:
         results = training_executor.train_agent(iterations=30)
 
         # Evaluate performance
-        evaluation = training_executor.evaluate_performance([
-            "bull_market",
-            "bear_market",
-        ])
+        evaluation = training_executor.evaluate_performance(
+            [
+                "bull_market",
+                "bear_market",
+            ]
+        )
 
         # Fine-tune parameters
         optimized_params = training_executor.fine_tune_parameters(evaluation)
@@ -777,8 +787,7 @@ class TestAgentTrainingModeFactoryIntegration:
         """Test that execution factory can create AI training mode."""
         # This test verifies that the execution factory pattern
         # could be extended to include AI training mode
-        from quantchain.tools.execution_factory import create_execution_interface
-        
+
         mock_config = Mock(spec=QuantChainConfig)
         mock_config.get.side_effect = lambda key, default=None: {
             "ai_training.enabled": True,

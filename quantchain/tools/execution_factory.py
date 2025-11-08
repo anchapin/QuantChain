@@ -6,7 +6,6 @@ from .trading_execution import TradingExecutionInterface
 from ..connectors.alpaca_execution import AlpacaExecutionConnector
 from .paper_trading import PaperTradingExecutor
 from .tutorial_mode import TutorialExecutor
-from .agent_training_mode import AgentTrainingMode
 
 
 def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInterface:
@@ -38,12 +37,16 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
             "session_duration": config.get("ai_training.session_duration", 3600),
             "max_iterations": config.get("ai_training.max_iterations", 1000),
             "learning_rate": config.get("ai_training.learning_rate", 0.001),
-            "optimization_strategy": config.get("ai_training.optimization_strategy", "bayesian"),
+            "optimization_strategy": config.get(
+                "ai_training.optimization_strategy", "bayesian"
+            ),
             "track_performance": config.get("ai_training.track_performance", True),
             "optimize_parameters": config.get("ai_training.optimize_parameters", True),
             "commission_per_trade": config.get("trading.commission_per_trade", 0.0),
             "commission_per_share": config.get("trading.commission_per_share", 0.0),
         }
+
+        from .agent_training_mode import AgentTrainingMode
 
         return AgentTrainingMode(
             initial_cash=initial_cash, config=config, **ai_training_config
@@ -104,5 +107,8 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
 
     else:
         raise ConfigurationError(
-            f"Unsupported broker: {broker}. Supported: alpaca, paper, tutorial, ai_training"
+            (
+                f"Unsupported broker: {broker}. "
+                "Supported: alpaca, paper, tutorial, ai_training"
+            )
         )
