@@ -183,7 +183,7 @@ class CCXTDataConnector(DataFeedInterface):
 
         # Check if cache needs refresh
         # Handle both timestamp (float) and datetime object types
-        cache_age = 0
+        cache_age: float = 0.0
         if self._cache_timestamp is not None:
             if isinstance(self._cache_timestamp, float):
                 cache_age = current_time - self._cache_timestamp
