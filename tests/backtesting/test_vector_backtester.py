@@ -23,7 +23,7 @@ from quantchain.backtesting.engine import BacktestConfig
 class TestVectorBacktester:
     """Test VectorBacktester class."""
 
-    def test_vector_backtester_initialization(self, default_backtest_config):
+    def test_vector_backtester_initialization(self, default_backtest_config) -> None:
         """Test VectorBacktester can be initialized with configuration."""
         backtester = VectorBacktester(default_backtest_config)
 
@@ -31,7 +31,7 @@ class TestVectorBacktester:
         assert hasattr(backtester, "position_manager")
         assert hasattr(backtester, "market_friction")
 
-    def test_vector_backtester_initialization_default_config(self):
+    def test_vector_backtester_initialization_default_config(self) -> None:
         """Test VectorBacktester can be initialized with default config."""
         from quantchain.backtesting.engine import BacktestConfig
 
@@ -96,7 +96,7 @@ class TestVectorBacktester:
         assert len(result.trade_log) == 0  # No trades
 
         # Equity curve should be flat (no trading)
-        expected_equity = [default_backtest_config.initial_cash] * len(
+        expected_equity: list[float] = [default_backtest_config.initial_cash] * len(
             sample_ohlcv_data
         )
         np.testing.assert_array_almost_equal(
@@ -139,7 +139,7 @@ class TestVectorBacktester:
         assert isinstance(equity_curve, pd.Series)
         assert len(equity_curve) == len(sample_ohlcv_data)
 
-    def test_vector_backtester_with_commission(self, sample_ohlcv_data):
+    def test_vector_backtester_with_commission(self, sample_ohlcv_data) -> None:
         """Test vector backtester with commission."""
         config_with_commission = BacktestConfig(
             initial_cash=100000.0,
@@ -168,7 +168,7 @@ class TestVectorBacktester:
 
         assert abs(result.equity_curve.iloc[-1] - expected_final_equity) < 100.0
 
-    def test_vector_backtester_with_slippage(self, sample_ohlcv_data):
+    def test_vector_backtester_with_slippage(self, sample_ohlcv_data) -> None:
         """Test vector backtester with slippage."""
         config_with_slippage = BacktestConfig(
             initial_cash=100000.0,
@@ -226,7 +226,7 @@ class TestVectorBacktester:
 class TestVectorizedPositionManager:
     """Test VectorizedPositionManager class."""
 
-    def test_vectorized_position_manager_initialization(self):
+    def test_vectorized_position_manager_initialization(self) -> None:
         """Test VectorizedPositionManager can be initialized."""
         manager = VectorizedPositionManager(initial_cash=100000.0)
 
@@ -235,7 +235,7 @@ class TestVectorizedPositionManager:
         assert hasattr(manager, "positions")
         assert hasattr(manager, "equity_curve")
 
-    def test_vectorized_position_manager_process_signals(self):
+    def test_vectorized_position_manager_process_signals(self) -> None:
         """Test processing trading signals."""
         manager = VectorizedPositionManager(initial_cash=100000.0)
 
@@ -252,7 +252,7 @@ class TestVectorizedPositionManager:
         # Should have position from first signal
         assert positions.iloc[0] > 0
 
-    def test_vectorized_position_manager_calculate_equity(self):
+    def test_vectorized_position_manager_calculate_equity(self) -> None:
         """Test equity calculation from positions and prices."""
         manager = VectorizedPositionManager(initial_cash=100000.0)
 
@@ -272,7 +272,7 @@ class TestVectorizedPositionManager:
         assert equity.iloc[0] == 100000.0
         assert equity.iloc[-1] > 100000.0
 
-    def test_vectorized_position_manager_multiple_positions(self):
+    def test_vectorized_position_manager_multiple_positions(self) -> None:
         """Test managing multiple positions over time."""
         manager = VectorizedPositionManager(initial_cash=100000.0)
 
@@ -291,7 +291,7 @@ class TestVectorizedPositionManager:
         # Final position should be positive (last signal is buy)
         assert positions.iloc[-1] > 0
 
-    def test_vectorized_position_manager_with_costs(self):
+    def test_vectorized_position_manager_with_costs(self) -> None:
         """Test position management with transaction costs."""
         manager = VectorizedPositionManager(
             initial_cash=100000.0,
@@ -311,7 +311,7 @@ class TestVectorizedPositionManager:
         assert "commission" in trades.columns, "Trades should have commission column"
         assert (trades["commission"] > 0).all()
 
-    def test_vectorized_position_manager_insufficient_cash(self):
+    def test_vectorized_position_manager_insufficient_cash(self) -> None:
         """Test handling insufficient cash for positions."""
         manager = VectorizedPositionManager(initial_cash=1000.0)
 
@@ -331,7 +331,9 @@ class TestVectorizedPositionManager:
 class TestVectorBacktesterIntegration:
     """Integration tests for vector backtester."""
 
-    def test_vector_backtester_vs_event_driven_comparison(self, sample_ohlcv_data):
+    def test_vector_backtester_vs_event_driven_comparison(
+        self, sample_ohlcv_data
+    ) -> None:
         """Test vector backtester produces similar results to event-driven approach."""
         config = BacktestConfig(
             initial_cash=100000.0, commission_rate=0.001, slippage_rate=0.0005
@@ -361,7 +363,7 @@ class TestVectorBacktesterIntegration:
         relative_diff = abs(vector_final - event_final) / event_final
         assert relative_diff < 0.01  # Within 1%
 
-    def test_vector_backtester_performance_simple_strategy(self):
+    def test_vector_backtester_performance_simple_strategy(self) -> None:
         """Test vector backtester performance with simple strategy."""
         config = BacktestConfig(initial_cash=100000.0)
 
@@ -392,7 +394,7 @@ class TestVectorBacktesterIntegration:
         assert result is not None
         assert len(result.equity_curve) == 100000
 
-    def test_vector_backtester_signal_based_strategy(self, sample_ohlcv_data):
+    def test_vector_backtester_signal_based_strategy(self, sample_ohlcv_data) -> None:
         """Test vector backtester with signal-based strategy."""
         backtester = VectorBacktester()
 
@@ -414,7 +416,7 @@ class TestVectorBacktesterIntegration:
         # Should have trades when momentum triggers
         assert len(result.trade_log) >= 0
 
-    def test_vector_backtester_position_tracking(self, sample_ohlcv_data):
+    def test_vector_backtester_position_tracking(self, sample_ohlcv_data) -> None:
         """Test vector backtester tracks positions correctly."""
         backtester = VectorBacktester()
 
@@ -444,7 +446,9 @@ class TestVectorBacktesterIntegration:
         assert positions[0] > 0  # First buy
         assert positions[-1] == 0  # Final sell (flat position)
 
-    def test_vector_backtester_error_handling_invalid_signals(self, sample_ohlcv_data):
+    def test_vector_backtester_error_handling_invalid_signals(
+        self, sample_ohlcv_data
+    ) -> None:
         """Test error handling with invalid signals."""
         backtester = VectorBacktester()
 
@@ -468,7 +472,7 @@ class TestVectorBacktesterIntegration:
         ):
             backtester.run(short_signals, sample_ohlcv_data)
 
-    def test_vector_backtester_error_handling_empty_data(self):
+    def test_vector_backtester_error_handling_empty_data(self) -> None:
         """Test error handling with empty data."""
         backtester = VectorBacktester()
 
@@ -478,7 +482,7 @@ class TestVectorBacktesterIntegration:
         with pytest.raises(VectorBacktestError, match="Empty data provided"):
             backtester.run(signals, empty_data)
 
-    def test_vector_backtester_memory_efficiency(self):
+    def test_vector_backtester_memory_efficiency(self) -> None:
         """Test vector backtester memory efficiency."""
         # Create large dataset to test memory usage
         large_data = pd.DataFrame(
@@ -508,7 +512,7 @@ class TestVectorBacktesterIntegration:
         """Mock event-driven backtest for comparison."""
         cash = config.initial_cash
         positions = 0
-        equity = []
+        equity: list[float] = []
 
         for i in range(len(data)):
             price = data.iloc[i]["close"]

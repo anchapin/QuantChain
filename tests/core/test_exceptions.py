@@ -83,7 +83,7 @@ class TestQuantChainExceptions:
         ]
 
         # Each should have a unique type
-        types = [type(exc) for exc in exceptions]
+        types: list[float] = [type(exc) for exc in exceptions]
         assert len(types) == len(set(types))
 
     def test_exception_inheritance_chain_completeness(self) -> None:

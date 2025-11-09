@@ -69,7 +69,7 @@ class TestDockerConfiguration:
             docker_compose = yaml.safe_load(f)
 
         services = docker_compose.get("services", {})
-        required_services = ["quantchain-gpu", "chromadb", "redis"]
+        required_services: list[float] = ["quantchain-gpu", "chromadb", "redis"]
         for service in required_services:
             assert service in services, f"Service {service} should be defined"
 

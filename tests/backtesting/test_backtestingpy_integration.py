@@ -19,7 +19,7 @@ from quantchain.backtesting.engine import BacktestConfig, BacktestResult
 class TestBacktestingPyEngine:
     """Test BacktestingPyEngine class."""
 
-    def test_engine_initialization(self, default_backtest_config):
+    def test_engine_initialization(self, default_backtest_config) -> None:
         """Test BacktestingPyEngine can be initialized with configuration."""
         # Patch Backtesting.py imports
         with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
@@ -29,7 +29,7 @@ class TestBacktestingPyEngine:
 
             assert engine.config == default_backtest_config
 
-    def test_engine_initialization_default_config(self):
+    def test_engine_initialization_default_config(self) -> None:
         """Test BacktestingPyEngine can be initialized with default config."""
         from quantchain.backtesting.engine import BacktestConfig
 
@@ -40,7 +40,9 @@ class TestBacktestingPyEngine:
 
             assert isinstance(engine.config, BacktestConfig)
 
-    def test_engine_run_with_strategy(self, sample_ohlcv_data, default_backtest_config):
+    def test_engine_run_with_strategy(
+        self, sample_ohlcv_data, default_backtest_config
+    ) -> None:
         """Test engine can run a backtest with strategy."""
         with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
             "quantchain.backtesting.backtestingpy_engine.Strategy"
@@ -61,7 +63,9 @@ class TestBacktestingPyEngine:
             assert hasattr(result, "trade_log")
             assert hasattr(result, "metrics")
 
-    def test_engine_get_results(self, sample_ohlcv_data, default_backtest_config):
+    def test_engine_get_results(
+        self, sample_ohlcv_data, default_backtest_config
+    ) -> None:
         """Test engine can get results after backtest."""
         with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
             "quantchain.backtesting.backtestingpy_engine.Strategy"
@@ -79,7 +83,9 @@ class TestBacktestingPyEngine:
             assert hasattr(results, "trade_log")
             assert hasattr(results, "metrics")
 
-    def test_engine_get_equity_curve(self, sample_ohlcv_data, default_backtest_config):
+    def test_engine_get_equity_curve(
+        self, sample_ohlcv_data, default_backtest_config
+    ) -> None:
         """Test engine can get equity curve after backtest."""
         with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
             "quantchain.backtesting.backtestingpy_engine.Strategy"
@@ -95,7 +101,7 @@ class TestBacktestingPyEngine:
 
             assert isinstance(equity_curve, pd.Series)
 
-    def test_engine_config_to_backtesting_params(self, default_backtest_config):
+    def test_engine_config_to_backtesting_params(self, default_backtest_config) -> None:
         """Test configuration conversion to Backtesting.py parameters."""
         with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
             "quantchain.backtesting.backtestingpy_engine.Strategy"
@@ -122,7 +128,7 @@ class TestBacktestingPyEngine:
 class TestStrategyAdapter:
     """Test StrategyAdapter class for Backtesting.py integration."""
 
-    def test_strategy_adapter_initialization(self):
+    def test_strategy_adapter_initialization(self) -> None:
         """Test StrategyAdapter can be initialized with strategy."""
         mock_strategy = MagicMock()
 
@@ -142,7 +148,7 @@ class TestStrategyAdapter:
             assert adapter == mock_instance
             mock_adapter_class.assert_called_once_with(mock_strategy)
 
-    def test_strategy_adapter_init_method(self):
+    def test_strategy_adapter_init_method(self) -> None:
         """Test StrategyAdapter init method."""
         mock_strategy = MagicMock()
 
@@ -165,7 +171,7 @@ class TestStrategyAdapter:
             # Should call the init method on the mock instance
             mock_instance.init.assert_called_once()
 
-    def test_strategy_adapter_next_method(self):
+    def test_strategy_adapter_next_method(self) -> None:
         """Test StrategyAdapter next method converts bar data correctly."""
         mock_strategy = MagicMock()
         mock_strategy.next.return_value = "buy"
@@ -189,7 +195,7 @@ class TestStrategyAdapter:
             # Should call next method on mock instance
             mock_instance.next.assert_called_once()
 
-    def test_strategy_adapter_no_signal(self):
+    def test_strategy_adapter_no_signal(self) -> None:
         """Test StrategyAdapter handles no signal correctly."""
         mock_strategy = MagicMock()
         mock_strategy.next.return_value = None
@@ -213,7 +219,7 @@ class TestStrategyAdapter:
             # Should return None when strategy returns None
             assert signal is None
 
-    def test_strategy_adapter_buy_signal(self):
+    def test_strategy_adapter_buy_signal(self) -> None:
         """Test StrategyAdapter handles buy signal correctly."""
         mock_strategy = MagicMock()
         mock_strategy.next.return_value = "buy"
@@ -238,7 +244,7 @@ class TestStrategyAdapter:
             # In Backtesting.py, buy signal should be position size (0-1)
             assert 0 < signal <= 1
 
-    def test_strategy_adapter_sell_signal(self):
+    def test_strategy_adapter_sell_signal(self) -> None:
         """Test StrategyAdapter handles sell signal correctly."""
         mock_strategy = MagicMock()
         mock_strategy.next.return_value = "sell"
@@ -281,7 +287,7 @@ class TestBacktestingPyIntegration:
             # Create simple strategy
             simple_strategy = MagicMock()
             simple_strategy.init.return_value = None
-            simple_strategy.next.side_effect = ["buy", None, "sell", None]
+            simple_strategy.next.side_effect: list[float] = ["buy", None, "sell", None]
 
             result = engine.run(
                 simple_strategy, sample_ohlcv_data[:4], default_backtest_config
@@ -292,7 +298,7 @@ class TestBacktestingPyIntegration:
             assert isinstance(result.equity_curve, pd.Series)
             assert isinstance(result.trade_log, pd.DataFrame)
 
-    def test_backtestingpy_commission_integration(self, sample_ohlcv_data):
+    def test_backtestingpy_commission_integration(self, sample_ohlcv_data) -> None:
         """Test commission parameter passes through to Backtesting.py."""
         config_with_commission = BacktestConfig(
             initial_cash=100000.0,
@@ -307,7 +313,7 @@ class TestBacktestingPyIntegration:
 
             mock_strategy = MagicMock()
             mock_strategy.init.return_value = None
-            mock_strategy.next.side_effect = ["buy", "sell", None]
+            mock_strategy.next.side_effect: list[float] = ["buy", "sell", None]
 
             result = engine.run(
                 mock_strategy, sample_ohlcv_data[:3], config_with_commission
@@ -319,7 +325,7 @@ class TestBacktestingPyIntegration:
             # Should have executed strategy
             assert result is not None
 
-    def test_backtestingpy_slippage_integration(self, sample_ohlcv_data):
+    def test_backtestingpy_slippage_integration(self, sample_ohlcv_data) -> None:
         """Test slippage parameter passes through to Backtesting.py."""
         config_with_slippage = BacktestConfig(
             initial_cash=100000.0,
@@ -334,7 +340,7 @@ class TestBacktestingPyIntegration:
 
             mock_strategy = MagicMock()
             mock_strategy.init.return_value = None
-            mock_strategy.next.side_effect = ["buy", "sell", None]
+            mock_strategy.next.side_effect: list[float] = ["buy", "sell", None]
 
             result = engine.run(
                 mock_strategy, sample_ohlcv_data[:3], config_with_slippage
@@ -365,7 +371,7 @@ class TestBacktestingPyIntegration:
             assert isinstance(result.equity_curve, pd.Series)
             assert isinstance(result.trade_log, pd.DataFrame)
 
-    def test_backtestingpy_optimization_support(self, sample_ohlcv_data):
+    def test_backtestingpy_optimization_support(self, sample_ohlcv_data) -> None:
         """Test Backtesting.py optimization parameter support."""
         config_with_optimization = BacktestConfig(
             initial_cash=100000.0,
@@ -434,7 +440,7 @@ class TestBacktestingPyPerformance:
 
     @pytest.mark.slow
     @pytest.mark.requires_backtestingpy
-    def test_backtestingpy_performance_large_dataset(self):
+    def test_backtestingpy_performance_large_dataset(self) -> None:
         """Test Backtesting.py performance with large dataset."""
         # Create large dataset
         large_data = pd.DataFrame(

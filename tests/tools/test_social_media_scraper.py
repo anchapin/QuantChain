@@ -3,6 +3,7 @@
 import pytest
 from unittest.mock import MagicMock, patch, Mock
 import sys
+from typing import Any
 from quantchain.tools import social_media_scraper
 from quantchain.tools.social_media_scraper import (
     SocialMediaScraper,
@@ -88,8 +89,8 @@ class TestSocialMediaScraper:
     def test_aggregate_social_metrics_empty_data(self) -> None:
         """Test aggregating metrics with empty data."""
         scraper = SocialMediaScraper()
-        telegram_data = {}
-        twitter_data = {}
+        telegram_data: dict[str, Any] = {}
+        twitter_data: dict[str, Any] = {}
 
         metrics = scraper._aggregate_social_metrics(telegram_data, twitter_data)
 
@@ -149,7 +150,9 @@ class TestSocialMediaScraper:
 
     @patch.object(SocialMediaScraper, "_get_telegram_metrics")
     @patch.object(SocialMediaScraper, "_get_twitter_metrics")
-    def test_get_social_metrics_success(self, mock_twitter, mock_telegram) -> None:
+    def test_get_social_metrics_success(
+        self, mock_twitter: Mock, mock_telegram: Mock
+    ) -> None:
         """Test successful social metrics retrieval."""
         mock_telegram.return_value = {"followers": 1000, "recent_posts": 10}
         mock_twitter.return_value = {
@@ -382,8 +385,8 @@ class TestSocialMediaScraperIntegration:
         """Test error handling maintains data integrity."""
         scraper = SocialMediaScraper()
 
-        telegram_data = {}
-        twitter_data = {}
+        telegram_data: dict[str, Any] = {}
+        twitter_data: dict[str, Any] = {}
 
         metrics = scraper._aggregate_social_metrics(telegram_data, twitter_data)
 

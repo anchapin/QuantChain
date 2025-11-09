@@ -27,7 +27,7 @@ from quantchain.backtesting.market_friction import (
 class TestCommissionModels:
     """Test commission models."""
 
-    def test_flat_commission_calculation(self):
+    def test_flat_commission_calculation(self) -> None:
         """Test flat commission calculation."""
         commission = FlatCommission(
             fee_per_trade=1.0, fee_per_contract=0.1, min_fee=0.5
@@ -49,7 +49,7 @@ class TestCommissionModels:
         result = commission_zero.calculate(1000.0, "buy")
         assert result == 0.0
 
-    def test_percentage_commission_calculation(self):
+    def test_percentage_commission_calculation(self) -> None:
         """Test percentage commission calculation."""
         commission = PercentageCommission(rate=0.001, min_fee=1.0, max_fee=10.0)
 
@@ -70,7 +70,7 @@ class TestCommissionModels:
         result = commission_no_limits.calculate(20000.0, "buy")
         assert result == 20.0
 
-    def test_tiered_commission_calculation(self):
+    def test_tiered_commission_calculation(self) -> None:
         """Test tiered commission calculation."""
         commission = TieredCommission()
 
@@ -91,7 +91,7 @@ class TestCommissionModels:
 class TestSlippageModels:
     """Test slippage models."""
 
-    def test_fixed_slippage(self):
+    def test_fixed_slippage(self) -> None:
         """Test fixed slippage model."""
         slippage = FixedSlippage(rate=0.0001)
 
@@ -109,7 +109,7 @@ class TestSlippageModels:
         result = slippage_zero.apply(price, 100, "buy")
         assert result == price
 
-    def test_volume_impact_slippage(self):
+    def test_volume_impact_slippage(self) -> None:
         """Test volume impact slippage model."""
         slippage = VolumeImpactSlippage(
             base_rate=0.0001, volume_impact_factor=0.001, avg_daily_volume=1000000
@@ -126,7 +126,7 @@ class TestSlippageModels:
         expected_price = price - expected_total
         assert abs(result - expected_price) < 0.0001
 
-    def test_bid_ask_spread_slippage(self):
+    def test_bid_ask_spread_slippage(self) -> None:
         """Test bid-ask spread slippage model."""
         slippage = BidAskSpreadSlippage(base_spread_rate=0.0005, volatility_factor=0.1)
 
@@ -149,7 +149,7 @@ class TestSlippageModels:
 class TestLatencyModels:
     """Test latency models."""
 
-    def test_fixed_latency(self):
+    def test_fixed_latency(self) -> None:
         """Test fixed latency model."""
         latency = FixedLatency(latency_ms=10.0)
         timestamp = datetime(2023, 1, 1, 12, 0, 0)
@@ -158,7 +158,7 @@ class TestLatencyModels:
         expected = timestamp + pd.Timedelta(milliseconds=10.0)
         assert result == expected
 
-    def test_uniform_random_latency(self):
+    def test_uniform_random_latency(self) -> None:
         """Test uniform random latency model."""
         latency = UniformRandomLatency(min_ms=5.0, max_ms=50.0)
         timestamp = datetime(2023, 1, 1, 12, 0, 0)
@@ -170,7 +170,7 @@ class TestLatencyModels:
         max_expected = timestamp + pd.Timedelta(milliseconds=50.0)
         assert min_expected <= result <= max_expected
 
-    def test_normal_random_latency(self):
+    def test_normal_random_latency(self) -> None:
         """Test normal random latency model."""
         latency = NormalRandomLatency(
             mean_ms=20.0, std_ms=5.0, min_ms=1.0, max_ms=100.0
@@ -188,7 +188,7 @@ class TestLatencyModels:
 class TestMarketFrictionConfig:
     """Test market friction configuration."""
 
-    def test_basic_config(self):
+    def test_basic_config(self) -> None:
         """Test basic configuration setup."""
         commission = FlatCommission(fee_per_trade=1.0)
         slippage = FixedSlippage(rate=0.0001)
@@ -203,7 +203,7 @@ class TestMarketFrictionConfig:
         assert config.latency_model == latency
         assert config.asset_specific == {}
 
-    def test_asset_specific_config(self):
+    def test_asset_specific_config(self) -> None:
         """Test asset-specific configuration."""
         commission = FlatCommission(fee_per_trade=1.0)
         slippage = FixedSlippage(rate=0.0001)
@@ -238,7 +238,7 @@ class TestMarketFrictionConfig:
 class TestMarketFrictionSimulator:
     """Test main market friction simulator."""
 
-    def test_initialization(self):
+    def test_initialization(self) -> None:
         """Test simulator initialization."""
         commission = FlatCommission(fee_per_trade=1.0)
         slippage = FixedSlippage(rate=0.0001)
@@ -251,7 +251,7 @@ class TestMarketFrictionSimulator:
         simulator = MarketFrictionSimulator(config)
         assert simulator.config == config
 
-    def test_commission_application(self):
+    def test_commission_application(self) -> None:
         """Test commission application."""
         commission = PercentageCommission(rate=0.001)
         slippage = FixedSlippage(rate=0.0001)
@@ -267,7 +267,7 @@ class TestMarketFrictionSimulator:
         result = simulator.apply_commission(1000.0, "buy", "AAPL")
         assert result == 1.0  # 1000 * 0.001
 
-    def test_slippage_application(self):
+    def test_slippage_application(self) -> None:
         """Test slippage application."""
         commission = FlatCommission(fee_per_trade=1.0)
         slippage = FixedSlippage(rate=0.0001)
@@ -283,7 +283,7 @@ class TestMarketFrictionSimulator:
         result = simulator.apply_slippage(100.0, 100, "buy")
         assert result == 99.99  # price - slippage
 
-    def test_latency_application(self):
+    def test_latency_application(self) -> None:
         """Test latency application."""
         commission = FlatCommission(fee_per_trade=1.0)
         slippage = FixedSlippage(rate=0.0001)
@@ -301,7 +301,7 @@ class TestMarketFrictionSimulator:
         expected = timestamp + pd.Timedelta(milliseconds=10.0)
         assert result == expected
 
-    def test_total_cost_calculation(self):
+    def test_total_cost_calculation(self) -> None:
         """Test total cost calculation."""
         commission = PercentageCommission(rate=0.001)
         slippage = FixedSlippage(rate=0.0001)
@@ -325,7 +325,7 @@ class TestMarketFrictionSimulator:
         assert abs(result["commission"] - expected_commission) < 0.01
         assert abs(result["slippage"] - expected_slippage) < 0.01
 
-    def test_asset_specific_override(self):
+    def test_asset_specific_override(self) -> None:
         """Test asset-specific configuration override."""
         commission = FlatCommission(fee_per_trade=1.0)
         slippage = FixedSlippage(rate=0.0001)
@@ -363,25 +363,25 @@ class TestMarketFrictionSimulator:
 class TestErrorHandling:
     """Test error handling."""
 
-    def test_invalid_commission_parameters(self):
+    def test_invalid_commission_parameters(self) -> None:
         """Test invalid commission parameters."""
         with pytest.raises(InvalidParameter):
             commission = PercentageCommission(rate=-0.1)  # Negative rate
             commission.calculate(1000.0, "buy")
 
-    def test_invalid_slippage_parameters(self):
+    def test_invalid_slippage_parameters(self) -> None:
         """Test invalid slippage parameters."""
         with pytest.raises(InvalidParameter):
             slippage = FixedSlippage(rate=-0.1)  # Negative rate
             slippage.apply(100.0, 100, "buy")
 
-    def test_invalid_latency_parameters(self):
+    def test_invalid_latency_parameters(self) -> None:
         """Test invalid latency parameters."""
         with pytest.raises(InvalidParameter):
             latency = FixedLatency(latency_ms=-10.0)  # Negative latency
             latency.apply(datetime.now())
 
-    def test_friction_calculation_errors(self):
+    def test_friction_calculation_errors(self) -> None:
         """Test friction calculation errors."""
         # Test with invalid trade parameters
         commission = FlatCommission(fee_per_trade=1.0)

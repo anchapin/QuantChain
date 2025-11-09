@@ -29,7 +29,7 @@ class TestAlpacaExecutionConnector:
     """Test cases for AlpacaExecutionConnector."""
 
     @pytest.fixture
-    def mock_client(self):
+    def mock_client(self) -> None:
         """Mock Alpaca trading client."""
         with patch(
             "quantchain.connectors.alpaca_execution.TradingClient"
@@ -45,7 +45,7 @@ class TestAlpacaExecutionConnector:
             api_key="test-key", api_secret="test-secret", use_paper=True
         )
 
-    def test_initialization(self):
+    def test_initialization(self) -> None:
         """Test connector initialization."""
         with patch(
             "quantchain.connectors.alpaca_execution.TradingClient"
@@ -72,7 +72,7 @@ class TestAlpacaExecutionConnector:
             assert connector.use_paper is True
             assert connector.base_url == "https://test.api.com"
 
-    def test_authentication_error(self):
+    def test_authentication_error(self) -> None:
         """Test authentication error handling."""
         with patch(
             "quantchain.connectors.alpaca_execution.TradingClient"
@@ -84,7 +84,7 @@ class TestAlpacaExecutionConnector:
 
             assert "Failed to authenticate with Alpaca" in str(exc_info.value)
 
-    def test_is_crypto_symbol(self, connector):
+    def test_is_crypto_symbol(self, connector) -> None:
         """Test crypto symbol detection."""
         assert connector._is_crypto_symbol("BTC/USD") is True
         assert connector._is_crypto_symbol("BTC-USD") is True
@@ -92,21 +92,21 @@ class TestAlpacaExecutionConnector:
         assert connector._is_crypto_symbol("AAPL") is False
         assert connector._is_crypto_symbol("MSFT") is False
 
-    def test_normalize_symbol(self, connector):
+    def test_normalize_symbol(self, connector) -> None:
         """Test symbol normalization."""
         assert connector._normalize_symbol("BTC-USD") == "BTC/USD"
         assert connector._normalize_symbol("BTC/USD") == "BTC/USD"
         assert connector._normalize_symbol("AAPL") == "AAPL"
         assert connector._normalize_symbol("MSFT") == "MSFT"
 
-    def test_get_asset_class(self, connector):
+    def test_get_asset_class(self, connector) -> None:
         """Test asset class determination."""
         assert connector._get_asset_class("BTC/USD") == "crypto"
         assert connector._get_asset_class("BTC-USD") == "crypto"
         assert connector._get_asset_class("AAPL") == "equity"
         assert connector._get_asset_class("MSFT") == "equity"
 
-    def test_convert_order_status(self, connector):
+    def test_convert_order_status(self, connector) -> None:
         """Test order status conversion."""
         assert connector._convert_order_status("new") == OrderStatus.PENDING
         assert connector._convert_order_status("filled") == OrderStatus.FILLED
@@ -118,7 +118,7 @@ class TestAlpacaExecutionConnector:
         assert connector._convert_order_status("rejected") == OrderStatus.REJECTED
         assert connector._convert_order_status("unknown") == OrderStatus.PENDING
 
-    def test_place_equity_market_order(self, connector, mock_client):
+    def test_place_equity_market_order(self, connector, mock_client) -> None:
         """Test placing an equity market order."""
         # Setup mock order response
         mock_alpaca_order = Mock()
@@ -172,7 +172,7 @@ class TestAlpacaExecutionConnector:
             # Verify Alpaca client was called correctly
             mock_client.submit_order.assert_called_once()
 
-    def test_place_crypto_limit_order(self, connector, mock_client):
+    def test_place_crypto_limit_order(self, connector, mock_client) -> None:
         """Test placing a crypto limit order."""
         # Setup mock order response
         mock_alpaca_order = Mock()
@@ -222,7 +222,7 @@ class TestAlpacaExecutionConnector:
             assert result.price == 45000.0
             assert result.status == OrderStatus.PENDING
 
-    def test_place_order_insufficient_funds(self, connector, mock_client):
+    def test_place_order_insufficient_funds(self, connector, mock_client) -> None:
         """Test order placement with insufficient funds."""
         mock_client.submit_order.side_effect = Exception("Insufficient funds")
 
@@ -246,7 +246,7 @@ class TestAlpacaExecutionConnector:
 
             assert "Insufficient funds" in str(exc_info.value)
 
-    def test_place_order_validation_error(self, connector, mock_client):
+    def test_place_order_validation_error(self, connector, mock_client) -> None:
         """Test order placement with validation error."""
         mock_client.submit_order.side_effect = Exception("Invalid order quantity")
 
@@ -270,7 +270,7 @@ class TestAlpacaExecutionConnector:
 
             assert "Invalid order" in str(exc_info.value)
 
-    def test_cancel_order(self, connector, mock_client):
+    def test_cancel_order(self, connector, mock_client) -> None:
         """Test order cancellation."""
         # Setup mock order
         mock_alpaca_order = Mock()
@@ -300,14 +300,14 @@ class TestAlpacaExecutionConnector:
         mock_client.cancel_order_by_id.assert_called_once_with("order-123")
         mock_client.get_order_by_id.assert_called_once_with("order-123")
 
-    def test_cancel_order_not_found(self, connector, mock_client):
+    def test_cancel_order_not_found(self, connector, mock_client) -> None:
         """Test canceling non-existent order."""
         mock_client.cancel_order_by_id.side_effect = Exception("Order not found")
 
         with pytest.raises(OrderNotFoundError):
             connector.cancel_order(order_id="non-existent")
 
-    def test_get_order(self, connector, mock_client):
+    def test_get_order(self, connector, mock_client) -> None:
         """Test getting order details."""
         # Setup mock order
         mock_alpaca_order = Mock()
@@ -338,14 +338,14 @@ class TestAlpacaExecutionConnector:
         assert result.avg_fill_price == 150.50
         mock_client.get_order_by_id.assert_called_once_with("order-123")
 
-    def test_get_order_not_found(self, connector, mock_client):
+    def test_get_order_not_found(self, connector, mock_client) -> None:
         """Test getting non-existent order."""
         mock_client.get_order_by_id.side_effect = Exception("Order not found")
 
         with pytest.raises(OrderNotFoundError):
             connector.get_order("non-existent")
 
-    def test_get_account(self, connector, mock_client):
+    def test_get_account(self, connector, mock_client) -> None:
         """Test getting account information."""
         # Setup mock account
         mock_account = Mock()
@@ -364,7 +364,7 @@ class TestAlpacaExecutionConnector:
         mock_position.market_value = "15500.00"
 
         mock_client.get_account.return_value = mock_account
-        mock_client.get_all_positions.return_value = [mock_position]
+        mock_client.get_all_positions.return_value: list[float] = [mock_position]
 
         with patch.object(connector, "get_positions") as mock_get_positions:
             mock_get_positions.return_value = [
@@ -392,7 +392,7 @@ class TestAlpacaExecutionConnector:
             assert len(account.positions) == 1
             assert account.positions[0].symbol == "AAPL"
 
-    def test_get_positions(self, connector, mock_client):
+    def test_get_positions(self, connector, mock_client) -> None:
         """Test getting current positions."""
         # Setup mock positions
         mock_position1 = Mock()
@@ -409,7 +409,10 @@ class TestAlpacaExecutionConnector:
         mock_position2.current_price = "290.00"
         mock_position2.market_value = "14500.00"
 
-        mock_client.get_all_positions.return_value = [mock_position1, mock_position2]
+        mock_client.get_all_positions.return_value: list[float] = [
+            mock_position1,
+            mock_position2,
+        ]
 
         positions = connector.get_positions()
 
@@ -432,7 +435,7 @@ class TestAlpacaExecutionConnector:
         assert msft.unrealized_pnl == -500.0
         assert abs(msft.unrealized_pnl_percent + 3.33) < 0.1
 
-    def test_get_order_history(self, connector, mock_client):
+    def test_get_order_history(self, connector, mock_client) -> None:
         """Test getting order history."""
         # Setup mock orders
         mock_order1 = Mock()
@@ -445,7 +448,7 @@ class TestAlpacaExecutionConnector:
         mock_order2.symbol = "MSFT"
         mock_order2.status = "canceled"
 
-        mock_client.get_orders.return_value = [mock_order1, mock_order2]
+        mock_client.get_orders.return_value: list[float] = [mock_order1, mock_order2]
 
         with patch.object(connector, "_convert_alpaca_order") as mock_convert:
             mock_convert.side_effect = [
@@ -484,7 +487,7 @@ class TestAlpacaExecutionConnector:
             assert len(history) == 2
             mock_client.get_orders.assert_called_once()
 
-    def test_is_market_open_equity(self, connector, mock_client):
+    def test_is_market_open_equity(self, connector, mock_client) -> None:
         """Test market status for equities."""
         mock_clock = Mock()
         mock_clock.is_open = True
@@ -493,12 +496,12 @@ class TestAlpacaExecutionConnector:
         assert connector.is_market_open("AAPL") is True
         mock_client.get_clock.assert_called_once()
 
-    def test_is_market_open_crypto(self, connector):
+    def test_is_market_open_crypto(self, connector) -> None:
         """Test market status for crypto (always open)."""
         assert connector.is_market_open("BTC/USD") is True
         assert connector.is_market_open("BTC-USD") is True
 
-    def test_is_market_open_no_symbol(self, connector, mock_client):
+    def test_is_market_open_no_symbol(self, connector, mock_client) -> None:
         """Test market status without symbol (equity default)."""
         mock_clock = Mock()
         mock_clock.is_open = False
@@ -507,7 +510,7 @@ class TestAlpacaExecutionConnector:
         assert connector.is_market_open() is False
         mock_client.get_clock.assert_called_once()
 
-    def test_get_symbol_info(self, connector):
+    def test_get_symbol_info(self, connector) -> None:
         """Test getting symbol information."""
         with patch.object(connector, "_get_symbol_info") as mock_get_info:
             mock_get_info.return_value = {
@@ -527,7 +530,7 @@ class TestAlpacaExecutionConnector:
             assert info["tradable"] is True
             assert info["min_order_size"] == 0.01
 
-    def test_get_market_hours(self, connector, mock_client):
+    def test_get_market_hours(self, connector, mock_client) -> None:
         """Test getting market hours."""
         mock_clock = Mock()
         mock_clock.is_open = True
@@ -548,7 +551,7 @@ class TestAlpacaExecutionConnector:
         crypto_hours = connector.get_market_hours("BTC/USD")
         assert crypto_hours["market_type"] == "crypto"
 
-    def test_close_position(self, connector, mock_client):
+    def test_close_position(self, connector, mock_client) -> None:
         """Test closing a position."""
         mock_order = Mock()
         mock_order.id = "close-order"
@@ -579,7 +582,7 @@ class TestAlpacaExecutionConnector:
             assert result.symbol == "AAPL"
             mock_client.close_position.assert_called_once()
 
-    def test_validate_order_invalid_symbol(self, connector):
+    def test_validate_order_invalid_symbol(self, connector) -> None:
         """Test order validation for non-tradable symbol."""
         with patch.object(connector, "_get_symbol_info") as mock_get_info:
             mock_get_info.return_value = {
@@ -601,7 +604,7 @@ class TestAlpacaExecutionConnector:
 
             assert "not tradable" in str(exc_info.value)
 
-    def test_validate_order_below_minimum(self, connector):
+    def test_validate_order_below_minimum(self, connector) -> None:
         """Test order validation for quantity below minimum."""
         with patch.object(connector, "_get_symbol_info") as mock_get_info:
             mock_get_info.return_value = {
@@ -623,7 +626,7 @@ class TestAlpacaExecutionConnector:
 
             assert "below minimum" in str(exc_info.value)
 
-    def test_validate_order_crypto_too_small(self, connector):
+    def test_validate_order_crypto_too_small(self, connector) -> None:
         """Test order validation for crypto quantity too small."""
         with patch.object(connector, "_get_symbol_info") as mock_get_info:
             mock_get_info.return_value = {
@@ -645,7 +648,7 @@ class TestAlpacaExecutionConnector:
 
             assert "below minimum" in str(exc_info.value)
 
-    def test_validate_order_equity_stop_limit(self, connector):
+    def test_validate_order_equity_stop_limit(self, connector) -> None:
         """Test order validation for equity stop limit orders."""
         with patch.object(connector, "_get_symbol_info") as mock_get_info:
             mock_get_info.return_value = {

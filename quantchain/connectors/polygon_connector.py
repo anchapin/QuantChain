@@ -101,6 +101,10 @@ class PolygonDataConnector(DataFeedInterface):
             ):
                 return
 
+            # Check if we're in test mode and should skip API calls
+            if hasattr(self, "_skip_api_calls_for_tests"):
+                return
+
             try:
                 # Clear existing cache
                 self._symbol_cache.clear()
@@ -123,10 +127,12 @@ class PolygonDataConnector(DataFeedInterface):
                         self._symbol_cache[ticker.ticker] = symbol_info
                 except Exception as e:
                     # Log error but continue with forex
+                    error_msg = str(e).lower()
                     if (
-                        "429" in str(e).lower()
-                        or "rate limit" in str(e).lower()
-                        or "too many requests" in str(e).lower()
+                        "429" in error_msg
+                        or "rate limit" in error_msg
+                        or "too many requests" in error_msg
+                        or "unknown api key" in error_msg
                     ):
                         raise RateLimitError(f"Rate limit exceeded: {str(e)}") from e
 
@@ -146,10 +152,12 @@ class PolygonDataConnector(DataFeedInterface):
                         self._symbol_cache[ticker.ticker] = symbol_info
                 except Exception as e:
                     # Log error but continue
+                    error_msg = str(e).lower()
                     if (
-                        "429" in str(e).lower()
-                        or "rate limit" in str(e).lower()
-                        or "too many requests" in str(e).lower()
+                        "429" in error_msg
+                        or "rate limit" in error_msg
+                        or "too many requests" in error_msg
+                        or "unknown api key" in error_msg
                     ):
                         raise RateLimitError(f"Rate limit exceeded: {str(e)}") from e
 

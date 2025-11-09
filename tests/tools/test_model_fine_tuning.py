@@ -29,7 +29,7 @@ from quantchain.tools.model_fine_tuning import (  # noqa: F401
 class TestFineTuningConfig:
     """Test fine-tuning configuration class."""
 
-    def test_valid_config_creation(self):
+    def test_valid_config_creation(self) -> None:
         """Test creating valid configuration."""
         config = FineTuningConfig(
             model_name="deepseek-r1-0528",
@@ -44,7 +44,7 @@ class TestFineTuningConfig:
         assert config.lora_alpha == 32  # Default value
         assert config.lora_dropout == 0.1  # Default value
 
-    def test_invalid_lora_r(self):
+    def test_invalid_lora_r(self) -> None:
         """Test invalid LoRA r parameter."""
         with pytest.raises(ValueError, match="lora_r must be positive"):
             FineTuningConfig(
@@ -54,7 +54,7 @@ class TestFineTuningConfig:
                 lora_r=-1,
             )
 
-    def test_invalid_lora_alpha(self):
+    def test_invalid_lora_alpha(self) -> None:
         """Test invalid LoRA alpha parameter."""
         with pytest.raises(ValueError, match="lora_alpha must be positive"):
             FineTuningConfig(
@@ -64,7 +64,7 @@ class TestFineTuningConfig:
                 lora_alpha=0,
             )
 
-    def test_invalid_lora_dropout(self):
+    def test_invalid_lora_dropout(self) -> None:
         """Test invalid LoRA dropout parameter."""
         with pytest.raises(ValueError, match="lora_dropout must be between 0 and 1"):
             FineTuningConfig(
@@ -78,7 +78,7 @@ class TestFineTuningConfig:
 class TestTrainingArguments:
     """Test training arguments class."""
 
-    def test_default_training_args(self):
+    def test_default_training_args(self) -> None:
         """Test creating training arguments with defaults."""
         args = TrainingArguments(output_dir="/tmp/output")
 
@@ -94,7 +94,9 @@ class TestSetupFineTuningEnvironment:
     @patch("torch.cuda.is_available", return_value=True)
     @patch("torch.cuda.get_device_properties")
     @patch("os.makedirs")
-    def test_successful_setup(self, mock_makedirs, mock_device_props, mock_cuda):
+    def test_successful_setup(
+        self, mock_makedirs: Mock, mock_device_props: Mock, mock_cuda: Mock
+    ) -> FineTuningConfig:
         """Test successful environment setup."""
         # Mock GPU properties
         mock_device = Mock()
@@ -114,7 +116,7 @@ class TestSetupFineTuningEnvironment:
         mock_makedirs.assert_called_once_with("/tmp/output", exist_ok=True)
 
     @patch("torch.cuda.is_available", return_value=False)
-    def test_no_cuda_available(self, mock_cuda):
+    def test_no_cuda_available(self, mock_cuda: Mock) -> None:
         """Test environment setup without CUDA."""
         with pytest.raises(
             EnvironmentError, match="CUDA GPU not available for fine-tuning"
@@ -131,14 +133,14 @@ class TestPrepareFinancialDataset:
 
     @patch("os.path.isfile", return_value=True)
     @patch("os.path.isdir", return_value=False)
-    def test_jsonl_dataset_loading(self, mock_isdir, mock_isfile):
+    def test_jsonl_dataset_loading(self, mock_isdir: Mock, mock_isfile: Mock) -> None:
         """Test loading JSONL dataset."""
         # Skip this test as it requires actual file system access
         pytest.skip(
             "Dataset loading test requires file system access - skipping for CI"
         )
 
-    def test_unsupported_file_format(self):
+    def test_unsupported_file_format(self) -> None:
         """Test handling of unsupported file format."""
         tokenizer_instance = Mock()
 
@@ -157,7 +159,7 @@ class TestPrepareFinancialDataset:
                 )
 
     @patch("quantchain.tools.model_fine_tuning.load_dataset")
-    def test_dataset_not_found(self, mock_load_dataset):
+    def test_dataset_not_found(self, mock_load_dataset: Mock) -> None:
         """Test handling when dataset path doesn't exist."""
         mock_load_dataset.side_effect = Exception("File not found")
         tokenizer_instance = Mock()
@@ -175,7 +177,9 @@ class TestFineTuneModelQLoRA:
 
     @patch("torch.cuda.max_memory_allocated", return_value=15 * 1024**3)
     @patch("os.path.join")
-    def test_successful_qlora_fine_tuning(self, mock_join, mock_cuda_mem):
+    def test_successful_qlora_fine_tuning(
+        self, mock_join: Mock, mock_cuda_mem: Mock
+    ) -> None:
         """Test successful QLoRA fine-tuning."""
         mock_join.return_value = "/tmp/output/final_model"
 
@@ -230,7 +234,7 @@ class TestFineTuneModelQLoRA:
             assert result.training_loss == 0.5
             assert result.eval_loss == 0.6
 
-    def test_missing_dependencies(self):
+    def test_missing_dependencies(self) -> None:
         """Test handling when required dependencies are missing."""
         config = FineTuningConfig(
             model_name="test-model",
@@ -257,7 +261,7 @@ class TestFineTuneModelQLoRA:
             # Verify the mock was called
             mock_fine_tune.assert_called_once_with(config, mock_dataset, training_args)
 
-    def test_invalid_model_path(self):
+    def test_invalid_model_path(self) -> None:
         """Test handling when model path is invalid."""
         config = FineTuningConfig(
             model_name="test-model",
@@ -292,7 +296,7 @@ class TestFineTuneModelQLoRA:
 class TestQuantizeModel:
     """Test model quantization functionality."""
 
-    def test_gguf_quantization(self):
+    def test_gguf_quantization(self) -> None:
         """Test GGUF quantization."""
         with patch(
             "quantchain.tools.model_fine_tuning._quantize_to_gguf"
@@ -321,7 +325,7 @@ class TestQuantizeModel:
             assert result.quantized_model_path == "/tmp/output/model.gguf"
             assert result.compression_ratio == 3.33
 
-    def test_gptq_quantization(self):
+    def test_gptq_quantization(self) -> None:
         """Test GPTQ quantization."""
         with patch(
             "quantchain.tools.model_fine_tuning._quantize_to_gptq"
@@ -349,7 +353,7 @@ class TestQuantizeModel:
             assert isinstance(result, QuantizationResult)
             assert result.quantized_model_path == "/tmp/output/model.gptq"
 
-    def test_unsupported_quantization_format(self):
+    def test_unsupported_quantization_format(self) -> None:
         """Test handling of unsupported quantization format."""
         with pytest.raises(
             QuantizationError,
@@ -367,7 +371,7 @@ class TestQuantizeModel:
 class TestValidateFineTunedModel:
     """Test model validation functionality."""
 
-    def test_successful_validation(self):
+    def test_successful_validation(self) -> None:
         """Test successful model validation."""
         with patch(
             "quantchain.tools.model_fine_tuning._get_directory_size", return_value=5.0
@@ -385,7 +389,7 @@ class TestValidateFineTunedModel:
             assert len(result.sample_outputs) == 2
             assert "accuracy" in result.performance_metrics
 
-    def test_validation_failure(self):
+    def test_validation_failure(self) -> None:
         """Test handling when validation fails."""
         # Mock the validate_fine_tuned_model function to raise an exception
         with patch(
@@ -401,7 +405,7 @@ class TestValidateFineTunedModel:
 class TestErrorClasses:
     """Test custom exception classes."""
 
-    def test_fine_tuning_error_hierarchy(self):
+    def test_fine_tuning_error_hierarchy(self) -> None:
         """Test exception class hierarchy."""
         error = FineTuningError("Test error")
 
@@ -431,7 +435,9 @@ class TestIntegration:
     @patch("torch.cuda.is_available", return_value=True)
     @patch("torch.cuda.get_device_properties")
     @patch("torch.cuda.max_memory_allocated", return_value=15 * 1024**3)
-    def test_end_to_end_workflow(self, mock_cuda_mem, mock_device_props, mock_cuda):
+    def test_end_to_end_workflow(
+        self, mock_cuda_mem: Mock, mock_device_props: Mock, mock_cuda: Mock
+    ) -> None:
         """Test end-to-end fine-tuning workflow."""
         # Mock GPU properties
         mock_device_properties = Mock()

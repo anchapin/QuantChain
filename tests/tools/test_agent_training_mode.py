@@ -25,11 +25,11 @@ from quantchain.core.config import QuantChainConfig
 class TestTrainingSession:
     """Test training session management."""
 
-    def test_session_initialization(self):
+    def test_session_initialization(self) -> None:
         """Test training session initialization."""
         session_id = str(uuid.uuid4())
         start_time = datetime.now(timezone.utc)
-        objectives = ["Improve decision quality", "Learn market drivers"]
+        objectives: list[float] = ["Improve decision quality", "Learn market drivers"]
         parameters = {"learning_rate": 0.001, "exploration_rate": 0.1}
 
         session = TrainingSession(
@@ -53,7 +53,7 @@ class TestTrainingSession:
         assert session.is_active is True
         assert session.progress_percentage == 0.0
 
-    def test_session_active_status(self):
+    def test_session_active_status(self) -> None:
         """Test session active status calculation."""
         past_time = datetime.now(timezone.utc) - timedelta(seconds=7200)  # 2 hours ago
         session = TrainingSession(
@@ -69,7 +69,7 @@ class TestTrainingSession:
         # Should have correct elapsed time
         assert session.elapsed_time >= 3600
 
-    def test_iteration_progress(self):
+    def test_iteration_progress(self) -> None:
         """Test iteration-based progress calculation."""
         session = TrainingSession(
             session_id="test",
@@ -87,7 +87,7 @@ class TestTrainingSession:
         session.iterations_completed = 150
         assert session.progress_percentage == 100.0  # Capped at 100
 
-    def test_performance_tracking(self):
+    def test_performance_tracking(self) -> None:
         """Test performance history tracking."""
         session = TrainingSession(
             session_id="test",
@@ -106,7 +106,7 @@ class TestTrainingSession:
         session.update_performance(0.6)  # Lower score to create trend
         assert session.improvement_trend > 0  # Should be positive trend
 
-    def test_parameter_updates(self):
+    def test_parameter_updates(self) -> None:
         """Test parameter update functionality."""
         session = TrainingSession(
             session_id="test",
@@ -124,7 +124,7 @@ class TestTrainingSession:
             session.current_parameters["exploration_rate"] == 0.1
         )  # Should remain unchanged
 
-    def test_session_to_dict(self):
+    def test_session_to_dict(self) -> None:
         """Test session dictionary conversion."""
         start_time = datetime.now(timezone.utc)
         session = TrainingSession(
@@ -148,7 +148,7 @@ class TestTrainingSession:
 class TestTrainingDecision:
     """Test training decision representation."""
 
-    def test_decision_creation(self):
+    def test_decision_creation(self) -> None:
         """Test training decision creation."""
         decision_id = str(uuid.uuid4())
         timestamp = datetime.now(timezone.utc)
@@ -196,7 +196,7 @@ class TestTrainingDecision:
         assert "RSI oversold" in decision.market_drivers
         assert decision.performance_impact == 0.1
 
-    def test_decision_to_dict(self):
+    def test_decision_to_dict(self) -> None:
         """Test decision dictionary conversion."""
         decision = TrainingDecision(
             decision_id="test",
@@ -228,7 +228,7 @@ class TestTrainingDecision:
 class TestPerformanceTracker:
     """Test performance tracking functionality."""
 
-    def test_tracker_initialization(self):
+    def test_tracker_initialization(self) -> None:
         """Test performance tracker initialization."""
         tracker = PerformanceTracker()
 
@@ -238,7 +238,7 @@ class TestPerformanceTracker:
         assert tracker.decisions == []
         assert tracker.current_session is None
 
-    def test_session_tracking(self):
+    def test_session_tracking(self) -> None:
         """Test session tracking functionality."""
         tracker = PerformanceTracker()
         session = TrainingSession(
@@ -249,7 +249,7 @@ class TestPerformanceTracker:
         tracker.start_session(session)
         assert tracker.current_session == session
 
-    def test_decision_recording(self):
+    def test_decision_recording(self) -> None:
         """Test decision recording and metrics update."""
         tracker = PerformanceTracker()
         session = TrainingSession(
@@ -283,7 +283,7 @@ class TestPerformanceTracker:
         assert tracker.performance_history["decision_quality"][0] == 0.8
         assert session.current_performance is not None
 
-    def test_improvement_trend_calculation(self):
+    def test_improvement_trend_calculation(self) -> None:
         """Test improvement trend calculation."""
         tracker = PerformanceTracker()
 
@@ -311,7 +311,7 @@ class TestPerformanceTracker:
         trend = tracker.get_improvement_trend()
         assert trend > 0  # Should show positive trend
 
-    def test_weakness_identification(self):
+    def test_weakness_identification(self) -> None:
         """Test weakness identification functionality."""
         tracker = PerformanceTracker()
 
@@ -340,7 +340,7 @@ class TestPerformanceTracker:
         assert len(weaknesses) > 0
         assert any("Low decision quality" in w for w in weaknesses)
 
-    def test_current_metrics(self):
+    def test_current_metrics(self) -> None:
         """Test current metrics calculation."""
         tracker = PerformanceTracker()
 
@@ -375,7 +375,7 @@ class TestPerformanceTracker:
 class TestModelOptimizer:
     """Test model optimization functionality."""
 
-    def test_optimizer_initialization(self):
+    def test_optimizer_initialization(self) -> None:
         """Test model optimizer initialization."""
         optimizer = ModelOptimizer()
 
@@ -384,7 +384,7 @@ class TestModelOptimizer:
         assert optimizer.best_performance == 0.0
         assert optimizer.best_parameters == {}
 
-    def test_parameter_optimization(self):
+    def test_parameter_optimization(self) -> None:
         """Test parameter optimization functionality."""
         optimizer = ModelOptimizer(optimization_strategy="gradient")
 
@@ -404,7 +404,7 @@ class TestModelOptimizer:
             <= constraints["learning_rate"]["max"]
         )
 
-    def test_best_performance_tracking(self):
+    def test_best_performance_tracking(self) -> None:
         """Test best performance tracking."""
         optimizer = ModelOptimizer()
 
@@ -421,23 +421,23 @@ class TestModelOptimizer:
         assert optimizer.best_performance == 0.8
         assert optimizer.best_parameters == params
 
-    def test_improvement_suggestions(self):
+    def test_improvement_suggestions(self) -> None:
         """Test improvement suggestion generation."""
         optimizer = ModelOptimizer()
 
         # Declining performance
-        declining_data = [0.8, 0.7, 0.6, 0.5, 0.4]
+        declining_data: list[float] = [0.8, 0.7, 0.6, 0.5, 0.4]
         suggestions = optimizer.suggest_improvements(declining_data)
         assert len(suggestions) > 0
         assert len(suggestions) > 0  # Just check we get some suggestions
 
         # Good performance
-        good_data = [0.7, 0.75, 0.8, 0.85, 0.9]
+        good_data: list[float] = [0.7, 0.75, 0.8, 0.85, 0.9]
         suggestions = optimizer.suggest_improvements(good_data)
         assert len(suggestions) > 0
         assert any("good performance" in s.lower() for s in suggestions)
 
-    def test_bayesian_optimization(self):
+    def test_bayesian_optimization(self) -> None:
         """Test Bayesian optimization strategy."""
         optimizer = ModelOptimizer(optimization_strategy="bayesian")
 
@@ -447,7 +447,7 @@ class TestModelOptimizer:
         optimized = optimizer.optimize_parameters(params, feedback)
         assert optimized != params  # Should be different
 
-    def test_grid_search_optimization(self):
+    def test_grid_search_optimization(self) -> None:
         """Test grid search optimization strategy."""
         optimizer = ModelOptimizer(optimization_strategy="grid_search")
 
@@ -459,7 +459,7 @@ class TestModelOptimizer:
         # Should decrease learning rate for poor performance
         assert optimized["learning_rate"] < params["learning_rate"]
 
-    def test_optimization_history(self):
+    def test_optimization_history(self) -> None:
         """Test optimization history tracking."""
         optimizer = ModelOptimizer()
 
@@ -480,7 +480,7 @@ class TestAgentTrainingMode:
     """Test AI training mode functionality."""
 
     @pytest.fixture
-    def mock_config(self):
+    def mock_config(self) -> None:
         """Create mock configuration."""
         config = Mock(spec=QuantChainConfig)
         config.get.return_value = False
@@ -497,7 +497,7 @@ class TestAgentTrainingMode:
             optimize_parameters=True,
         )
 
-    def test_executor_initialization(self, training_executor):
+    def test_executor_initialization(self, training_executor) -> None:
         """Test training executor initialization."""
         assert training_executor.paper_executor is not None
         assert training_executor.performance_tracker is not None
@@ -510,9 +510,9 @@ class TestAgentTrainingMode:
         assert training_executor.track_performance is True
         assert training_executor.optimize_parameters is True
 
-    def test_start_training_session(self, training_executor):
+    def test_start_training_session(self, training_executor) -> None:
         """Test starting a training session."""
-        objectives = ["Optimize risk management"]
+        objectives: list[float] = ["Optimize risk management"]
         agent_params = {"learning_rate": 0.001}
 
         session = training_executor.start_training_session(
@@ -535,7 +535,7 @@ class TestAgentTrainingMode:
         assert training_executor.current_session == session
         assert len(training_executor.training_history) == 1
 
-    def test_training_execution(self, training_executor):
+    def test_training_execution(self, training_executor) -> None:
         """Test training execution with iterations."""
         # Start session
         session = training_executor.start_training_session(
@@ -559,13 +559,13 @@ class TestAgentTrainingMode:
         # Check session updates
         assert session.iterations_completed == 10
 
-    def test_performance_evaluation(self, training_executor):
+    def test_performance_evaluation(self, training_executor) -> None:
         """Test performance evaluation on scenarios."""
         # Start session and train a bit
         training_executor.start_training_session(["AAPL"])
         training_executor.train_agent(iterations=5)
 
-        test_scenarios = ["bull_market", "bear_market", "high_volatility"]
+        test_scenarios: list[float] = ["bull_market", "bear_market", "high_volatility"]
         evaluation_results = training_executor.evaluate_performance(test_scenarios)
 
         assert len(evaluation_results) == 3
@@ -573,7 +573,7 @@ class TestAgentTrainingMode:
             assert scenario in evaluation_results
             assert "score" in evaluation_results[scenario]
 
-    def test_parameter_fine_tuning(self, training_executor):
+    def test_parameter_fine_tuning(self, training_executor) -> None:
         """Test parameter fine-tuning functionality."""
         # Start session
         training_executor.start_training_session(["AAPL"])
@@ -600,7 +600,7 @@ class TestAgentTrainingMode:
                 <= constraints["learning_rate"]["max"]
             )
 
-    def test_training_progress(self, training_executor):
+    def test_training_progress(self, training_executor) -> None:
         """Test training progress reporting."""
         # Start session and train
         training_executor.start_training_session(["AAPL"], iterations=50)
@@ -614,7 +614,7 @@ class TestAgentTrainingMode:
         assert "weaknesses" in progress
         assert progress["session"]["iterations_completed"] == 20
 
-    def test_export_improved_agent(self, training_executor):
+    def test_export_improved_agent(self, training_executor) -> None:
         """Test exporting improved agent state."""
         # Start session and train
         training_executor.start_training_session(["AAPL"])
@@ -631,7 +631,7 @@ class TestAgentTrainingMode:
         assert "final_performance" in export_data
         assert "improvement_made" in export_data
 
-    def test_end_training_session(self, training_executor):
+    def test_end_training_session(self, training_executor) -> None:
         """Test ending a training session."""
         # Start session and train
         training_executor.start_training_session(["AAPL"])
@@ -649,7 +649,7 @@ class TestAgentTrainingMode:
         # Session should be ended
         assert training_executor.current_session is None
 
-    def test_delegate_methods(self, training_executor):
+    def test_delegate_methods(self, training_executor) -> None:
         """Test delegated methods to paper executor."""
         # Account info
         account = training_executor.get_account()
@@ -663,12 +663,12 @@ class TestAgentTrainingMode:
         metrics = training_executor.get_performance_metrics()
         assert metrics is not None
 
-    def test_market_price_setting(self, training_executor):
+    def test_market_price_setting(self, training_executor) -> None:
         """Test market price setting functionality."""
         training_executor.set_market_price("AAPL", 150.0)
         assert training_executor.market_prices["AAPL"] == 150.0
 
-    def test_reset_functionality(self, training_executor):
+    def test_reset_functionality(self, training_executor) -> None:
         """Test reset functionality."""
         # Start session and train
         training_executor.start_training_session(["AAPL"])
@@ -687,7 +687,7 @@ class TestAgentTrainingMode:
         assert len(training_executor.decision_history) == 0
         assert training_executor.get_account().cash == 100000.0
 
-    def test_error_handling(self, training_executor):
+    def test_error_handling(self, training_executor) -> None:
         """Test error handling in training mode."""
         # Test error without session
         with pytest.raises(ValueError, match="No active training session"):
@@ -705,7 +705,7 @@ class TestAgentTrainingModeIntegration:
     """Integration tests for AI training mode."""
 
     @pytest.fixture
-    def mock_config(self):
+    def mock_config(self) -> None:
         """Create mock configuration."""
         config = Mock(spec=QuantChainConfig)
         config.get.return_value = False
@@ -722,7 +722,7 @@ class TestAgentTrainingModeIntegration:
             optimize_parameters=True,
         )
 
-    def test_complete_training_workflow(self, training_executor):
+    def test_complete_training_workflow(self, training_executor) -> None:
         """Test complete training workflow."""
         # Start training session
         session = training_executor.start_training_session(
@@ -762,7 +762,7 @@ class TestAgentTrainingModeIntegration:
         assert export_data["training_session_id"] == session.session_id
         assert report["session"]["session_id"] == session.session_id
 
-    def test_multiple_training_sessions(self, training_executor):
+    def test_multiple_training_sessions(self, training_executor) -> None:
         """Test multiple training sessions."""
         # First session
         session1 = training_executor.start_training_session(["AAPL"], iterations=20)

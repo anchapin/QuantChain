@@ -75,7 +75,7 @@ class TestWithRetryDecorator:
     def test_exponential_backoff(self) -> None:
         """Test exponential backoff delay calculation."""
         mock_func = Mock(side_effect=[ValueError("fail")] * 4 + ["success"])
-        delays = []
+        delays: list[float] = []
 
         @with_retry(max_retries=5, base_delay=0.1, backoff_factor=2.0)
         def test_func() -> str:
@@ -86,7 +86,7 @@ class TestWithRetryDecorator:
             # Capture delay arguments from sleep calls
             delays.extend(call.args[0] for call in mock_sleep.call_args_list)
 
-        expected_delays = [0.1, 0.2, 0.4, 0.8]  # base * (factor^attempt)
+        expected_delays: list[float] = [0.1, 0.2, 0.4, 0.8]  # base * (factor^attempt)
         assert delays == expected_delays
 
     def test_retry_with_logging(self) -> None:
@@ -263,7 +263,7 @@ class TestRetryHandler:
         """Test handler exponential backoff."""
         handler = RetryHandler(max_retries=3, base_delay=0.1, backoff_factor=2.0)
         mock_func = Mock(side_effect=[ValueError("fail")] * 4)
-        delays = []
+        delays: list[float] = []
 
         with patch("time.sleep") as mock_sleep:
             try:
@@ -275,7 +275,7 @@ class TestRetryHandler:
 
         # With max_retries=3, we get delays for attempts 0, 1, 2 but
         # the handler only sleeps on first 2 failures
-        expected_delays = [0.1, 0.2]
+        expected_delays: list[float] = [0.1, 0.2]
         assert delays == expected_delays
 
     def test_handler_no_logger(self) -> None:
