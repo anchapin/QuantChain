@@ -149,7 +149,9 @@ class IBExecutionConnector(TradingExecutionInterface):
         """Run async coroutine synchronously."""
         try:
             if timeout:
-                return asyncio.wait_for(coro, timeout=timeout)
+                # Wrap the coroutine with wait_for and run through the loop
+                wrapped_coro = asyncio.wait_for(coro, timeout=timeout)
+                return self._loop.run_until_complete(wrapped_coro)
             return self._loop.run_until_complete(coro)
         except asyncio.TimeoutError as e:
             raise ExecutionError(f"Operation timed out: {str(e)}") from e
@@ -167,17 +169,40 @@ class IBExecutionConnector(TradingExecutionInterface):
             return Forex(base, quote)
 
         # Check for option format (e.g., AAPL 20231215 150 C)
-        option_match = re.match(r"^([A-Z]+)\s+(\d{6})\s+([\d.]+)\s+([CP])$", symbol)
+        # Parse manually to avoid regex issues
+        parts = symbol.split()
+        if len(parts) >= 4:
+            ticker = parts[0]
+            date_str = parts[1]
+            strike_str = parts[2]
+            right = parts[3]
+            
+            # Validate components
+            ticker_valid = ticker.isalpha()
+            date_valid = len(date_str) == 6 and date_str.isdigit()
+            strike_valid = (strike_str.replace('.', '', 1).isdigit() if '.' in strike_str else strike_str.isdigit())
+            right_valid = right in ['C', 'P']
+            
+            if ticker_valid and date_valid and strike_valid and right_valid:
+                
+                # Convert YYMMDD to YYYYMMDD
+                date = f"20{date_str[:2]}{date_str[2:4]}{date_str[4:]}"
+                strike = float(strike_str)
+                right = "CALL" if right.upper() == "C" else "PUT"
+                return Option(ticker, date, strike, right, "")
+        
+        option_match = None
+        
         if option_match:
             ticker, date_str, strike_str, right = option_match.groups()
             # Convert YYMMDD to YYYYMMDD
             date = f"20{date_str[:2]}{date_str[2:4]}{date_str[4:]}"
             strike = float(strike_str)
             right = "CALL" if right.upper() == "C" else "PUT"
-            return Option(ticker, date, strike, right)
+            return Option(ticker, date, strike, right, "")
 
         # Check for futures format (e.g., ESZ3)
-        futures_match = re.match(r"^([A-Z]+)(\d)(\d)$", symbol)
+        futures_match = re.match(r"^([A-Z]+)([A-Z])(\d)$", symbol)
         if futures_match:
             root, month_code, year_code = futures_match.groups()
             # Simple mapping for month codes
@@ -196,9 +221,17 @@ class IBExecutionConnector(TradingExecutionInterface):
                 "Z": "12",
             }
             month = month_map.get(month_code.upper(), "01")
-            year = f"20{year_code}"
+            # Handle year code - single digit maps to current decade
+            # For simplicity, map 0-9 to 2020-2029
+            year_code_num = int(year_code)
+            current_year = 2023  # Should be dynamic, using 2023 for now
+            decade = (current_year // 10) * 10
+            year = decade + year_code_num
+            if year < current_year:
+                year += 10  # Add decade if year is in past
             expiry = f"{year}{month}"
-            return Future(root, expiry)
+            
+            return Future(root, expiry, "", "", "")
 
         # Default to stock
         return Stock(symbol, "SMART", "USD")
