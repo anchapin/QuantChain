@@ -1,5 +1,7 @@
 """Comprehensive unit tests for the MemecoinVibeTrader agent."""
 
+from typing import Any
+
 import pytest
 from unittest.mock import MagicMock, patch
 from datetime import datetime
@@ -21,7 +23,7 @@ from quantchain.tools.execution import AlpacaExecutionTool
 class TestMemecoinVibeTraderConfig:
     """Test configuration validation and defaults."""
 
-    def test_default_config_values(self):
+    def test_default_config_values(self) -> None:
         """Test that default configuration values are set correctly."""
         config = MemecoinVibeTraderConfig()
 
@@ -33,7 +35,7 @@ class TestMemecoinVibeTraderConfig:
         assert config.risk_tolerance == "MEDIUM"
         assert config.time_window == "1h"
 
-    def test_custom_config_values(self):
+    def test_custom_config_values(self) -> None:
         """Test that custom configuration values are respected."""
         config = MemecoinVibeTraderConfig(
             scan_interval=1800,
@@ -53,7 +55,7 @@ class TestMemecoinVibeTraderConfig:
         assert config.risk_tolerance == "LOW"
         assert config.time_window == "30m"
 
-    def test_config_validation_edge_cases(self):
+    def test_config_validation_edge_cases(self) -> None:
         """Test edge case validation for configuration."""
         # Test negative values (should still work as they may be validated elsewhere)
         config = MemecoinVibeTraderConfig(
@@ -74,7 +76,7 @@ class TestMemecoinVibeTraderConfig:
 class TestMemecoinVibeTraderInitialization:
     """Test agent initialization and workflow building."""
 
-    def test_agent_initialization_with_all_components(self):
+    def test_agent_initialization_with_all_components(self) -> None:
         """Test that agent initializes correctly with all components."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -97,7 +99,7 @@ class TestMemecoinVibeTraderInitialization:
         assert agent.llm == llm
         assert agent.workflow is not None
 
-    def test_agent_initialization_with_default_llm(self):
+    def test_agent_initialization_with_default_llm(self) -> None:
         """Test that agent initializes with MockLLM when no LLM provided."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -113,7 +115,7 @@ class TestMemecoinVibeTraderInitialization:
 
         assert isinstance(agent.llm, MockLLM)
 
-    def test_workflow_construction(self):
+    def test_workflow_construction(self) -> None:
         """Test that LangGraph workflow is constructed correctly."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -139,7 +141,7 @@ class TestMemecoinVibeTraderInitialization:
 class TestTokenFiltering:
     """Test token filtering and conversion functionality."""
 
-    def test_filter_and_convert_tokens_with_valid_data(self):
+    def test_filter_and_convert_tokens_with_valid_data(self) -> None:
         """Test filtering and converting valid token data."""
         config = MemecoinVibeTraderConfig(min_liquidity_threshold=10000)
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -185,7 +187,7 @@ class TestTokenFiltering:
         assert tokens[0].liquidity == 50000
         assert tokens[0].address == "0x123"
 
-    def test_filter_and_convert_tokens_with_empty_data(self):
+    def test_filter_and_convert_tokens_with_empty_data(self) -> None:
         """Test filtering with empty token data."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -202,7 +204,7 @@ class TestTokenFiltering:
         tokens = agent._filter_and_convert_tokens([])
         assert tokens == []
 
-    def test_filter_and_convert_tokens_with_malformed_data(self):
+    def test_filter_and_convert_tokens_with_malformed_data(self) -> None:
         """Test filtering with malformed token data."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -234,7 +236,7 @@ class TestWorkflowSteps:
     """Test individual workflow steps."""
 
     @pytest.fixture
-    def agent_setup(self):
+    def agent_setup(self) -> MemecoinVibeTrader:
         """Create a basic agent setup for testing workflow steps."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -250,7 +252,7 @@ class TestWorkflowSteps:
             llm=llm_mock,
         )
 
-    def test_scan_tokens_success(self, agent_setup):
+    def test_scan_tokens_success(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test successful token scanning."""
         agent = agent_setup
 
@@ -275,7 +277,7 @@ class TestWorkflowSteps:
         assert result_state.tokens[0].symbol == "PEPE"
         assert result_state.error_message is None
 
-    def test_scan_tokens_api_failure(self, agent_setup):
+    def test_scan_tokens_api_failure(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test token scanning with API failure."""
         agent = agent_setup
 
@@ -290,7 +292,7 @@ class TestWorkflowSteps:
         assert result_state.error_message is not None
         assert "Failed to scan tokens" in result_state.error_message
 
-    def test_gather_social_data_success(self, agent_setup):
+    def test_gather_social_data_success(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test successful social data gathering."""
         agent = agent_setup
 
@@ -324,7 +326,7 @@ class TestWorkflowSteps:
         assert result_state.social_data["PEPE"].telegram_followers == 10000
         assert result_state.error_message is None
 
-    def test_gather_social_data_with_failures(self, agent_setup):
+    def test_gather_social_data_with_failures(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test social data gathering with some failures."""
         agent = agent_setup
 
@@ -365,7 +367,7 @@ class TestWorkflowSteps:
         assert result_state.social_data["DOGE"].telegram_followers == 0
         assert result_state.error_message is None
 
-    def test_assess_vibes_success(self, agent_setup):
+    def test_assess_vibes_success(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test successful vibe assessment."""
         agent = agent_setup
 
@@ -408,7 +410,7 @@ class TestWorkflowSteps:
         assert "Strong social presence" in assessment.reasoning
         assert result_state.error_message is None
 
-    def test_assess_vibes_with_llm_failure(self, agent_setup):
+    def test_assess_vibes_with_llm_failure(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test vibe assessment with LLM failure."""
         agent = agent_setup
 
@@ -439,7 +441,7 @@ class TestWorkflowSteps:
         assert "Assessment failed" in assessment.reasoning
         assert result_state.error_message is None
 
-    def test_execute_trades_success(self, agent_setup):
+    def test_execute_trades_success(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test successful trade execution."""
         agent = agent_setup
 
@@ -482,13 +484,13 @@ class TestWorkflowSteps:
         assert trade["vibe_score"] == 85.0
         assert result_state.error_message is None
 
-    def test_execute_trades_with_position_limits(self, agent_setup):
+    def test_execute_trades_with_position_limits(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test trade execution respects position limits."""
         agent = agent_setup
         agent.config.max_positions = 2
 
         # Create more assessments than the limit
-        assessments = []
+        assessments: list[VibeAssessment] = []
         for i in range(5):
             token = TokenPair(
                 address=f"0x{i:03d}",
@@ -527,7 +529,7 @@ class TestWorkflowSteps:
         assert result_state.trades_executed[0]["token"] == "TOKEN0"  # Highest score
         assert result_state.trades_executed[1]["token"] == "TOKEN1"  # Second highest
 
-    def test_execute_trades_with_existing_positions(self, agent_setup):
+    def test_execute_trades_with_existing_positions(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test trade execution skips existing positions."""
         agent = agent_setup
 
@@ -590,7 +592,7 @@ class TestWorkflowConditions:
     """Test workflow conditional routing."""
 
     @pytest.fixture
-    def agent_setup(self):
+    def agent_setup(self) -> MemecoinVibeTrader:
         """Create a basic agent setup for testing workflow conditions."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -611,7 +613,7 @@ class TestWorkflowConditions:
 
         return agent
 
-    def test_should_continue_after_scan_continue(self, agent_setup):
+    def test_should_continue_after_scan_continue(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test scan continuation when tokens found and no error."""
         agent = agent_setup
 
@@ -632,7 +634,7 @@ class TestWorkflowConditions:
         result = agent._should_continue_after_scan(state)
         assert result == "continue"
 
-    def test_should_continue_after_scan_error(self, agent_setup):
+    def test_should_continue_after_scan_error(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test scan continuation when error occurs."""
         agent = agent_setup
 
@@ -641,7 +643,7 @@ class TestWorkflowConditions:
         result = agent._should_continue_after_scan(state)
         assert result == "error"
 
-    def test_should_continue_after_scan_end(self, agent_setup):
+    def test_should_continue_after_scan_end(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test scan continuation when no tokens found."""
         agent = agent_setup
 
@@ -650,7 +652,7 @@ class TestWorkflowConditions:
         result = agent._should_continue_after_scan(state)
         assert result == "end"
 
-    def test_should_continue_after_social_continue(self, agent_setup):
+    def test_should_continue_after_social_continue(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test social continuation when data gathered and no error."""
         agent = agent_setup
 
@@ -659,7 +661,7 @@ class TestWorkflowConditions:
         result = agent._should_continue_after_social(state)
         assert result == "continue"
 
-    def test_should_continue_after_social_error(self, agent_setup):
+    def test_should_continue_after_social_error(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test social continuation when error occurs."""
         agent = agent_setup
 
@@ -668,7 +670,7 @@ class TestWorkflowConditions:
         result = agent._should_continue_after_social(state)
         assert result == "error"
 
-    def test_should_continue_after_social_end(self, agent_setup):
+    def test_should_continue_after_social_end(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test social continuation when no social data."""
         agent = agent_setup
 
@@ -677,7 +679,7 @@ class TestWorkflowConditions:
         result = agent._should_continue_after_social(state)
         assert result == "end"
 
-    def test_should_continue_after_assessment_continue(self, agent_setup):
+    def test_should_continue_after_assessment_continue(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test assessment continuation when assessments made and no error."""
         agent = agent_setup
 
@@ -702,7 +704,7 @@ class TestWorkflowConditions:
         result = agent._should_continue_after_assessment(state)
         assert result == "continue"
 
-    def test_should_continue_after_assessment_error(self, agent_setup):
+    def test_should_continue_after_assessment_error(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test assessment continuation when error occurs."""
         agent = agent_setup
 
@@ -711,7 +713,7 @@ class TestWorkflowConditions:
         result = agent._should_continue_after_assessment(state)
         assert result == "error"
 
-    def test_should_continue_after_assessment_end(self, agent_setup):
+    def test_should_continue_after_assessment_end(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test assessment continuation when no assessments."""
         agent = agent_setup
 
@@ -720,7 +722,7 @@ class TestWorkflowConditions:
         result = agent._should_continue_after_assessment(state)
         assert result == "end"
 
-    def test_should_continue_after_execution(self, agent_setup):
+    def test_should_continue_after_execution(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test execution always continues."""
         agent = agent_setup
 
@@ -738,7 +740,7 @@ class TestWorkflowConditions:
 class TestErrorHandling:
     """Test error handling and recovery mechanisms."""
 
-    def test_handle_error(self):
+    def test_handle_error(self) -> None:
         """Test error handler sets error message in log."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -760,7 +762,7 @@ class TestErrorHandling:
         assert result_state.error_message == "Test error message"
         assert result_state is state  # Should return the same state object
 
-    def test_run_cycle_with_workflow_error(self):
+    def test_run_cycle_with_workflow_error(self) -> None:
         """Test run_cycle handles workflow errors gracefully."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -789,7 +791,7 @@ class TestErrorHandling:
         assert result["assessments_made"] == 0
         assert result["trades_executed"] == 0
 
-    def test_run_cycle_with_workflow_state_error(self):
+    def test_run_cycle_with_workflow_state_error(self) -> None:
         """Test run_cycle handles workflow state with error message."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -822,7 +824,7 @@ class TestLLMPromptAndParsing:
     """Test LLM prompt creation and response parsing."""
 
     @pytest.fixture
-    def agent_setup(self):
+    def agent_setup(self) -> MemecoinVibeTrader:
         """Create a basic agent setup for testing LLM functionality."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -843,7 +845,7 @@ class TestLLMPromptAndParsing:
 
         return agent
 
-    def test_create_assessment_prompt(self, agent_setup):
+    def test_create_assessment_prompt(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test that assessment prompt is created correctly."""
         agent = agent_setup
 
@@ -882,7 +884,7 @@ class TestLLMPromptAndParsing:
         assert "RISK_LEVEL:" in prompt
         assert "REASONING:" in prompt
 
-    def test_parse_llm_response_complete(self, agent_setup):
+    def test_parse_llm_response_complete(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test parsing complete LLM response."""
         agent = agent_setup
 
@@ -911,7 +913,7 @@ class TestLLMPromptAndParsing:
         assert assessment.token == token
         assert assessment.social_metrics == social_metrics
 
-    def test_parse_llm_response_partial(self, agent_setup):
+    def test_parse_llm_response_partial(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test parsing partial LLM response with defaults."""
         agent = agent_setup
 
@@ -938,7 +940,7 @@ class TestLLMPromptAndParsing:
         assert assessment.risk_level == "MEDIUM"
         assert assessment.reasoning == "LLM assessment parsing failed"
 
-    def test_parse_llm_response_malformed(self, agent_setup):
+    def test_parse_llm_response_malformed(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test parsing malformed LLM response."""
         agent = agent_setup
 
@@ -964,7 +966,7 @@ class TestLLMPromptAndParsing:
         assert assessment.risk_level == "MEDIUM"
         assert assessment.reasoning == "LLM assessment parsing failed"
 
-    def test_parse_llm_response_edge_cases(self, agent_setup):
+    def test_parse_llm_response_edge_cases(self, agent_setup: MemecoinVibeTrader) -> None:
         """Test parsing edge cases in LLM response."""
         agent = agent_setup
 
@@ -1000,7 +1002,7 @@ class TestLLMPromptAndParsing:
 class TestPriceEstimation:
     """Test token price estimation functionality."""
 
-    def test_estimate_token_price_normal_case(self):
+    def test_estimate_token_price_normal_case(self) -> None:
         """Test price estimation with normal values."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -1030,7 +1032,7 @@ class TestPriceEstimation:
         expected_price = min(100000 / (50000 * 10), 100.0)
         assert price == expected_price
 
-    def test_estimate_token_price_high_volume(self):
+    def test_estimate_token_price_high_volume(self) -> None:
         """Test price estimation with very high volume."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -1059,7 +1061,7 @@ class TestPriceEstimation:
         # Should be capped at $100
         assert price == 100.0
 
-    def test_estimate_token_price_zero_values(self):
+    def test_estimate_token_price_zero_values(self) -> None:
         """Test price estimation with zero values."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -1088,7 +1090,7 @@ class TestPriceEstimation:
         # Should return default price of 1.0
         assert price == 1.0
 
-    def test_estimate_token_price_exception_handling(self):
+    def test_estimate_token_price_exception_handling(self) -> None:
         """Test price estimation handles exceptions gracefully."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -1122,7 +1124,7 @@ class TestPriceEstimation:
 class TestRiskManagement:
     """Test risk management logic."""
 
-    def test_vibe_score_threshold_filtering(self):
+    def test_vibe_score_threshold_filtering(self) -> None:
         """Test that vibe score thresholds are properly applied."""
         config = MemecoinVibeTraderConfig(min_vibe_score_threshold=75)
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -1137,7 +1139,7 @@ class TestRiskManagement:
         )
 
         # Create assessments with different vibe scores
-        assessments = []
+        assessments: list[float] = []
         for score in [70, 75, 80, 85, 90]:
             token = TokenPair(
                 address=f"0x{score:03d}",
@@ -1172,14 +1174,14 @@ class TestRiskManagement:
         result_state = agent._execute_trades(state)
 
         # Should only execute trades for scores >= 75
-        executed_tokens = [trade["token"] for trade in result_state.trades_executed]
+        executed_tokens: list[float] = [trade["token"] for trade in result_state.trades_executed]
         assert "TOKEN75" in executed_tokens
         assert "TOKEN80" in executed_tokens
         assert "TOKEN85" in executed_tokens
         assert "TOKEN90" in executed_tokens
         assert "TOKEN70" not in executed_tokens  # Below threshold
 
-    def test_allocation_calculations(self):
+    def test_allocation_calculations(self) -> None:
         """Test that position allocation calculations are correct."""
         config = MemecoinVibeTraderConfig(
             max_allocation_per_trade=0.05, max_positions=10  # 5% per trade
@@ -1242,12 +1244,12 @@ class TestRiskManagement:
 class TestMockLLM:
     """Test MockLLM functionality."""
 
-    def test_mock_llm_basic_functionality(self):
+    def test_mock_llm_basic_functionality(self) -> None:
         """Test basic MockLLM functionality."""
         llm = MockLLM("Test response")
 
         class MockResponse:
-            def __init__(self, content):
+            def __init__(self, content: str) -> None:
                 self.content = content
 
         # Mock the invoke method to return our response object
@@ -1259,15 +1261,15 @@ class TestMockLLM:
             assert response.content == "Test response"
             mock_invoke.assert_called_once_with("test prompt")
 
-    def test_mock_llm_with_different_responses(self):
+    def test_mock_llm_with_different_responses(self) -> None:
         """Test MockLLM with different response texts."""
-        responses = ["Response 1", "Response 2", ""]
+        responses: list[str] = ["Response 1", "Response 2", ""]
 
         for response_text in responses:
             llm = MockLLM(response_text)
 
             class MockResponse:
-                def __init__(self, content):
+                def __init__(self, content: str) -> None:
                     self.content = content
 
             with patch.object(llm, "invoke") as mock_invoke:
@@ -1282,7 +1284,7 @@ class TestRunCycleIntegration:
     """Test the main run_cycle method integration."""
 
     @pytest.fixture
-    def complete_agent_setup(self):
+    def complete_agent_setup(self) -> MemecoinVibeTrader:
         """Create a complete agent setup with all mocks configured."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -1331,7 +1333,7 @@ class TestRunCycleIntegration:
 
         return agent
 
-    def test_run_cycle_success_case(self, complete_agent_setup):
+    def test_run_cycle_success_case(self, complete_agent_setup: MemecoinVibeTrader) -> None:
         """Test successful complete run cycle."""
         agent = complete_agent_setup
 
@@ -1385,7 +1387,7 @@ class TestRunCycleIntegration:
         assert len(result["trades"]) == 1
         assert result["trades"][0]["token"] == "PEPE"
 
-    def test_run_cycle_no_tokens_found(self, complete_agent_setup):
+    def test_run_cycle_no_tokens_found(self, complete_agent_setup: MemecoinVibeTrader) -> None:
         """Test run cycle when no tokens are found."""
         agent = complete_agent_setup
 
@@ -1393,7 +1395,7 @@ class TestRunCycleIntegration:
         agent.dex_connector.get_new_token_pairs.return_value = []
 
         # Mock workflow to return successful state with no tokens
-        mock_state = {
+        mock_state: dict[str, Any] = {
             "error_message": None,
             "tokens": [],
             "assessments": [],
@@ -1411,7 +1413,7 @@ class TestRunCycleIntegration:
         assert result["trades_executed"] == 0
         assert result["error_message"] is None
 
-    def test_run_cycle_no_qualifying_assessments(self, complete_agent_setup):
+    def test_run_cycle_no_qualifying_assessments(self, complete_agent_setup: MemecoinVibeTrader) -> None:
         """Test run cycle when no assessments qualify for trading."""
         agent = complete_agent_setup
 
@@ -1453,7 +1455,7 @@ class TestRunCycleIntegration:
         assert result["trades_executed"] == 0
         assert result["error_message"] is None
 
-    def test_run_cycle_exception_handling(self, complete_agent_setup):
+    def test_run_cycle_exception_handling(self, complete_agent_setup: MemecoinVibeTrader) -> None:
         """Test run cycle handles unexpected exceptions."""
         agent = complete_agent_setup
 
@@ -1469,7 +1471,7 @@ class TestRunCycleIntegration:
         assert result["assessments_made"] == 0
         assert result["trades_executed"] == 0
 
-    def test_run_cycle_state_normalization(self, complete_agent_setup):
+    def test_run_cycle_state_normalization(self, complete_agent_setup: MemecoinVibeTrader) -> None:
         """Test that run_cycle properly normalizes different state types."""
         agent = complete_agent_setup
 
@@ -1533,13 +1535,13 @@ class TestRunCycleIntegration:
 class TestParallelExecutionSafety:
     """Test that tests can run safely in parallel."""
 
-    def test_isolated_test_execution(self):
+    def test_isolated_test_execution(self) -> None:
         """Test that each test runs in isolation."""
         # This test should be safe to run in parallel with others
         config = MemecoinVibeTraderConfig()
         assert config.scan_interval == 3600
 
-    def test_no_shared_state(self):
+    def test_no_shared_state(self) -> None:
         """Test that tests don't share state."""
         # Create fresh mocks for each test
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -1561,7 +1563,7 @@ class TestParallelExecutionSafety:
 class TestEdgeCases:
     """Test edge cases and boundary conditions."""
 
-    def test_empty_token_list_handling(self):
+    def test_empty_token_list_handling(self) -> None:
         """Test handling of empty token lists."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -1579,7 +1581,7 @@ class TestEdgeCases:
         result = agent._filter_and_convert_tokens([])
         assert result == []
 
-    def test_extreme_vibe_scores(self):
+    def test_extreme_vibe_scores(self) -> None:
         """Test handling of extreme vibe scores."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -1614,7 +1616,7 @@ class TestEdgeCases:
         assessment = agent._parse_llm_response(response, token, social_metrics)
         assert assessment.vibe_score == 0.0
 
-    def test_all_recommendation_types(self):
+    def test_all_recommendation_types(self) -> None:
         """Test all possible recommendation types."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -1639,14 +1641,14 @@ class TestEdgeCases:
         )
         social_metrics = SocialMetrics()
 
-        recommendations = ["BUY", "HOLD", "SKIP", "SELL"]
+        recommendations: list[str] = ["BUY", "HOLD", "SKIP", "SELL"]
 
         for rec in recommendations:
             response = f"VIBE_SCORE: 50\nRECOMMENDATION: {rec}"
             assessment = agent._parse_llm_response(response, token, social_metrics)
             assert assessment.recommendation == rec
 
-    def test_risk_level_variations(self):
+    def test_risk_level_variations(self) -> None:
         """Test different risk levels."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -1671,14 +1673,14 @@ class TestEdgeCases:
         )
         social_metrics = SocialMetrics()
 
-        risk_levels = ["LOW", "MEDIUM", "HIGH"]
+        risk_levels: list[str] = ["LOW", "MEDIUM", "HIGH"]
 
         for risk in risk_levels:
             response = f"VIBE_SCORE: 50\nRISK_LEVEL: {risk}"
             assessment = agent._parse_llm_response(response, token, social_metrics)
             assert assessment.risk_level == risk
 
-    def test_zero_portfolio_value(self):
+    def test_zero_portfolio_value(self) -> None:
         """Test handling of zero portfolio value."""
         config = MemecoinVibeTraderConfig()
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -1720,7 +1722,7 @@ class TestEdgeCases:
         # Should handle zero portfolio gracefully
         assert len(result_state.trades_executed) == 0
 
-    def test_very_small_allocation_percentage(self):
+    def test_very_small_allocation_percentage(self) -> None:
         """Test very small allocation percentages."""
         config = MemecoinVibeTraderConfig(max_allocation_per_trade=0.001)  # 0.1%
         dex_connector = MagicMock(spec=DexscreenerDataConnector)
@@ -1766,3 +1768,9 @@ class TestEdgeCases:
         agent.execution_tool.execute_market_order.assert_called_once_with(
             symbol="PEPE/USD", side="buy", quantity=10.0
         )
+
+
+
+
+
+
