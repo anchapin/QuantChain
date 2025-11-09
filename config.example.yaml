@@ -14,6 +14,14 @@ trading:
   paper_trading: true
   max_position_size: 0.1
   initial_cash: 100000.0
+  
+  # Interactive Brokers Configuration
+  ib:
+    host: 127.0.0.1
+    port: 7497  # 7497=TWS paper, 7496=TWS live, 4002=Gateway paper, 4001=Gateway live
+    client_id: 1  # Unique client ID (1-32)
+    timeout: 10  # Connection timeout in seconds
+    account: null  # Specific account for multi-account setups (optional)
 
 rag:
   vector_store_type: chromadb

@@ -4,6 +4,7 @@ from ..core.config import QuantChainConfig
 from ..core.exceptions import AuthenticationError, ConfigurationError
 from .trading_execution import TradingExecutionInterface
 from ..connectors.alpaca_execution import AlpacaExecutionConnector
+from ..connectors.ib_async_execution import IBExecutionConnector
 from .paper_trading import PaperTradingExecutor
 from .tutorial_mode import TutorialExecutor
 
@@ -101,6 +102,28 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
             api_key=api_key, api_secret=api_secret, use_paper=paper_trading
         )
 
+    elif broker == "ib" or broker == "interactive_brokers":
+        # Get IB configuration
+        host = config.get("trading.ib.host", "127.0.0.1")
+        
+        # Set port based on paper trading mode and default to TWS
+        port = config.get(
+            "trading.ib.port",
+            7497 if paper_trading else 7496  # TWS default ports
+        )
+        
+        client_id = config.get("trading.ib.client_id", 1)
+        timeout = config.get("trading.ib.timeout", 10)
+        account = config.get("trading.ib.account", None)
+        
+        return IBExecutionConnector(
+            host=host,
+            port=port,
+            client_id=client_id,
+            timeout=timeout,
+            account=account
+        )
+
     elif broker == "paper":
         # Standalone paper trading - ignore paper_trading flag
         return PaperTradingExecutor()
@@ -109,6 +132,6 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
         raise ConfigurationError(
             (
                 f"Unsupported broker: {broker}. "
-                "Supported: alpaca, paper, tutorial, ai_training"
+                "Supported: alpaca, ib, interactive_brokers, paper, tutorial, ai_training"
             )
         )

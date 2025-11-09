@@ -13,6 +13,7 @@ torchvision>=0.15.0
 # Trading and data dependencies
 alpaca-py>=0.43.1
 polygon-api-client>=1.0.0
+ib_async>=1.0.0
 
 # Type stubs for mypy
 types-requests
