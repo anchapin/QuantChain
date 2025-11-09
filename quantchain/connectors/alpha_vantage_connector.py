@@ -4,7 +4,7 @@ import requests
 import pandas as pd
 import logging
 import time
-from typing import List, Dict, Optional, Any, Tuple
+from typing import List, Dict, Optional, Any, Tuple, cast
 from datetime import datetime, timezone
 
 from .base_interface import DataFeedInterface
@@ -162,10 +162,10 @@ class AlphaVantageDataConnector(DataFeedInterface):
             if "Information" in data and "invalid" in data["Information"].lower():
                 raise AuthenticationError(data["Information"])
 
-            return data
+            return cast(Dict[str, Any], data)
 
         try:
-            return self.retry_handler.execute(
+            result = self.retry_handler.execute(
                 _request,
                 exceptions=(
                     requests.exceptions.RequestException,
@@ -173,6 +173,8 @@ class AlphaVantageDataConnector(DataFeedInterface):
                     requests.exceptions.ConnectionError,
                 ),
             )
+            # Ensure we return the expected type
+            return cast(Dict[str, Any], result)
         except Exception as e:
             if isinstance(
                 e, (AuthenticationError, RateLimitError, SymbolNotFoundError)
@@ -504,7 +506,9 @@ class AlphaVantageDataConnector(DataFeedInterface):
                     status.get("market") == "Equity"
                     and status.get("region") == "United States"
                 ):
-                    return status.get("current_status") == "open"
+                    # Explicitly cast to string for comparison
+                    current_status = status.get("current_status")
+                    return bool(current_status == "open")
 
             # Default to False if status not found
             return False
