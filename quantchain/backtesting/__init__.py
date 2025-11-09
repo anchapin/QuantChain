@@ -63,6 +63,10 @@ from .langgraph_adapter import (
     ScenarioLoadError,
 )
 
+from .finrl_adapter import (
+    FinRLAdapter,
+)
+
 __all__ = [
     "BacktestEngine",
     "BacktestConfig",
@@ -115,4 +119,5 @@ __all__ = [
     "PositionError",
     "DeterministicRuleError",
     "ScenarioLoadError",
+    "FinRLAdapter",
 ]
