@@ -1,0 +1,87 @@
+# Configuration optimized for Chart Reader Agent
+# This configuration is tuned for technical analysis with vision model support
+
+llm:
+  # Vision model required for chart analysis
+  provider: openai  # Must support vision capabilities
+  model: gpt-4-vision-preview  # Or 'gpt-4o' when available
+  temperature: 0.3  # Lower for consistent technical analysis
+  max_tokens: 2000  # More tokens for detailed pattern analysis
+
+data:
+  default_provider: alpaca
+  cache_enabled: true
+  cache_dir: ./data/cache
+
+trading:
+  default_broker: alpaca
+  paper_trading: true  # IMPORTANT: Keep true for safety
+  max_position_size: 0.05  # 5% per position for lower-risk equities
+  initial_cash: 100000.0  # Standard starting capital
+
+rag:
+  # Enable for market data caching and pattern recognition
+  enabled: true
+  vector_store_type: chromadb
+  embedding_model: all-MiniLM-L6-v2
+  persist_directory: ./data/chroma_db
+
+# Chart Reader Agent specific settings
+chart_reader:
+  # Technical analysis timeframes
+  timeframes: ["15m", "1h", "4h", "1d"]
+  
+  # Chart patterns to detect
+  patterns_enabled: [
+    "head_and_shoulders",
+    "double_top",
+    "double_bottom",
+    "triangle",
+    "flag",
+    "pennant",
+    "wedge",
+    "channel"
+  ]
+  
+  # Technical indicators to calculate
+  indicators_enabled: [
+    "SMA",
+    "EMA",
+    "RSI",
+    "MACD",
+    "Bollinger_Bands",
+    "Volume"
+  ]
+  
+  # Confidence thresholds
+  min_pattern_confidence: 70.0  # Minimum confidence for pattern recognition
+  min_confluence_score: 60.0  # Minimum confluence score for recommendations
+  
+  # Chart rendering settings
+  chart_width: 800
+  chart_height: 600
+  
+  # Vision model settings
+  vision_model_provider: openai  # Must match llm.provider
+  vision_model_name: gpt-4-vision-preview  # Must match llm.model
+
+# Disable other features not needed for this agent
+tutorial:
+  enabled: false
+
+ai_training:
+  enabled: false
+
+backtesting:
+  default_engine: backtesting.py
+  initial_balance: 100000
+  commission: 0.001
+
+agent:
+  max_iterations: 5
+  reflection_interval: 10
+
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: ./logs/chart_reader.log

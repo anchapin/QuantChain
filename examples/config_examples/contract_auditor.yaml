@@ -1,0 +1,93 @@
+# Configuration optimized for Smart Contract Auditor
+# This configuration is tuned for security analysis and code review
+
+llm:
+  # Strong reasoning models recommended for code analysis
+  provider: openai  # Can also use 'anthropic' for Claude
+  model: gpt-4  # Strong reasoning for security analysis
+  temperature: 0.1  # Very low for consistent security analysis
+  max_tokens: 4000  # More tokens for analyzing large contracts
+
+data:
+  # Data settings not applicable for auditor (minimal)
+  default_provider: alpaca
+  cache_enabled: false
+  cache_dir: ./data/cache
+
+trading:
+  # Trading not applicable for auditor (non-trading agent)
+  default_broker: alpaca
+  paper_trading: true
+  max_position_size: 0.0  # No trading
+  initial_cash: 0.0  # No capital
+
+rag:
+  # Enable for vulnerability pattern database
+  enabled: true
+  vector_store_type: chromadb
+  embedding_model: all-MiniLM-L6-v2
+  persist_directory: ./data/vulnerability_db
+
+# Smart Contract Auditor specific settings
+contract_auditor:
+  # Default blockchain network
+  blockchain_network: ethereum  # Can be: ethereum, bsc, polygon, arbitrum, optimism
+  
+  # Security checks to perform
+  security_checks_enabled: [
+    "reentrancy",
+    "access_control",
+    "arithmetic",
+    "unchecked_calls",
+    "delegatecall",
+    "tx_origin",
+    "integer_overflow",
+    "logic_gates",
+    "gas_limit",
+    "timestamp_dependency"
+  ]
+  
+  # Financial analysis settings
+  financial_analysis_enabled: true  # Analyze tokenomics for token contracts
+  
+  # Score thresholds
+  min_security_score: 70.0  # Minimum security score to consider "safe"
+  min_financial_score: 60.0  # Minimum financial score for investment
+  
+  # Caching settings
+  cache_contract_source: true  # Cache retrieved contract source
+  cache_directory: ./data/contract_cache  # Directory for cached contracts
+  
+  # Analysis depth
+  analyze_inherited_contracts: true  # Analyze contracts that are inherited
+  check_external_calls: true  # Verify security of external contract calls
+  gas_analysis: true  # Perform gas optimization analysis
+
+# Blockchain Explorer API Keys
+# Set these in your .env file:
+# ETHERSCAN_API_KEY=your_etherscan_key
+# BSCSCAN_API_KEY=your_bscscan_key
+# POLYGONSCAN_API_KEY=your_polygonscan_key
+# ARBISCAN_API_KEY=your_arbiscan_key
+# OPTIMISM_API_KEY=your_optimism_key
+
+# Disable other features not needed for this agent
+tutorial:
+  enabled: false
+
+ai_training:
+  enabled: false
+
+backtesting:
+  default_engine: backtesting.py
+  initial_balance: 0  # Not applicable
+  commission: 0  # Not applicable
+
+agent:
+  max_iterations: 5
+  reflection_interval: 10
+
+logging:
+  level: DEBUG  # More detailed for security analysis
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: ./logs/contract_auditor.log
