@@ -12,7 +12,7 @@ from quantchain.backtesting.performance_metrics import (
 
 # Enhanced test fixtures
 @pytest.fixture
-def complex_equity_curve():
+def complex_equity_curve() -> pd.Series:
     """Create a more complex equity curve with realistic market patterns."""
     dates = pd.date_range("2023-01-01", periods=252, freq="D")
     # Simulate a volatile equity curve with trends and corrections
@@ -25,7 +25,7 @@ def complex_equity_curve():
 
 
 @pytest.fixture
-def realistic_trade_log():
+def realistic_trade_log() -> pd.DataFrame:
     """Create a realistic trade log with various PnL scenarios."""
     return pd.DataFrame(
         {
@@ -74,7 +74,7 @@ def realistic_trade_log():
 
 
 @pytest.fixture
-def problematic_data():
+def problematic_data() -> dict:
     """Create various types of problematic data for error testing."""
     return {
         "empty_series": pd.Series([], dtype=float),
