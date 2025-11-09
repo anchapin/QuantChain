@@ -107,18 +107,26 @@ class QuantChainConfig:
             self._config["trading"]["paper_trading"] = (
                 os.environ["QUANTCHAIN_PAPER_TRADING"].lower() == "true"
             )
-        
+
         # Interactive Brokers settings
         if "QUANTCHAIN_IB_HOST" in os.environ:
             self._config["trading"]["ib"]["host"] = os.environ["QUANTCHAIN_IB_HOST"]
         if "QUANTCHAIN_IB_PORT" in os.environ:
-            self._config["trading"]["ib"]["port"] = int(os.environ["QUANTCHAIN_IB_PORT"])
+            self._config["trading"]["ib"]["port"] = int(
+                os.environ["QUANTCHAIN_IB_PORT"]
+            )
         if "QUANTCHAIN_IB_CLIENT_ID" in os.environ:
-            self._config["trading"]["ib"]["client_id"] = int(os.environ["QUANTCHAIN_IB_CLIENT_ID"])
+            self._config["trading"]["ib"]["client_id"] = int(
+                os.environ["QUANTCHAIN_IB_CLIENT_ID"]
+            )
         if "QUANTCHAIN_IB_TIMEOUT" in os.environ:
-            self._config["trading"]["ib"]["timeout"] = float(os.environ["QUANTCHAIN_IB_TIMEOUT"])
+            self._config["trading"]["ib"]["timeout"] = float(
+                os.environ["QUANTCHAIN_IB_TIMEOUT"]
+            )
         if "QUANTCHAIN_IB_ACCOUNT" in os.environ:
-            self._config["trading"]["ib"]["account"] = os.environ["QUANTCHAIN_IB_ACCOUNT"]
+            self._config["trading"]["ib"]["account"] = os.environ[
+                "QUANTCHAIN_IB_ACCOUNT"
+            ]
 
         # Tutorial mode settings
         if "QUANTCHAIN_TUTORIAL_ENABLED" in os.environ:

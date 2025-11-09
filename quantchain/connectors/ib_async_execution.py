@@ -176,23 +176,27 @@ class IBExecutionConnector(TradingExecutionInterface):
             date_str = parts[1]
             strike_str = parts[2]
             right = parts[3]
-            
+
             # Validate components
             ticker_valid = ticker.isalpha()
             date_valid = len(date_str) == 6 and date_str.isdigit()
-            strike_valid = (strike_str.replace('.', '', 1).isdigit() if '.' in strike_str else strike_str.isdigit())
-            right_valid = right in ['C', 'P']
-            
+            strike_valid = (
+                strike_str.replace(".", "", 1).isdigit()
+                if "." in strike_str
+                else strike_str.isdigit()
+            )
+            right_valid = right in ["C", "P"]
+
             if ticker_valid and date_valid and strike_valid and right_valid:
-                
+
                 # Convert YYMMDD to YYYYMMDD
                 date = f"20{date_str[:2]}{date_str[2:4]}{date_str[4:]}"
                 strike = float(strike_str)
                 right = "CALL" if right.upper() == "C" else "PUT"
                 return Option(ticker, date, strike, right, "")
-        
+
         option_match = None
-        
+
         if option_match:
             ticker, date_str, strike_str, right = option_match.groups()
             # Convert YYMMDD to YYYYMMDD
@@ -230,7 +234,7 @@ class IBExecutionConnector(TradingExecutionInterface):
             if year < current_year:
                 year += 10  # Add decade if year is in past
             expiry = f"{year}{month}"
-            
+
             return Future(root, expiry, "", "", "")
 
         # Default to stock
