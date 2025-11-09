@@ -107,5 +107,3 @@ class TestExecutionFactory:
 
         with pytest.raises(ConfigurationError):
             create_execution_interface(mock_config)
-
-

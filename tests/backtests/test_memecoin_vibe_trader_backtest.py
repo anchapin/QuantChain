@@ -413,5 +413,3 @@ REASONING: High potential token with strong metrics."""
             f"Should calculate correct quantity, got {order_call.kwargs['quantity']}, "
             f"expected {expected_quantity}"
         )
-
-

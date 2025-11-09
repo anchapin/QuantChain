@@ -151,7 +151,9 @@ class TestSocialMediaScraper:
 
     @patch.object(SocialMediaScraper, "_get_telegram_metrics")
     @patch.object(SocialMediaScraper, "_get_twitter_metrics")
-    def test_get_social_metrics_success(self, mock_twitter: Mock, mock_telegram: Mock) -> None:
+    def test_get_social_metrics_success(
+        self, mock_twitter: Mock, mock_telegram: Mock
+    ) -> None:
         """Test successful social metrics retrieval."""
         # Setup mock data
         mock_telegram.return_value = {"followers": 1000, "recent_posts": 10}
@@ -492,5 +494,3 @@ class TestSocialMediaScraperIntegration:
                 0.0 <= metrics.sentiment_score <= 1.0,
             ]
         )
-
-

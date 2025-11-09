@@ -445,5 +445,3 @@ def create_test_bar(
 # Note: pytest_plugins and pytest_configure moved to root conftest.py
 # See: https://docs.pytest.org/en/stable/deprecations.html
 # #pytest-plugins-in-non-top-level-conftest-files
-
-

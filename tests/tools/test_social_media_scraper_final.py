@@ -510,5 +510,3 @@ class TestSocialMediaScraperIntegration:
                 0.0 <= metrics.sentiment_score <= 1.0,
             ]
         )
-
-

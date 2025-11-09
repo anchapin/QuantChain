@@ -623,5 +623,3 @@ class TestAPISecurityManager:
         """Test initialization with AWS Secrets Manager backend."""
         # TODO: Implement test
         pass
-
-

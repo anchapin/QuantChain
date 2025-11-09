@@ -326,7 +326,9 @@ class TestWorkflowSteps:
         assert result_state.social_data["PEPE"].telegram_followers == 10000
         assert result_state.error_message is None
 
-    def test_gather_social_data_with_failures(self, agent_setup: MemecoinVibeTrader) -> None:
+    def test_gather_social_data_with_failures(
+        self, agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test social data gathering with some failures."""
         agent = agent_setup
 
@@ -410,7 +412,9 @@ class TestWorkflowSteps:
         assert "Strong social presence" in assessment.reasoning
         assert result_state.error_message is None
 
-    def test_assess_vibes_with_llm_failure(self, agent_setup: MemecoinVibeTrader) -> None:
+    def test_assess_vibes_with_llm_failure(
+        self, agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test vibe assessment with LLM failure."""
         agent = agent_setup
 
@@ -484,7 +488,9 @@ class TestWorkflowSteps:
         assert trade["vibe_score"] == 85.0
         assert result_state.error_message is None
 
-    def test_execute_trades_with_position_limits(self, agent_setup: MemecoinVibeTrader) -> None:
+    def test_execute_trades_with_position_limits(
+        self, agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test trade execution respects position limits."""
         agent = agent_setup
         agent.config.max_positions = 2
@@ -529,7 +535,9 @@ class TestWorkflowSteps:
         assert result_state.trades_executed[0]["token"] == "TOKEN0"  # Highest score
         assert result_state.trades_executed[1]["token"] == "TOKEN1"  # Second highest
 
-    def test_execute_trades_with_existing_positions(self, agent_setup: MemecoinVibeTrader) -> None:
+    def test_execute_trades_with_existing_positions(
+        self, agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test trade execution skips existing positions."""
         agent = agent_setup
 
@@ -613,7 +621,9 @@ class TestWorkflowConditions:
 
         return agent
 
-    def test_should_continue_after_scan_continue(self, agent_setup: MemecoinVibeTrader) -> None:
+    def test_should_continue_after_scan_continue(
+        self, agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test scan continuation when tokens found and no error."""
         agent = agent_setup
 
@@ -634,7 +644,9 @@ class TestWorkflowConditions:
         result = agent._should_continue_after_scan(state)
         assert result == "continue"
 
-    def test_should_continue_after_scan_error(self, agent_setup: MemecoinVibeTrader) -> None:
+    def test_should_continue_after_scan_error(
+        self, agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test scan continuation when error occurs."""
         agent = agent_setup
 
@@ -643,7 +655,9 @@ class TestWorkflowConditions:
         result = agent._should_continue_after_scan(state)
         assert result == "error"
 
-    def test_should_continue_after_scan_end(self, agent_setup: MemecoinVibeTrader) -> None:
+    def test_should_continue_after_scan_end(
+        self, agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test scan continuation when no tokens found."""
         agent = agent_setup
 
@@ -652,7 +666,9 @@ class TestWorkflowConditions:
         result = agent._should_continue_after_scan(state)
         assert result == "end"
 
-    def test_should_continue_after_social_continue(self, agent_setup: MemecoinVibeTrader) -> None:
+    def test_should_continue_after_social_continue(
+        self, agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test social continuation when data gathered and no error."""
         agent = agent_setup
 
@@ -661,7 +677,9 @@ class TestWorkflowConditions:
         result = agent._should_continue_after_social(state)
         assert result == "continue"
 
-    def test_should_continue_after_social_error(self, agent_setup: MemecoinVibeTrader) -> None:
+    def test_should_continue_after_social_error(
+        self, agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test social continuation when error occurs."""
         agent = agent_setup
 
@@ -670,7 +688,9 @@ class TestWorkflowConditions:
         result = agent._should_continue_after_social(state)
         assert result == "error"
 
-    def test_should_continue_after_social_end(self, agent_setup: MemecoinVibeTrader) -> None:
+    def test_should_continue_after_social_end(
+        self, agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test social continuation when no social data."""
         agent = agent_setup
 
@@ -679,7 +699,9 @@ class TestWorkflowConditions:
         result = agent._should_continue_after_social(state)
         assert result == "end"
 
-    def test_should_continue_after_assessment_continue(self, agent_setup: MemecoinVibeTrader) -> None:
+    def test_should_continue_after_assessment_continue(
+        self, agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test assessment continuation when assessments made and no error."""
         agent = agent_setup
 
@@ -704,7 +726,9 @@ class TestWorkflowConditions:
         result = agent._should_continue_after_assessment(state)
         assert result == "continue"
 
-    def test_should_continue_after_assessment_error(self, agent_setup: MemecoinVibeTrader) -> None:
+    def test_should_continue_after_assessment_error(
+        self, agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test assessment continuation when error occurs."""
         agent = agent_setup
 
@@ -713,7 +737,9 @@ class TestWorkflowConditions:
         result = agent._should_continue_after_assessment(state)
         assert result == "error"
 
-    def test_should_continue_after_assessment_end(self, agent_setup: MemecoinVibeTrader) -> None:
+    def test_should_continue_after_assessment_end(
+        self, agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test assessment continuation when no assessments."""
         agent = agent_setup
 
@@ -722,7 +748,9 @@ class TestWorkflowConditions:
         result = agent._should_continue_after_assessment(state)
         assert result == "end"
 
-    def test_should_continue_after_execution(self, agent_setup: MemecoinVibeTrader) -> None:
+    def test_should_continue_after_execution(
+        self, agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test execution always continues."""
         agent = agent_setup
 
@@ -940,7 +968,9 @@ class TestLLMPromptAndParsing:
         assert assessment.risk_level == "MEDIUM"
         assert assessment.reasoning == "LLM assessment parsing failed"
 
-    def test_parse_llm_response_malformed(self, agent_setup: MemecoinVibeTrader) -> None:
+    def test_parse_llm_response_malformed(
+        self, agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test parsing malformed LLM response."""
         agent = agent_setup
 
@@ -966,7 +996,9 @@ class TestLLMPromptAndParsing:
         assert assessment.risk_level == "MEDIUM"
         assert assessment.reasoning == "LLM assessment parsing failed"
 
-    def test_parse_llm_response_edge_cases(self, agent_setup: MemecoinVibeTrader) -> None:
+    def test_parse_llm_response_edge_cases(
+        self, agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test parsing edge cases in LLM response."""
         agent = agent_setup
 
@@ -1174,7 +1206,9 @@ class TestRiskManagement:
         result_state = agent._execute_trades(state)
 
         # Should only execute trades for scores >= 75
-        executed_tokens: list[float] = [trade["token"] for trade in result_state.trades_executed]
+        executed_tokens: list[float] = [
+            trade["token"] for trade in result_state.trades_executed
+        ]
         assert "TOKEN75" in executed_tokens
         assert "TOKEN80" in executed_tokens
         assert "TOKEN85" in executed_tokens
@@ -1333,7 +1367,9 @@ class TestRunCycleIntegration:
 
         return agent
 
-    def test_run_cycle_success_case(self, complete_agent_setup: MemecoinVibeTrader) -> None:
+    def test_run_cycle_success_case(
+        self, complete_agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test successful complete run cycle."""
         agent = complete_agent_setup
 
@@ -1387,7 +1423,9 @@ class TestRunCycleIntegration:
         assert len(result["trades"]) == 1
         assert result["trades"][0]["token"] == "PEPE"
 
-    def test_run_cycle_no_tokens_found(self, complete_agent_setup: MemecoinVibeTrader) -> None:
+    def test_run_cycle_no_tokens_found(
+        self, complete_agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test run cycle when no tokens are found."""
         agent = complete_agent_setup
 
@@ -1413,7 +1451,9 @@ class TestRunCycleIntegration:
         assert result["trades_executed"] == 0
         assert result["error_message"] is None
 
-    def test_run_cycle_no_qualifying_assessments(self, complete_agent_setup: MemecoinVibeTrader) -> None:
+    def test_run_cycle_no_qualifying_assessments(
+        self, complete_agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test run cycle when no assessments qualify for trading."""
         agent = complete_agent_setup
 
@@ -1455,7 +1495,9 @@ class TestRunCycleIntegration:
         assert result["trades_executed"] == 0
         assert result["error_message"] is None
 
-    def test_run_cycle_exception_handling(self, complete_agent_setup: MemecoinVibeTrader) -> None:
+    def test_run_cycle_exception_handling(
+        self, complete_agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test run cycle handles unexpected exceptions."""
         agent = complete_agent_setup
 
@@ -1471,7 +1513,9 @@ class TestRunCycleIntegration:
         assert result["assessments_made"] == 0
         assert result["trades_executed"] == 0
 
-    def test_run_cycle_state_normalization(self, complete_agent_setup: MemecoinVibeTrader) -> None:
+    def test_run_cycle_state_normalization(
+        self, complete_agent_setup: MemecoinVibeTrader
+    ) -> None:
         """Test that run_cycle properly normalizes different state types."""
         agent = complete_agent_setup
 
@@ -1768,9 +1812,3 @@ class TestEdgeCases:
         agent.execution_tool.execute_market_order.assert_called_once_with(
             symbol="PEPE/USD", side="buy", quantity=10.0
         )
-
-
-
-
-
-

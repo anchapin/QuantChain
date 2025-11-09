@@ -299,5 +299,3 @@ class TestRetryHandler:
         mock_logger.error.assert_called_once()
         error_call = mock_logger.error.call_args[0][0]
         assert "Failed after 2 attempts" in error_call
-
-

@@ -395,5 +395,3 @@ class TestDexscreenerDataConnector:
 
             assert trending == []
             mock_request.assert_called_with("dex/tokens")
-
-

@@ -466,5 +466,3 @@ class TestAlpacaDataConnector:
             # Test invalid market filter
             invalid_symbols = connector.get_available_symbols(market="invalid")
             assert invalid_symbols == []
-
-

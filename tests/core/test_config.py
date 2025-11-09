@@ -255,5 +255,3 @@ class TestQuantChainConfig:
 
         assert config1 is not config2
         assert isinstance(config2, QuantChainConfig)
-
-

@@ -94,5 +94,3 @@ class TestDataFeedInterface:
 
         assert "self" in params
         assert "market" in params
-
-

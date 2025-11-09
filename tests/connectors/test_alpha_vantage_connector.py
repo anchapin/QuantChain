@@ -555,7 +555,13 @@ class TestAlphaVantageDataConnector:
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test getting available symbols with limit."""
-        connector._symbol_cache: list[float] = ["AAPL", "GOOGL", "MSFT", "EUR/USD", "GBP/JPY"]
+        connector._symbol_cache: list[float] = [
+            "AAPL",
+            "GOOGL",
+            "MSFT",
+            "EUR/USD",
+            "GBP/JPY",
+        ]
         connector._cache_timestamp = datetime.now().timestamp()
         connector.symbol_limit = 3
 
@@ -776,5 +782,3 @@ class TestAlphaVantageDataConnector:
             connector._refresh_symbol_cache()
             # Should still have the default symbols even on "error"
             assert len(connector._symbol_cache) > 0
-
-

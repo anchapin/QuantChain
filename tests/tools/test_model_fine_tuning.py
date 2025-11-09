@@ -94,7 +94,9 @@ class TestSetupFineTuningEnvironment:
     @patch("torch.cuda.is_available", return_value=True)
     @patch("torch.cuda.get_device_properties")
     @patch("os.makedirs")
-    def test_successful_setup(self, mock_makedirs: Mock, mock_device_props: Mock, mock_cuda: Mock) -> FineTuningConfig:
+    def test_successful_setup(
+        self, mock_makedirs: Mock, mock_device_props: Mock, mock_cuda: Mock
+    ) -> FineTuningConfig:
         """Test successful environment setup."""
         # Mock GPU properties
         mock_device = Mock()
@@ -175,7 +177,9 @@ class TestFineTuneModelQLoRA:
 
     @patch("torch.cuda.max_memory_allocated", return_value=15 * 1024**3)
     @patch("os.path.join")
-    def test_successful_qlora_fine_tuning(self, mock_join: Mock, mock_cuda_mem: Mock) -> None:
+    def test_successful_qlora_fine_tuning(
+        self, mock_join: Mock, mock_cuda_mem: Mock
+    ) -> None:
         """Test successful QLoRA fine-tuning."""
         mock_join.return_value = "/tmp/output/final_model"
 
@@ -431,7 +435,9 @@ class TestIntegration:
     @patch("torch.cuda.is_available", return_value=True)
     @patch("torch.cuda.get_device_properties")
     @patch("torch.cuda.max_memory_allocated", return_value=15 * 1024**3)
-    def test_end_to_end_workflow(self, mock_cuda_mem: Mock, mock_device_props: Mock, mock_cuda: Mock) -> None:
+    def test_end_to_end_workflow(
+        self, mock_cuda_mem: Mock, mock_device_props: Mock, mock_cuda: Mock
+    ) -> None:
         """Test end-to-end fine-tuning workflow."""
         # Mock GPU properties
         mock_device_properties = Mock()
@@ -527,5 +533,3 @@ class TestIntegration:
             assert training_result.training_loss == 0.5
             assert quantize_result.compression_ratio == 3.33
             assert validation_result.test_loss == 0.4
-
-

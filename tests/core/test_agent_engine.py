@@ -214,5 +214,3 @@ def test_calculate_confidence() -> None:
     )
     score = agent._calculate_confidence(all_certainty)
     assert score == 1.0  # Should not exceed 1.0
-
-

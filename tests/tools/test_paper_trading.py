@@ -73,7 +73,9 @@ class TestSlippageModels:
         order = OrderRequest("AAPL", OrderSide.BUY, OrderType.MARKET, 100)
 
         # Test multiple slippage applications
-        results: list[float] = [slippage.apply_slippage(order, 150.0) for _ in range(100)]
+        results: list[float] = [
+            slippage.apply_slippage(order, 150.0) for _ in range(100)
+        ]
 
         # Should vary around 150.0
         assert min(results) >= 149.7  # 150 - (150 * 0.002)
@@ -498,5 +500,3 @@ class TestPaperTradingExecutor:
         assert executor.is_market_open() is True
         assert executor.is_market_open("AAPL") is True
         assert executor.is_market_open("BTC/USD") is True
-
-

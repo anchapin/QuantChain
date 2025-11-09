@@ -344,7 +344,9 @@ class TestChartRenderer:
         """Create sample OHLCV data for rendering."""
         num_points = 100
         base_price = 100
-        closes: list[float] = [base_price + np.random.normal(0, 2) for _ in range(num_points)]
+        closes: list[float] = [
+            base_price + np.random.normal(0, 2) for _ in range(num_points)
+        ]
 
         return OHLCVData(
             symbol="TEST",
@@ -572,5 +574,3 @@ class TestChartReaderAgent:
             assert recommendation["action"] == "HOLD"
             assert recommendation["confidence"] == 0.0
             assert "No data available" in recommendation["reasoning"]
-
-

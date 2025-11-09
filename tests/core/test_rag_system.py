@@ -305,5 +305,3 @@ class TestMarketDataRAG:
         assert "price" in text
         assert '{"price": 150.0}' in text
         assert timestamp.isoformat() in text
-
-

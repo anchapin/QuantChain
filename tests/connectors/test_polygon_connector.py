@@ -197,7 +197,10 @@ class TestPolygonDataConnector:
                 connector.get_historical_data("AAPL", "1D", start_date, end_date)
 
     def test_get_real_time_data_equity(
-        self, connector: PolygonDataConnector, sample_trade: MagicMock, sample_quote: MagicMock
+        self,
+        connector: PolygonDataConnector,
+        sample_trade: MagicMock,
+        sample_quote: MagicMock,
     ) -> None:
         """Test real-time data retrieval for equities."""
         with patch.object(
@@ -550,5 +553,3 @@ class TestPolygonDataConnector:
         with patch("quantchain.connectors.polygon_connector.RESTClient"):
             connector = PolygonDataConnector("MOCK_API_KEY", limit=1000)
             assert connector.limit == 1000
-
-
