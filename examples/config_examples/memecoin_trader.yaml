@@ -1,0 +1,55 @@
+# Configuration optimized for Memecoin Vibe Trader
+# This configuration is tuned for high-risk, high-reward memecoin trading
+# with fast inference for real-time decisions
+
+llm:
+  # Fast inference models recommended for real-time trading
+  provider: ollama  # Use 'openai' for cloud-based with gpt-4
+  model: llama2:7b  # Fast local model, or 'gpt-4' for cloud
+  temperature: 0.7  # Balanced creativity for vibe assessment
+  max_tokens: 500   # Sufficient for vibe analysis
+
+data:
+  default_provider: alpaca
+  cache_enabled: true  # Reduce API calls for performance
+  cache_dir: ./data/cache
+
+trading:
+  default_broker: alpaca
+  paper_trading: true  # IMPORTANT: Keep true for safety
+  max_position_size: 0.02  # 2% per position for high-risk assets
+  initial_cash: 10000.0  # Smaller starting capital for testing
+
+rag:
+  # RAG not needed for memecoin trading
+  enabled: false
+
+# Memecoin Vibe Trader specific settings
+memecoin_trader:
+  scan_interval: 3600  # Scan every hour (seconds)
+  max_positions: 5  # Maximum concurrent positions
+  min_liquidity_threshold: 10000  # Minimum liquidity in USD
+  min_vibe_score_threshold: 70  # Minimum vibe score to trade
+  risk_tolerance: MEDIUM  # Can be LOW, MEDIUM, or HIGH
+  time_window: 1h  # Look for tokens from last hour
+
+# Disable other features not needed for this agent
+tutorial:
+  enabled: false
+
+ai_training:
+  enabled: false
+
+backtesting:
+  default_engine: backtesting.py
+  initial_balance: 10000
+  commission: 0.001
+
+agent:
+  max_iterations: 5
+  reflection_interval: 10
+
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: ./logs/memecoin_trader.log
