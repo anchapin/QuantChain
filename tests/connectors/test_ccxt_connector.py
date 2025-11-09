@@ -40,6 +40,7 @@ class TestCCXTDataConnector:
                 'base': 'BTC',
                 'quote': 'USDT',
                 'active': True,
+                'type': 'spot',
                 'limits': {
                     'amount': {'min': 0.00001, 'max': 1000},
                     'price': {'min': 0.01, 'max': 1000000},
@@ -53,6 +54,7 @@ class TestCCXTDataConnector:
                 'base': 'ETH',
                 'quote': 'USDT',
                 'active': True,
+                'type': 'spot',
                 'limits': {
                     'amount': {'min': 0.001, 'max': 10000},
                     'price': {'min': 0.01, 'max': 100000},
