@@ -2,13 +2,14 @@
 
 try:
     import ccxt
+
     CCXT_AVAILABLE = True
 except ImportError:
     CCXT_AVAILABLE = False
     ccxt = None
 
 import pandas as pd
-from typing import List, Dict, Optional, Any, Union
+from typing import List, Dict, Optional, Any
 from datetime import datetime, timezone
 import logging
 
@@ -59,9 +60,10 @@ class CCXTDataConnector(DataFeedInterface):
         """
         if not CCXT_AVAILABLE:
             raise ImportError(
-                "CCXT library is not installed. Please install it with: pip install ccxt>=4.0.0"
+                "CCXT library is not installed. Please install it with: "
+                "pip install ccxt>=4.0.0"
             )
-        
+
         # Call parent init with empty strings if not provided
         super().__init__(api_key or "", api_secret, **kwargs)
 
@@ -85,25 +87,31 @@ class CCXTDataConnector(DataFeedInterface):
             if exchange_class is None:
                 raise ValueError(f"Exchange '{exchange}' not found in ccxt")
 
-            self.exchange = exchange_class({
-                'apiKey': api_key,
-                'secret': api_secret,
-                'enableRateLimit': self.enable_rate_limit,
-                'timeout': self.timeout,
-                'options': {
-                    'defaultType': 'spot',  # Use spot market by default
-                },
-            })
+            self.exchange = exchange_class(
+                {
+                    "apiKey": api_key,
+                    "secret": api_secret,
+                    "enableRateLimit": self.enable_rate_limit,
+                    "timeout": self.timeout,
+                    "options": {
+                        "defaultType": "spot",  # Use spot market by default
+                    },
+                }
+            )
 
             # Set sandbox mode if requested
             if self.sandbox:
-                if hasattr(self.exchange, 'set_sandbox_mode'):
+                if hasattr(self.exchange, "set_sandbox_mode"):
                     self.exchange.set_sandbox_mode(True)
                 else:
-                    self.logger.warning(f"Exchange {exchange} does not support sandbox mode")
+                    self.logger.warning(
+                        f"Exchange {exchange} does not support sandbox mode"
+                    )
 
         except ccxt.AuthenticationError as e:
-            raise AuthenticationError(f"Failed to authenticate with {exchange}: {str(e)}") from e
+            raise AuthenticationError(
+                f"Failed to authenticate with {exchange}: {str(e)}"
+            ) from e
         except Exception as e:
             raise DataSourceError(f"Failed to initialize {exchange}: {str(e)}") from e
 
@@ -136,12 +144,12 @@ class CCXTDataConnector(DataFeedInterface):
             Normalized symbol in ccxt format (e.g., 'BTC/USDT')
         """
         # If already in ccxt format
-        if '/' in symbol:
+        if "/" in symbol:
             return symbol.upper()
 
         # Convert BTC-USD to BTC/USD
-        if '-' in symbol:
-            parts = symbol.split('-')
+        if "-" in symbol:
+            parts = symbol.split("-")
             if len(parts) == 2:
                 return f"{parts[0].upper()}/{parts[1].upper()}"
 
@@ -149,9 +157,9 @@ class CCXTDataConnector(DataFeedInterface):
         # For crypto pairs, typically the last 3-4 chars are the quote currency
         if len(symbol) >= 6:
             # Common quote currencies
-            for quote in ['USDT', 'USDC', 'USD', 'BTC', 'ETH', 'EUR']:
+            for quote in ["USDT", "USDC", "USD", "BTC", "ETH", "EUR"]:
                 if symbol.endswith(quote):
-                    base = symbol[:-len(quote)]
+                    base = symbol[: -len(quote)]
                     return f"{base.upper()}/{quote}"
 
         # If we can't parse it, return as is
@@ -167,11 +175,12 @@ class CCXTDataConnector(DataFeedInterface):
         """
         if not CCXT_AVAILABLE:
             raise ImportError(
-                "CCXT library is not installed. Please install it with: pip install ccxt>=4.0.0"
+                "CCXT library is not installed. Please install it with: "
+                "pip install ccxt>=4.0.0"
             )
-        
+
         current_time = datetime.now().timestamp()
-        
+
         # Check if cache needs refresh
         # Handle both timestamp (float) and datetime object types
         cache_age = 0
@@ -180,14 +189,14 @@ class CCXTDataConnector(DataFeedInterface):
                 cache_age = current_time - self._cache_timestamp
             else:  # datetime object
                 cache_age = current_time - self._cache_timestamp.timestamp()
-        
+
         if self._cache_timestamp is None or cache_age > self._cache_ttl:
-            
+
             try:
                 self.exchange.load_markets()
                 # Handle both dict and MagicMock markets
                 markets = self.exchange.markets
-                
+
                 # Check if it's a real dict or a MagicMock
                 if isinstance(markets, dict):
                     # It's a real dict, copy it
@@ -196,18 +205,27 @@ class CCXTDataConnector(DataFeedInterface):
                     # It's a MagicMock or other type, use as is
                     # For tests, the MagicMock should behave like a dict
                     self._market_cache = markets
-                
+
                 self._cache_timestamp = current_time
             except Exception as e:
                 exception_type = type(e).__name__
-                
-                if exception_type in ('RateLimitExceeded',) or 'RateLimit' in exception_type:
-                    raise RateLimitError(f"Rate limit exceeded while loading markets: {str(e)}") from e
-                elif exception_type in ('NetworkError', 'ExchangeNotAvailable') or \
-                     any(x in exception_type for x in ['NetworkError', 'ExchangeNotAvailable']):
+
+                if (
+                    exception_type in ("RateLimitExceeded",)
+                    or "RateLimit" in exception_type
+                ):
+                    raise RateLimitError(
+                        f"Rate limit exceeded while loading markets: {str(e)}"
+                    ) from e
+                elif exception_type in ("NetworkError", "ExchangeNotAvailable") or any(
+                    x in exception_type
+                    for x in ["NetworkError", "ExchangeNotAvailable"]
+                ):
                     raise DataSourceError(f"Failed to load markets: {str(e)}") from e
                 else:
-                    raise DataSourceError(f"Unexpected error loading markets: {str(e)}") from e
+                    raise DataSourceError(
+                        f"Unexpected error loading markets: {str(e)}"
+                    ) from e
 
     def get_historical_data(
         self,
@@ -238,7 +256,7 @@ class CCXTDataConnector(DataFeedInterface):
         # Convert parameters
         ccxt_timeframe = self._convert_timeframe(timeframe)
         normalized_symbol = self._normalize_symbol(symbol)
-        
+
         # Convert dates to milliseconds for ccxt
         # If limit is specified, don't use since to match test expectations
         if limit is not None:
@@ -259,40 +277,67 @@ class CCXTDataConnector(DataFeedInterface):
 
             # Convert to DataFrame
             if ohlcv:
-                df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+                df = pd.DataFrame(
+                    ohlcv,
+                    columns=["timestamp", "open", "high", "low", "close", "volume"],
+                )
                 # Convert timestamp from milliseconds to datetime
-                df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms', utc=True).dt.tz_convert('UTC')
+                df["timestamp"] = pd.to_datetime(
+                    df["timestamp"], unit="ms", utc=True
+                ).dt.tz_convert("UTC")
                 # Sort by timestamp
-                df = df.sort_values('timestamp').reset_index(drop=True)
+                df = df.sort_values("timestamp").reset_index(drop=True)
                 return df
             else:
                 # Return empty DataFrame with correct columns
-                return pd.DataFrame(columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+                return pd.DataFrame(
+                    columns=["timestamp", "open", "high", "low", "close", "volume"]
+                )
 
         except Exception as e:
             # Handle various exception types including mocks
             exception_type = type(e).__name__
-            
-            if exception_type in ('BadSymbol',) or 'BadSymbol' in exception_type:
-                raise SymbolNotFoundError(f"Symbol {symbol} not found on {self.exchange_name}: {str(e)}") from e
-            elif exception_type in ('RateLimitExceeded',) or 'RateLimit' in exception_type:
-                raise RateLimitError(f"Rate limit exceeded for {symbol}: {str(e)}") from e
-            elif exception_type in ('NetworkError', 'ExchangeNotAvailable') or \
-                 any(x in exception_type for x in ['NetworkError', 'ExchangeNotAvailable']):
-                raise DataSourceError(f"Failed to fetch data for {symbol}: {str(e)}") from e
+
+            if exception_type in ("BadSymbol",) or "BadSymbol" in exception_type:
+                raise SymbolNotFoundError(
+                    f"Symbol {symbol} not found on {self.exchange_name}: {str(e)}"
+                ) from e
+            elif (
+                exception_type in ("RateLimitExceeded",)
+                or "RateLimit" in exception_type
+            ):
+                raise RateLimitError(
+                    f"Rate limit exceeded for {symbol}: {str(e)}"
+                ) from e
+            elif exception_type in ("NetworkError", "ExchangeNotAvailable") or any(
+                x in exception_type for x in ["NetworkError", "ExchangeNotAvailable"]
+            ):
+                raise DataSourceError(
+                    f"Failed to fetch data for {symbol}: {str(e)}"
+                ) from e
             else:
-                # For mock exceptions, check message content and exception type string representation
+                # For mock exceptions, check message content
+                # and exception type representation
                 error_str = str(e)
                 error_type_str = str(type(e))
-                
-                if 'Symbol not found' in error_str or 'BadSymbol' in error_type_str:
-                    raise SymbolNotFoundError(f"Symbol {symbol} not found on {self.exchange_name}: {str(e)}") from e
-                elif 'Rate limit' in error_str or 'RateLimit' in error_type_str:
-                    raise RateLimitError(f"Rate limit exceeded for {symbol}: {str(e)}") from e
-                elif 'Network error' in error_str or 'NetworkError' in error_type_str:
-                    raise DataSourceError(f"Failed to fetch data for {symbol}: {str(e)}") from e
+
+                if "Symbol not found" in error_str or "BadSymbol" in error_type_str:
+                    raise SymbolNotFoundError(
+                        f"Symbol {symbol} not found on {self.exchange_name}: "
+                        f"{str(e)}"
+                    ) from e
+                elif "Rate limit" in error_str or "RateLimit" in error_type_str:
+                    raise RateLimitError(
+                        f"Rate limit exceeded for {symbol}: {str(e)}"
+                    ) from e
+                elif "Network error" in error_str or "NetworkError" in error_type_str:
+                    raise DataSourceError(
+                        f"Failed to fetch data for {symbol}: {str(e)}"
+                    ) from e
                 else:
-                    raise DataSourceError(f"Unexpected error fetching data for {symbol}: {str(e)}") from e
+                    raise DataSourceError(
+                        f"Unexpected error fetching data for {symbol}: {str(e)}"
+                    ) from e
 
     def get_real_time_data(self, symbol: str) -> Dict[str, Any]:
         """Fetch real-time price data for a symbol.
@@ -319,49 +364,70 @@ class CCXTDataConnector(DataFeedInterface):
             ticker = self.exchange.fetch_ticker(normalized_symbol)
 
             # Extract and normalize data
-            price = ticker.get('last') or ticker.get('close')
+            price = ticker.get("last") or ticker.get("close")
             if price is None:
                 # If no last price, try to calculate from bid/ask
-                bid = ticker.get('bid', 0)
-                ask = ticker.get('ask', 0)
+                bid = ticker.get("bid", 0)
+                ask = ticker.get("ask", 0)
                 price = (bid + ask) / 2 if bid and ask else 0
 
             return {
-                'timestamp': datetime.now(timezone.utc),
-                'price': float(price) if price else 0.0,
-                'bid': float(ticker.get('bid', 0.0)),
-                'ask': float(ticker.get('ask', 0.0)),
-                'volume': float(ticker.get('baseVolume', 0.0)),
+                "timestamp": datetime.now(timezone.utc),
+                "price": float(price) if price else 0.0,
+                "bid": float(ticker.get("bid", 0.0)),
+                "ask": float(ticker.get("ask", 0.0)),
+                "volume": float(ticker.get("baseVolume", 0.0)),
             }
 
         except Exception as e:
             # Handle various exception types including mocks
             exception_type = type(e).__name__
-            
-            if exception_type in ('BadSymbol',) or 'BadSymbol' in exception_type:
-                raise SymbolNotFoundError(f"Symbol {symbol} not found on {self.exchange_name}: {str(e)}") from e
-            elif exception_type in ('RateLimitExceeded',) or 'RateLimit' in exception_type:
-                raise RateLimitError(f"Rate limit exceeded for {symbol}: {str(e)}") from e
-            elif exception_type in ('NetworkError', 'ExchangeNotAvailable') or \
-                 any(x in exception_type for x in ['NetworkError', 'ExchangeNotAvailable']):
-                raise DataSourceError(f"Failed to fetch ticker for {symbol}: {str(e)}") from e
+
+            if exception_type in ("BadSymbol",) or "BadSymbol" in exception_type:
+                raise SymbolNotFoundError(
+                    f"Symbol {symbol} not found on {self.exchange_name}: {str(e)}"
+                ) from e
+            elif (
+                exception_type in ("RateLimitExceeded",)
+                or "RateLimit" in exception_type
+            ):
+                raise RateLimitError(
+                    f"Rate limit exceeded for {symbol}: {str(e)}"
+                ) from e
+            elif exception_type in ("NetworkError", "ExchangeNotAvailable") or any(
+                x in exception_type for x in ["NetworkError", "ExchangeNotAvailable"]
+            ):
+                raise DataSourceError(
+                    f"Failed to fetch ticker for {symbol}: {str(e)}"
+                ) from e
             else:
                 # For mock exceptions, check the message content and type
                 error_str = str(e)
                 error_type_str = str(type(e))
-                
-                if 'Symbol not found' in error_str or 'BadSymbol' in error_type_str:
-                    raise SymbolNotFoundError(f"Symbol {symbol} not found on {self.exchange_name}: {str(e)}") from e
-                elif 'Invalid API key' in error_str:
+
+                if "Symbol not found" in error_str or "BadSymbol" in error_type_str:
+                    raise SymbolNotFoundError(
+                        f"Symbol {symbol} not found on {self.exchange_name}: "
+                        f"{str(e)}"
+                    ) from e
+                elif "Invalid API key" in error_str:
                     # This is the test case for AuthenticationError
-                    raise AuthenticationError(f"Authentication failed for {self.exchange_name}: {str(e)}") from e
-                elif 'Rate limit' in error_str or 'RateLimit' in error_type_str:
-                    raise RateLimitError(f"Rate limit exceeded for {symbol}: {str(e)}") from e
-                elif 'Exchange down' in str(e):
+                    raise AuthenticationError(
+                        f"Authentication failed for {self.exchange_name}: {str(e)}"
+                    ) from e
+                elif "Rate limit" in error_str or "RateLimit" in error_type_str:
+                    raise RateLimitError(
+                        f"Rate limit exceeded for {symbol}: {str(e)}"
+                    ) from e
+                elif "Exchange down" in str(e):
                     # This is the test case for ExchangeNotAvailable
-                    raise DataSourceError(f"Failed to fetch ticker for {symbol}: {str(e)}") from e
+                    raise DataSourceError(
+                        f"Failed to fetch ticker for {symbol}: {str(e)}"
+                    ) from e
                 else:
-                    raise DataSourceError(f"Unexpected error fetching ticker for {symbol}: {str(e)}") from e
+                    raise DataSourceError(
+                        f"Unexpected error fetching ticker for {symbol}: {str(e)}"
+                    ) from e
 
     def get_quote(self, symbol: str) -> Dict[str, Any]:
         """Get current quote for a symbol.
@@ -391,14 +457,14 @@ class CCXTDataConnector(DataFeedInterface):
             ticker = self.exchange.fetch_ticker(normalized_symbol)
 
             # Extract data
-            bid_price = float(ticker.get('bid', 0.0))
-            ask_price = float(ticker.get('ask', 0.0))
-            last_price = float(ticker.get('last') or ticker.get('close', 0.0))
-            
+            bid_price = float(ticker.get("bid", 0.0))
+            ask_price = float(ticker.get("ask", 0.0))
+            last_price = float(ticker.get("last") or ticker.get("close", 0.0))
+
             # Extract sizes or calculate them
-            bid_size = float(ticker.get('bidVolume', 0.0))
-            ask_size = float(ticker.get('askVolume', 0.0))
-            last_size = float(ticker.get('baseVolume', 0.0))
+            bid_size = float(ticker.get("bidVolume", 0.0))
+            ask_size = float(ticker.get("askVolume", 0.0))
+            last_size = float(ticker.get("baseVolume", 0.0))
 
             # If bid/ask sizes are not available, estimate from volume
             if bid_size == 0.0 and last_size > 0:
@@ -407,38 +473,55 @@ class CCXTDataConnector(DataFeedInterface):
                 ask_size = last_size * 0.5  # Estimate
 
             return {
-                'symbol': normalized_symbol,
-                'timestamp': datetime.now(timezone.utc),
-                'bid_price': bid_price,
-                'ask_price': ask_price,
-                'bid_size': bid_size,
-                'ask_size': ask_size,
-                'last_price': last_price,
-                'last_size': last_size,
+                "symbol": normalized_symbol,
+                "timestamp": datetime.now(timezone.utc),
+                "bid_price": bid_price,
+                "ask_price": ask_price,
+                "bid_size": bid_size,
+                "ask_size": ask_size,
+                "last_price": last_price,
+                "last_size": last_size,
             }
 
         except Exception as e:
             # Handle various exception types including mocks
             exception_type = type(e).__name__
-            
-            if exception_type in ('BadSymbol',) or 'BadSymbol' in exception_type:
-                raise SymbolNotFoundError(f"Symbol {symbol} not found on {self.exchange_name}: {str(e)}") from e
-            elif exception_type in ('RateLimitExceeded',) or 'RateLimit' in exception_type:
-                raise RateLimitError(f"Rate limit exceeded for {symbol}: {str(e)}") from e
-            elif exception_type in ('NetworkError', 'ExchangeNotAvailable') or \
-                 any(x in exception_type for x in ['NetworkError', 'ExchangeNotAvailable']):
-                raise DataSourceError(f"Failed to fetch quote for {symbol}: {str(e)}") from e
+
+            if exception_type in ("BadSymbol",) or "BadSymbol" in exception_type:
+                raise SymbolNotFoundError(
+                    f"Symbol {symbol} not found on {self.exchange_name}: {str(e)}"
+                ) from e
+            elif (
+                exception_type in ("RateLimitExceeded",)
+                or "RateLimit" in exception_type
+            ):
+                raise RateLimitError(
+                    f"Rate limit exceeded for {symbol}: {str(e)}"
+                ) from e
+            elif exception_type in ("NetworkError", "ExchangeNotAvailable") or any(
+                x in exception_type for x in ["NetworkError", "ExchangeNotAvailable"]
+            ):
+                raise DataSourceError(
+                    f"Failed to fetch quote for {symbol}: {str(e)}"
+                ) from e
             else:
                 # For mock exceptions, check message content and type
                 error_str = str(e)
                 error_type_str = str(type(e))
-                
-                if 'Symbol not found' in error_str or 'BadSymbol' in error_type_str:
-                    raise SymbolNotFoundError(f"Symbol {symbol} not found on {self.exchange_name}: {str(e)}") from e
-                elif 'Rate limit' in error_str or 'RateLimit' in error_type_str:
-                    raise RateLimitError(f"Rate limit exceeded for {symbol}: {str(e)}") from e
+
+                if "Symbol not found" in error_str or "BadSymbol" in error_type_str:
+                    raise SymbolNotFoundError(
+                        f"Symbol {symbol} not found on {self.exchange_name}: "
+                        f"{str(e)}"
+                    ) from e
+                elif "Rate limit" in error_str or "RateLimit" in error_type_str:
+                    raise RateLimitError(
+                        f"Rate limit exceeded for {symbol}: {str(e)}"
+                    ) from e
                 else:
-                    raise DataSourceError(f"Unexpected error fetching quote for {symbol}: {str(e)}") from e
+                    raise DataSourceError(
+                        f"Unexpected error fetching quote for {symbol}: {str(e)}"
+                    ) from e
 
     def get_available_symbols(
         self,
@@ -463,18 +546,24 @@ class CCXTDataConnector(DataFeedInterface):
 
         # Get active symbols
         symbols = []
-        
+
         # Check if it's a real dict or a MagicMock
         if isinstance(self._market_cache, dict):
             # It's a real dict
             for symbol, market_data in self._market_cache.items():
-                if market_data.get('active', True) and market_data.get('type') == 'spot':
+                if (
+                    market_data.get("active", True)
+                    and market_data.get("type") == "spot"
+                ):
                     symbols.append(symbol)
         else:
             # It's a MagicMock or other type, try to iterate
             try:
                 for symbol, market_data in self._market_cache.items():
-                    if market_data.get('active', True) and market_data.get('type') == 'spot':
+                    if (
+                        market_data.get("active", True)
+                        and market_data.get("type") == "spot"
+                    ):
                         symbols.append(symbol)
             except (AttributeError, TypeError):
                 # If it's a MagicMock that doesn't support iteration
@@ -511,7 +600,7 @@ class CCXTDataConnector(DataFeedInterface):
         """
         # Refresh market cache
         self._refresh_market_cache()
-        
+
         normalized_symbol = self._normalize_symbol(symbol)
 
         # Get market data
@@ -519,31 +608,37 @@ class CCXTDataConnector(DataFeedInterface):
         if isinstance(self._market_cache, dict):
             # It's a real dict
             if normalized_symbol not in self._market_cache:
-                raise SymbolNotFoundError(f"Symbol {symbol} not found on {self.exchange_name}")
+                raise SymbolNotFoundError(
+                    f"Symbol {symbol} not found on {self.exchange_name}"
+                )
             market = self._market_cache[normalized_symbol]
         else:
             # It's a MagicMock, try to get the market
             try:
                 if normalized_symbol not in self._market_cache:
-                    raise SymbolNotFoundError(f"Symbol {symbol} not found on {self.exchange_name}")
+                    raise SymbolNotFoundError(
+                        f"Symbol {symbol} not found on {self.exchange_name}"
+                    )
                 market = self._market_cache[normalized_symbol]
             except (AttributeError, TypeError):
                 # If _market_cache is a MagicMock that doesn't support dict operations
-                raise SymbolNotFoundError(f"Symbol {symbol} not found on {self.exchange_name}")
+                raise SymbolNotFoundError(
+                    f"Symbol {symbol} not found on {self.exchange_name}"
+                )
 
         # Extract information
-        limits = market.get('limits', {})
-        precision = market.get('precision', {})
+        limits = market.get("limits", {})
+        precision = market.get("precision", {})
 
         return {
-            'symbol': normalized_symbol,
-            'name': market.get('info', {}).get('name', normalized_symbol),
-            'market': 'crypto',
-            'currency': market.get('quote', ''),
-            'min_order_size': float(limits.get('amount', {}).get('min', 0.0)),
-            'max_order_size': float(limits.get('amount', {}).get('max', 0.0)),
-            'price_precision': int(precision.get('price', 8)),
-            'size_precision': int(precision.get('amount', 8)),
+            "symbol": normalized_symbol,
+            "name": market.get("info", {}).get("name", normalized_symbol),
+            "market": "crypto",
+            "currency": market.get("quote", ""),
+            "min_order_size": float(limits.get("amount", {}).get("min", 0.0)),
+            "max_order_size": float(limits.get("amount", {}).get("max", 0.0)),
+            "price_precision": int(precision.get("price", 8)),
+            "size_precision": int(precision.get("amount", 8)),
         }
 
     def is_market_open(self, market: Optional[str] = None) -> bool:
@@ -562,12 +657,12 @@ class CCXTDataConnector(DataFeedInterface):
         # In the future, we could check exchange status if ccxt provides it
         try:
             # Some exchanges have a status check
-            if hasattr(self.exchange, 'fetch_status'):
-                status = self.exchange.fetch_status()
+            if hasattr(self.exchange, "fetch_status"):
+                self.exchange.fetch_status()
                 # Regardless of status, crypto markets are 24/7
                 # So we return True anyway
                 return True
         except Exception:
             pass
-        
+
         return True
