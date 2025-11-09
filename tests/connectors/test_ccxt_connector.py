@@ -1,10 +1,10 @@
 """Tests for CCXT data connector."""
 
+import sys
 import pytest
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 from datetime import datetime, timezone, timedelta
 import pandas as pd
-import sys
 
 # Mock ccxt before importing the connector
 ccxt_mock = MagicMock()
@@ -23,8 +23,8 @@ if "quantchain.connectors.ccxt_connector" in sys.modules:
     del sys.modules["quantchain.connectors.ccxt_connector"]
 sys.modules["ccxt"] = ccxt_mock
 
-from quantchain.connectors.ccxt_connector import CCXTDataConnector
-from quantchain.core.exceptions import (
+from quantchain.connectors.ccxt_connector import CCXTDataConnector  # noqa: E402
+from quantchain.core.exceptions import (  # noqa: E402
     DataSourceError,
     SymbolNotFoundError,
     AuthenticationError,
@@ -159,7 +159,7 @@ class TestCCXTDataConnector:
         mock_exchange.load_markets.return_value = {}
 
         with patch.object(ccxt_mock, "binance", return_value=mock_exchange):
-            connector = CCXTDataConnector(api_key="test_key", api_secret="test_secret")
+            CCXTDataConnector(api_key="test_key", api_secret="test_secret")
 
             args, kwargs = ccxt_mock.binance.call_args
             if args:
@@ -271,7 +271,7 @@ class TestCCXTDataConnector:
         connector.exchange.fetch_ohlcv.return_value = sample_ohlcv_data
 
         start_date = datetime(2023, 1, 1)
-        df = connector.get_historical_data("BTC/USDT", "1H", start_date, limit=100)
+        connector.get_historical_data("BTC/USDT", "1H", start_date, limit=100)
 
         connector.exchange.fetch_ohlcv.assert_called_once_with(
             "BTC/USDT", "1h", since=None, limit=100
@@ -283,7 +283,7 @@ class TestCCXTDataConnector:
 
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 1, 2)
-        df = connector.get_historical_data("BTC/USDT", "1H", start_date, end_date)
+        connector.get_historical_data("BTC/USDT", "1H", start_date, end_date)
 
         # Verify start_date was converted to milliseconds
         call_args = connector.exchange.fetch_ohlcv.call_args
