@@ -78,7 +78,7 @@ class TestOpenAIProvider:
         mock_openai.return_value = mock_client
 
         mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
+        mock_response.choices: list[float] = [MagicMock()]
         mock_response.choices[0].message.content = "Generated text"
         mock_response.choices[0].finish_reason = "stop"
         mock_response.usage.model_dump.return_value = {"tokens": 10}
@@ -147,7 +147,7 @@ class TestAnthropicProvider:
         mock_anthropic.Anthropic.return_value = mock_client
 
         mock_response = MagicMock()
-        mock_response.content = [MagicMock()]
+        mock_response.content: list[float] = [MagicMock()]
         mock_response.content[0].text = "Generated text"
         mock_response.stop_reason = "end_turn"
         mock_response.usage.input_tokens = 5
@@ -272,3 +272,5 @@ class TestCreateLLMProvider:
         """Test creating unknown provider raises ValueError."""
         with pytest.raises(ValueError, match="Unsupported provider"):
             create_llm_provider("unknown")
+
+

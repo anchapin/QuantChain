@@ -514,7 +514,7 @@ class TestAlphaVantageDataConnector:
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test getting all available symbols."""
-        connector._symbol_cache = ["AAPL", "GOOGL", "EUR/USD", "GBP/JPY"]
+        connector._symbol_cache: list[float] = ["AAPL", "GOOGL", "EUR/USD", "GBP/JPY"]
         connector._cache_timestamp = datetime.now().timestamp()
 
         symbols = connector.get_available_symbols()
@@ -527,7 +527,7 @@ class TestAlphaVantageDataConnector:
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test getting available equity symbols."""
-        connector._symbol_cache = ["AAPL", "GOOGL", "EUR/USD", "GBP/JPY"]
+        connector._symbol_cache: list[float] = ["AAPL", "GOOGL", "EUR/USD", "GBP/JPY"]
         connector._cache_timestamp = datetime.now().timestamp()
 
         symbols = connector.get_available_symbols(market="equity")
@@ -541,7 +541,7 @@ class TestAlphaVantageDataConnector:
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test getting available forex symbols."""
-        connector._symbol_cache = ["AAPL", "GOOGL", "EUR/USD", "GBP/JPY"]
+        connector._symbol_cache: list[float] = ["AAPL", "GOOGL", "EUR/USD", "GBP/JPY"]
         connector._cache_timestamp = datetime.now().timestamp()
 
         symbols = connector.get_available_symbols(market="forex")
@@ -555,7 +555,7 @@ class TestAlphaVantageDataConnector:
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test getting available symbols with limit."""
-        connector._symbol_cache = ["AAPL", "GOOGL", "MSFT", "EUR/USD", "GBP/JPY"]
+        connector._symbol_cache: list[float] = ["AAPL", "GOOGL", "MSFT", "EUR/USD", "GBP/JPY"]
         connector._cache_timestamp = datetime.now().timestamp()
         connector.symbol_limit = 3
 
@@ -768,7 +768,7 @@ class TestAlphaVantageDataConnector:
         """Test symbol cache refresh error handling."""
         # Set expired cache and empty initial cache to trigger refresh
         connector._cache_timestamp = 0
-        connector._symbol_cache = []
+        connector._symbol_cache: list[float] = []
 
         # Mock the logger to avoid actual logging
         with patch.object(connector.logger, "warning"):
@@ -776,3 +776,5 @@ class TestAlphaVantageDataConnector:
             connector._refresh_symbol_cache()
             # Should still have the default symbols even on "error"
             assert len(connector._symbol_cache) > 0
+
+

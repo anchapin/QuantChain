@@ -120,7 +120,7 @@ class TestAlpacaDataConnector:
             mock_asset.tradable = True
             mock_asset.fractionable = True
 
-            mock_get_assets.return_value = [mock_asset]
+            mock_get_assets.return_value: list[float] = [mock_asset]
 
             connector._refresh_symbol_cache()
 
@@ -139,7 +139,7 @@ class TestAlpacaDataConnector:
             mock_bars.__contains__ = MagicMock(
                 return_value=True
             )  # Mock __contains__ for "AAPL" in bars
-            mock_bars.__getitem__.return_value = [sample_stock_bar]
+            mock_bars.__getitem__.return_value: list[float] = [sample_stock_bar]
             mock_get_bars.return_value = mock_bars
 
             df = connector.get_historical_data("AAPL", "1D", start_date, end_date)
@@ -161,7 +161,7 @@ class TestAlpacaDataConnector:
             mock_bars.__contains__ = MagicMock(
                 return_value=True
             )  # Mock __contains__ for "BTC/USD" in bars
-            mock_bars.__getitem__.return_value = [sample_crypto_bar]
+            mock_bars.__getitem__.return_value: list[float] = [sample_crypto_bar]
             mock_get_bars.return_value = mock_bars
 
             df = connector.get_historical_data("BTC/USD", "1D", start_date, end_date)
@@ -178,7 +178,7 @@ class TestAlpacaDataConnector:
 
         with patch.object(connector.stock_client, "get_stock_bars") as mock_get_bars:
             mock_bars = MagicMock()
-            mock_bars.__getitem__.return_value = []
+            mock_bars.__getitem__.return_value: list[float] = []
             mock_get_bars.return_value = mock_bars
 
             with pytest.raises(SymbolNotFoundError):
@@ -466,3 +466,5 @@ class TestAlpacaDataConnector:
             # Test invalid market filter
             invalid_symbols = connector.get_available_symbols(market="invalid")
             assert invalid_symbols == []
+
+

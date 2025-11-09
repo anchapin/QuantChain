@@ -120,13 +120,11 @@ class TestReflectionEngine:
     """Test ReflectionEngine."""
 
     @pytest.fixture
-    def engine(self):
-        """Create a ReflectionEngine instance."""
+    def engine(self) -> None: """Create a ReflectionEngine instance."""
         return ReflectionEngine()
 
     @pytest.fixture
-    def sample_actions(self):
-        """Create sample actions for testing."""
+    def sample_actions(self) -> None: """Create sample actions for testing."""
         base_time = datetime.now()
         return [
             AgentAction(
@@ -297,7 +295,7 @@ class TestReflectionEngine:
 
     def test_update_strategy_low_win_rate(self, engine) -> None:
         """Test strategy updates for low win rate."""
-        insights = ["Low win rate - consider reviewing decision logic"]
+        insights: list[float] = ["Low win rate - consider reviewing decision logic"]
         recommendations = engine.update_strategy(insights)
 
         assert "conservative thresholds" in " ".join(recommendations)
@@ -305,7 +303,7 @@ class TestReflectionEngine:
 
     def test_update_strategy_low_confidence(self, engine) -> None:
         """Test strategy updates for low confidence."""
-        insights = ["Low confidence suggests uncertainty"]
+        insights: list[float] = ["Low confidence suggests uncertainty"]
         recommendations = engine.update_strategy(insights)
 
         assert "data gathering" in " ".join(recommendations)
@@ -313,7 +311,7 @@ class TestReflectionEngine:
 
     def test_update_strategy_negative_pnl(self, engine) -> None:
         """Test strategy updates for negative P&L."""
-        insights = ["Negative P&L - investigate losses"]
+        insights: list[float] = ["Negative P&L - investigate losses"]
         recommendations = engine.update_strategy(insights)
 
         assert "position sizes" in " ".join(recommendations)
@@ -321,7 +319,7 @@ class TestReflectionEngine:
 
     def test_update_strategy_good_performance(self, engine) -> None:
         """Test strategy updates for good performance."""
-        insights = ["Excellent win rate", "High confidence"]
+        insights: list[float] = ["Excellent win rate", "High confidence"]
         recommendations = engine.update_strategy(insights)
 
         assert "Continue current strategy" in " ".join(recommendations)
@@ -364,3 +362,5 @@ class TestReflectionEngine:
         assert report.metrics.total_actions == 1
         assert report.period_start == start
         assert report.period_end == end
+
+

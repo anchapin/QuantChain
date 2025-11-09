@@ -24,7 +24,7 @@ class MockTradingExecutor(TradingExecutionInterface):
 
     def __init__(self):
         self.orders = {}
-        self.positions = []
+        self.positions: list[float] = []
         self.account = AccountInfo(
             account_id="test-account",
             buying_power=100000.0,
@@ -90,13 +90,13 @@ class MockTradingExecutor(TradingExecutionInterface):
 
         # Apply filters
         if symbol:
-            orders = [o for o in orders if o.symbol == symbol]
+            orders: list[float] = [o for o in orders if o.symbol == symbol]
         if status:
-            orders = [o for o in orders if o.status == status]
+            orders: list[float] = [o for o in orders if o.status == status]
         if start_date:
-            orders = [o for o in orders if o.timestamp >= start_date]
+            orders: list[float] = [o for o in orders if o.timestamp >= start_date]
         if end_date:
-            orders = [o for o in orders if o.timestamp <= end_date]
+            orders: list[float] = [o for o in orders if o.timestamp <= end_date]
         if limit:
             orders = orders[:limit]
 
@@ -110,8 +110,7 @@ class MockTradingExecutor(TradingExecutionInterface):
 class TestOrderRequest:
     """Test cases for OrderRequest."""
 
-    def test_valid_market_order(self):
-        """Test creation of a valid market order."""
+    def test_valid_market_order(self) -> None: """Test creation of a valid market order."""
         order = OrderRequest(
             symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
         )
@@ -122,8 +121,7 @@ class TestOrderRequest:
         assert order.price is None
         assert order.time_in_force == TimeInForce.DAY
 
-    def test_valid_limit_order(self):
-        """Test creation of a valid limit order."""
+    def test_valid_limit_order(self) -> None: """Test creation of a valid limit order."""
         order = OrderRequest(
             symbol="MSFT",
             side=OrderSide.SELL,
@@ -134,8 +132,7 @@ class TestOrderRequest:
         assert order.price == 250.0
         assert order.quantity == 50
 
-    def test_valid_stop_order(self):
-        """Test creation of a valid stop order."""
+    def test_valid_stop_order(self) -> None: """Test creation of a valid stop order."""
         order = OrderRequest(
             symbol="TSLA",
             side=OrderSide.BUY,
@@ -145,8 +142,7 @@ class TestOrderRequest:
         )
         assert order.stop_price == 800.0
 
-    def test_valid_stop_limit_order(self):
-        """Test creation of a valid stop limit order."""
+    def test_valid_stop_limit_order(self) -> None: """Test creation of a valid stop limit order."""
         order = OrderRequest(
             symbol="NVDA",
             side=OrderSide.SELL,
@@ -158,8 +154,7 @@ class TestOrderRequest:
         assert order.price == 500.0
         assert order.stop_price == 450.0
 
-    def test_invalid_quantity(self):
-        """Test that orders with invalid quantity raise ValidationError."""
+    def test_invalid_quantity(self) -> None: """Test that orders with invalid quantity raise ValidationError."""
         with pytest.raises(ValidationError, match="Order quantity must be positive"):
             OrderRequest(
                 symbol="AAPL",
@@ -176,8 +171,7 @@ class TestOrderRequest:
                 quantity=-10,
             )
 
-    def test_limit_order_without_price(self):
-        """Test that limit orders without price raise ValidationError."""
+    def test_limit_order_without_price(self) -> None: """Test that limit orders without price raise ValidationError."""
         with pytest.raises(ValidationError, match="Limit orders require a price"):
             OrderRequest(
                 symbol="AAPL",
@@ -186,8 +180,7 @@ class TestOrderRequest:
                 quantity=100,
             )
 
-    def test_stop_order_without_stop_price(self):
-        """Test that stop orders without stop price raise ValidationError."""
+    def test_stop_order_without_stop_price(self) -> None: """Test that stop orders without stop price raise ValidationError."""
         with pytest.raises(ValidationError, match="Stop orders require a stop price"):
             OrderRequest(
                 symbol="AAPL",
@@ -196,8 +189,7 @@ class TestOrderRequest:
                 quantity=100,
             )
 
-    def test_stop_limit_order_missing_prices(self):
-        """Test that stop limit orders without required prices raise ValidationError."""
+    def test_stop_limit_order_missing_prices(self) -> None: """Test that stop limit orders without required prices raise ValidationError."""
         with pytest.raises(
             ValidationError, match="Stop limit orders require both price and stop_price"
         ):
@@ -224,8 +216,7 @@ class TestOrderRequest:
 class TestOrderResult:
     """Test cases for OrderResult."""
 
-    def test_filled_order_properties(self):
-        """Test properties of a filled order."""
+    def test_filled_order_properties(self) -> None: """Test properties of a filled order."""
         timestamp = datetime.now()
         order = OrderResult(
             order_id="test-order",
@@ -246,8 +237,7 @@ class TestOrderResult:
         assert order.is_partially_filled is False
         assert order.is_active is False
 
-    def test_partially_filled_order_properties(self):
-        """Test properties of a partially filled order."""
+    def test_partially_filled_order_properties(self) -> None: """Test properties of a partially filled order."""
         timestamp = datetime.now()
         order = OrderResult(
             order_id="test-order",
@@ -268,8 +258,7 @@ class TestOrderResult:
         assert order.is_partially_filled is True
         assert order.is_active is True
 
-    def test_pending_order_properties(self):
-        """Test properties of a pending order."""
+    def test_pending_order_properties(self) -> None: """Test properties of a pending order."""
         timestamp = datetime.now()
         order = OrderResult(
             order_id="test-order",
@@ -294,8 +283,7 @@ class TestOrderResult:
 class TestPosition:
     """Test cases for Position."""
 
-    def test_long_position(self):
-        """Test properties of a long position."""
+    def test_long_position(self) -> None: """Test properties of a long position."""
         position = Position(
             symbol="AAPL",
             quantity=100,
@@ -310,8 +298,7 @@ class TestPosition:
         assert position.is_short is False
         assert position.is_flat is False
 
-    def test_short_position(self):
-        """Test properties of a short position."""
+    def test_short_position(self) -> None: """Test properties of a short position."""
         position = Position(
             symbol="AAPL",
             quantity=-50,
@@ -326,8 +313,7 @@ class TestPosition:
         assert position.is_short is True
         assert position.is_flat is False
 
-    def test_flat_position(self):
-        """Test properties of a flat position."""
+    def test_flat_position(self) -> None: """Test properties of a flat position."""
         position = Position(
             symbol="AAPL",
             quantity=0,
@@ -346,8 +332,7 @@ class TestPosition:
 class TestAccountInfo:
     """Test cases for AccountInfo."""
 
-    def test_account_properties(self):
-        """Test account info properties."""
+    def test_account_properties(self) -> None: """Test account info properties."""
         positions = [
             Position("AAPL", 100, 150.0, 160.0, 16000.0, 1000.0, 6.67),
             Position("MSFT", 50, 300.0, 320.0, 16000.0, 1000.0, 6.67),
@@ -381,8 +366,7 @@ class TestAccountInfo:
 class TestTradingExecutionInterface:
     """Test cases for TradingExecutionInterface."""
 
-    def test_interface_methods_exist(self):
-        """Test that all required abstract methods are defined."""
+    def test_interface_methods_exist(self) -> None: """Test that all required abstract methods are defined."""
         # This test ensures the interface is properly defined
         abstract_methods = TradingExecutionInterface.__abstractmethods__
         expected_methods = {
@@ -397,8 +381,7 @@ class TestTradingExecutionInterface:
 
         assert abstract_methods == expected_methods
 
-    def test_mock_implementation(self):
-        """Test that mock implementation works correctly."""
+    def test_mock_implementation(self) -> None: """Test that mock implementation works correctly."""
         executor = MockTradingExecutor()
 
         # Test order placement
@@ -432,8 +415,7 @@ class TestTradingExecutionInterface:
         # Test market status
         assert executor.is_market_open() is True
 
-    def test_order_not_found_error(self):
-        """Test OrderNotFoundError is raised for missing orders."""
+    def test_order_not_found_error(self) -> None: """Test OrderNotFoundError is raised for missing orders."""
         executor = MockTradingExecutor()
 
         with pytest.raises(OrderNotFoundError):
@@ -442,8 +424,7 @@ class TestTradingExecutionInterface:
         with pytest.raises(OrderNotFoundError):
             executor.cancel_order("non-existent-order")
 
-    def test_order_history_filtering(self):
-        """Test order history filtering functionality."""
+    def test_order_history_filtering(self) -> None: """Test order history filtering functionality."""
         executor = MockTradingExecutor()
 
         # Place multiple orders
@@ -453,7 +434,7 @@ class TestTradingExecutionInterface:
             OrderRequest("AAPL", OrderSide.SELL, OrderType.MARKET, 25),
         ]
 
-        results = [executor.place_order(order) for order in orders]
+        results: list[float] = [executor.place_order(order) for order in orders]
 
         # Test symbol filter
         aapl_orders = executor.get_order_history(symbol="AAPL")
@@ -470,3 +451,5 @@ class TestTradingExecutionInterface:
         # Test limit
         limited_orders = executor.get_order_history(limit=2)
         assert len(limited_orders) == 2
+
+

@@ -24,7 +24,7 @@ from quantchain.backtesting.engine import (
 class TestBacktestConfig:
     """Test BacktestConfig dataclass initialization and validation."""
 
-    def test_backtest_config_initialization(self):
+    def test_backtest_config_initialization(self) -> None:
         """Test BacktestConfig can be initialized with default values."""
         config = BacktestConfig()
 
@@ -39,8 +39,7 @@ class TestBacktestConfig:
         assert config.data_frequency == "1d"
         assert config.additional_params == {}
 
-    def test_backtest_config_custom_initialization(self, default_backtest_config):
-        """Test BacktestConfig can be initialized with custom values."""
+    def test_backtest_config_custom_initialization(self, default_backtest_config) -> None: """Test BacktestConfig can be initialized with custom values."""
         config = default_backtest_config
 
         assert config.initial_cash == 100000.0
@@ -48,7 +47,7 @@ class TestBacktestConfig:
         assert config.slippage_model == "fixed"
         assert config.data_frequency == "1d"
 
-    def test_backtest_config_date_validation(self):
+    def test_backtest_config_date_validation(self) -> None:
         """Test BacktestConfig validates date consistency."""
         start_date = datetime(2023, 12, 31)
         end_date = datetime(2023, 1, 1)  # End before start
@@ -58,29 +57,29 @@ class TestBacktestConfig:
         ):
             BacktestConfig(start_date=start_date, end_date=end_date)
 
-    def test_backtest_config_cash_validation(self):
+    def test_backtest_config_cash_validation(self) -> None:
         """Test BacktestConfig validates initial cash is positive."""
         with pytest.raises(ConfigurationError, match="initial_cash must be positive"):
             BacktestConfig(initial_cash=-1000.0)
 
-    def test_backtest_config_commission_validation(self):
+    def test_backtest_config_commission_validation(self) -> None:
         """Test BacktestConfig validates commission rate is non-negative."""
         with pytest.raises(
             ConfigurationError, match="commission_rate must be non-negative"
         ):
             BacktestConfig(commission_rate=-0.01)
 
-    def test_backtest_config_frequency_validation(self):
+    def test_backtest_config_frequency_validation(self) -> None:
         """Test BacktestConfig validates data frequency."""
         with pytest.raises(ConfigurationError, match="Invalid data_frequency"):
             BacktestConfig(data_frequency="invalid_freq")
 
-    def test_backtest_config_slippage_model_validation(self):
+    def test_backtest_config_slippage_model_validation(self) -> None:
         """Test BacktestConfig validates slippage model."""
         with pytest.raises(ConfigurationError, match="Invalid slippage_model"):
             BacktestConfig(slippage_model="invalid_model")
 
-    def test_backtest_config_latency_model_validation(self):
+    def test_backtest_config_latency_model_validation(self) -> None:
         """Test BacktestConfig validates latency model."""
         with pytest.raises(ConfigurationError, match="Invalid latency_model"):
             BacktestConfig(latency_model="invalid_model")
@@ -90,7 +89,7 @@ class TestBacktestConfig:
 class TestBacktestResult:
     """Test BacktestResult dataclass initialization and validation."""
 
-    def test_backtest_result_initialization(self):
+    def test_backtest_result_initialization(self) -> None:
         """Test BacktestResult can be initialized properly."""
         equity_curve = pd.Series([100000, 101000, 102000])
         trade_log = pd.DataFrame({"symbol": ["AAPL"], "price": [100.0]})
@@ -125,7 +124,7 @@ class TestBacktestResult:
         assert result.metrics.total_return == 0.02
         assert result.config.initial_cash == 100000.0
 
-    def test_backtest_result_invalid_equity_curve(self):
+    def test_backtest_result_invalid_equity_curve(self) -> None:
         """Test BacktestResult raises error for invalid equity_curve type."""
         with pytest.raises(ValueError, match="equity_curve must be a pandas Series"):
             BacktestResult(
@@ -150,7 +149,7 @@ class TestBacktestResult:
                 config=BacktestConfig(),
             )
 
-    def test_backtest_result_invalid_trade_log(self):
+    def test_backtest_result_invalid_trade_log(self) -> None:
         """Test BacktestResult raises error for invalid trade_log type."""
         with pytest.raises(ValueError, match="trade_log must be a pandas DataFrame"):
             BacktestResult(
@@ -180,12 +179,12 @@ class TestBacktestResult:
 class TestBacktestEngine:
     """Test BacktestEngine abstract base class."""
 
-    def test_backtest_engine_is_abstract(self):
+    def test_backtest_engine_is_abstract(self) -> None:
         """Test BacktestEngine cannot be instantiated directly."""
         with pytest.raises(TypeError, match="Can't instantiate abstract class"):
             BacktestEngine()
 
-    def test_backtest_engine_abstract_methods(self):
+    def test_backtest_engine_abstract_methods(self) -> None:
         """Test BacktestEngine defines required abstract methods."""
         abstract_methods = BacktestEngine.__abstractmethods__
         expected_methods = {"run", "get_results", "get_equity_curve"}
@@ -197,7 +196,7 @@ class TestBacktestEngine:
 class TestConcreteBacktestEngine:
     """Test concrete implementations of BacktestEngine."""
 
-    def test_concrete_engine_implementation(self):
+    def test_concrete_engine_implementation(self) -> None:
         """Test a concrete engine can implement abstract methods."""
 
         class ConcreteBacktestEngine(BacktestEngine):
@@ -240,12 +239,10 @@ class TestConcreteBacktestEngine:
 
                 return self._results
 
-            def get_results(self):
-                """Mock implementation."""
+            def get_results(self) -> None: """Mock implementation."""
                 return self._results
 
-            def get_equity_curve(self):
-                """Mock implementation."""
+            def get_equity_curve(self) -> None: """Mock implementation."""
                 return self._equity_curve
 
         engine = ConcreteBacktestEngine()
@@ -284,7 +281,7 @@ class TestBacktestEngineIntegration:
 
                 # Test strategy generates signals correctly
                 sample_rows = data.head(5)
-                signals = [strategy.next(row) for row in sample_rows.to_dict("records")]
+                signals: list[float] = [strategy.next(row) for row in sample_rows.to_dict("records")]
 
                 # Should generate valid signals
                 assert all(signal in ["buy", "sell", "hold"] for signal in signals)
@@ -338,7 +335,7 @@ class TestBacktestEngineIntegration:
         # Create simple strategy
         strategy = MagicMock()
         strategy.init.return_value = None
-        strategy.next.side_effect = ["buy"] + ["hold"] * (len(sample_ohlcv_data) + 4)
+        strategy.next.side_effect: list[float] = ["buy"] + ["hold"] * (len(sample_ohlcv_data) + 4)
 
         result = engine.run(strategy, sample_ohlcv_data, default_backtest_config)
 
@@ -374,7 +371,7 @@ class TestBacktestEngineIntegration:
 
                 # Test strategy generates signals correctly
                 sample_rows = data.head(3)
-                signals = [strategy.next(row) for row in sample_rows.to_dict("records")]
+                signals: list[float] = [strategy.next(row) for row in sample_rows.to_dict("records")]
 
                 # Should generate valid signals
                 assert all(signal in ["buy", "sell", "hold"] for signal in signals)
@@ -429,7 +426,7 @@ class TestBacktestEngineIntegration:
         # Strategy that buys and sells once
         strategy = MagicMock()
         strategy.init.return_value = None
-        signals = ["buy"] + ["hold"] * (len(sample_ohlcv_data) + 2) + ["sell"]
+        signals: list[float] = ["buy"] + ["hold"] * (len(sample_ohlcv_data) + 2) + ["sell"]
         strategy.next.side_effect = signals
 
         result = engine.run(strategy, sample_ohlcv_data, config_with_commission)
@@ -474,7 +471,7 @@ class TestBacktestEngineIntegration:
 
                 # Create equity curve with slippage impact
                 slippage_impact = 1 - config.slippage_rate
-                equity_curve = [initial_cash * slippage_impact] * len(data)
+                equity_curve: list[float] = [initial_cash * slippage_impact] * len(data)
                 equity_series = pd.Series(equity_curve, index=data.index)
 
                 trade_log = pd.DataFrame()
@@ -518,7 +515,7 @@ class TestBacktestEngineIntegration:
 
         strategy = MagicMock()
         strategy.init.return_value = None
-        signals = ["buy"] + ["hold"] * (len(sample_ohlcv_data) + 2) + ["sell"]
+        signals: list[float] = ["buy"] + ["hold"] * (len(sample_ohlcv_data) + 2) + ["sell"]
         strategy.next.side_effect = signals
 
         result = engine.run(strategy, sample_ohlcv_data, config_with_slippage)
@@ -526,8 +523,7 @@ class TestBacktestEngineIntegration:
         # Slippage should reduce returns
         assert isinstance(result, BacktestResult)
 
-    def test_backtest_engine_empty_data(self, default_backtest_config):
-        """Test backtesting engine handles empty data correctly."""
+    def test_backtest_engine_empty_data(self, default_backtest_config) -> None: """Test backtesting engine handles empty data correctly."""
 
         class EmptyDataEngine(BacktestEngine):
             def run(self, strategy, data, config):
@@ -545,8 +541,7 @@ class TestBacktestEngineIntegration:
         with pytest.raises(DataValidationError, match="Data cannot be empty"):
             engine.run(strategy, pd.DataFrame(), default_backtest_config)
 
-    def test_backtest_engine_none_data(self, default_backtest_config):
-        """Test backtesting engine handles None data correctly."""
+    def test_backtest_engine_none_data(self, default_backtest_config) -> None: """Test backtesting engine handles None data correctly."""
 
         class NoneDataEngine(BacktestEngine):
             def run(self, strategy, data, config):
@@ -672,7 +667,7 @@ class TestBacktestEnginePerformance:
     """Performance tests for backtesting engine."""
 
     @pytest.mark.slow
-    def test_backtest_engine_performance_large_dataset(self):
+    def test_backtest_engine_performance_large_dataset(self) -> None:
         """Test engine performance with large dataset."""
 
         class PerformanceTestEngine(BacktestEngine):
@@ -765,3 +760,5 @@ class TestBacktestEnginePerformance:
         assert execution_time < 5.0  # 5 seconds max
         assert result is not None
         assert len(result.equity_curve) == 100000
+
+

@@ -87,7 +87,7 @@ class TestChromaVectorStore:
             data_type="price",
             content={"price": 150.0},
         )
-        embedding = [0.1, 0.2, 0.3]
+        embedding: list[float] = [0.1, 0.2, 0.3]
 
         data_id = store.store(data, embedding)
 
@@ -181,7 +181,7 @@ class TestSentenceTransformerProvider:
         """Test encoding text with SentenceTransformerProvider."""
         mock_model = MagicMock()
         mock_embedding = MagicMock()
-        mock_embedding.tolist.return_value = [0.1, 0.2, 0.3]
+        mock_embedding.tolist.return_value: list[float] = [0.1, 0.2, 0.3]
         mock_model.encode.return_value = mock_embedding
         mock_transformer.return_value = mock_model
 
@@ -204,7 +204,7 @@ class TestMarketDataRAG:
     def mock_embedding_provider(self) -> None:
         """Mock embedding provider."""
         provider = MagicMock(spec=EmbeddingProvider)
-        provider.encode.return_value = [0.1, 0.2, 0.3]
+        provider.encode.return_value: list[float] = [0.1, 0.2, 0.3]
         return provider
 
     def test_rag_init(self, mock_vector_store, mock_embedding_provider) -> None:
@@ -244,7 +244,7 @@ class TestMarketDataRAG:
         rag = MarketDataRAG(mock_vector_store, mock_embedding_provider)
 
         mock_data = MagicMock(spec=MarketData)
-        mock_vector_store.search.return_value = [mock_data]
+        mock_vector_store.search.return_value: list[float] = [mock_data]
 
         results = rag.retrieve_relevant_data("test query")
 
@@ -264,7 +264,7 @@ class TestMarketDataRAG:
         mock_data.timestamp = datetime.now()
         mock_data.content = {"price": 150.0}
 
-        mock_vector_store.search.return_value = [mock_data]
+        mock_vector_store.search.return_value: list[float] = [mock_data]
 
         prompt = rag.generate_augmented_prompt("Analyze market", "AAPL price")
 
@@ -279,7 +279,7 @@ class TestMarketDataRAG:
         """Test generating augmented prompt with no relevant data."""
         rag = MarketDataRAG(mock_vector_store, mock_embedding_provider)
 
-        mock_vector_store.search.return_value = []
+        mock_vector_store.search.return_value: list[float] = []
 
         prompt = rag.generate_augmented_prompt("Analyze market", "AAPL price")
 
@@ -305,3 +305,5 @@ class TestMarketDataRAG:
         assert "price" in text
         assert '{"price": 150.0}' in text
         assert timestamp.isoformat() in text
+
+

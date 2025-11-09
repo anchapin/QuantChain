@@ -67,7 +67,7 @@ class TestMemecoinVibeTraderBacktest:
         }
 
         # Mock empty current positions
-        mock_tool.get_positions.return_value = []
+        mock_tool.get_positions.return_value: list[float] = []
 
         # Mock successful order execution
         mock_order = MagicMock()
@@ -309,7 +309,7 @@ REASONING: High potential token with strong metrics."""
     ) -> None:
         """Test behavior when no new tokens are found."""
         # Mock to return empty list
-        mock_dex_connector.get_new_token_pairs.return_value = []
+        mock_dex_connector.get_new_token_pairs.return_value: list[float] = []
 
         trader = MemecoinVibeTrader(
             config=trader_config,
@@ -413,3 +413,5 @@ REASONING: High potential token with strong metrics."""
             f"Should calculate correct quantity, got {order_call.kwargs['quantity']}, "
             f"expected {expected_quantity}"
         )
+
+

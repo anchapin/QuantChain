@@ -329,7 +329,7 @@ class TestSocialMediaScraper:
         scraper = SocialMediaScraper()
 
         # Fixed: More comprehensive time mocking with proper sequence
-        time_values = [1000.0, 1000.0, 1002.0, 1002.0, 1005.0, 1005.0]
+        time_values: list[float] = [1000.0, 1000.0, 1002.0, 1002.0, 1005.0, 1005.0]
         time_mock = MagicMock(side_effect=time_values)
 
         with patch("quantchain.tools.social_media_scraper.time.time", time_mock):
@@ -510,3 +510,5 @@ class TestSocialMediaScraperIntegration:
                 0.0 <= metrics.sentiment_score <= 1.0,
             ]
         )
+
+

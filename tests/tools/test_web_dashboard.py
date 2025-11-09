@@ -93,8 +93,7 @@ class TestWebDashboardApp:
         config.host = mock_dashboard_config["host"]
         return config
 
-    def test_web_dashboard_app_initialization(self, mock_config):
-        """Test WebDashboardApp initialization."""
+    def test_web_dashboard_app_initialization(self, mock_config) -> None: """Test WebDashboardApp initialization."""
         from quantchain.tools.web_dashboard import WebDashboardApp
 
         app = WebDashboardApp(mock_config)
@@ -104,8 +103,7 @@ class TestWebDashboardApp:
         assert app.config.enable_real_time == mock_config.enable_real_time
 
     @patch("subprocess.run")
-    def test_web_dashboard_run(self, mock_subprocess_run, mock_config):
-        """Test running the Streamlit application."""
+    def test_web_dashboard_run(self, mock_subprocess_run, mock_config) -> None: """Test running the Streamlit application."""
         from quantchain.tools.web_dashboard import WebDashboardApp
 
         app = WebDashboardApp(mock_config)
@@ -122,8 +120,7 @@ class TestMonitoringService:
     """Test cases for MonitoringService."""
 
     @pytest.fixture
-    def mock_agent_registry(self):
-        """Create mock agent registry."""
+    def mock_agent_registry(self) -> None: """Create mock agent registry."""
         registry = Mock()
         registry.get_agent_status.return_value = {
             "agent_id": "test_agent_001",
@@ -135,8 +132,7 @@ class TestMonitoringService:
         ]
         return registry
 
-    def test_get_agent_status_success(self, mock_agent_registry, mock_agent_status):
-        """Test successful agent status retrieval."""
+    def test_get_agent_status_success(self, mock_agent_registry, mock_agent_status) -> None: """Test successful agent status retrieval."""
         mock_agent_registry.get_agent_status.return_value = mock_agent_status
 
         from quantchain.tools.web_dashboard import MonitoringService
@@ -149,8 +145,7 @@ class TestMonitoringService:
         assert status["status"] == "RUNNING"
         mock_agent_registry.get_agent_status.assert_called_once_with("test_agent_001")
 
-    def test_get_agent_status_not_found(self, mock_agent_registry):
-        """Test agent status retrieval for non-existent agent."""
+    def test_get_agent_status_not_found(self, mock_agent_registry) -> None: """Test agent status retrieval for non-existent agent."""
         mock_agent_registry.get_agent_status.side_effect = Exception("Agent not found")
 
         from quantchain.tools.web_dashboard import MonitoringService
@@ -176,8 +171,7 @@ class TestMonitoringService:
         assert metrics["total_value"] == 30000.0
         assert metrics["pnl_percentage"] == 5.25
 
-    def test_get_system_health_success(self, mock_agent_registry, mock_system_health):
-        """Test successful system health retrieval."""
+    def test_get_system_health_success(self, mock_agent_registry, mock_system_health) -> None: """Test successful system health retrieval."""
         mock_agent_registry.get_system_health.return_value = mock_system_health
 
         from quantchain.tools.web_dashboard import MonitoringService
@@ -194,7 +188,7 @@ class TestMonitoringService:
 class TestVisualizationService:
     """Test cases for VisualizationService."""
 
-    def test_create_equity_curve_success(self):
+    def test_create_equity_curve_success(self) -> None:
         """Test successful equity curve creation."""
         from quantchain.tools.web_dashboard import VisualizationService
 
@@ -215,7 +209,7 @@ class TestVisualizationService:
         assert hasattr(figure, "data")
         assert len(figure.data) > 0
 
-    def test_create_equity_curve_empty_data(self):
+    def test_create_equity_curve_empty_data(self) -> None:
         """Test equity curve creation with empty data."""
         from quantchain.tools.web_dashboard import VisualizationService
 
@@ -227,7 +221,7 @@ class TestVisualizationService:
         assert hasattr(figure, "data")
         # Should have a "No data available" annotation
 
-    def test_create_decision_flow_diagram_success(self):
+    def test_create_decision_flow_diagram_success(self) -> None:
         """Test successful decision flow diagram creation."""
         from quantchain.tools.web_dashboard import VisualizationService
 
@@ -256,7 +250,7 @@ class TestVisualizationService:
         assert figure is not None
         assert hasattr(figure, "data")
 
-    def test_create_decision_flow_diagram_empty(self):
+    def test_create_decision_flow_diagram_empty(self) -> None:
         """Test decision flow diagram creation with no steps."""
         from quantchain.tools.web_dashboard import VisualizationService
 
@@ -269,8 +263,7 @@ class TestVisualizationService:
         assert figure is not None
         assert hasattr(figure, "data")
 
-    def test_create_performance_charts_success(self, mock_portfolio_metrics):
-        """Test successful performance charts creation."""
+    def test_create_performance_charts_success(self, mock_portfolio_metrics) -> None: """Test successful performance charts creation."""
         from quantchain.tools.web_dashboard import VisualizationService
 
         service = VisualizationService()
@@ -288,7 +281,7 @@ class TestVisualizationService:
 class TestConfigurationWizard:
     """Test cases for ConfigurationWizard."""
 
-    def test_get_agent_template_success(self):
+    def test_get_agent_template_success(self) -> None:
         """Test successful agent template retrieval."""
         from quantchain.tools.web_dashboard import ConfigurationWizard
 
@@ -301,7 +294,7 @@ class TestConfigurationWizard:
         assert "agent_type" in template
         assert template["agent_type"] == "memecoin_vibe_trader"
 
-    def test_get_agent_template_invalid_type(self):
+    def test_get_agent_template_invalid_type(self) -> None:
         """Test agent template retrieval for unknown type."""
         from quantchain.tools.web_dashboard import ConfigurationWizard
 
@@ -310,7 +303,7 @@ class TestConfigurationWizard:
         with pytest.raises(ValueError, match="Unknown agent type"):
             wizard.get_agent_template("unknown_agent_type")
 
-    def test_validate_config_valid(self):
+    def test_validate_config_valid(self) -> None:
         """Test configuration validation for valid config."""
         from quantchain.tools.web_dashboard import ConfigurationWizard
 
@@ -332,7 +325,7 @@ class TestConfigurationWizard:
         assert result["is_valid"] is True
         assert len(result["errors"]) == 0
 
-    def test_validate_config_invalid(self):
+    def test_validate_config_invalid(self) -> None:
         """Test configuration validation for invalid config."""
         from quantchain.tools.web_dashboard import ConfigurationWizard
 
@@ -349,7 +342,7 @@ class TestConfigurationWizard:
         assert result["is_valid"] is False
         assert len(result["errors"]) > 0
 
-    def test_save_config_success(self):
+    def test_save_config_success(self) -> None:
         """Test successful configuration saving."""
         from quantchain.tools.web_dashboard import ConfigurationWizard
 
@@ -373,7 +366,7 @@ class TestConfigurationWizard:
 class TestMonitoringServiceAdditional:
     """Additional test cases for MonitoringService to improve coverage."""
 
-    def test_get_all_agents_with_registry(self):
+    def test_get_all_agents_with_registry(self) -> None:
         """Test getting all agents when registry is provided."""
         from unittest.mock import Mock
         from quantchain.tools.web_dashboard import MonitoringService
@@ -396,7 +389,7 @@ class TestMonitoringServiceAdditional:
         assert agents[1]["status"] == "STOPPED"
         mock_agent_registry.get_all_agents.assert_called_once()
 
-    def test_get_all_agents_without_registry(self):
+    def test_get_all_agents_without_registry(self) -> None:
         """Test getting all agents when no registry is provided (mock data)."""
         from quantchain.tools.web_dashboard import MonitoringService
 
@@ -408,7 +401,7 @@ class TestMonitoringServiceAdditional:
         assert any(agent["status"] == "STOPPED" for agent in agents)
         assert any(agent["status"] == "ERROR" for agent in agents)
 
-    def test_get_portfolio_metrics_without_registry(self):
+    def test_get_portfolio_metrics_without_registry(self) -> None:
         """Test portfolio metrics retrieval without registry."""
         from quantchain.tools.web_dashboard import MonitoringService
 
@@ -419,7 +412,7 @@ class TestMonitoringServiceAdditional:
         assert metrics["total_value"] == 30000.0
         assert metrics["sharpe_ratio"] == 1.2
 
-    def test_get_system_health_without_registry(self):
+    def test_get_system_health_without_registry(self) -> None:
         """Test system health retrieval without registry."""
         from quantchain.tools.web_dashboard import MonitoringService
 
@@ -431,7 +424,7 @@ class TestMonitoringServiceAdditional:
         assert health["api_status"]["alpaca"] is True
         assert health["api_status"]["dexscreener"] is False
 
-    def test_get_agent_status_without_registry(self):
+    def test_get_agent_status_without_registry(self) -> None:
         """Test agent status retrieval without registry."""
         from quantchain.tools.web_dashboard import MonitoringService
 
@@ -447,7 +440,7 @@ class TestMonitoringServiceAdditional:
 class TestVisualizationServiceAdditional:
     """Additional test cases for VisualizationService to improve coverage."""
 
-    def test_create_equity_curve_with_real_data(self):
+    def test_create_equity_curve_with_real_data(self) -> None:
         """Test equity curve with realistic data."""
         from quantchain.tools.web_dashboard import VisualizationService
         import pandas as pd
@@ -469,7 +462,7 @@ class TestVisualizationServiceAdditional:
         assert len(figure.data) > 0
         assert figure.layout.title.text == "Portfolio Equity Curve"
 
-    def test_create_decision_flow_diagram_with_complex_flow(self):
+    def test_create_decision_flow_diagram_with_complex_flow(self) -> None:
         """Test decision flow diagram with complex reasoning flow."""
         from quantchain.tools.web_dashboard import VisualizationService
 
@@ -522,7 +515,7 @@ class TestVisualizationServiceAdditional:
         assert figure is not None
         assert hasattr(figure, "data")
 
-    def test_create_performance_charts_with_edge_cases(self):
+    def test_create_performance_charts_with_edge_cases(self) -> None:
         """Test performance charts with edge case values."""
         from quantchain.tools.web_dashboard import VisualizationService
 
@@ -555,7 +548,7 @@ class TestVisualizationServiceAdditional:
 class TestConfigurationWizardAdditional:
     """Additional test cases for ConfigurationWizard to improve coverage."""
 
-    def test_get_agent_template_multiple_types(self):
+    def test_get_agent_template_multiple_types(self) -> None:
         """Test getting templates for different agent types."""
         from quantchain.tools.web_dashboard import ConfigurationWizard
 
@@ -576,7 +569,7 @@ class TestConfigurationWizardAdditional:
                 # Some agent types might not be implemented yet
                 pass
 
-    def test_validate_config_with_warnings(self):
+    def test_validate_config_with_warnings(self) -> None:
         """Test configuration validation that produces warnings."""
         from quantchain.tools.web_dashboard import ConfigurationWizard
 
@@ -599,7 +592,7 @@ class TestConfigurationWizardAdditional:
         assert "is_valid" in result
         assert "errors" in result
 
-    def test_save_config_with_permission_error(self):
+    def test_save_config_with_permission_error(self) -> None:
         """Test configuration saving with permission error."""
         from quantchain.tools.web_dashboard import ConfigurationWizard
 
@@ -612,7 +605,7 @@ class TestConfigurationWizardAdditional:
 
             assert result is False
 
-    def test_save_config_with_invalid_path(self):
+    def test_save_config_with_invalid_path(self) -> None:
         """Test configuration saving with invalid file path."""
         from quantchain.tools.web_dashboard import ConfigurationWizard
 
@@ -629,7 +622,7 @@ class TestConfigurationWizardAdditional:
 class TestWebDashboardAppAdditional:
     """Additional test cases for WebDashboardApp to improve coverage."""
 
-    def test_dashboard_app_initialization_with_custom_config(self):
+    def test_dashboard_app_initialization_with_custom_config(self) -> None:
         """Test WebDashboardApp initialization with custom configuration."""
         from quantchain.tools.web_dashboard import WebDashboardApp, DashboardConfig
 
@@ -653,7 +646,7 @@ class TestWebDashboardAppAdditional:
         assert app.config.port == 8080
         assert app.config.host == "0.0.0.0"
 
-    def test_dashboard_service_initialization(self):
+    def test_dashboard_service_initialization(self) -> None:
         """Test dashboard service initialization and basic methods."""
         from quantchain.tools.web_dashboard import WebDashboardApp, DashboardConfig
 
@@ -669,8 +662,7 @@ class TestWebDashboardAppAdditional:
         assert app.config_wizard is not None
 
     @patch("streamlit.set_page_config")
-    def test_dashboard_page_config_setup(self, mock_set_page_config):
-        """Test dashboard page configuration setup."""
+    def test_dashboard_page_config_setup(self, mock_set_page_config) -> None: """Test dashboard page configuration setup."""
         from quantchain.tools.web_dashboard import WebDashboardApp, DashboardConfig
 
         config = DashboardConfig()
@@ -680,7 +672,7 @@ class TestWebDashboardAppAdditional:
         app._setup_page_config()
         mock_set_page_config.assert_called_once()
 
-    def test_dashboard_helper_methods(self):
+    def test_dashboard_helper_methods(self) -> None:
         """Test dashboard helper methods and utilities."""
         from quantchain.tools.web_dashboard import WebDashboardApp, DashboardConfig
 
@@ -699,7 +691,7 @@ class TestWebDashboardAppAdditional:
 class TestDataStructures:
     """Test data structure classes for proper initialization."""
 
-    def test_dashboard_config_defaults(self):
+    def test_dashboard_config_defaults(self) -> None:
         """Test DashboardConfig default values."""
         from quantchain.tools.web_dashboard import DashboardConfig
 
@@ -713,7 +705,7 @@ class TestDataStructures:
         assert config.port == 8501
         assert config.host == "localhost"
 
-    def test_dashboard_config_custom_values(self):
+    def test_dashboard_config_custom_values(self) -> None:
         """Test DashboardConfig with custom values."""
         from quantchain.tools.web_dashboard import DashboardConfig
 
@@ -739,7 +731,7 @@ class TestDataStructures:
 class TestWebDashboardIntegration:
     """Integration tests for Web Dashboard components."""
 
-    def test_dashboard_app_creation(self):
+    def test_dashboard_app_creation(self) -> None:
         """Test dashboard app creation with default config."""
         from quantchain.tools.web_dashboard import create_dashboard, DashboardConfig
 
@@ -754,7 +746,7 @@ class TestWebDashboardIntegration:
         assert dashboard.config.refresh_interval == 10
         assert dashboard.config.theme == "dark"
 
-    def test_full_dashboard_workflow(self):
+    def test_full_dashboard_workflow(self) -> None:
         """Test complete dashboard workflow from monitoring to visualization."""
         from quantchain.tools.web_dashboard import WebDashboardApp, DashboardConfig
 
@@ -791,7 +783,7 @@ class TestWebDashboardIntegration:
         assert isinstance(charts, dict)
         assert len(charts) > 0
 
-    def test_real_time_updates(self):
+    def test_real_time_updates(self) -> None:
         """Test real-time data updates functionality."""
         # Basic test for config settings
         from quantchain.tools.web_dashboard import DashboardConfig
@@ -803,7 +795,7 @@ class TestWebDashboardIntegration:
         offline_config = DashboardConfig(enable_real_time=False)
         assert offline_config.enable_real_time is False
 
-    def test_multi_agent_support(self):
+    def test_multi_agent_support(self) -> None:
         """Test dashboard with multiple running agents."""
         from quantchain.tools.web_dashboard import MonitoringService
 
@@ -818,3 +810,5 @@ class TestWebDashboardIntegration:
             assert "agent_id" in agent
             assert "agent_type" in agent
             assert "status" in agent
+
+

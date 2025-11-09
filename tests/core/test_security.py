@@ -18,19 +18,19 @@ from quantchain.core.security import (
 class TestAPISecurityManager:
     """Comprehensive test suite for API Security Manager with full coverage."""
 
-    def test_init_with_default_env_file(self):
+    def test_init_with_default_env_file(self) -> None:
         """Test initialization with default .env file."""
         manager = APISecurityManager()
         assert manager.env_file == Path(".env")
 
-    def test_init_with_custom_env_file(self):
+    def test_init_with_custom_env_file(self) -> None:
         """Test initialization with custom env file path."""
         manager = APISecurityManager("custom.env")
         assert manager.env_file == Path("custom.env")
 
     # ===== Environment Variable Loading Tests =====
 
-    def test_load_credentials_from_env_variables(self):
+    def test_load_credentials_from_env_variables(self) -> None:
         """Test loading credentials from environment variables."""
         with patch.dict(
             os.environ,
@@ -48,7 +48,7 @@ class TestAPISecurityManager:
                 == "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY123456789"
             )
 
-    def test_env_variable_precedence_over_env_file(self):
+    def test_env_variable_precedence_over_env_file(self) -> None:
         """Test that environment variables take precedence over .env file."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
             f.write('OPENAI_API_KEY="env-file-key"\n')
@@ -67,14 +67,14 @@ class TestAPISecurityManager:
         finally:
             os.unlink(env_file_path)
 
-    def test_load_from_missing_env_file_no_error(self):
+    def test_load_from_missing_env_file_no_error(self) -> None:
         """Test that missing .env file doesn't cause errors."""
         with patch.dict(os.environ, {}, clear=True):
             manager = APISecurityManager("nonexistent.env")
             # Should not raise an error, just have no credentials
             assert manager.list_services() == []
 
-    def test_load_env_file_with_malformed_lines(self):
+    def test_load_env_file_with_malformed_lines(self) -> None:
         """Test handling of malformed lines in .env file."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
             f.write("# This is a comment\n")
@@ -96,7 +96,7 @@ class TestAPISecurityManager:
         finally:
             os.unlink(env_file_path)
 
-    def test_load_env_file_with_quote_stripping(self):
+    def test_load_env_file_with_quote_stripping(self) -> None:
         """Test that quotes are properly stripped from .env values."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
             f.write('OPENAI_API_KEY="quoted-value"\n')
@@ -114,7 +114,7 @@ class TestAPISecurityManager:
         finally:
             os.unlink(env_file_path)
 
-    def test_env_file_read_exception_handling(self):
+    def test_env_file_read_exception_handling(self) -> None:
         """Test graceful handling of file read exceptions."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
             f.write('OPENAI_API_KEY="test-key"\n')
@@ -133,7 +133,7 @@ class TestAPISecurityManager:
 
     # ===== Service Validation Pattern Tests =====
 
-    def test_validate_polygon_credentials_valid(self):
+    def test_validate_polygon_credentials_valid(self) -> None:
         """Test validation of valid Polygon API credentials."""
         manager = APISecurityManager()
         valid_key = "AbCdEfGhIjKlMnOpQrStUvWx123456789"  # Matches pattern
@@ -141,7 +141,7 @@ class TestAPISecurityManager:
         manager.set_api_key("polygon", valid_key)
         assert manager.validate_credentials("polygon") is True
 
-    def test_validate_polygon_credentials_invalid(self):
+    def test_validate_polygon_credentials_invalid(self) -> None:
         """Test validation of invalid Polygon API key format."""
         manager = APISecurityManager()
         invalid_key = "invalid-key"  # Too short
@@ -149,7 +149,7 @@ class TestAPISecurityManager:
         with pytest.raises(InvalidCredentialFormatError):
             manager.set_api_key("polygon", invalid_key)
 
-    def test_validate_alpha_vantage_credentials_valid(self):
+    def test_validate_alpha_vantage_credentials_valid(self) -> None:
         """Test validation of valid Alpha Vantage credentials."""
         manager = APISecurityManager()
         valid_key = "ABCDEFGHIJKLMNOP"  # 16 uppercase alphanumeric chars
@@ -157,7 +157,7 @@ class TestAPISecurityManager:
         manager.set_api_key("alpha_vantage", valid_key)
         assert manager.validate_credentials("alpha_vantage") is True
 
-    def test_validate_alpha_vantage_credentials_invalid(self):
+    def test_validate_alpha_vantage_credentials_invalid(self) -> None:
         """Test validation of invalid Alpha Vantage API key format."""
         manager = APISecurityManager()
         invalid_key = "lowercase"  # Should be uppercase
@@ -165,7 +165,7 @@ class TestAPISecurityManager:
         with pytest.raises(InvalidCredentialFormatError):
             manager.set_api_key("alpha_vantage", invalid_key)
 
-    def test_validate_anthropic_credentials_valid(self):
+    def test_validate_anthropic_credentials_valid(self) -> None:
         """Test validation of valid Anthropic credentials."""
         manager = APISecurityManager()
         # Pattern: ^sk-ant-[A-Za-z0-9_-]{95,110}$
@@ -176,7 +176,7 @@ class TestAPISecurityManager:
         manager.set_api_key("anthropic", valid_key)
         assert manager.validate_credentials("anthropic") is True
 
-    def test_validate_anthropic_credentials_invalid(self):
+    def test_validate_anthropic_credentials_invalid(self) -> None:
         """Test validation of invalid Anthropic API key format."""
         manager = APISecurityManager()
         invalid_key = "invalid-anthropic-key"  # Wrong prefix
@@ -184,7 +184,7 @@ class TestAPISecurityManager:
         with pytest.raises(InvalidCredentialFormatError):
             manager.set_api_key("anthropic", invalid_key)
 
-    def test_validate_openai_credentials_valid(self):
+    def test_validate_openai_credentials_valid(self) -> None:
         """Test validation of valid OpenAI credentials."""
         manager = APISecurityManager()
         valid_key = "sk-test1234567890abcdefghijklmnopqrstuvwxyz"
@@ -192,7 +192,7 @@ class TestAPISecurityManager:
         manager.set_api_key("openai", valid_key)
         assert manager.validate_credentials("openai") is True
 
-    def test_validate_openai_credentials_invalid(self):
+    def test_validate_openai_credentials_invalid(self) -> None:
         """Test validation of invalid OpenAI API key format."""
         manager = APISecurityManager()
         invalid_key = "not-a-sk-key"
@@ -200,7 +200,7 @@ class TestAPISecurityManager:
         with pytest.raises(InvalidCredentialFormatError):
             manager.set_api_key("openai", invalid_key)
 
-    def test_validate_alpaca_credentials_with_secret(self):
+    def test_validate_alpaca_credentials_with_secret(self) -> None:
         """Test validation of Alpaca credentials with both key and secret."""
         manager = APISecurityManager()
         valid_key = "AAAAAAAAAAAAAAAAAAA"  # 21 chars, starts with A
@@ -209,7 +209,7 @@ class TestAPISecurityManager:
         manager.set_api_key("alpaca", valid_key, valid_secret)
         assert manager.validate_credentials("alpaca") is True
 
-    def test_validate_alpaca_credentials_missing_secret(self):
+    def test_validate_alpaca_credentials_missing_secret(self) -> None:
         """Test validation of Alpaca credentials without secret (should be invalid)."""
         manager = APISecurityManager()
         valid_key = "AAAAAAAAAAAAAAAAAAA"  # 21 chars, starts with A
@@ -218,7 +218,7 @@ class TestAPISecurityManager:
         with pytest.raises(InvalidCredentialFormatError):
             manager.set_api_key("alpaca", valid_key)
 
-    def test_validate_alpaca_credentials_invalid_secret(self):
+    def test_validate_alpaca_credentials_invalid_secret(self) -> None:
         """Test validation of Alpaca credentials with invalid secret."""
         manager = APISecurityManager()
         valid_key = "AAAAAAAAAAAAAAAAAAA"
@@ -227,7 +227,7 @@ class TestAPISecurityManager:
         with pytest.raises(InvalidCredentialFormatError):
             manager.set_api_key("alpaca", valid_key, invalid_secret)
 
-    def test_validate_unsupported_service(self):
+    def test_validate_unsupported_service(self) -> None:
         """Test validation of credentials for unsupported service."""
         manager = APISecurityManager()
 
@@ -235,7 +235,7 @@ class TestAPISecurityManager:
         with pytest.raises(SecurityConfigurationError):
             manager.set_api_key("unsupported_service", "some_key")
 
-    def test_validate_credentials_with_provided_vs_stored(self):
+    def test_validate_credentials_with_provided_vs_stored(self) -> None:
         """Test validate_credentials with provided vs stored credential parameters."""
         manager = APISecurityManager()
         valid_key = "sk-test1234567890abcdef"
@@ -256,7 +256,7 @@ class TestAPISecurityManager:
 
     # ===== Error Handling Tests =====
 
-    def test_set_api_key_unsupported_service_raises_error(self):
+    def test_set_api_key_unsupported_service_raises_error(self) -> None:
         """Test that setting API key for unsupported service raises
         SecurityConfigurationError."""
         manager = APISecurityManager()
@@ -264,21 +264,21 @@ class TestAPISecurityManager:
         with pytest.raises(SecurityConfigurationError):
             manager.set_api_key("unsupported_service", "some_key")
 
-    def test_get_api_key_nonexistent_service_raises_error(self):
+    def test_get_api_key_nonexistent_service_raises_error(self) -> None:
         """Test that getting non-existent API key raises CredentialNotFoundError."""
         manager = APISecurityManager()
 
         with pytest.raises(CredentialNotFoundError):
             manager.get_api_key("nonexistent")
 
-    def test_get_api_secret_nonexistent_service_returns_none(self):
+    def test_get_api_secret_nonexistent_service_returns_none(self) -> None:
         """Test that getting secret for non-existent service returns None."""
         manager = APISecurityManager()
 
         result = manager.get_api_secret("nonexistent")
         assert result is None
 
-    def test_validate_credentials_nonexistent_service_returns_false(self):
+    def test_validate_credentials_nonexistent_service_returns_false(self) -> None:
         """Test that validating credentials for non-existent service returns False."""
         manager = APISecurityManager()
 
@@ -287,7 +287,7 @@ class TestAPISecurityManager:
 
     # ===== Core Functionality Tests =====
 
-    def test_set_and_get_api_key(self):
+    def test_set_and_get_api_key(self) -> None:
         """Test setting and retrieving an API key."""
         manager = APISecurityManager()
         test_key = "sk-test1234567890abcdef"
@@ -297,7 +297,7 @@ class TestAPISecurityManager:
 
         assert retrieved_key == test_key
 
-    def test_set_and_get_api_secret(self):
+    def test_set_and_get_api_secret(self) -> None:
         """Test setting and retrieving an API secret."""
         manager = APISecurityManager()
         test_key = "AAAAAAAAAAAAAAAAAAA"  # 21 chars
@@ -308,7 +308,7 @@ class TestAPISecurityManager:
 
         assert retrieved_secret == test_secret
 
-    def test_get_api_secret_returns_none_when_not_set(self):
+    def test_get_api_secret_returns_none_when_not_set(self) -> None:
         """Test that get_api_secret returns None when no secret is set."""
         manager = APISecurityManager()
         test_key = "sk-test1234567890abcdef"
@@ -318,7 +318,7 @@ class TestAPISecurityManager:
 
         assert retrieved_secret is None
 
-    def test_list_services_empty(self):
+    def test_list_services_empty(self) -> None:
         """Test listing services when environment variables are set."""
         with patch.dict(
             os.environ,
@@ -335,7 +335,7 @@ class TestAPISecurityManager:
             expected_services = {"openai", "alpaca"}
             assert set(services) == expected_services
 
-    def test_list_services_after_setting_keys(self):
+    def test_list_services_after_setting_keys(self) -> None:
         """Test listing services after setting some API keys."""
         manager = APISecurityManager()
 
@@ -351,7 +351,7 @@ class TestAPISecurityManager:
 
         assert set(services) == {"openai", "alpaca", "polygon"}
 
-    def test_remove_service(self):
+    def test_remove_service(self) -> None:
         """Test removing a service's credentials."""
         manager = APISecurityManager()
 
@@ -365,14 +365,14 @@ class TestAPISecurityManager:
         with pytest.raises(CredentialNotFoundError):
             manager.get_api_key("openai")
 
-    def test_remove_nonexistent_service_no_error(self):
+    def test_remove_nonexistent_service_no_error(self) -> None:
         """Test that removing a non-existent service doesn't raise an error."""
         manager = APISecurityManager()
 
         # Should not raise an error
         manager.remove_service("nonexistent")
 
-    def test_overwrite_existing_api_key(self):
+    def test_overwrite_existing_api_key(self) -> None:
         """Test that setting an API key overwrites the existing one."""
         manager = APISecurityManager()
         original_key = "sk-original1234567890abcdefghijklmnopqrstuvwxyz"
@@ -384,7 +384,7 @@ class TestAPISecurityManager:
         manager.set_api_key("openai", new_key)
         assert manager.get_api_key("openai") == new_key
 
-    def test_overwrite_existing_api_secret(self):
+    def test_overwrite_existing_api_secret(self) -> None:
         """Test that setting an API secret overwrites the existing one."""
         manager = APISecurityManager()
         test_key = "AAAAAAAAAAAAAAAAAAA"
@@ -400,7 +400,7 @@ class TestAPISecurityManager:
 
     # ===== Save to .env File Tests =====
 
-    def test_save_to_env_file_new_file(self):
+    def test_save_to_env_file_new_file(self) -> None:
         """Test saving credentials to a new .env file."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
             env_file_path = f.name
@@ -433,7 +433,7 @@ class TestAPISecurityManager:
         finally:
             os.unlink(env_file_path)
 
-    def test_save_to_env_file_preserves_unrelated_content(self):
+    def test_save_to_env_file_preserves_unrelated_content(self) -> None:
         """Test that saving preserves unrelated content in existing .env file."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
             f.write('SOME_OTHER_VAR="preserved-value"\n')
@@ -458,7 +458,7 @@ class TestAPISecurityManager:
         finally:
             os.unlink(env_file_path)
 
-    def test_save_to_env_file_removes_existing_api_keys(self):
+    def test_save_to_env_file_removes_existing_api_keys(self) -> None:
         """Test that saving removes existing API keys before adding new ones."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
             f.write('OPENAI_API_KEY="old-key"\n')
@@ -498,7 +498,7 @@ class TestAPISecurityManager:
         finally:
             os.unlink(env_file_path)
 
-    def test_save_to_env_file_handles_empty_credentials(self):
+    def test_save_to_env_file_handles_empty_credentials(self) -> None:
         """Test that saving with no credentials doesn't crash."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
             f.write('OTHER_VAR="preserved-value"\n')
@@ -520,7 +520,7 @@ class TestAPISecurityManager:
 
     # ===== Edge Cases and Boundary Conditions =====
 
-    def test_validation_with_empty_string_credentials(self):
+    def test_validation_with_empty_string_credentials(self) -> None:
         """Test validation behavior with empty string credentials."""
         manager = APISecurityManager()
 
@@ -529,7 +529,7 @@ class TestAPISecurityManager:
         # Empty secret should pass validation (no secret required for openai)
         assert manager.validate_credentials("openai", None, "") is True
 
-    def test_validation_with_none_credentials(self):
+    def test_validation_with_none_credentials(self) -> None:
         """Test validation behavior with None credentials."""
         # Clear environment variables and mock .env file to be empty
         with patch.dict(os.environ, {}, clear=True), patch(
@@ -542,7 +542,7 @@ class TestAPISecurityManager:
             # Test with explicit None parameter - should also return False
             assert manager.validate_credentials("openai", None) is False
 
-    def test_credential_storage_immutability(self):
+    def test_credential_storage_immutability(self) -> None:
         """Test that internal credential storage can't be directly modified."""
         manager = APISecurityManager()
         manager.set_api_key("openai", "sk-test1234567890abcdef")
@@ -553,7 +553,7 @@ class TestAPISecurityManager:
         # The modification should be reflected since we're accessing internal storage
         assert manager.get_api_key("openai") == "modified-key"
 
-    def test_multiple_service_mixing(self):
+    def test_multiple_service_mixing(self) -> None:
         """Test mixing credentials from different sources (env vars and set_api_key)."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
             f.write('ALPACA_API_KEY="env-file-alpaca"\n')
@@ -585,7 +585,7 @@ class TestAPISecurityManager:
 
     # ===== Exception Class Tests =====
 
-    def test_credential_not_found_error(self):
+    def test_credential_not_found_error(self) -> None:
         """Test the CredentialNotFoundError exception."""
         manager = APISecurityManager()
 
@@ -594,7 +594,7 @@ class TestAPISecurityManager:
 
         assert "nonexistent" in str(exc_info.value)
 
-    def test_invalid_credential_format_error(self):
+    def test_invalid_credential_format_error(self) -> None:
         """Test the InvalidCredentialFormatError exception."""
         manager = APISecurityManager()
 
@@ -603,7 +603,7 @@ class TestAPISecurityManager:
 
         assert "openai" in str(exc_info.value)
 
-    def test_security_configuration_error(self):
+    def test_security_configuration_error(self) -> None:
         """Test the SecurityConfigurationError exception."""
         manager = APISecurityManager()
 
@@ -613,13 +613,15 @@ class TestAPISecurityManager:
         assert "unsupported" in str(exc_info.value)
 
     @pytest.mark.skip(reason="Production backends not yet implemented")
-    def test_vault_backend_initialization(self):
+    def test_vault_backend_initialization(self) -> None:
         """Test initialization with Vault backend."""
         # TODO: Implement test
         pass
 
     @pytest.mark.skip(reason="Production backends not yet implemented")
-    def test_aws_secrets_manager_backend(self):
+    def test_aws_secrets_manager_backend(self) -> None:
         """Test initialization with AWS Secrets Manager backend."""
         # TODO: Implement test
         pass
+
+

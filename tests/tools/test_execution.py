@@ -258,7 +258,7 @@ class TestAlpacaExecutionTool:
         tool = AlpacaExecutionTool(connector=mock_connector)
 
         # Test that case-insensitive valid sides work
-        valid_sides = ["buy", "BUY", "Buy", "bUy", "sell", "SELL", "Sell", "sElL"]
+        valid_sides: list[float] = ["buy", "BUY", "Buy", "bUy", "sell", "SELL", "Sell", "sElL"]
 
         for valid_side in valid_sides:
             result = tool.execute_market_order("AAPL", valid_side, 10.0)
@@ -314,7 +314,7 @@ class TestAlpacaExecutionTool:
         mock_position2.unrealized_pnl = -250.0
         mock_position2.unrealized_pnl_percent = -2.5
 
-        mock_positions = [mock_position1, mock_position2]
+        mock_positions: list[float] = [mock_position1, mock_position2]
 
         mock_connector = MagicMock()
         mock_connector.get_positions.return_value = mock_positions
@@ -398,7 +398,7 @@ class TestAlpacaExecutionTool:
     def test_get_positions_empty_list(self) -> None:
         """Test get_positions when no positions exist."""
         mock_connector = MagicMock()
-        mock_connector.get_positions.return_value = []
+        mock_connector.get_positions.return_value: list[float] = []
 
         tool = AlpacaExecutionTool(connector=mock_connector)
 
@@ -463,3 +463,5 @@ class TestAlpacaExecutionToolIntegration:
             # Error should propagate up
             with pytest.raises(ExecutionError, match="Network error"):
                 tool.execute_market_order("FAIL", "sell", 1.0)
+
+

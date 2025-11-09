@@ -28,8 +28,7 @@ from quantchain.backtesting.langgraph_adapter import (
 class TestLangGraphBacktestAdapter:
     """Test LangGraph backtest adapter."""
 
-    def test_initialization(self):
-        """Test adapter initialization."""
+    def test_initialization(self) -> None: """Test adapter initialization."""
         mock_graph = Mock()
         config = {"deterministic": True}
 
@@ -39,8 +38,7 @@ class TestLangGraphBacktestAdapter:
         assert adapter.config == config
         assert adapter.reasoning_log == []
 
-    def test_create_strategy(self):
-        """Test strategy creation."""
+    def test_create_strategy(self) -> None: """Test strategy creation."""
         mock_graph = Mock()
         adapter = LangGraphBacktestAdapter(mock_graph)
         initial_state = {"cash": 100000}
@@ -51,8 +49,7 @@ class TestLangGraphBacktestAdapter:
         assert strategy.adapter == adapter
         assert strategy.current_state.cash == 100000
 
-    def test_set_deterministic_llm(self):
-        """Test deterministic LLM configuration."""
+    def test_set_deterministic_llm(self) -> None: """Test deterministic LLM configuration."""
         mock_graph = Mock()
         adapter = LangGraphBacktestAdapter(mock_graph)
 
@@ -67,8 +64,7 @@ class TestLangGraphBacktestAdapter:
         assert hasattr(adapter, "deterministic_responses")
         assert adapter.deterministic_responses == deterministic_responses
 
-    def test_get_reasoning_log(self):
-        """Test reasoning log retrieval."""
+    def test_get_reasoning_log(self) -> None: """Test reasoning log retrieval."""
         mock_graph = Mock()
         adapter = LangGraphBacktestAdapter(mock_graph)
 
@@ -86,8 +82,7 @@ class TestLangGraphBacktestAdapter:
         assert len(log) == 1
         assert log[0] == entry
 
-    def test_reset_state(self):
-        """Test state reset."""
+    def test_reset_state(self) -> None: """Test state reset."""
         mock_graph = Mock()
         adapter = LangGraphBacktestAdapter(mock_graph)
 
@@ -104,8 +99,7 @@ class TestLangGraphBacktestAdapter:
 class TestAgentStrategy:
     """Test agent strategy wrapper."""
 
-    def test_initialization(self):
-        """Test strategy initialization."""
+    def test_initialization(self) -> None: """Test strategy initialization."""
         mock_adapter = Mock()
         initial_state = {"cash": 100000}
 
@@ -115,8 +109,7 @@ class TestAgentStrategy:
         assert strategy.current_state.cash == 100000
         assert isinstance(strategy.position_manager, PositionManager)
 
-    def test_init(self):
-        """Test strategy initialization with cash and positions."""
+    def test_init(self) -> None: """Test strategy initialization with cash and positions."""
         mock_adapter = Mock()
         initial_state = {"cash": 100000}
 
@@ -128,8 +121,7 @@ class TestAgentStrategy:
         assert strategy.position_manager.get_positions() == {"AAPL": 10}
 
     @patch("quantchain.backtesting.langgraph_adapter.bar_to_agent_state")
-    def test_next(self, mock_bar_to_state):
-        """Test processing next bar."""
+    def test_next(self, mock_bar_to_state) -> None: """Test processing next bar."""
         mock_adapter = Mock()
         mock_adapter.config.get.return_value = 0  # Disable timeout
         initial_state = {"cash": 100000}
@@ -167,8 +159,7 @@ class TestAgentStrategy:
         # Return the processed signal
         assert signal is not None
 
-    def test_get_current_positions(self):
-        """Test getting current positions."""
+    def test_get_current_positions(self) -> None: """Test getting current positions."""
         mock_adapter = Mock()
         strategy = AgentStrategy(mock_adapter)
         strategy.position_manager = Mock()
@@ -179,8 +170,7 @@ class TestAgentStrategy:
         assert positions == {"AAPL": 10, "GOOGL": 5}
         strategy.position_manager.get_positions.assert_called_once()
 
-    def test_get_current_cash(self):
-        """Test getting current cash."""
+    def test_get_current_cash(self) -> None: """Test getting current cash."""
         mock_adapter = Mock()
         strategy = AgentStrategy(mock_adapter)
         strategy.position_manager = Mock()
@@ -195,8 +185,7 @@ class TestAgentStrategy:
 class TestAgentState:
     """Test agent state data structure."""
 
-    def test_default_initialization(self):
-        """Test default state initialization."""
+    def test_default_initialization(self) -> None: """Test default state initialization."""
         state = AgentState()
 
         assert state.current_bar == {}
@@ -217,8 +206,7 @@ class TestAgentState:
         assert isinstance(state.timestamp, datetime)
         assert state.step_count == 0
 
-    def test_custom_initialization(self):
-        """Test custom state initialization."""
+    def test_custom_initialization(self) -> None: """Test custom state initialization."""
         custom_time = datetime(2023, 1, 1, 12, 0, 0)
 
         state = AgentState(
@@ -245,8 +233,7 @@ class TestAgentState:
 class TestDeterministicLLMWrapper:
     """Test deterministic LLM wrapper."""
 
-    def test_initialization(self):
-        """Test wrapper initialization."""
+    def test_initialization(self) -> None: """Test wrapper initialization."""
         response_rules = {"condition1": "response1", "condition2": "response2"}
 
         wrapper = DeterministicLLMWrapper(response_rules)
@@ -254,8 +241,7 @@ class TestDeterministicLLMWrapper:
         assert wrapper.response_rules == response_rules
         assert wrapper.call_history == []
 
-    def test_call_with_rule_match(self):
-        """Test calling with matching rule."""
+    def test_call_with_rule_match(self) -> None: """Test calling with matching rule."""
         response_rules = {"price > 100": "BUY", "price < 90": "SELL"}
         wrapper = DeterministicLLMWrapper(response_rules)
 
@@ -266,8 +252,7 @@ class TestDeterministicLLMWrapper:
         assert response == "BUY"
         assert len(wrapper.call_history) == 1
 
-    def test_call_no_rule_match(self):
-        """Test calling with no matching rule."""
+    def test_call_no_rule_match(self) -> None: """Test calling with no matching rule."""
         response_rules = {"price > 100": "BUY", "price < 90": "SELL"}
         wrapper = DeterministicLLMWrapper(response_rules)
 
@@ -278,8 +263,7 @@ class TestDeterministicLLMWrapper:
         assert response is not None or response == ""
         assert len(wrapper.call_history) == 1
 
-    def test_add_rule(self):
-        """Test adding new rule."""
+    def test_add_rule(self) -> None: """Test adding new rule."""
         wrapper = DeterministicLLMWrapper()
 
         wrapper.add_rule("volume > 1000", "BUY_STRONG")
@@ -287,8 +271,7 @@ class TestDeterministicLLMWrapper:
         assert "volume > 1000" in wrapper.response_rules
         assert wrapper.response_rules["volume > 1000"] == "BUY_STRONG"
 
-    def test_load_scenario(self):
-        """Test loading scenario from file."""
+    def test_load_scenario(self) -> None: """Test loading scenario from file."""
         wrapper = DeterministicLLMWrapper()
 
         # Mock file loading
@@ -300,8 +283,7 @@ class TestDeterministicLLMWrapper:
 
         assert "test_rule" in wrapper.response_rules
 
-    def test_save_scenario(self):
-        """Test saving scenario to file."""
+    def test_save_scenario(self) -> None: """Test saving scenario to file."""
         response_rules = {"test_rule": "test_response"}
         wrapper = DeterministicLLMWrapper(response_rules)
 
@@ -316,8 +298,7 @@ class TestDeterministicLLMWrapper:
 class TestStateConversion:
     """Test state conversion functions."""
 
-    def test_bar_to_agent_state(self):
-        """Test converting bar to agent state."""
+    def test_bar_to_agent_state(self) -> None: """Test converting bar to agent state."""
         bar = {
             "timestamp": datetime(2023, 1, 1, 12, 0, 0),
             "symbol": "AAPL",
@@ -342,8 +323,7 @@ class TestStateConversion:
         assert new_state.cash == 50000.0
         assert new_state.equity == 65000.0
 
-    def test_agent_state_to_signal(self):
-        """Test converting agent state to signal."""
+    def test_agent_state_to_signal(self) -> None: """Test converting agent state to signal."""
         # Valid buy signal
         agent_state = AgentState()
         agent_state.signal = "buy"
@@ -382,15 +362,14 @@ class TestStateConversion:
 class TestReasoningCapture:
     """Test reasoning log capture."""
 
-    def test_capture_reasoning(self):
-        """Test capturing reasoning entry."""
+    def test_capture_reasoning(self) -> None: """Test capturing reasoning entry."""
         agent_state = AgentState()
         agent_state.timestamp = datetime(2023, 1, 1, 12, 0, 0)
         agent_state.step_count = 5
         agent_state.current_bar = {"symbol": "AAPL", "close": 150.0}
-        agent_state.observations = ["Price is high"]
-        agent_state.reasoning = ["Consider buying"]
-        agent_state.decisions = ["Buy 10 shares"]
+        agent_state.observations: list[float] = ["Price is high"]
+        agent_state.reasoning: list[float] = ["Consider buying"]
+        agent_state.decisions: list[float] = ["Buy 10 shares"]
         agent_state.signal = "buy"
         agent_state.signal_confidence = 0.8
         agent_state.quantity = 10
@@ -417,8 +396,7 @@ class TestReasoningCapture:
 class TestPositionManager:
     """Test position management."""
 
-    def test_initialization(self):
-        """Test position manager initialization."""
+    def test_initialization(self) -> None: """Test position manager initialization."""
         manager = PositionManager(100000.0)
 
         assert manager.initial_cash == 100000.0
@@ -426,8 +404,7 @@ class TestPositionManager:
         assert manager.positions == {}
         assert manager.trades == []
 
-    def test_update_position_buy(self):
-        """Test updating position with buy trade."""
+    def test_update_position_buy(self) -> None: """Test updating position with buy trade."""
         manager = PositionManager(100000.0)
 
         manager.update_position("AAPL", 10, 150.0, 5.0)
@@ -442,8 +419,7 @@ class TestPositionManager:
         assert trade["price"] == 150.0
         assert trade["commission"] == 5.0
 
-    def test_update_position_sell(self):
-        """Test updating position with sell trade."""
+    def test_update_position_sell(self) -> None: """Test updating position with sell trade."""
         manager = PositionManager(100000.0)
 
         # First buy
@@ -459,8 +435,7 @@ class TestPositionManager:
         expected_cash = 100000.0 - (10 * 150.0 + 5.0) + (10 * 160.0 - 5.0)
         assert manager.cash == expected_cash
 
-    def test_calculate_equity(self):
-        """Test equity calculation."""
+    def test_calculate_equity(self) -> None: """Test equity calculation."""
         manager = PositionManager(100000.0)
         manager.update_position("AAPL", 10, 150.0, 5.0)
         manager.update_position("GOOGL", 5, 2500.0, 10.0)
@@ -473,8 +448,7 @@ class TestPositionManager:
 
         assert equity == expected_equity
 
-    def test_insufficient_cash_error(self):
-        """Test error on insufficient cash."""
+    def test_insufficient_cash_error(self) -> None: """Test error on insufficient cash."""
         manager = PositionManager(1000.0)
 
         with pytest.raises(PositionError):
@@ -484,8 +458,7 @@ class TestPositionManager:
 class TestErrorHandling:
     """Test error handling."""
 
-    def test_agent_execution_error(self):
-        """Test agent execution error."""
+    def test_agent_execution_error(self) -> None: """Test agent execution error."""
         mock_graph = Mock()
         mock_graph.invoke.side_effect = Exception("Agent failed")
 
@@ -496,8 +469,7 @@ class TestErrorHandling:
         with pytest.raises(AgentExecutionError):
             strategy.next({"close": 150.0})
 
-    def test_timeout_error(self):
-        """Test timeout error."""
+    def test_timeout_error(self) -> None: """Test timeout error."""
         mock_graph = Mock()
         mock_graph.invoke.side_effect = TimeoutError("Agent timeout")
 
@@ -508,8 +480,7 @@ class TestErrorHandling:
         with pytest.raises(TimeoutError):
             strategy.next({"close": 150.0})
 
-    def test_signal_conversion_error(self):
-        """Test signal conversion error."""
+    def test_signal_conversion_error(self) -> None: """Test signal conversion error."""
         agent_state = AgentState()
         agent_state.signal = "invalid_signal"
 
@@ -520,8 +491,7 @@ class TestErrorHandling:
 class TestLangGraphWorkflowEdgeCases:
     """Test workflow orchestration edge cases."""
 
-    def test_workflow_with_nested_decisions(self):
-        """Test workflow with nested decision points."""
+    def test_workflow_with_nested_decisions(self) -> None: """Test workflow with nested decision points."""
         mock_graph = Mock()
         # Set return value to include required signal field
         mock_graph.invoke.return_value = {
@@ -584,8 +554,7 @@ class TestLangGraphWorkflowEdgeCases:
             assert signal is not None  # Should return a signal
             assert signal in ["hold", "buy", "sell"]  # Should be a valid signal
 
-    def test_workflow_with_timeout_handling(self):
-        """Test workflow timeout handling and recovery."""
+    def test_workflow_with_timeout_handling(self) -> None: """Test workflow timeout handling and recovery."""
         mock_graph = Mock()
         adapter = LangGraphBacktestAdapter(mock_graph)
 
@@ -615,8 +584,7 @@ class TestLangGraphWorkflowEdgeCases:
             }
             strategy.next(bar)
 
-    def test_workflow_with_state_persistence(self):
-        """Test workflow state persistence across steps."""
+    def test_workflow_with_state_persistence(self) -> None: """Test workflow state persistence across steps."""
         mock_graph = Mock()
         adapter = LangGraphBacktestAdapter(mock_graph)
 
@@ -660,8 +628,7 @@ class TestLangGraphWorkflowEdgeCases:
             current_state = strategy.current_state
             assert current_state.step_count == i + 1
 
-    def test_workflow_error_recovery(self):
-        """Test workflow error recovery mechanisms."""
+    def test_workflow_error_recovery(self) -> None: """Test workflow error recovery mechanisms."""
         mock_graph = Mock()
         # Set return value to proper dict
         mock_graph.invoke.return_value = {
@@ -699,8 +666,7 @@ class TestLangGraphWorkflowEdgeCases:
 
         assert signal2 is not None  # Should recover from error
 
-    def test_workflow_with_concurrent_decisions(self):
-        """Test workflow with concurrent decision scenarios."""
+    def test_workflow_with_concurrent_decisions(self) -> None: """Test workflow with concurrent decision scenarios."""
         mock_graph = Mock()
         mock_graph.invoke.return_value = {
             "signal": "buy",
@@ -745,8 +711,7 @@ class TestLangGraphWorkflowEdgeCases:
 class TestLangGraphComplexScenarios:
     """Test complex multi-step scenarios."""
 
-    def test_multi_symbol_portfolio_management(self):
-        """Test managing multiple symbols in portfolio."""
+    def test_multi_symbol_portfolio_management(self) -> None: """Test managing multiple symbols in portfolio."""
         mock_graph = Mock()
         # Mock graph to return buy signals for first few iterations, then hold
         call_count = 0
@@ -778,7 +743,7 @@ class TestLangGraphComplexScenarios:
         _strategy = _adapter.create_strategy(initial_state)
 
         # Simulate multi-symbol data
-        symbols = ["AAPL", "GOOGL", "MSFT"]
+        symbols: list[float] = ["AAPL", "GOOGL", "MSFT"]
         for i in range(10):
             symbol = symbols[i % len(symbols)]
             bar = {
@@ -799,8 +764,7 @@ class TestLangGraphComplexScenarios:
                     len(current_state.positions) >= 2
                 )  # Should have multiple positions
 
-    def test_dynamic_risk_adjustment(self):
-        """Test dynamic risk adjustment during workflow."""
+    def test_dynamic_risk_adjustment(self) -> None: """Test dynamic risk adjustment during workflow."""
         mock_graph = Mock()
         # Mock graph to return risk-aware reasoning at iteration 3
         call_count = 0
@@ -840,7 +804,7 @@ class TestLangGraphComplexScenarios:
         strategy = _adapter.create_strategy(initial_state)
 
         # Simulate changing market conditions
-        volatility_levels = [0.01, 0.02, 0.05, 0.01, 0.03]
+        volatility_levels: list[float] = [0.01, 0.02, 0.05, 0.01, 0.03]
         for i, volatility in enumerate(volatility_levels):
             bar = {
                 "timestamp": datetime.now(),
@@ -859,8 +823,7 @@ class TestLangGraphComplexScenarios:
                     "risk" in entry.get("decision", "").lower() for entry in log[-3:]
                 )
 
-    def test_market_regime_detection(self):
-        """Test market regime detection and adaptation."""
+    def test_market_regime_detection(self) -> None: """Test market regime detection and adaptation."""
         mock_graph = Mock()
         # Mock graph to return regime-aware reasoning at specific iterations
         call_count = 0
@@ -926,8 +889,7 @@ class TestLangGraphComplexScenarios:
                     for entry in recent_entries
                 )
 
-    def test_complex_order_management(self):
-        """Test complex order management scenarios."""
+    def test_complex_order_management(self) -> None: """Test complex order management scenarios."""
         mock_graph = Mock()
         mock_graph.invoke.return_value = {
             "signal": "buy",
@@ -975,8 +937,7 @@ class TestLangGraphComplexScenarios:
 class TestLangGraphErrorHandling:
     """Test error handling and recovery."""
 
-    def test_agent_graph_failure_recovery(self):
-        """Test recovery from agent graph failures."""
+    def test_agent_graph_failure_recovery(self) -> None: """Test recovery from agent graph failures."""
         mock_graph = Mock()
 
         # Configure graph to fail on specific calls
@@ -1009,8 +970,7 @@ class TestLangGraphErrorHandling:
         signal = strategy.next(bar)
         assert signal is not None  # Should get fallback signal
 
-    def test_data_validation_error_handling(self):
-        """Test handling of data validation errors."""
+    def test_data_validation_error_handling(self) -> None: """Test handling of data validation errors."""
         mock_graph = Mock()
         mock_graph.invoke.return_value = {
             "signal": "hold",
@@ -1043,8 +1003,7 @@ class TestLangGraphErrorHandling:
                 # Should handle expected validation errors
                 assert "invalid" in str(e).lower() or "missing" in str(e).lower()
 
-    def test_resource_constraint_handling(self):
-        """Test handling of resource constraints."""
+    def test_resource_constraint_handling(self) -> None: """Test handling of resource constraints."""
         mock_graph = Mock()
         mock_graph.invoke.return_value = {
             "signal": "hold",
@@ -1076,7 +1035,7 @@ class TestLangGraphErrorHandling:
             for _ in range(5)
         ]
 
-        signals = []
+        signals: list[float] = []
         for bar in bars:
             signal = strategy.next(bar)
             if signal:
@@ -1085,8 +1044,7 @@ class TestLangGraphErrorHandling:
         # Should handle rate limiting
         assert len(signals) <= 2  # Limited by rate constraint
 
-    def test_partial_data_recovery(self):
-        """Test recovery from partial or incomplete data."""
+    def test_partial_data_recovery(self) -> None: """Test recovery from partial or incomplete data."""
         mock_graph = Mock()
         adapter = LangGraphBacktestAdapter(mock_graph)
 
@@ -1109,8 +1067,7 @@ class TestLangGraphErrorHandling:
                 # Should handle gracefully
                 assert True
 
-    def test_state_consistency_validation(self):
-        """Test state consistency validation."""
+    def test_state_consistency_validation(self) -> None: """Test state consistency validation."""
         mock_graph = Mock()
         mock_graph.invoke.return_value = {
             "signal": "hold",
@@ -1160,3 +1117,5 @@ class TestLangGraphErrorHandling:
         # Timestamp should be recent
         assert current_state.timestamp is not None
         assert (datetime.now() - current_state.timestamp).total_seconds() < 60
+
+

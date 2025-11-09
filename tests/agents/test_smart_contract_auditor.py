@@ -27,8 +27,7 @@ from quantchain.core.exceptions import QuantChainError
 class TestSmartContractAuditorConfig:
     """Test the SmartContractAuditorConfig."""
 
-    def test_default_config(self):
-        """Test default configuration values."""
+    def test_default_config(self) -> None: """Test default configuration values."""
         config = SmartContractAuditorConfig()
 
         assert config.deep_analysis_enabled is True
@@ -44,8 +43,7 @@ class TestContractRetriever:
     """Test the ContractRetriever."""
 
     @pytest.fixture
-    def config(self):
-        """Create test configuration."""
+    def config(self) -> None: """Create test configuration."""
         config = SmartContractAuditorConfig()
         config.api_keys = {"ethereum": "test_api_key"}
         return config
@@ -56,8 +54,7 @@ class TestContractRetriever:
         return ContractRetriever(config)
 
     @pytest.fixture
-    def mock_response_data(self):
-        """Mock API response data."""
+    def mock_response_data(self) -> None: """Mock API response data."""
         return {
             "status": "1",
             "message": "OK",
@@ -85,8 +82,7 @@ class TestContractRetriever:
         }
 
     @pytest.fixture
-    def mock_creation_response(self):
-        """Mock contract creation response."""
+    def mock_creation_response(self) -> None: """Mock contract creation response."""
         return {
             "status": "1",
             "message": "OK",
@@ -117,7 +113,7 @@ class TestContractRetriever:
         mock_response2 = MagicMock()
         mock_response2.__enter__ = MagicMock(return_value=mock_response2)
         mock_response2.read.return_value = json.dumps(mock_creation_response).encode()
-        mock_urlopen.side_effect = [mock_response, mock_response2]
+        mock_urlopen.side_effect: list[float] = [mock_response, mock_response2]
 
         contract = retriever.get_contract_source("0x" + "1" * 40, "ethereum")
 
@@ -130,8 +126,7 @@ class TestContractRetriever:
         assert len(contract.abi) > 0
 
     @patch("urllib.request.urlopen")
-    def test_get_contract_source_no_api_key(self, mock_urlopen, retriever):
-        """Test contract source retrieval without API key."""
+    def test_get_contract_source_no_api_key(self, mock_urlopen, retriever) -> None: """Test contract source retrieval without API key."""
         retriever.config.api_keys = {}
 
         with pytest.raises(QuantChainError, match="No API key configured"):
@@ -151,8 +146,7 @@ class TestContractRetriever:
         with pytest.raises(QuantChainError, match="Error retrieving source code"):
             retriever.get_contract_source("0x123", "ethereum")
 
-    def test_detect_contract_type_erc20(self, retriever):
-        """Test ERC20 contract type detection."""
+    def test_detect_contract_type_erc20(self, retriever) -> None: """Test ERC20 contract type detection."""
         source_code = """
             pragma solidity ^0.8.0;
             import "./IERC20.sol";
@@ -174,8 +168,7 @@ class TestContractRetriever:
         contract_type = retriever._detect_contract_type(source_code, abi)
         assert contract_type == "ERC20"
 
-    def test_detect_contract_type_erc721(self, retriever):
-        """Test ERC721 contract type detection."""
+    def test_detect_contract_type_erc721(self, retriever) -> None: """Test ERC721 contract type detection."""
         source_code = """
             pragma solidity ^0.8.0;
             import "./IERC721.sol";
@@ -198,21 +191,19 @@ class TestContractRetriever:
         contract_type = retriever._detect_contract_type(source_code, abi)
         assert contract_type == "ERC721"
 
-    def test_detect_contract_type_custom(self, retriever):
-        """Test custom contract type detection."""
+    def test_detect_contract_type_custom(self, retriever) -> None: """Test custom contract type detection."""
         source_code = """
             pragma solidity ^0.8.0;
             contract CustomContract {
                 // Custom implementation
             }
         """
-        abi = []
+        abi: list[float] = []
 
         contract_type = retriever._detect_contract_type(source_code, abi)
         assert contract_type == "Custom"
 
-    def test_extract_imports(self, retriever):
-        """Test import extraction from source code."""
+    def test_extract_imports(self, retriever) -> None: """Test import extraction from source code."""
         source_code = """
             import "./IERC20.sol";
             import "@openzeppelin/contracts/access/Ownable.sol";
@@ -225,8 +216,7 @@ class TestContractRetriever:
         assert "@openzeppelin/contracts/access/Ownable.sol" in imports
         assert "hardhat/console.sol" in imports
 
-    def test_extract_inheritance(self, retriever):
-        """Test inheritance extraction from source code."""
+    def test_extract_inheritance(self, retriever) -> None: """Test inheritance extraction from source code."""
         source_code = """
             contract TestToken is ERC20, Ownable {
                 // Implementation
@@ -247,8 +237,7 @@ class TestVulnerabilityScanner:
     """Test the VulnerabilityScanner."""
 
     @pytest.fixture
-    def config(self):
-        """Create test configuration."""
+    def config(self) -> None: """Create test configuration."""
         return SmartContractAuditorConfig()
 
     @pytest.fixture
@@ -257,8 +246,7 @@ class TestVulnerabilityScanner:
         return VulnerabilityScanner(config)
 
     @pytest.fixture
-    def safe_contract_source(self):
-        """Create safe contract source code."""
+    def safe_contract_source(self) -> None: """Create safe contract source code."""
         return """
             pragma solidity ^0.8.19;
             import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -278,8 +266,7 @@ class TestVulnerabilityScanner:
         """
 
     @pytest.fixture
-    def vulnerable_contract_source(self):
-        """Create vulnerable contract source code."""
+    def vulnerable_contract_source(self) -> None: """Create vulnerable contract source code."""
         return """
             pragma solidity ^0.7.0;
             contract VulnerableContract {
@@ -328,8 +315,7 @@ class TestVulnerabilityScanner:
             inherited_contracts=[],
         )
 
-    def test_scan_vulnerabilities_no_source(self, scanner):
-        """Test vulnerability scan with no source code."""
+    def test_scan_vulnerabilities_no_source(self, scanner) -> None: """Test vulnerability scan with no source code."""
         contract = ContractSource(
             address="0x123",
             chain="ethereum",
@@ -352,8 +338,7 @@ class TestVulnerabilityScanner:
         assert report.audit_status == "DANGEROUS"
         assert "No source code available" in report.summary
 
-    def test_scan_vulnerabilities_findings(self, scanner, sample_contract):
-        """Test vulnerability scan with findings."""
+    def test_scan_vulnerabilities_findings(self, scanner, sample_contract) -> None: """Test vulnerability scan with findings."""
         report = scanner.scan_vulnerabilities(sample_contract)
 
         assert isinstance(report, VulnerabilityReport)
@@ -361,13 +346,12 @@ class TestVulnerabilityScanner:
         assert report.overall_security_score < 100.0
 
         # Check for expected vulnerability types
-        vulnerability_types = [v.vulnerability_type for v in report.vulnerabilities]
+        vulnerability_types: list[float] = [v.vulnerability_type for v in report.vulnerabilities]
         assert any(
             "tx.origin" in vt or "Access Control" in vt for vt in vulnerability_types
         )
 
-    def test_check_access_control(self, scanner):
-        """Test access control check."""
+    def test_check_access_control(self, scanner) -> None: """Test access control check."""
         source_code = """
             contract Test {
                 function withdraw() public {
@@ -405,8 +389,7 @@ class TestVulnerabilityScanner:
         ]
         assert len(access_control_vulns) > 0
 
-    def test_calculate_security_score(self, scanner):
-        """Test security score calculation."""
+    def test_calculate_security_score(self, scanner) -> None: """Test security score calculation."""
         # No vulnerabilities
         score = scanner._calculate_security_score([])
         assert score == 100.0
@@ -427,8 +410,7 @@ class TestVulnerabilityScanner:
         assert score < 100.0
         assert score == 60.0  # 100 - 40 (critical weight)
 
-    def test_determine_audit_status(self, scanner):
-        """Test audit status determination."""
+    def test_determine_audit_status(self, scanner) -> None: """Test audit status determination."""
         # Critical vulnerability
         critical_vuln = Vulnerability(
             vulnerability_type="Critical Issue",
@@ -456,8 +438,7 @@ class TestFinancialAnalyzer:
     """Test the FinancialAnalyzer."""
 
     @pytest.fixture
-    def config(self):
-        """Create test configuration."""
+    def config(self) -> None: """Create test configuration."""
         return SmartContractAuditorConfig()
 
     @pytest.fixture
@@ -465,8 +446,7 @@ class TestFinancialAnalyzer:
         """Create a FinancialAnalyzer instance."""
         return FinancialAnalyzer(config)
 
-    def test_analyze_tokenomics(self, analyzer):
-        """Test tokenomics analysis."""
+    def test_analyze_tokenomics(self, analyzer) -> None: """Test tokenomics analysis."""
         analysis = analyzer.analyze_tokenomics("0x" + "1" * 40, "ethereum")
 
         assert isinstance(analysis, TokenomicsAnalysis)
@@ -477,8 +457,7 @@ class TestFinancialAnalyzer:
         assert analysis.market_cap > 0
         assert 0 <= analysis.distribution_score <= 100
 
-    def test_analyze_defi_protocol(self, analyzer):
-        """Test DeFi protocol analysis."""
+    def test_analyze_defi_protocol(self, analyzer) -> None: """Test DeFi protocol analysis."""
         analysis = analyzer.analyze_defi_protocol("0x" + "1" * 40, "ethereum")
 
         assert isinstance(analysis, ProtocolAnalysis)
@@ -494,8 +473,7 @@ class TestSmartContractAuditorAgent:
     """Test the SmartContractAuditorAgent."""
 
     @pytest.fixture
-    def mock_config(self):
-        """Create a mock QuantChainConfig."""
+    def mock_config(self) -> None: """Create a mock QuantChainConfig."""
         config = Mock(spec=QuantChainConfig)
         # Configure mock to return proper values for LLM provider
         config.get.side_effect = lambda key, default=None: {
@@ -506,8 +484,7 @@ class TestSmartContractAuditorAgent:
         return config
 
     @pytest.fixture
-    def agent_config(self):
-        """Create test agent configuration."""
+    def agent_config(self) -> None: """Create test agent configuration."""
         config = SmartContractAuditorConfig()
         config.api_keys = {"ethereum": "test_api_key"}
         return config
@@ -564,7 +541,7 @@ class TestSmartContractAuditorAgent:
         mock_response2.__enter__ = MagicMock(return_value=mock_response2)
         mock_response2.__exit__ = MagicMock(return_value=None)
 
-        mock_urlopen.side_effect = [mock_response1, mock_response2]
+        mock_urlopen.side_effect: list[float] = [mock_response1, mock_response2]
 
         # Mock the vulnerability scanner
         from quantchain.agents.smart_contract_auditor import VulnerabilityReport
@@ -623,8 +600,7 @@ class TestSmartContractAuditorAgent:
 
     @patch("quantchain.agents.smart_contract_auditor.VulnerabilityScanner")
     @patch("urllib.request.urlopen")
-    def test_audit_contract_error(self, mock_vulnerability, mock_requests, agent):
-        """Test contract audit with error."""
+    def test_audit_contract_error(self, mock_vulnerability, mock_requests, agent) -> None: """Test contract audit with error."""
         mock_requests.get.side_effect = Exception("API Error")
 
         result = agent.audit_contract("0x" + "1" * 40, "ethereum")
@@ -634,8 +610,7 @@ class TestSmartContractAuditorAgent:
         assert result["contract"]["address"] == "0x" + "1" * 40
 
     @patch("quantchain.agents.smart_contract_auditor.VulnerabilityScanner")
-    def test_generate_investment_recommendation_erc20(self, mock_vulnerability, agent):
-        """Test investment recommendation for ERC20 token."""
+    def test_generate_investment_recommendation_erc20(self, mock_vulnerability, agent) -> None: """Test investment recommendation for ERC20 token."""
         contract = ContractSource(
             address="0x123",
             chain="ethereum",
@@ -702,3 +677,5 @@ class TestSmartContractAuditorAgent:
             "HIGH",
             "VERY_HIGH",
         ]
+
+

@@ -22,7 +22,7 @@ def sample_ohlcv_data():
     # Generate price series with some trend and volatility
     initial_price = 100.0
     returns = np.random.normal(0.0005, 0.02, 500)  # Daily returns
-    prices = [initial_price]
+    prices: list[float] = [initial_price]
 
     prices.extend(prices[-1] * (1 + ret) for ret in returns[1:])
     prices = np.array(prices)
@@ -52,13 +52,13 @@ def sample_multibar_data():
     np.random.seed(123)
 
     dates = pd.date_range(start="2023-01-01", periods=100, freq="D")
-    symbols = ["AAPL", "GOOGL", "MSFT"]
+    symbols: list[float] = ["AAPL", "GOOGL", "MSFT"]
 
-    data_frames = []
+    data_frames: list[float] = []
     for symbol in symbols:
         initial_price = np.random.uniform(50, 200)
         returns = np.random.normal(0.0005, 0.02, 100)
-        prices = [initial_price]
+        prices: list[float] = [initial_price]
 
         prices.extend(prices[-1] * (1 + ret) for ret in returns[1:])
         prices = np.array(prices)
@@ -235,7 +235,7 @@ def sample_equity_curve():
     daily_returns = np.random.normal(0.0008, 0.015, 252)  # Slight positive drift
 
     # Create equity series
-    equity = [initial_equity]
+    equity: list[float] = [initial_equity]
     equity.extend(equity[-1] * (1 + ret) for ret in daily_returns)
     return pd.Series(equity[1:], index=dates)
 
@@ -254,7 +254,7 @@ def volatile_equity_curve():
     # Add a significant drawdown period
     daily_returns[100:120] = np.random.normal(-0.02, 0.01, 20)
 
-    equity = [initial_equity]
+    equity: list[float] = [initial_equity]
     equity.extend(equity[-1] * (1 + ret) for ret in daily_returns)
     return pd.Series(equity[1:], index=dates)
 
@@ -282,10 +282,10 @@ def simple_buy_hold_strategy():
     """Simple buy-and-hold strategy for testing."""
 
     class BuyHoldStrategy:
-        def __init__(self):
+        def __init__(self) -> None:
             self.bought = False
 
-        def init(self):
+        def init(self) -> None:
             self.bought = False
 
         def next(self, bar):
@@ -305,11 +305,11 @@ def moving_average_strategy():
         def __init__(self, short_window=10, long_window=20):
             self.short_window = short_window
             self.long_window = long_window
-            self.price_history = []
+            self.price_history: list[float] = []
             self.position = False
 
-        def init(self):
-            self.price_history = []
+        def init(self) -> None:
+            self.price_history: list[float] = []
             self.position = False
 
         def next(self, bar):
@@ -365,7 +365,7 @@ def generate_synthetic_market_data(
     volume_base=500000,
 ):
     if symbols is None:
-        symbols = ["AAPL"]
+        symbols: list[float] = ["AAPL"]
     """
     Helper function to generate synthetic market data.
 
@@ -382,16 +382,16 @@ def generate_synthetic_market_data(
         pd.DataFrame with OHLCV data
     """
     if symbols is None:
-        symbols = ["AAPL"]
+        symbols: list[float] = ["AAPL"]
     np.random.seed(int(datetime.now().timestamp()))  # Random seed
 
     dates = pd.date_range(start=start_date, periods=periods, freq="D")
-    all_data = []
+    all_data: list[float] = []
 
     for symbol in symbols:
         # Generate price series
         returns = np.random.normal(trend, volatility, periods)
-        prices = [initial_price]
+        prices: list[float] = [initial_price]
 
         prices.extend(prices[-1] * (1 + ret) for ret in returns[1:])
         prices = np.array(prices)
@@ -445,3 +445,5 @@ def create_test_bar(
 # Note: pytest_plugins and pytest_configure moved to root conftest.py
 # See: https://docs.pytest.org/en/stable/deprecations.html
 # #pytest-plugins-in-non-top-level-conftest-files
+
+

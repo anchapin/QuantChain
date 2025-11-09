@@ -107,21 +107,18 @@ def sample_strategy_config():
 class TestDataValidationWorkflow:
     """Test data validation workflow as part of end-to-end process."""
 
-    def test_validate_ohlcv_data_success(self, sample_ohlcv_data):
-        """Test successful validation of OHLCV data."""
+    def test_validate_ohlcv_data_success(self, sample_ohlcv_data) -> None: """Test successful validation of OHLCV data."""
         # Should not raise any exceptions
         validate_ohlcv_data(sample_ohlcv_data)
 
-    def test_validate_ohlcv_data_missing_columns(self, sample_ohlcv_data):
-        """Test validation fails with missing columns."""
+    def test_validate_ohlcv_data_missing_columns(self, sample_ohlcv_data) -> None: """Test validation fails with missing columns."""
         # Remove a required column
         invalid_data = sample_ohlcv_data.drop(columns=["volume"])
 
         with pytest.raises(Exception):  # DataValidationError
             validate_ohlcv_data(invalid_data)
 
-    def test_filter_data_by_date_range(self, sample_ohlcv_data):
-        """Test filtering data by date range."""
+    def test_filter_data_by_date_range(self, sample_ohlcv_data) -> None: """Test filtering data by date range."""
         # Filter to middle 5 days
         start_date = datetime(2023, 1, 3)
         end_date = datetime(2023, 1, 7)
@@ -140,8 +137,7 @@ class TestDataValidationWorkflow:
 class TestBacktestWorkflow:
     """Test complete backtesting workflow."""
 
-    def test_backtest_config_creation(self):
-        """Test creating backtest configuration."""
+    def test_backtest_config_creation(self) -> None: """Test creating backtest configuration."""
         config = BacktestConfig(
             initial_cash=100000.0,
             commission_rate=0.001,
@@ -154,8 +150,7 @@ class TestBacktestWorkflow:
         assert config.slippage_rate == 0.0001
         assert config.data_frequency == "1d"
 
-    def test_simple_backtest_execution(self, sample_ohlcv_data):
-        """Test executing a simple backtest."""
+    def test_simple_backtest_execution(self, sample_ohlcv_data) -> None: """Test executing a simple backtest."""
         # Create a mock engine
         mock_engine = Mock(spec=BacktestEngine)
 
@@ -205,8 +200,7 @@ class TestBacktestWorkflow:
 class TestAgentExecutionWorkflow:
     """Test agent execution workflow from data retrieval to execution."""
 
-    def test_dexscreener_data_retrieval(self):
-        """Test retrieving data from DexScreener."""
+    def test_dexscreener_data_retrieval(self) -> None: """Test retrieving data from DexScreener."""
         # Mock connector's get_new_token_pairs method directly
         with patch.object(
             DexscreenerDataConnector, "get_new_token_pairs"
@@ -232,8 +226,7 @@ class TestAgentExecutionWorkflow:
             assert result[0]["volume_24h"] == 150000
             assert result[0]["liquidity"] == 50000
 
-    def test_execution_workflow(self):
-        """Test trade execution workflow."""
+    def test_execution_workflow(self) -> None: """Test trade execution workflow."""
         # Mock connector first
         mock_connector = Mock()
         executor = AlpacaExecutionTool(connector=mock_connector)
@@ -261,8 +254,7 @@ class TestAgentExecutionWorkflow:
 class TestIntegratedWorkflow:
     """Test complete integrated workflow from data to execution."""
 
-    def test_complete_trading_workflow(self, sample_ohlcv_data, sample_strategy_config):
-        """Test complete trading workflow from data retrieval to execution."""
+    def test_complete_trading_workflow(self, sample_ohlcv_data, sample_strategy_config) -> None: """Test complete trading workflow from data retrieval to execution."""
         # Mock all external dependencies
         # Mock the get_new_token_pairs method directly
         with patch.object(
@@ -336,8 +328,7 @@ class TestIntegratedWorkflow:
 class TestSystemIntegration:
     """Test system-level integration between components."""
 
-    def test_error_handling_workflow(self, sample_ohlcv_data):
-        """Test error handling in integrated workflow."""
+    def test_error_handling_workflow(self, sample_ohlcv_data) -> None: """Test error handling in integrated workflow."""
         # Test error propagation through the system
         with patch(
             "quantchain.connectors.dexscreener_connector.DexscreenerDataConnector"
@@ -353,3 +344,5 @@ class TestSystemIntegration:
             with pytest.raises((Exception, DataSourceError)):
                 connector = DexscreenerDataConnector()
                 connector.get_new_token_pairs("1h")
+
+

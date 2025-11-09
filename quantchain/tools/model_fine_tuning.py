@@ -341,7 +341,7 @@ def prepare_financial_dataset(
         else:
             raise DatasetError(f"Dataset path not found: {dataset_path}")
 
-        def tokenize_function(examples: dict) -> dict[str, Any]:
+        def tokenize_function(examples: Dict[str, Any]) -> Dict[str, Any]:
             """Tokenize and format dataset."""
             # Handle different data formats
             if "text" in examples:

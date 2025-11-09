@@ -93,15 +93,13 @@ def problematic_data():
 class TestLibraryAvailabilityCoverage:
     """Test library import fallback mechanisms for enhanced coverage."""
 
-    def test_quantstats_import_error_coverage(self):
-        """Test import error handling for QuantStats library (line 16)."""
+    def test_quantstats_import_error_coverage(self) -> None: """Test import error handling for QuantStats library (line 16)."""
         # Test the global variable check directly
         from quantchain.backtesting.performance_metrics import QUANTSTATS_AVAILABLE
 
         assert isinstance(QUANTSTATS_AVAILABLE, bool)
 
-    def test_empyrical_import_error_coverage(self):
-        """Test import error handling for Empyrical library (line 24)."""
+    def test_empyrical_import_error_coverage(self) -> None: """Test import error handling for Empyrical library (line 24)."""
         # Test the global variable check directly
         from quantchain.backtesting.performance_metrics import EMPYRICAL_AVAILABLE
 
@@ -111,8 +109,7 @@ class TestLibraryAvailabilityCoverage:
 class TestReturnCalculationEdgeCases:
     """Test return calculation methods with edge cases."""
 
-    def test_calculate_returns_with_nan_values(self):
-        """Test calculate_returns with NaN values (line 99)."""
+    def test_calculate_returns_with_nan_values(self) -> None: """Test calculate_returns with NaN values (line 99)."""
         metrics = PerformanceMetrics()
 
         dates = pd.date_range("2023-01-01", periods=5, freq="D")
@@ -128,8 +125,7 @@ class TestReturnCalculationEdgeCases:
             # If we have results, ensure not all are NaN
             assert not result.isna().all()
 
-    def test_calculate_returns_with_infinity_values(self):
-        """Test calculate_returns with infinity values."""
+    def test_calculate_returns_with_infinity_values(self) -> None: """Test calculate_returns with infinity values."""
         metrics = PerformanceMetrics()
 
         dates = pd.date_range("2023-01-01", periods=5, freq="D")
@@ -141,8 +137,7 @@ class TestReturnCalculationEdgeCases:
         assert result is not None
         assert len(result) < len(equity_curve)  # Should drop inf values
 
-    def test_calculate_returns_with_single_value(self):
-        """Test calculate_returns with single value raises InsufficientDataError."""
+    def test_calculate_returns_with_single_value(self) -> None: """Test calculate_returns with single value raises InsufficientDataError."""
         metrics = PerformanceMetrics()
 
         dates = pd.date_range("2023-01-01", periods=1, freq="D")
@@ -151,8 +146,7 @@ class TestReturnCalculationEdgeCases:
         with pytest.raises(InsufficientDataError):
             metrics.calculate_returns(equity_curve)
 
-    def test_calculate_returns_with_mixed_types(self):
-        """Test calculate_returns with mixed data types
+    def test_calculate_returns_with_mixed_types(self) -> None: """Test calculate_returns with mixed data types
         raises MetricsCalculationError."""
         metrics = PerformanceMetrics()
 
@@ -166,8 +160,7 @@ class TestReturnCalculationEdgeCases:
 class TestRiskMetricsBoundaryConditions:
     """Test risk metrics with boundary conditions."""
 
-    def test_calculate_max_drawdown_with_flat_equity(self):
-        """Test calculate_max_drawdown with flat equity curve."""
+    def test_calculate_max_drawdown_with_flat_equity(self) -> None: """Test calculate_max_drawdown with flat equity curve."""
         metrics = PerformanceMetrics()
 
         dates = pd.date_range("2023-01-01", periods=10, freq="D")
@@ -177,8 +170,7 @@ class TestRiskMetricsBoundaryConditions:
         assert result["max_drawdown"] == 0.0
         assert result["max_drawdown_duration"] == 0
 
-    def test_calculate_sharpe_ratio_with_zero_volatility(self):
-        """Test calculate_sharpe_ratio with zero volatility."""
+    def test_calculate_sharpe_ratio_with_zero_volatility(self) -> None: """Test calculate_sharpe_ratio with zero volatility."""
         metrics = PerformanceMetrics()
 
         dates = pd.date_range("2023-01-01", periods=10, freq="D")
@@ -187,8 +179,7 @@ class TestRiskMetricsBoundaryConditions:
         result = metrics.calculate_sharpe_ratio(returns)
         assert result == 0.0  # Should handle zero volatility gracefully
 
-    def test_calculate_sortino_ratio_with_no_downside(self):
-        """Test calculate_sortino_ratio with no negative returns."""
+    def test_calculate_sortino_ratio_with_no_downside(self) -> None: """Test calculate_sortino_ratio with no negative returns."""
         metrics = PerformanceMetrics()
 
         dates = pd.date_range("2023-01-01", periods=10, freq="D")
@@ -200,8 +191,7 @@ class TestRiskMetricsBoundaryConditions:
         result = metrics.calculate_sortino_ratio(returns)
         assert result == float("inf")  # No downside risk
 
-    def test_calculate_calmar_ratio_with_zero_max_drawdown(self):
-        """Test calculate_calmar_ratio with zero max drawdown."""
+    def test_calculate_calmar_ratio_with_zero_max_drawdown(self) -> None: """Test calculate_calmar_ratio with zero max drawdown."""
         metrics = PerformanceMetrics()
 
         dates = pd.date_range("2023-01-01", periods=10, freq="D")
@@ -216,8 +206,7 @@ class TestRiskMetricsBoundaryConditions:
 class TestExceptionHandlingEdgeCases:
     """Test comprehensive exception handling scenarios."""
 
-    def test_calculate_returns_invalid_data_types(self):
-        """Test calculate_returns with invalid data types."""
+    def test_calculate_returns_invalid_data_types(self) -> None: """Test calculate_returns with invalid data types."""
         metrics = PerformanceMetrics()
 
         # Test with string data mixed with numeric
@@ -229,8 +218,7 @@ class TestExceptionHandlingEdgeCases:
         with pytest.raises((ValueError, TypeError, Exception)):
             metrics.calculate_returns(equity_curve)
 
-    def test_calculate_total_return_with_extreme_values(self):
-        """Test calculate_total_return with extreme values
+    def test_calculate_total_return_with_extreme_values(self) -> None: """Test calculate_total_return with extreme values
         that raises MetricsCalculationError."""
         metrics = PerformanceMetrics()
 
@@ -240,8 +228,7 @@ class TestExceptionHandlingEdgeCases:
         with pytest.raises(MetricsCalculationError):
             metrics.calculate_total_return(equity_curve)
 
-    def test_calculate_sharpe_ratio_with_single_return(self):
-        """Test calculate_sharpe_ratio with single return value."""
+    def test_calculate_sharpe_ratio_with_single_return(self) -> None: """Test calculate_sharpe_ratio with single return value."""
         metrics = PerformanceMetrics()
 
         returns = pd.Series([0.01])
@@ -249,8 +236,7 @@ class TestExceptionHandlingEdgeCases:
         result = metrics.calculate_sharpe_ratio(returns)
         assert np.isnan(result) or result == 0.0  # Single value can produce NaN
 
-    def test_calculate_sortino_ratio_with_single_return(self):
-        """Test calculate_sortino_ratio with single return value."""
+    def test_calculate_sortino_ratio_with_single_return(self) -> None: """Test calculate_sortino_ratio with single return value."""
         metrics = PerformanceMetrics()
 
         returns = pd.Series([0.01])
@@ -258,8 +244,7 @@ class TestExceptionHandlingEdgeCases:
         result = metrics.calculate_sortino_ratio(returns)
         assert np.isinf(result) or result == 0.0  # Single value can produce infinity
 
-    def test_calculate_max_drawdown_with_insufficient_data(self):
-        """Test calculate_max_drawdown with insufficient data."""
+    def test_calculate_max_drawdown_with_insufficient_data(self) -> None: """Test calculate_max_drawdown with insufficient data."""
         metrics = PerformanceMetrics()
 
         dates = pd.date_range("2023-01-01", periods=1, freq="D")
@@ -269,8 +254,7 @@ class TestExceptionHandlingEdgeCases:
         assert result["max_drawdown"] == 0.0
         assert result["max_drawdown_duration"] == 0
 
-    def test_calculate_calmar_ratio_with_insufficient_data(self):
-        """Test calculate_calmar_ratio with insufficient data."""
+    def test_calculate_calmar_ratio_with_insufficient_data(self) -> None: """Test calculate_calmar_ratio with insufficient data."""
         metrics = PerformanceMetrics()
 
         returns = pd.Series([0.01])  # Single return
@@ -280,8 +264,7 @@ class TestExceptionHandlingEdgeCases:
             np.isinf(result) or result == 0.0
         )  # Can produce infinity with zero max_drawdown
 
-    def test_calculate_win_rate_with_empty_trades(self):
-        """Test calculate_win_rate with empty trades."""
+    def test_calculate_win_rate_with_empty_trades(self) -> None: """Test calculate_win_rate with empty trades."""
         metrics = PerformanceMetrics()
 
         trades = pd.DataFrame({"pnl": []})
@@ -289,8 +272,7 @@ class TestExceptionHandlingEdgeCases:
         result = metrics.calculate_win_rate(trades)
         assert result == 0.0  # Should handle empty data
 
-    def test_calculate_profit_factor_with_empty_trades(self):
-        """Test calculate_profit_factor with empty trades."""
+    def test_calculate_profit_factor_with_empty_trades(self) -> None: """Test calculate_profit_factor with empty trades."""
         metrics = PerformanceMetrics()
 
         trades = pd.DataFrame({"pnl": []})
@@ -298,8 +280,7 @@ class TestExceptionHandlingEdgeCases:
         result = metrics.calculate_profit_factor(trades)
         assert result == 0.0  # Should handle empty data
 
-    def test_calculate_average_win_with_no_winning_trades(self):
-        """Test calculate_average_win with no winning trades
+    def test_calculate_average_win_with_no_winning_trades(self) -> None: """Test calculate_average_win with no winning trades
         - handled in _calculate_trade_statistics."""
         # This is tested through _calculate_trade_statistics since
         # calculate_average_win doesn't exist
@@ -311,8 +292,7 @@ class TestExceptionHandlingEdgeCases:
         result = metrics._calculate_trade_statistics(trades)
         assert result["avg_win"] == 0.0  # Should handle no winning trades
 
-    def test_calculate_average_loss_with_no_losing_trades(self):
-        """Test calculate_average_loss with no losing trades
+    def test_calculate_average_loss_with_no_losing_trades(self) -> None: """Test calculate_average_loss with no losing trades
         - handled in _calculate_trade_statistics."""
         # This is tested through _calculate_trade_statistics since
         # calculate_average_loss doesn't exist
@@ -324,8 +304,7 @@ class TestExceptionHandlingEdgeCases:
         result = metrics._calculate_trade_statistics(trades)
         assert result["avg_loss"] == 0.0  # Should handle no losing trades
 
-    def test_calculate_best_trade_with_empty_trades(self):
-        """Test calculate_best_trade with empty trades
+    def test_calculate_best_trade_with_empty_trades(self) -> None: """Test calculate_best_trade with empty trades
         - handled in _calculate_trade_statistics."""
         # This is tested through _calculate_trade_statistics since
         # calculate_best_trade doesn't exist
@@ -337,8 +316,7 @@ class TestExceptionHandlingEdgeCases:
         result = metrics._calculate_trade_statistics(trades)
         assert result["best_trade"] == 0.0  # Should handle empty data
 
-    def test_calculate_worst_trade_with_empty_trades(self):
-        """Test calculate_worst_trade with empty trades
+    def test_calculate_worst_trade_with_empty_trades(self) -> None: """Test calculate_worst_trade with empty trades
         - handled in _calculate_trade_statistics."""
         # This is tested through _calculate_trade_statistics since
         # calculate_worst_trade doesn't exist
@@ -359,8 +337,7 @@ class TestAdvancedMetricsEdgeCases:
         or PerformanceMetrics._calculate_quantstats_metrics.__doc__ is None,
         reason="QuantStats not available",
     )
-    def test_calculate_quantstats_metrics_with_empty_returns(self):
-        """Test _calculate_quantstats_metrics with empty returns."""
+    def test_calculate_quantstats_metrics_with_empty_returns(self) -> None: """Test _calculate_quantstats_metrics with empty returns."""
         metrics = PerformanceMetrics()
 
         returns = pd.Series([], dtype=float)
@@ -370,8 +347,7 @@ class TestAdvancedMetricsEdgeCases:
         assert "sharpe_ratio_qstats" in result
         assert result["sharpe_ratio_qstats"] == 0.0  # Should return default
 
-    def test_calculate_empyrical_metrics_with_empty_returns(self):
-        """Test calculate_empyrical_metrics with empty returns
+    def test_calculate_empyrical_metrics_with_empty_returns(self) -> None: """Test calculate_empyrical_metrics with empty returns
         raises LibraryImportError."""
         metrics = PerformanceMetrics()
 
@@ -381,8 +357,7 @@ class TestAdvancedMetricsEdgeCases:
         with pytest.raises(LibraryImportError):
             metrics.calculate_empyrical_metrics(returns)
 
-    def test_calculate_all_metrics_with_missing_pnl_column(self):
-        """Test calculate_all_metrics with missing 'pnl' column
+    def test_calculate_all_metrics_with_missing_pnl_column(self) -> None: """Test calculate_all_metrics with missing 'pnl' column
         in trades."""
         metrics = PerformanceMetrics()
 
@@ -399,8 +374,7 @@ class TestAdvancedMetricsEdgeCases:
 class TestRemainingUncoveredLines:
     """Test specific uncovered lines to reach 85%+ coverage."""
 
-    def test_calculate_returns_exception_path_coverage(self):
-        """Test exception handling in calculate_returns (lines 100-101)."""
+    def test_calculate_returns_exception_path_coverage(self) -> None: """Test exception handling in calculate_returns (lines 100-101)."""
         metrics = PerformanceMetrics()
 
         # Create problematic equity curve that causes exception in pct_change
@@ -410,8 +384,7 @@ class TestRemainingUncoveredLines:
         with pytest.raises((ValueError, TypeError, Exception)):
             metrics.calculate_returns(equity_curve)
 
-    def test_calculate_total_return_exception_paths(self):
-        """Test exception handling in calculate_total_return (lines 118, 122-123)."""
+    def test_calculate_total_return_exception_paths(self) -> None: """Test exception handling in calculate_total_return (lines 118, 122-123)."""
         metrics = PerformanceMetrics()
 
         # Test with equity curve containing infinity
@@ -427,8 +400,7 @@ class TestRemainingUncoveredLines:
         with pytest.raises(MetricsCalculationError):
             metrics.calculate_total_return(equity_with_nan)
 
-    def test_calculate_annualized_return_exception_paths(self):
-        """Test exception handling in calculate_annualized_return (lines 153-154)."""
+    def test_calculate_annualized_return_exception_paths(self) -> None: """Test exception handling in calculate_annualized_return (lines 153-154)."""
         metrics = PerformanceMetrics()
 
         # Create returns with problematic datetime indices
@@ -440,8 +412,7 @@ class TestRemainingUncoveredLines:
             with pytest.raises(Exception):  # Accept any exception
                 metrics.calculate_annualized_return(returns)
 
-    def test_calculate_sharpe_ratio_exception_path_coverage(self):
-        """Test exception handling in calculate_sharpe_ratio (line 196)."""
+    def test_calculate_sharpe_ratio_exception_path_coverage(self) -> None: """Test exception handling in calculate_sharpe_ratio (line 196)."""
         metrics = PerformanceMetrics()
         returns = pd.Series([0.01, 0.02, 0.015])
 
@@ -455,8 +426,7 @@ class TestRemainingUncoveredLines:
 class TestSimpleExceptionPaths:
     """Test simple exception paths that can be reliably triggered."""
 
-    def test_calculate_returns_with_invalid_frequency(self):
-        """Test calculate_sharpe_ratio with invalid frequency."""
+    def test_calculate_returns_with_invalid_frequency(self) -> None: """Test calculate_sharpe_ratio with invalid frequency."""
         metrics = PerformanceMetrics()
 
         dates = pd.date_range("2023-01-01", periods=3, freq="D")
@@ -468,8 +438,7 @@ class TestSimpleExceptionPaths:
         with pytest.raises(InvalidFrequencyError):
             metrics.calculate_sharpe_ratio(returns, frequency="invalid")
 
-    def test_calculate_sortino_ratio_with_invalid_frequency(self):
-        """Test calculate_sortino_ratio with invalid frequency."""
+    def test_calculate_sortino_ratio_with_invalid_frequency(self) -> None: """Test calculate_sortino_ratio with invalid frequency."""
         metrics = PerformanceMetrics()
 
         dates = pd.date_range("2023-01-01", periods=3, freq="D")
@@ -485,8 +454,7 @@ class TestSimpleExceptionPaths:
 class TestAdditionalCoverageMethods:
     """Test additional methods to improve coverage."""
 
-    def test_calculate_annualized_return_with_short_period(self):
-        """Test calculate_annualized_return with short period.
+    def test_calculate_annualized_return_with_short_period(self) -> None: """Test calculate_annualized_return with short period.
 
         Returns 0.0 for zero time period.
         """
@@ -499,8 +467,7 @@ class TestAdditionalCoverageMethods:
         # Should handle multiple values properly
         assert result is not None
 
-    def test_calculate_all_metrics_integration(self):
-        """Test complete integration of calculate_all_metrics with simple data."""
+    def test_calculate_all_metrics_integration(self) -> None: """Test complete integration of calculate_all_metrics with simple data."""
         metrics = PerformanceMetrics()
 
         # Create simple equity curve
@@ -533,8 +500,7 @@ class TestAdditionalCoverageMethods:
         assert result.best_trade is not None
         assert result.worst_trade is not None
 
-    def test_calculate_all_metrics_with_empty_data(self):
-        """Test calculate_all_metrics with simple empty trades."""
+    def test_calculate_all_metrics_with_empty_data(self) -> None: """Test calculate_all_metrics with simple empty trades."""
         metrics = PerformanceMetrics()
 
         dates = pd.date_range("2023-01-01", periods=3, freq="D")
@@ -554,16 +520,14 @@ class TestAdditionalCoverageMethods:
 class TestPerformanceMetricsAdditionalCoverage:
     """Additional tests to improve coverage for PerformanceMetrics."""
 
-    def test_calculate_empyrical_metrics_with_mock(self):
-        """Test empirical metrics calculation using mock."""
+    def test_calculate_empyrical_metrics_with_mock(self) -> None: """Test empirical metrics calculation using mock."""
         # Skip this test for now since empyrical module is not available
         # and mocking complex imports is problematic
         import pytest
 
         pytest.skip("Skipping empyrical test - library not available")
 
-    def test_calculate_basic_metrics(self):
-        """Test basic metrics calculation."""
+    def test_calculate_basic_metrics(self) -> None: """Test basic metrics calculation."""
         metrics = PerformanceMetrics()
 
         # Create simple equity curve data (not returns)
@@ -580,8 +544,7 @@ class TestPerformanceMetricsAdditionalCoverage:
         assert isinstance(result["total_return"], (float, int))
         assert isinstance(result["annualized_return"], (float, int))
 
-    def test_calculate_risk_metrics(self):
-        """Test risk metrics calculation."""
+    def test_calculate_risk_metrics(self) -> None: """Test risk metrics calculation."""
         metrics = PerformanceMetrics()
 
         # Create simple returns data with datetime index
@@ -600,8 +563,7 @@ class TestPerformanceMetricsAdditionalCoverage:
         assert isinstance(result["sharpe_ratio"], (float, int))
         assert isinstance(result["volatility"], (float, int))
 
-    def test_calculate_trade_statistics(self):
-        """Test trade statistics calculation."""
+    def test_calculate_trade_statistics(self) -> None: """Test trade statistics calculation."""
         metrics = PerformanceMetrics()
 
         # Create simple trade data
@@ -621,16 +583,14 @@ class TestPerformanceMetricsAdditionalCoverage:
         assert "worst_trade" in result
         assert "total_trades" in result
 
-    def test_calculate_quantstats_metrics_with_mock(self):
-        """Test quantstats metrics calculation."""
+    def test_calculate_quantstats_metrics_with_mock(self) -> None: """Test quantstats metrics calculation."""
         # Skip this test for now since quantstats module is not available
         # and mocking complex imports is problematic
         import pytest
 
         pytest.skip("Skipping quantstats test - library not available")
 
-    def test_generate_tear_sheet_library_import_error(self):
-        """Test tear sheet generation handles library import error."""
+    def test_generate_tear_sheet_library_import_error(self) -> None: """Test tear sheet generation handles library import error."""
         metrics = PerformanceMetrics()
 
         # Create simple result data
@@ -670,8 +630,7 @@ class TestPerformanceMetricsAdditionalCoverage:
         with pytest.raises(Exception):  # Should raise some form of import error
             metrics.generate_tear_sheet(result)
 
-    def test_edge_cases_for_methods(self):
-        """Test edge cases for PerformanceMetrics methods."""
+    def test_edge_cases_for_methods(self) -> None: """Test edge cases for PerformanceMetrics methods."""
         metrics = PerformanceMetrics()
 
         # Test with very short equity curve
@@ -688,3 +647,5 @@ class TestPerformanceMetricsAdditionalCoverage:
 
         profit_factor = metrics.calculate_profit_factor(empty_trades)
         assert profit_factor == 0.0  # Should default to 0 for empty trades
+
+

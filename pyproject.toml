@@ -81,7 +81,9 @@ all-dev = [
 "types-requests>=2.25.0",
 "alpaca-py>=0.43.0",
 "ccxt>=4.0.0",
-    "backtesting>=0.6.0",
+"backtesting>=0.6.0",
+"polygon-api-client>=0.7.0",
+"quantstats>=0.0.62",
 ]
 
 # Backtesting dependencies
