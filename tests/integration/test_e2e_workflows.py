@@ -108,18 +108,21 @@ def sample_strategy_config():
 class TestDataValidationWorkflow:
     """Test data validation workflow as part of end-to-end process."""
 
-    def test_validate_ohlcv_data_success(self, sample_ohlcv_data) -> None: """Test successful validation of OHLCV data."""
+    def test_validate_ohlcv_data_success(self, sample_ohlcv_data) -> None:
+        """Test successful validation of OHLCV data."""
         # Should not raise any exceptions
         validate_ohlcv_data(sample_ohlcv_data)
 
-    def test_validate_ohlcv_data_missing_columns(self, sample_ohlcv_data) -> None: """Test validation fails with missing columns."""
+    def test_validate_ohlcv_data_missing_columns(self, sample_ohlcv_data) -> None:
+        """Test validation fails with missing columns."""
         # Remove a required column
         invalid_data = sample_ohlcv_data.drop(columns=["volume"])
 
         with pytest.raises(Exception):  # DataValidationError
             validate_ohlcv_data(invalid_data)
 
-    def test_validate_ohlcv_data_invalid_prices(self, sample_ohlcv_data) -> None: """Test validation fails with invalid price relationships."""
+    def test_validate_ohlcv_data_invalid_prices(self, sample_ohlcv_data) -> None:
+        """Test validation fails with invalid price relationships."""
         # Create invalid data where high < low
         invalid_data = sample_ohlcv_data.copy()
         invalid_data.loc[invalid_data.index[0], "high"] = 98.0  # Less than low
@@ -127,7 +130,8 @@ class TestDataValidationWorkflow:
         with pytest.raises(Exception):  # DataValidationError
             validate_ohlcv_data(invalid_data)
 
-    def test_filter_data_by_date_range(self, sample_ohlcv_data) -> None: """Test filtering data by date range."""
+    def test_filter_data_by_date_range(self, sample_ohlcv_data) -> None:
+        """Test filtering data by date range."""
         # Filter to middle 5 days
         start_date = datetime(2023, 1, 3)
         end_date = datetime(2023, 1, 7)
@@ -146,7 +150,8 @@ class TestDataValidationWorkflow:
 class TestBacktestWorkflow:
     """Test complete backtesting workflow."""
 
-    def test_backtest_config_creation(self) -> None: """Test creating backtest configuration."""
+    def test_backtest_config_creation(self) -> None:
+        """Test creating backtest configuration."""
         config = BacktestConfig(
             initial_cash=100000.0,
             commission_rate=0.001,
@@ -159,7 +164,8 @@ class TestBacktestWorkflow:
         assert config.slippage_rate == 0.0001
         assert config.data_frequency == "1d"
 
-    def test_langgraph_backtester_initialization(self, sample_strategy_config) -> None: """Test initializing LangGraph backtester."""
+    def test_langgraph_backtester_initialization(self, sample_strategy_config) -> None:
+        """Test initializing LangGraph backtester."""
         # Create a mock graph
         mock_graph = Mock()
 
@@ -169,7 +175,10 @@ class TestBacktestWorkflow:
             assert adapter.config == sample_strategy_config
             assert adapter.agent_graph == mock_graph
 
-    def test_simple_backtest_execution(self, sample_ohlcv_data, sample_strategy_config) -> None: """Test executing a simple backtest."""
+    def test_simple_backtest_execution(
+        self, sample_ohlcv_data, sample_strategy_config
+    ) -> None:
+        """Test executing a simple backtest."""
         # Create a mock engine
         mock_engine = Mock(spec=BacktestEngine)
 
@@ -224,7 +233,8 @@ class TestBacktestWorkflow:
 class TestAgentExecutionWorkflow:
     """Test agent execution workflow from data retrieval to execution."""
 
-    def test_dexscreener_data_retrieval(self) -> None: """Test retrieving data from DexScreener."""
+    def test_dexscreener_data_retrieval(self) -> None:
+        """Test retrieving data from DexScreener."""
         connector = DexscreenerDataConnector()
 
         # Mock the connector's _make_request method to avoid actual API calls
@@ -268,7 +278,8 @@ class TestAgentExecutionWorkflow:
             assert result[0]["liquidity"] == 50000.0
             assert result[0]["volume_24h"] == 150000.0
 
-    def test_social_media_scraper_workflow(self) -> None: """Test social media scraping workflow."""
+    def test_social_media_scraper_workflow(self) -> None:
+        """Test social media scraping workflow."""
         scraper = SocialMediaScraper()
 
         # Mock the Twitter API
@@ -289,7 +300,8 @@ class TestAgentExecutionWorkflow:
             assert result["sentiment_score"] == 0.7
             mock_twitter.assert_called_once_with("TOK1", platforms=["twitter"])
 
-    def test_execution_workflow(self) -> None: """Test trade execution workflow."""
+    def test_execution_workflow(self) -> None:
+        """Test trade execution workflow."""
         # Mock the connector and executor
         mock_connector = Mock()
         executor = AlpacaExecutionTool(connector=mock_connector)
@@ -320,7 +332,10 @@ class TestAgentExecutionWorkflow:
 class TestIntegratedWorkflow:
     """Test complete integrated workflow from data to execution."""
 
-    def test_complete_trading_workflow(self, sample_ohlcv_data, sample_strategy_config) -> None: """Test complete trading workflow from data retrieval to execution."""
+    def test_complete_trading_workflow(
+        self, sample_ohlcv_data, sample_strategy_config
+    ) -> None:
+        """Test complete trading workflow from data retrieval to execution."""
         # Mock all external dependencies
         with patch(
             "quantchain.connectors.dexscreener_connector.DexscreenerDataConnector"
@@ -413,7 +428,8 @@ class TestIntegratedWorkflow:
 class TestSystemIntegration:
     """Test system-level integration between components."""
 
-    def test_error_handling_workflow(self, sample_ohlcv_data) -> None: """Test error handling in integrated workflow."""
+    def test_error_handling_workflow(self, sample_ohlcv_data) -> None:
+        """Test error handling in integrated workflow."""
         # Test error propagation through the system
         with patch(
             "quantchain.connectors.dexscreener_connector.DexscreenerDataConnector"
@@ -429,5 +445,3 @@ class TestSystemIntegration:
             connector = mock_connector()
             with pytest.raises(Exception, match="API error"):
                 connector.get_new_token_pairs()
-
-

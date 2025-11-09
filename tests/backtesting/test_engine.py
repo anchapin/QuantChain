@@ -39,7 +39,10 @@ class TestBacktestConfig:
         assert config.data_frequency == "1d"
         assert config.additional_params == {}
 
-    def test_backtest_config_custom_initialization(self, default_backtest_config) -> None: """Test BacktestConfig can be initialized with custom values."""
+    def test_backtest_config_custom_initialization(
+        self, default_backtest_config
+    ) -> None:
+        """Test BacktestConfig can be initialized with custom values."""
         config = default_backtest_config
 
         assert config.initial_cash == 100000.0
@@ -239,10 +242,12 @@ class TestConcreteBacktestEngine:
 
                 return self._results
 
-            def get_results(self) -> None: """Mock implementation."""
+            def get_results(self) -> None:
+                """Mock implementation."""
                 return self._results
 
-            def get_equity_curve(self) -> None: """Mock implementation."""
+            def get_equity_curve(self) -> None:
+                """Mock implementation."""
                 return self._equity_curve
 
         engine = ConcreteBacktestEngine()
@@ -281,7 +286,9 @@ class TestBacktestEngineIntegration:
 
                 # Test strategy generates signals correctly
                 sample_rows = data.head(5)
-                signals: list[float] = [strategy.next(row) for row in sample_rows.to_dict("records")]
+                signals: list[float] = [
+                    strategy.next(row) for row in sample_rows.to_dict("records")
+                ]
 
                 # Should generate valid signals
                 assert all(signal in ["buy", "sell", "hold"] for signal in signals)
@@ -335,7 +342,9 @@ class TestBacktestEngineIntegration:
         # Create simple strategy
         strategy = MagicMock()
         strategy.init.return_value = None
-        strategy.next.side_effect: list[float] = ["buy"] + ["hold"] * (len(sample_ohlcv_data) + 4)
+        strategy.next.side_effect: list[float] = ["buy"] + ["hold"] * (
+            len(sample_ohlcv_data) + 4
+        )
 
         result = engine.run(strategy, sample_ohlcv_data, default_backtest_config)
 
@@ -371,7 +380,9 @@ class TestBacktestEngineIntegration:
 
                 # Test strategy generates signals correctly
                 sample_rows = data.head(3)
-                signals: list[float] = [strategy.next(row) for row in sample_rows.to_dict("records")]
+                signals: list[float] = [
+                    strategy.next(row) for row in sample_rows.to_dict("records")
+                ]
 
                 # Should generate valid signals
                 assert all(signal in ["buy", "sell", "hold"] for signal in signals)
@@ -426,7 +437,9 @@ class TestBacktestEngineIntegration:
         # Strategy that buys and sells once
         strategy = MagicMock()
         strategy.init.return_value = None
-        signals: list[float] = ["buy"] + ["hold"] * (len(sample_ohlcv_data) + 2) + ["sell"]
+        signals: list[float] = (
+            ["buy"] + ["hold"] * (len(sample_ohlcv_data) + 2) + ["sell"]
+        )
         strategy.next.side_effect = signals
 
         result = engine.run(strategy, sample_ohlcv_data, config_with_commission)
@@ -515,7 +528,9 @@ class TestBacktestEngineIntegration:
 
         strategy = MagicMock()
         strategy.init.return_value = None
-        signals: list[float] = ["buy"] + ["hold"] * (len(sample_ohlcv_data) + 2) + ["sell"]
+        signals: list[float] = (
+            ["buy"] + ["hold"] * (len(sample_ohlcv_data) + 2) + ["sell"]
+        )
         strategy.next.side_effect = signals
 
         result = engine.run(strategy, sample_ohlcv_data, config_with_slippage)
@@ -523,7 +538,8 @@ class TestBacktestEngineIntegration:
         # Slippage should reduce returns
         assert isinstance(result, BacktestResult)
 
-    def test_backtest_engine_empty_data(self, default_backtest_config) -> None: """Test backtesting engine handles empty data correctly."""
+    def test_backtest_engine_empty_data(self, default_backtest_config) -> None:
+        """Test backtesting engine handles empty data correctly."""
 
         class EmptyDataEngine(BacktestEngine):
             def run(self, strategy, data, config):
@@ -541,7 +557,8 @@ class TestBacktestEngineIntegration:
         with pytest.raises(DataValidationError, match="Data cannot be empty"):
             engine.run(strategy, pd.DataFrame(), default_backtest_config)
 
-    def test_backtest_engine_none_data(self, default_backtest_config) -> None: """Test backtesting engine handles None data correctly."""
+    def test_backtest_engine_none_data(self, default_backtest_config) -> None:
+        """Test backtesting engine handles None data correctly."""
 
         class NoneDataEngine(BacktestEngine):
             def run(self, strategy, data, config):
@@ -760,5 +777,3 @@ class TestBacktestEnginePerformance:
         assert execution_time < 5.0  # 5 seconds max
         assert result is not None
         assert len(result.equity_curve) == 100000
-
-

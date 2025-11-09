@@ -93,7 +93,8 @@ class TestWebDashboardApp:
         config.host = mock_dashboard_config["host"]
         return config
 
-    def test_web_dashboard_app_initialization(self, mock_config) -> None: """Test WebDashboardApp initialization."""
+    def test_web_dashboard_app_initialization(self, mock_config) -> None:
+        """Test WebDashboardApp initialization."""
         from quantchain.tools.web_dashboard import WebDashboardApp
 
         app = WebDashboardApp(mock_config)
@@ -103,7 +104,8 @@ class TestWebDashboardApp:
         assert app.config.enable_real_time == mock_config.enable_real_time
 
     @patch("subprocess.run")
-    def test_web_dashboard_run(self, mock_subprocess_run, mock_config) -> None: """Test running the Streamlit application."""
+    def test_web_dashboard_run(self, mock_subprocess_run, mock_config) -> None:
+        """Test running the Streamlit application."""
         from quantchain.tools.web_dashboard import WebDashboardApp
 
         app = WebDashboardApp(mock_config)
@@ -120,7 +122,8 @@ class TestMonitoringService:
     """Test cases for MonitoringService."""
 
     @pytest.fixture
-    def mock_agent_registry(self) -> None: """Create mock agent registry."""
+    def mock_agent_registry(self) -> None:
+        """Create mock agent registry."""
         registry = Mock()
         registry.get_agent_status.return_value = {
             "agent_id": "test_agent_001",
@@ -132,7 +135,10 @@ class TestMonitoringService:
         ]
         return registry
 
-    def test_get_agent_status_success(self, mock_agent_registry, mock_agent_status) -> None: """Test successful agent status retrieval."""
+    def test_get_agent_status_success(
+        self, mock_agent_registry, mock_agent_status
+    ) -> None:
+        """Test successful agent status retrieval."""
         mock_agent_registry.get_agent_status.return_value = mock_agent_status
 
         from quantchain.tools.web_dashboard import MonitoringService
@@ -145,7 +151,8 @@ class TestMonitoringService:
         assert status["status"] == "RUNNING"
         mock_agent_registry.get_agent_status.assert_called_once_with("test_agent_001")
 
-    def test_get_agent_status_not_found(self, mock_agent_registry) -> None: """Test agent status retrieval for non-existent agent."""
+    def test_get_agent_status_not_found(self, mock_agent_registry) -> None:
+        """Test agent status retrieval for non-existent agent."""
         mock_agent_registry.get_agent_status.side_effect = Exception("Agent not found")
 
         from quantchain.tools.web_dashboard import MonitoringService
@@ -171,7 +178,10 @@ class TestMonitoringService:
         assert metrics["total_value"] == 30000.0
         assert metrics["pnl_percentage"] == 5.25
 
-    def test_get_system_health_success(self, mock_agent_registry, mock_system_health) -> None: """Test successful system health retrieval."""
+    def test_get_system_health_success(
+        self, mock_agent_registry, mock_system_health
+    ) -> None:
+        """Test successful system health retrieval."""
         mock_agent_registry.get_system_health.return_value = mock_system_health
 
         from quantchain.tools.web_dashboard import MonitoringService
@@ -263,7 +273,8 @@ class TestVisualizationService:
         assert figure is not None
         assert hasattr(figure, "data")
 
-    def test_create_performance_charts_success(self, mock_portfolio_metrics) -> None: """Test successful performance charts creation."""
+    def test_create_performance_charts_success(self, mock_portfolio_metrics) -> None:
+        """Test successful performance charts creation."""
         from quantchain.tools.web_dashboard import VisualizationService
 
         service = VisualizationService()
@@ -662,7 +673,8 @@ class TestWebDashboardAppAdditional:
         assert app.config_wizard is not None
 
     @patch("streamlit.set_page_config")
-    def test_dashboard_page_config_setup(self, mock_set_page_config) -> None: """Test dashboard page configuration setup."""
+    def test_dashboard_page_config_setup(self, mock_set_page_config) -> None:
+        """Test dashboard page configuration setup."""
         from quantchain.tools.web_dashboard import WebDashboardApp, DashboardConfig
 
         config = DashboardConfig()
@@ -810,5 +822,3 @@ class TestWebDashboardIntegration:
             assert "agent_id" in agent
             assert "agent_type" in agent
             assert "status" in agent
-
-

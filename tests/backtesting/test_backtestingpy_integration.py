@@ -19,7 +19,8 @@ from quantchain.backtesting.engine import BacktestConfig, BacktestResult
 class TestBacktestingPyEngine:
     """Test BacktestingPyEngine class."""
 
-    def test_engine_initialization(self, default_backtest_config) -> None: """Test BacktestingPyEngine can be initialized with configuration."""
+    def test_engine_initialization(self, default_backtest_config) -> None:
+        """Test BacktestingPyEngine can be initialized with configuration."""
         # Patch Backtesting.py imports
         with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
             "quantchain.backtesting.backtestingpy_engine.Strategy"
@@ -39,7 +40,10 @@ class TestBacktestingPyEngine:
 
             assert isinstance(engine.config, BacktestConfig)
 
-    def test_engine_run_with_strategy(self, sample_ohlcv_data, default_backtest_config) -> None: """Test engine can run a backtest with strategy."""
+    def test_engine_run_with_strategy(
+        self, sample_ohlcv_data, default_backtest_config
+    ) -> None:
+        """Test engine can run a backtest with strategy."""
         with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
             "quantchain.backtesting.backtestingpy_engine.Strategy"
         ), patch("quantchain.backtesting.backtestingpy_engine.StrategyAdapter"):
@@ -59,7 +63,10 @@ class TestBacktestingPyEngine:
             assert hasattr(result, "trade_log")
             assert hasattr(result, "metrics")
 
-    def test_engine_get_results(self, sample_ohlcv_data, default_backtest_config) -> None: """Test engine can get results after backtest."""
+    def test_engine_get_results(
+        self, sample_ohlcv_data, default_backtest_config
+    ) -> None:
+        """Test engine can get results after backtest."""
         with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
             "quantchain.backtesting.backtestingpy_engine.Strategy"
         ), patch("quantchain.backtesting.backtestingpy_engine.StrategyAdapter"):
@@ -76,7 +83,10 @@ class TestBacktestingPyEngine:
             assert hasattr(results, "trade_log")
             assert hasattr(results, "metrics")
 
-    def test_engine_get_equity_curve(self, sample_ohlcv_data, default_backtest_config) -> None: """Test engine can get equity curve after backtest."""
+    def test_engine_get_equity_curve(
+        self, sample_ohlcv_data, default_backtest_config
+    ) -> None:
+        """Test engine can get equity curve after backtest."""
         with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
             "quantchain.backtesting.backtestingpy_engine.Strategy"
         ), patch("quantchain.backtesting.backtestingpy_engine.StrategyAdapter"):
@@ -91,7 +101,8 @@ class TestBacktestingPyEngine:
 
             assert isinstance(equity_curve, pd.Series)
 
-    def test_engine_config_to_backtesting_params(self, default_backtest_config) -> None: """Test configuration conversion to Backtesting.py parameters."""
+    def test_engine_config_to_backtesting_params(self, default_backtest_config) -> None:
+        """Test configuration conversion to Backtesting.py parameters."""
         with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
             "quantchain.backtesting.backtestingpy_engine.Strategy"
         ), patch("quantchain.backtesting.backtestingpy_engine.StrategyAdapter"):
@@ -287,7 +298,8 @@ class TestBacktestingPyIntegration:
             assert isinstance(result.equity_curve, pd.Series)
             assert isinstance(result.trade_log, pd.DataFrame)
 
-    def test_backtestingpy_commission_integration(self, sample_ohlcv_data) -> None: """Test commission parameter passes through to Backtesting.py."""
+    def test_backtestingpy_commission_integration(self, sample_ohlcv_data) -> None:
+        """Test commission parameter passes through to Backtesting.py."""
         config_with_commission = BacktestConfig(
             initial_cash=100000.0,
             commission_rate=0.005,  # 0.5% commission
@@ -313,7 +325,8 @@ class TestBacktestingPyIntegration:
             # Should have executed strategy
             assert result is not None
 
-    def test_backtestingpy_slippage_integration(self, sample_ohlcv_data) -> None: """Test slippage parameter passes through to Backtesting.py."""
+    def test_backtestingpy_slippage_integration(self, sample_ohlcv_data) -> None:
+        """Test slippage parameter passes through to Backtesting.py."""
         config_with_slippage = BacktestConfig(
             initial_cash=100000.0,
             commission_rate=0.0,  # No commission for clean test
@@ -358,7 +371,8 @@ class TestBacktestingPyIntegration:
             assert isinstance(result.equity_curve, pd.Series)
             assert isinstance(result.trade_log, pd.DataFrame)
 
-    def test_backtestingpy_optimization_support(self, sample_ohlcv_data) -> None: """Test Backtesting.py optimization parameter support."""
+    def test_backtestingpy_optimization_support(self, sample_ohlcv_data) -> None:
+        """Test Backtesting.py optimization parameter support."""
         config_with_optimization = BacktestConfig(
             initial_cash=100000.0,
             commission_rate=0.001,
@@ -455,5 +469,3 @@ class TestBacktestingPyPerformance:
             # Should complete execution without errors
             assert result is not None
             assert isinstance(result, BacktestResult)
-
-

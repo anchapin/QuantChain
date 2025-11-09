@@ -31,7 +31,10 @@ class TestTutorialSession:
         session_id = str(uuid.uuid4())
         start_time = datetime.now(timezone.utc)
         symbols: list[float] = ["AAPL", "MSFT"]
-        objectives: list[float] = ["Understand market drivers", "Practice risk management"]
+        objectives: list[float] = [
+            "Understand market drivers",
+            "Practice risk management",
+        ]
 
         session = TutorialSession(
             session_id=session_id,
@@ -263,7 +266,8 @@ class TestTutorialExecutor:
     """Test tutorial executor functionality."""
 
     @pytest.fixture
-    def mock_config(self) -> None: """Create mock configuration."""
+    def mock_config(self) -> None:
+        """Create mock configuration."""
         config = Mock(spec=QuantChainConfig)
         config.get.return_value = False  # RAG disabled by default
         return config
@@ -279,7 +283,8 @@ class TestTutorialExecutor:
             analyze_market_drivers=True,
         )
 
-    def test_executor_initialization(self, tutorial_executor) -> None: """Test tutorial executor initialization."""
+    def test_executor_initialization(self, tutorial_executor) -> None:
+        """Test tutorial executor initialization."""
         assert tutorial_executor.paper_executor is not None
         assert tutorial_executor.reflection_engine is not None
         assert tutorial_executor.market_driver_analysis is not None
@@ -292,7 +297,8 @@ class TestTutorialExecutor:
         assert tutorial_executor.track_mistakes is True
         assert tutorial_executor.analyze_market_drivers is True
 
-    def test_start_tutorial_session(self, tutorial_executor) -> None: """Test starting a tutorial session."""
+    def test_start_tutorial_session(self, tutorial_executor) -> None:
+        """Test starting a tutorial session."""
         symbols: list[float] = ["AAPL", "MSFT"]
         objectives: list[float] = ["Understand technical analysis"]
 
@@ -309,7 +315,8 @@ class TestTutorialExecutor:
         # Check executor state
         assert tutorial_executor.current_session == session
 
-    def test_end_tutorial_session(self, tutorial_executor) -> None: """Test ending a tutorial session."""
+    def test_end_tutorial_session(self, tutorial_executor) -> None:
+        """Test ending a tutorial session."""
         # Start session first
         tutorial_executor.start_tutorial_session(["AAPL"])
 
@@ -332,7 +339,8 @@ class TestTutorialExecutor:
         # Session should be ended
         assert tutorial_executor.current_session.end_time is not None
 
-    def test_order_placement_with_analysis(self, tutorial_executor) -> None: """Test order placement with decision analysis."""
+    def test_order_placement_with_analysis(self, tutorial_executor) -> None:
+        """Test order placement with decision analysis."""
         # Start session
         tutorial_executor.start_tutorial_session(["AAPL"])
 
@@ -353,7 +361,8 @@ class TestTutorialExecutor:
         assert 0.0 <= analysis.decision_quality <= 1.0
         assert analysis.market_drivers is not None
 
-    def test_tutorial_feedback_generation(self, tutorial_executor) -> None: """Test tutorial feedback generation."""
+    def test_tutorial_feedback_generation(self, tutorial_executor) -> None:
+        """Test tutorial feedback generation."""
         # Start session and make trades
         tutorial_executor.start_tutorial_session(["AAPL"])
 
@@ -377,7 +386,8 @@ class TestTutorialExecutor:
         assert 0.0 <= feedback.risk_management_score <= 1.0
         assert "learning_progress" in feedback.to_dict()
 
-    def test_confidence_score_tracking(self, tutorial_executor) -> None: """Test confidence score tracking."""
+    def test_confidence_score_tracking(self, tutorial_executor) -> None:
+        """Test confidence score tracking."""
         confidence = tutorial_executor.get_confidence_score()
         assert 0.0 <= confidence <= 1.0
 
@@ -399,7 +409,8 @@ class TestTutorialExecutor:
         assert isinstance(new_confidence, float)
         assert 0.0 <= new_confidence <= 1.0
 
-    def test_market_price_setting(self, tutorial_executor) -> None: """Test market price setting functionality."""
+    def test_market_price_setting(self, tutorial_executor) -> None:
+        """Test market price setting functionality."""
         tutorial_executor.set_market_price("AAPL", 150.0)
 
         # Place order should use set price
@@ -410,7 +421,8 @@ class TestTutorialExecutor:
         result = tutorial_executor.place_order(order)
         assert result.avg_fill_price == 150.0
 
-    def test_delegate_methods(self, tutorial_executor) -> None: """Test that methods are properly delegated to paper executor."""
+    def test_delegate_methods(self, tutorial_executor) -> None:
+        """Test that methods are properly delegated to paper executor."""
         # Account info
         account = tutorial_executor.get_account()
         assert account.account_id == "PAPER_TRADING"
@@ -423,7 +435,8 @@ class TestTutorialExecutor:
         metrics = tutorial_executor.get_performance_metrics()
         assert metrics is not None
 
-    def test_reset_functionality(self, tutorial_executor) -> None: """Test reset functionality."""
+    def test_reset_functionality(self, tutorial_executor) -> None:
+        """Test reset functionality."""
         # Start session and make trades
         tutorial_executor.start_tutorial_session(["AAPL"])
         tutorial_executor.set_market_price("AAPL", 150.0)
@@ -480,5 +493,3 @@ class TestTutorialExecutorFactoryIntegration:
         # Should work without RAG
         assert executor.rag_system is None
         assert executor is not None
-
-

@@ -120,11 +120,13 @@ class TestReflectionEngine:
     """Test ReflectionEngine."""
 
     @pytest.fixture
-    def engine(self) -> None: """Create a ReflectionEngine instance."""
+    def engine(self) -> None:
+        """Create a ReflectionEngine instance."""
         return ReflectionEngine()
 
     @pytest.fixture
-    def sample_actions(self) -> None: """Create sample actions for testing."""
+    def sample_actions(self) -> None:
+        """Create sample actions for testing."""
         base_time = datetime.now()
         return [
             AgentAction(
@@ -362,5 +364,3 @@ class TestReflectionEngine:
         assert report.metrics.total_actions == 1
         assert report.period_start == start
         assert report.period_end == end
-
-
