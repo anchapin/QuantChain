@@ -9,7 +9,7 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, Any
 import logging
 
 from quantchain.backtesting.market_friction import MarketFrictionSimulator
@@ -24,7 +24,9 @@ from quantchain.connectors import (
 logger = logging.getLogger(__name__)
 
 
-def get_connector(connector_name: str, **kwargs):
+def get_connector(
+    connector_name: str, **kwargs: Any
+) -> Union[AlpacaDataConnector, PolygonDataConnector, CCXTDataConnector]:
     """
     Get a data connector instance.
 
@@ -74,7 +76,7 @@ class FinRLAdapter(gym.Env):
         market_friction_config: Optional[Dict] = None,
         observation_features: Optional[List[str]] = None,
         reward_strategy: str = "risk_adjusted_return",
-        **kwargs,
+        **kwargs: Any,
     ):
         """
         Initialize the FinRL adapter environment.
@@ -109,22 +111,22 @@ class FinRLAdapter(gym.Env):
         self._setup_spaces(observation_features)
 
         # State tracking
-        self.current_step = 0
-        self.max_steps = len(self.market_data) - 1
-        self.done = False
+        self.current_step: int = 0
+        self.max_steps: int = int(len(self.market_data) - 1)
+        self.done: bool = False
 
         # Portfolio state
-        self.balance = initial_balance
-        self.position = 0
-        self.position_value = 0
-        self.total_value = initial_balance
+        self.balance: float = float(initial_balance)
+        self.position: float = 0.0
+        self.position_value: float = 0.0
+        self.total_value: float = float(initial_balance)
 
         # Tracking for rewards
-        self.last_total_value = initial_balance
-        self.transaction_costs = 0
-        self.portfolio_values = [initial_balance]
+        self.last_total_value: float = float(initial_balance)
+        self.transaction_costs: float = 0.0
+        self.portfolio_values: List[float] = [float(initial_balance)]
 
-    def _setup_data_connector(self, connector_name: str):
+    def _setup_data_connector(self, connector_name: str) -> None:
         """Initialize the data connector and fetch market data."""
         try:
             connector = get_connector(connector_name, **self.kwargs)
@@ -139,7 +141,7 @@ class FinRLAdapter(gym.Env):
             logger.error(f"Failed to setup data connector: {e}")
             raise
 
-    def _setup_market_friction(self, config: Optional[Dict]):
+    def _setup_market_friction(self, config: Optional[Dict]) -> None:
         """Initialize market friction model."""
         from quantchain.backtesting.market_friction import (
             MarketFrictionConfig,
@@ -166,11 +168,11 @@ class FinRLAdapter(gym.Env):
 
         self.market_friction = MarketFrictionSimulator(config=friction_config)
 
-    def _setup_performance_metrics(self):
+    def _setup_performance_metrics(self) -> None:
         """Initialize performance metrics tracker."""
         self.performance_metrics = PerformanceMetrics()
 
-    def _setup_spaces(self, features: Optional[List[str]]):
+    def _setup_spaces(self, features: Optional[List[str]]) -> None:
         """Setup observation and action spaces."""
         # Default observation features
         if features is None:
@@ -209,7 +211,7 @@ class FinRLAdapter(gym.Env):
             low=np.array([0, 0]), high=np.array([2, 1]), dtype=np.float32
         )
 
-    def _add_technical_indicators(self):
+    def _add_technical_indicators(self) -> None:
         """Add technical indicators to market data."""
         # RSI
         delta = self.market_data["close"].diff()
@@ -245,15 +247,15 @@ class FinRLAdapter(gym.Env):
         self.done = False
 
         # Reset portfolio state
-        self.balance = self.initial_balance
-        self.position = 0
-        self.position_value = 0
-        self.total_value = self.initial_balance
+        self.balance = float(self.initial_balance)
+        self.position = 0.0
+        self.position_value = 0.0
+        self.total_value = float(self.initial_balance)
 
         # Reset tracking
-        self.last_total_value = self.initial_balance
-        self.transaction_costs = 0
-        self.portfolio_values = [self.initial_balance]
+        self.last_total_value = float(self.initial_balance)
+        self.transaction_costs = 0.0
+        self.portfolio_values = [float(self.initial_balance)]
 
         # Reset performance metrics (create new instance as reset method not available)
         self._setup_performance_metrics()
@@ -305,7 +307,7 @@ class FinRLAdapter(gym.Env):
 
         return observation, reward, self.done, info
 
-    def _execute_action(self, action_type: int, amount: float):
+    def _execute_action(self, action_type: int, amount: float) -> None:
         """Execute trading action with market frictions."""
         current_price = self.market_data.iloc[self.current_step]["close"]
 
@@ -322,8 +324,8 @@ class FinRLAdapter(gym.Env):
                 side="buy",
                 symbol=self.symbol,
             )
-            execution_price = cost_info["executed_price"]
-            cost = cost_info["total"]
+            execution_price = float(cost_info["executed_price"])
+            cost = float(cost_info["total"])
 
             # Execute trade if sufficient balance
             if shares_to_buy * execution_price + cost <= self.balance:
@@ -343,8 +345,8 @@ class FinRLAdapter(gym.Env):
                     side="sell",
                     symbol=self.symbol,
                 )
-                execution_price = cost_info["executed_price"]
-                cost = cost_info["total"]
+                execution_price = float(cost_info["executed_price"])
+                cost = float(cost_info["total"])
 
                 # Execute trade
                 self.position -= shares_to_sell
@@ -382,7 +384,7 @@ class FinRLAdapter(gym.Env):
             else:
                 obs.append(0.0)  # Default value
 
-        return np.array(obs, dtype=np.float32)
+        return np.array(obs, dtype=np.float32)  # type: ignore
 
     def _calculate_reward(self) -> float:
         """Calculate reward based on strategy."""
@@ -404,7 +406,7 @@ class FinRLAdapter(gym.Env):
                 self.portfolio_values[:-1]
             )
             if len(returns) > 1:
-                reward = np.mean(returns) / (np.std(returns) + 1e-6)
+                reward = float(np.mean(returns) / (np.std(returns) + 1e-6))
             else:
                 reward = 0
         elif self.reward_strategy == "log_return":
@@ -423,7 +425,7 @@ class FinRLAdapter(gym.Env):
 
         return float(reward)
 
-    def render(self, mode="human"):
+    def render(self, mode: str = "human") -> None:
         """Render environment state."""
         if mode == "human":
             print(f"Step: {self.current_step}/{self.max_steps}")
@@ -466,7 +468,7 @@ class FinRLAdapter(gym.Env):
         )
 
         # Convert MetricsResult to dict and add custom metrics
-        metrics = metrics_result.__dict__.copy()
+        metrics = dict(metrics_result.__dict__.copy())
         metrics.update(
             {
                 "total_return": (self.total_value - self.initial_balance)
