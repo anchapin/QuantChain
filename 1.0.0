@@ -1,0 +1,21 @@
+Collecting ib_async
+  Obtaining dependency information for ib_async from https://files.pythonhosted.org/packages/b6/d5/310c3642f6008b43d751811d09302c8abf490f2086ff16f280f030a2bd24/ib_async-2.0.1-py3-none-any.whl.metadata
+  Downloading ib_async-2.0.1-py3-none-any.whl.metadata (16 kB)
+Collecting aeventkit<3.0.0,>=2.1.0 (from ib_async)
+  Obtaining dependency information for aeventkit<3.0.0,>=2.1.0 from https://files.pythonhosted.org/packages/8d/8c/2a4b912b1afa201b25bdd0f5bccf96d5a8b5dccb6131316a8dd2d9cabcc1/aeventkit-2.1.0-py3-none-any.whl.metadata
+  Downloading aeventkit-2.1.0-py3-none-any.whl.metadata (5.6 kB)
+Collecting nest_asyncio (from ib_async)
+  Obtaining dependency information for nest_asyncio from https://files.pythonhosted.org/packages/a0/c4/c2971a3ba4c6103a3d10c4b0f24f461ddc027f0f09763220cf35ca1401b3/nest_asyncio-1.6.0-py3-none-any.whl.metadata
+  Downloading nest_asyncio-1.6.0-py3-none-any.whl.metadata (2.8 kB)
+Collecting numpy (from aeventkit<3.0.0,>=2.1.0->ib_async)
+  Obtaining dependency information for numpy from https://files.pythonhosted.org/packages/3d/a8/566578b10d8d0e9955b1b6cd5db4e9d4592dd0026a941ff7994cedda030a/numpy-2.3.4-cp312-cp312-win_amd64.whl.metadata
+  Downloading numpy-2.3.4-cp312-cp312-win_amd64.whl.metadata (60 kB)
+     ---------------------------------------- 60.9/60.9 kB 1.6 MB/s eta 0:00:00
+Downloading ib_async-2.0.1-py3-none-any.whl (86 kB)
+   ---------------------------------------- 86.8/86.8 kB 5.1 MB/s eta 0:00:00
+Downloading aeventkit-2.1.0-py3-none-any.whl (26 kB)
+Downloading nest_asyncio-1.6.0-py3-none-any.whl (5.2 kB)
+Downloading numpy-2.3.4-cp312-cp312-win_amd64.whl (12.8 MB)
+   ---------------------------------------- 12.8/12.8 MB 59.5 MB/s eta 0:00:00
+Installing collected packages: numpy, nest_asyncio, aeventkit, ib_async
+Successfully installed aeventkit-2.1.0 ib_async-2.0.1 nest_asyncio-1.6.0 numpy-2.3.4
