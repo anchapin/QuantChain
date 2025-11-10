@@ -47,7 +47,7 @@ class TestFinRLAdapter:
         """Create FinRL adapter instance for testing."""
         # Ensure the mock returns the DataFrame
         mock_connector.get_historical_data.return_value = mock_market_data
-        
+
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector",
             return_value=mock_connector,

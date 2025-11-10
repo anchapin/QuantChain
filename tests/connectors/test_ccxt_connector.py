@@ -7,14 +7,6 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from quantchain.connectors.ccxt_connector import CCXTDataConnector
-from quantchain.core.exceptions import (
-    AuthenticationError,
-    DataSourceError,
-    RateLimitError,
-    SymbolNotFoundError,
-)
-
 # Mock ccxt before importing the connector
 ccxt_mock = MagicMock()
 # Add the necessary exception classes to the mock
@@ -31,6 +23,15 @@ if "ccxt" in sys.modules:
 if "quantchain.connectors.ccxt_connector" in sys.modules:
     del sys.modules["quantchain.connectors.ccxt_connector"]
 sys.modules["ccxt"] = ccxt_mock
+
+# Now we can safely import after mocking
+from quantchain.connectors.ccxt_connector import CCXTDataConnector, CCXT_AVAILABLE
+from quantchain.core.exceptions import (
+    AuthenticationError,
+    DataSourceError,
+    RateLimitError,
+    SymbolNotFoundError,
+)
 
 
 @pytest.mark.unit
@@ -140,7 +141,10 @@ class TestCCXTDataConnector:
         mock_exchange = MagicMock()
         mock_exchange.load_markets.return_value = {}
 
-        with patch("quantchain.connectors.ccxt_connector.ccxt.binance", return_value=mock_exchange):
+        with patch(
+            "quantchain.connectors.ccxt_connector.ccxt.binance",
+            return_value=mock_exchange,
+        ):
             connector = CCXTDataConnector()
 
             assert connector.exchange == mock_exchange
@@ -164,7 +168,10 @@ class TestCCXTDataConnector:
         mock_exchange = MagicMock()
         mock_exchange.load_markets.return_value = {}
 
-        with patch("quantchain.connectors.ccxt_connector.ccxt.kraken", return_value=mock_exchange):
+        with patch(
+            "quantchain.connectors.ccxt_connector.ccxt.kraken",
+            return_value=mock_exchange,
+        ):
             connector = CCXTDataConnector(exchange="kraken")
 
             assert connector.exchange == mock_exchange
