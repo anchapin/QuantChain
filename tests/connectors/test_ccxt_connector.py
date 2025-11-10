@@ -75,8 +75,13 @@ class TestCCXTDataConnector:
                 "precision": {"price": 2, "amount": 8},
             },
         }
-        # Mock the load_markets method to avoid API calls
-        exchange.load_markets.return_value = exchange.markets
+        # Mock all methods that tests will try to configure with proper MagicMock objects
+        exchange.load_markets = MagicMock(return_value=exchange.markets)
+        exchange.fetch_ticker = MagicMock()
+        exchange.fetch_ohlcv = MagicMock()
+        exchange.fetch_order_book = MagicMock()
+        exchange.set_sandbox_mode = MagicMock()
+                
         # Add dict-like behavior
         exchange.__getitem__ = lambda self, key: self.markets.get(key)
         exchange.__contains__ = lambda self, key: key in self.markets
@@ -88,7 +93,12 @@ class TestCCXTDataConnector:
         """Create a test connector instance with mocked exchange."""
         with patch("ccxt.binance", return_value=mock_exchange):
             with patch("ccxt.kraken", return_value=mock_exchange):
-                return CCXTDataConnector(exchange="binance")
+                # Initialize connector with mocked markets to avoid API calls
+                connector = CCXTDataConnector(exchange="binance")
+                # Ensure cache is populated to avoid API calls
+                connector._market_cache = mock_exchange.markets.copy()
+                connector._cache_timestamp = datetime.now()
+                return connector
 
     @pytest.fixture
     def sample_ohlcv_data(self):

@@ -1,15 +1,11 @@
 # Current Todo List
 
-## Completed
-- ✅ [1] Review current git status and changes
-
 ## In Progress
-- 🔄 [2] Add files to staging area
-
-- ⏳ [3] Create commit with appropriate message
-- ⏳ [4] Push changes to remote repository
+- 🔄 [COMMIT_PUSH] Commit and push current changes
 
 ## Pending
-- ⏳ [5] Clean up logs directory if needed
+- ⏳ [CLEANUP] Clean up logs directory
+- ⏳ [CLEANUP] Remove temporary todo file
 
 ## Completed
+- ✅ [VERIFY_CHANGES] Review changes before committing
