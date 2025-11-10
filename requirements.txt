@@ -10,6 +10,10 @@ numpy>=1.21.0
 torch>=2.0.0
 torchvision>=0.15.0
 
+# Testing dependencies
+pytest-cov>=4.0.0
+pytest-timeout>=2.0.0
+
 # Trading and data dependencies
 alpaca-py>=0.43.1
 polygon-api-client>=1.0.0
