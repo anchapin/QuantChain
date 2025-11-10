@@ -1,3 +1,6 @@
 [flake8]
-ignore = E501,F811,F841,E203,W503
 max-line-length = 88
+extend-ignore = E203, W503
+ignore = E501, F811, F841
+per-file-ignores =
+    __init__.py: F401

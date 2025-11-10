@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 # Import from engine for type annotations
-from .engine import BacktestResult, MetricsResult
+from .engine import MetricsResult
 
 # Try to import optional libraries
 try:
