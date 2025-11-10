@@ -200,7 +200,7 @@ class TestIBExecutionConnector:
 
         with patch.object(ib_async_execution, "Future") as mock_future:
             # Debug by checking actual symbol processing
-            result = connector._create_contract("ESZ3")
+            connector._create_contract("ESZ3")
 
             mock_future.assert_called_once_with("ES", "202312", "", "", "")
 
@@ -209,7 +209,7 @@ class TestIBExecutionConnector:
         from quantchain.connectors import ib_async_execution
 
         with patch.object(ib_async_execution, "Option") as mock_option:
-            result = connector._create_contract("AAPL 231215 150 C")
+            connector._create_contract("AAPL 231215 150 C")
 
             mock_option.assert_called_once_with("AAPL", "20231215", 150.0, "CALL", "")
 
@@ -217,9 +217,9 @@ class TestIBExecutionConnector:
         """Test contract qualification process."""
         connector.ib.qualifyContractsAsync = AsyncMock(return_value=[mock_contract])
 
-        result = connector._qualify_contract(mock_contract)
+        _ = connector._qualify_contract(mock_contract)
 
-        assert result == mock_contract
+        assert _ == mock_contract
         connector.ib.qualifyContractsAsync.assert_called_once_with(mock_contract)
 
     # Order Placement Tests
@@ -928,7 +928,7 @@ class TestIBExecutionConnector:
         """Test validation error for negative quantity."""
         # OrderRequest already validates quantity in __post_init__
         with pytest.raises(ValidationError):
-            order = OrderRequest(
+            OrderRequest(
                 symbol="AAPL",
                 side=OrderSide.BUY,
                 order_type=OrderType.MARKET,
@@ -939,7 +939,7 @@ class TestIBExecutionConnector:
         """Test validation error for limit order without price."""
         # OrderRequest already validates price in __post_init__
         with pytest.raises(ValidationError):
-            order = OrderRequest(
+            OrderRequest(
                 symbol="AAPL",
                 side=OrderSide.BUY,
                 order_type=OrderType.LIMIT,

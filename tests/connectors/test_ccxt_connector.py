@@ -94,7 +94,7 @@ class TestCCXTDataConnector:
                 "precision": {"price": 2, "amount": 8},
             },
         }
-        # Mock all methods that tests will try to configure with proper MagicMock objects
+        # Mock all methods that tests will try to configure with proper MagicMock
         # Use configure_mock to ensure these are properly configurable
         exchange.load_markets = MagicMock(return_value=exchange.markets)
         exchange.fetch_ticker = MagicMock()
@@ -103,8 +103,8 @@ class TestCCXTDataConnector:
         exchange.set_sandbox_mode = MagicMock()
 
         # Add dict-like behavior
-        exchange.__getitem__ = lambda self, key: self.markets.get(key)
-        exchange.__contains__ = lambda self, key: key in self.markets
+        exchange.__getitem__ = lambda self, k: self.markets.get(k)
+        exchange.__contains__ = lambda self, k: k in self.markets
         exchange.items = lambda: self.markets.items()
         return exchange
 
@@ -131,8 +131,8 @@ class TestCCXTDataConnector:
                 fresh_mock.fetch_ohlcv = MagicMock()
                 fresh_mock.fetch_order_book = MagicMock()
                 fresh_mock.set_sandbox_mode = MagicMock()
-                fresh_mock.__getitem__ = lambda self, key: self.markets.get(key)
-                fresh_mock.__contains__ = lambda self, key: key in self.markets
+                fresh_mock.__getitem__ = lambda self, k: self.markets.get(k)
+                fresh_mock.__contains__ = lambda self, k: k in self.markets
                 fresh_mock.items = lambda: self.markets.items()
                 connector.exchange = fresh_mock
                 return connector
@@ -237,7 +237,8 @@ class TestCCXTDataConnector:
         # Skip this test for now - module mocking makes it complex
         # The get_quote method test covers the same exception handling logic
         pytest.skip(
-            "Test skipped due to complex module mocking - covered by test_authentication_error_handling"
+            "Test skipped due to complex module mocking - "
+            "covered by test_authentication_error_handling"
         )
 
     def test_normalize_symbol(self, connector):

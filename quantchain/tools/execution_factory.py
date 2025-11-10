@@ -129,8 +129,6 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
 
     else:
         raise ConfigurationError(
-            (
-                f"Unsupported broker: {broker}. "
-                "Supported: alpaca, ib, interactive_brokers, paper, tutorial, ai_training"
-            )
+            f"Unsupported broker: {broker}. "
+            "Supported: alpaca, ib, interactive_brokers, paper, tutorial, ai_training"
         )

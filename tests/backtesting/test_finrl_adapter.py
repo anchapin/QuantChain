@@ -105,7 +105,6 @@ class TestFinRLAdapter:
 
     def test_step_hold(self, adapter):
         """Test step with hold action."""
-        initial_state = adapter._get_observation()
         initial_balance = adapter.balance
 
         obs, reward, done, info = adapter.step([0, 0])
