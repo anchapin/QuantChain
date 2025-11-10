@@ -30,19 +30,15 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-
 
-    - name: Install dependencies
+    - name: Install basic dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
-        # Install fine-tuning dependencies after PyTorch is available
-        # Temporarily skip auto-gptq due to CUDA extension build issues in CI
-        if [ -f requirements-finetuning.txt ]; then
-          # Install everything except auto-gptq
-          grep -v "auto-gptq" requirements-finetuning.txt > /tmp/finetuning-deps.txt
-          if [ -s /tmp/finetuning-deps.txt ]; then
-            pip install -r /tmp/finetuning-deps.txt
-          fi
-        fi
+        pip install --upgrade pip setuptools wheel
+        pip install langchain openai pandas numpy pytest black flake8
+
+    - name: Install heavy dependencies
+      run: |
+        pip install torch transformers streamlit plotly --no-deps
+        pip install -r requirements.txt
 
     - name: Run Black (code formatting)
       run: black --check --diff quantchain tests
@@ -77,20 +73,15 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-
 
-    - name: Install dependencies
+    - name: Install basic dependencies
       run: |
-        python -m pip install --upgrade pip
+        pip install --upgrade pip setuptools wheel
+        pip install langchain openai pandas numpy pytest black flake8
+
+    - name: Install heavy dependencies
+      run: |
+        pip install torch transformers streamlit plotly --no-deps
         pip install -r requirements.txt
-        pip install -r requirements-dev.txt
-        # Install fine-tuning dependencies after PyTorch is available
-        # Temporarily skip auto-gptq due to CUDA extension build issues in CI
-        if [ -f requirements-finetuning.txt ]; then
-          # Install everything except auto-gptq
-          grep -v "auto-gptq" requirements-finetuning.txt > /tmp/finetuning-deps.txt
-          if [ -s /tmp/finetuning-deps.txt ]; then
-            pip install -r /tmp/finetuning-deps.txt
-          fi
-        fi
 
     - name: Run unit tests
       run: |
@@ -128,20 +119,15 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-
 
-    - name: Install dependencies
+    - name: Install basic dependencies
       run: |
-        python -m pip install --upgrade pip
+        pip install --upgrade pip setuptools wheel
+        pip install langchain openai pandas numpy pytest black flake8
+
+    - name: Install heavy dependencies
+      run: |
+        pip install torch transformers streamlit plotly --no-deps
         pip install -r requirements.txt
-        pip install -r requirements-dev.txt
-        # Install fine-tuning dependencies after PyTorch is available
-        # Temporarily skip auto-gptq due to CUDA extension build issues in CI
-        if [ -f requirements-finetuning.txt ]; then
-          # Install everything except auto-gptq
-          grep -v "auto-gptq" requirements-finetuning.txt > /tmp/finetuning-deps.txt
-          if [ -s /tmp/finetuning-deps.txt ]; then
-            pip install -r /tmp/finetuning-deps.txt
-          fi
-        fi
         # Install optional dependencies for integration tests
         pip install -e .[backtesting,data,llm]
 
@@ -182,20 +168,15 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-
 
-    - name: Install dependencies
+    - name: Install basic dependencies
       run: |
-        python -m pip install --upgrade pip
+        pip install --upgrade pip setuptools wheel
+        pip install langchain openai pandas numpy pytest black flake8
+
+    - name: Install heavy dependencies
+      run: |
+        pip install torch transformers streamlit plotly --no-deps
         pip install -r requirements.txt
-        pip install -r requirements-dev.txt
-        # Install fine-tuning dependencies after PyTorch is available
-        # Temporarily skip auto-gptq due to CUDA extension build issues in CI
-        if [ -f requirements-finetuning.txt ]; then
-          # Install everything except auto-gptq
-          grep -v "auto-gptq" requirements-finetuning.txt > /tmp/finetuning-deps.txt
-          if [ -s /tmp/finetuning-deps.txt ]; then
-            pip install -r /tmp/finetuning-deps.txt
-          fi
-        fi
         # Install all optional dependencies for slow tests
         pip install -e .[full]
 
@@ -227,10 +208,15 @@ jobs:
         python-version: '3.12'
         cache: 'pip'
 
-    - name: Install build dependencies
+    - name: Install basic dependencies
       run: |
-        python -m pip install --upgrade pip
+        pip install --upgrade pip setuptools wheel
         pip install build twine
+
+    - name: Install heavy dependencies
+      run: |
+        pip install torch transformers streamlit plotly --no-deps
+        pip install -r requirements.txt
 
     - name: Build package
       run: python -m build
