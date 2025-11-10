@@ -11,14 +11,18 @@ import pytest
 class CCXTAuthenticationError(Exception):
     pass
 
+
 class CCXTBadSymbol(Exception):
     pass
+
 
 class CCXTNetworkError(Exception):
     pass
 
+
 class CCXTExchangeNotAvailable(Exception):
     pass
+
 
 class CCXTRateLimitExceeded(Exception):
     pass
@@ -108,7 +112,7 @@ class TestCCXTDataConnector:
         # Create fresh mocks for each test
         binance_mock = MagicMock(return_value=mock_exchange)
         kraken_mock = MagicMock(return_value=mock_exchange)
-        
+
         with patch("ccxt.binance", binance_mock):
             with patch("ccxt.kraken", kraken_mock):
                 # Initialize connector with mocked markets to avoid API calls
@@ -137,11 +141,11 @@ class TestCCXTDataConnector:
         return [
             [
                 1672531200000,  # 2023-01-01 00:00:00 UTC
-                16500.0,      # open
-                16600.0,      # high
-                16400.0,      # low
-                16550.0,      # close
-                100.5,        # volume
+                16500.0,  # open
+                16600.0,  # high
+                16400.0,  # low
+                16550.0,  # close
+                100.5,  # volume
             ],
             [
                 1672534800000,  # 2023-01-01 01:00:00 UTC
@@ -230,7 +234,9 @@ class TestCCXTDataConnector:
         """Test initialization failure due to authentication error."""
         # Skip this test for now - module mocking makes it complex
         # The get_quote method test covers the same exception handling logic
-        pytest.skip("Test skipped due to complex module mocking - covered by test_authentication_error_handling")
+        pytest.skip(
+            "Test skipped due to complex module mocking - covered by test_authentication_error_handling"
+        )
 
     def test_normalize_symbol(self, connector):
         """Test symbol normalization."""
@@ -308,6 +314,7 @@ class TestCCXTDataConnector:
 
     def test_get_historical_data_symbol_not_found(self, connector):
         """Test historical data with symbol not found."""
+
         # Create a function that raises BadSymbol when called
         def raise_bad_symbol(*args, **kwargs):
             raise CCXTBadSymbol("Symbol not found")
@@ -320,6 +327,7 @@ class TestCCXTDataConnector:
 
     def test_get_historical_data_network_error(self, connector):
         """Test historical data with network error."""
+
         # Create a function that raises NetworkError when called
         def raise_network_error(*args, **kwargs):
             raise CCXTNetworkError("Network error")
@@ -332,6 +340,7 @@ class TestCCXTDataConnector:
 
     def test_get_historical_data_rate_limit_error(self, connector):
         """Test historical data with rate limit error."""
+
         # Create a function that raises RateLimitExceeded when called
         def raise_rate_limit(*args, **kwargs):
             raise CCXTRateLimitExceeded("Rate limit exceeded")
@@ -391,6 +400,7 @@ class TestCCXTDataConnector:
 
     def test_get_real_time_data_symbol_not_found(self, connector):
         """Test real-time data with symbol not found."""
+
         # Create a function that raises BadSymbol when called
         def raise_bad_symbol(*args, **kwargs):
             raise CCXTBadSymbol("Symbol not found")
@@ -437,6 +447,7 @@ class TestCCXTDataConnector:
 
     def test_get_quote_symbol_not_found(self, connector):
         """Test quote with symbol not found."""
+
         # Create a function that raises BadSymbol when called
         def raise_bad_symbol(*args, **kwargs):
             raise CCXTBadSymbol("Symbol not found")
@@ -450,10 +461,10 @@ class TestCCXTDataConnector:
         """Test getting available symbols from cache."""
         # Ensure cache is populated
         connector._cache_timestamp = datetime.now()
-        
+
         # Should not call load_markets when cache is fresh
         symbols = connector.get_available_symbols()
-        
+
         assert "BTC/USDT" in symbols
         assert "ETH/USDT" in symbols
         assert connector.exchange.load_markets.call_count == 0
@@ -463,17 +474,18 @@ class TestCCXTDataConnector:
         # Make cache expired
         connector._cache_timestamp = datetime.now() - timedelta(hours=2)
         connector._market_cache = {}
-        
+
         # Mock load_markets to return markets
         connector.exchange.load_markets.return_value = connector.exchange.markets
-        
+
         symbols = connector.get_available_symbols()
-        
+
         assert "BTC/USDT" in symbols
         assert "ETH/USDT" in symbols
 
     def test_rate_limit_error_handling(self, connector):
         """Test handling of rate limit errors."""
+
         # Create a function that raises RateLimitExceeded when called
         def raise_rate_limit(*args, **kwargs):
             raise CCXTRateLimitExceeded("Rate limit exceeded")
@@ -485,6 +497,7 @@ class TestCCXTDataConnector:
 
     def test_authentication_error_handling(self, connector):
         """Test handling of authentication errors."""
+
         # Create a function that raises AuthenticationError when called
         def raise_auth_error(*args, **kwargs):
             raise CCXTAuthenticationError("Invalid API key")
@@ -496,6 +509,7 @@ class TestCCXTDataConnector:
 
     def test_exchange_not_available_error(self, connector):
         """Test handling of exchange not available errors."""
+
         # Create a function that raises ExchangeNotAvailable when called
         def raise_exchange_error(*args, **kwargs):
             raise CCXTExchangeNotAvailable("Exchange down")
@@ -523,7 +537,7 @@ class TestCCXTDataConnector:
             mock_exchange_with_timeout = MagicMock()
             mock_binance.return_value = mock_exchange_with_timeout
             custom_connector = CCXTDataConnector(exchange="binance", timeout=60)
-            
+
             # Check if timeout was stored correctly
             assert custom_connector.timeout == 60
 
@@ -532,8 +546,10 @@ class TestCCXTDataConnector:
         with patch("ccxt.binance") as mock_binance:
             mock_exchange_with_config = MagicMock()
             mock_binance.return_value = mock_exchange_with_config
-            custom_connector = CCXTDataConnector(exchange="binance", enableRateLimit=False)
-            
+            custom_connector = CCXTDataConnector(
+                exchange="binance", enableRateLimit=False
+            )
+
             # Check if rate limit was stored correctly
             assert custom_connector.enable_rate_limit is False
 
@@ -541,12 +557,12 @@ class TestCCXTDataConnector:
         """Test handling of market cache refresh errors."""
         # Make cache expired
         connector._cache_timestamp = datetime.now() - timedelta(hours=2)
-        
+
         # Create a function that raises exception when called
         def raise_error(*args, **kwargs):
             raise CCXTNetworkError("Network error")
-            
+
         connector.exchange.load_markets.side_effect = raise_error
-        
+
         with pytest.raises(DataSourceError):
             connector.get_available_symbols()

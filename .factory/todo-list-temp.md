@@ -1,7 +1,7 @@
 # Current Todo List
 
 ## In Progress
-- 🔄 [T10] Download and analyze CI failure logs from provided URLs
+- 
 
 ## Pending
 - ⏳ [T2] Create specs/backtesting/finrl_adapter.spec.md outlining integration strategy
@@ -12,6 +12,8 @@
 - ⏳ [T7] Ensure pre-commit, flake8, mypy configurations are satisfied by new code
 - ⏳ [T8] Clean logs/ directory and verify log integrity per CI instructions
 - ⏳ [T11] Fix issues identified in logs (mypy errors and/or test failures)
+- ⏳ [T10] Download and analyze CI failure logs from provided URLs (mypy/test logs next)
+- ⏳ [T14] Apply black formatting fixes per CI diff (tests/connectors/test_ccxt_connector.py)
 
 ## Completed
 - ✅ [T1] Analyze CI failures for PR #47 and determine causes
