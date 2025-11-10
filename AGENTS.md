@@ -1,17 +1,17 @@
 <!-- TODO_MANAGEMENT_INSTRUCTIONS -->
 
-# CRITICAL: Task Management System
+# FILE-BASED TODO MANAGEMENT SYSTEM
 
-**If TodoRead/TodoWrite tools are unavailable, IGNORE ALL TODO RULES and proceed normally.**
+**TodoRead/TodoWrite tools are no longer available. All todo tracking will be done via temporary markdown files in the `.factory` directory.**
 
 ## MANDATORY TODO WORKFLOW
 
 **BEFORE responding to ANY request, you MUST:**
 
-1. **Call `TodoRead()` first** - Check current task status before doing ANYTHING
-2. **Plan work based on existing todos** - Reference what's already tracked
-3. **Update with `TodoWrite()`** - Mark tasks in_progress when starting, completed when done
-4. **NEVER work without consulting the todo system first**
+1. **Create temporary todo file** - Generate `todo-list-temp.md` in `.factory/` directory
+2. **Plan work based on existing todos** - Reference what's already tracked in the file
+3. **Update todo file** - Mark tasks in_progress when starting, completed when done
+4. **NEVER work without consulting the todo file first**
 
 ## CRITICAL TODO SYSTEM RULES
 
@@ -23,7 +23,7 @@
 
 ## MANDATORY VISUAL DISPLAY
 
-**ALWAYS display the complete todo list AFTER every `TodoRead()` or `TodoWrite()`:**
+**ALWAYS display the complete todo list after updating the todo file:**
 
 ```
 Current todos:
@@ -36,6 +36,52 @@ Current todos:
 Icons: ✅ = completed | 🔄 = in_progress | ⏳ = pending
 
 **NEVER just say "updated todos"** - Show the full list every time.
+
+## TODO FILE MANAGEMENT
+
+**All todo tracking will be done via temporary markdown file in `.factory` directory:**
+
+1. **Create todo file** - Generate `todo-list-temp.md` in `.factory/` directory
+2. **Update todo file** - Keep file synchronized with current task progress
+3. **Display from todo file** - Show todos from the markdown file
+4. **Clean up after completion** - Remove temporary file when all tasks are done
+
+### Todo File Structure
+```
+.factory/
+├── todo-list-temp.md    # Temporary todo tracking file
+└── ...                  # Other .factory files
+```
+
+### Todo File Format
+```markdown
+# Current Todo List
+
+## In Progress
+- 🔄 [ID] Task description
+
+## Pending
+- ⏳ [ID] Task description
+
+## Completed
+- ✅ [ID] Task description
+```
+
+### Todo File Management Commands
+```bash
+# Create new todo file
+echo "# Current Todo List" > .factory/todo-list-temp.md
+
+# Add new todo
+echo "- ⏳ [ID] Task description" >> .factory/todo-list-temp.md
+
+# Update todo status
+sed -i 's/⏳ \[ID\]/🔄 \[ID\]/g' .factory/todo-list-temp.md
+sed -i 's/🔄 \[ID\]/✅ \[ID\]/g' .factory/todo-list-temp.md
+
+# Display current todos
+cat .factory/todo-list-temp.md
+```
 
 ## CRITICAL ANTI-PATTERNS
 
@@ -65,21 +111,6 @@ These phrases indicate you're about to violate the todo system:
 - "Before we begin, I'll..."
 
 **Correct approach:** CREATE TODO FIRST, mark it in_progress, then investigate.
-
-## TOOL REFERENCE
-
-```python
-TodoRead()  # No parameters, returns current todos
-TodoWrite(todos=[...])  # Replaces entire list
-
-Todo Structure:
-{
-  "id": "unique-id",
-  "content": "Specific task description",
-  "status": "pending|in_progress|completed",
-  "priority": "high|medium|low"
-}
-```
 
 <!-- END_TODO_MANAGEMENT_INSTRUCTIONS -->
 

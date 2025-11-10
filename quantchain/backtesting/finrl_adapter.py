@@ -24,6 +24,33 @@ from quantchain.connectors import (
 logger = logging.getLogger(__name__)
 
 
+def get_connector(connector_name: str, **kwargs):
+    """
+    Get a data connector instance.
+
+    Args:
+        connector_name: Name of the connector to create
+        **kwargs: Additional arguments for connector initialization
+
+    Returns:
+        Data connector instance
+
+    Raises:
+        ValueError: If connector name is not recognized
+    """
+    connector_map = {
+        "alpaca": AlpacaDataConnector,
+        "polygon": PolygonDataConnector,
+        "ccxt": CCXTDataConnector,
+    }
+
+    connector_class = connector_map.get(connector_name.lower())
+    if not connector_class:
+        raise ValueError(f"Unknown connector: {connector_name}")
+
+    return connector_class(**kwargs)
+
+
 class FinRLAdapter(gym.Env):
     """
     Gym-compatible environment for integrating FinRL agents with QuantChain backtesting.
@@ -100,18 +127,7 @@ class FinRLAdapter(gym.Env):
     def _setup_data_connector(self, connector_name: str):
         """Initialize the data connector and fetch market data."""
         try:
-            # Map connector name to actual connector class
-            connector_map = {
-                "alpaca": AlpacaDataConnector,
-                "polygon": PolygonDataConnector,
-                "ccxt": CCXTDataConnector,
-            }
-
-            connector_class = connector_map.get(connector_name.lower())
-            if not connector_class:
-                raise ValueError(f"Unknown connector: {connector_name}")
-
-            connector = connector_class(**self.kwargs)
+            connector = get_connector(connector_name, **self.kwargs)
             self.market_data = connector.fetch_historical_data(
                 symbol=self.symbol, start=self.start_date, end=self.end_date
             )
@@ -132,10 +148,14 @@ class FinRLAdapter(gym.Env):
             FixedLatency,
         )
 
+        # Use empty dict if config is None
+        if config is None:
+            config = {}
+
         # Default models
         commission = PercentageCommission(rate=config.get("commission", 0.001))
         slippage = VolumeImpactSlippage(
-            base_rate=config.get("slippage", 0.0005), impact_factor=0.0001
+            base_rate=config.get("slippage", 0.0005), volume_impact_factor=0.0001
         )
         latency = FixedLatency(latency_ms=config.get("latency_ms", 50))
 
@@ -235,8 +255,8 @@ class FinRLAdapter(gym.Env):
         self.transaction_costs = 0
         self.portfolio_values = [self.initial_balance]
 
-        # Reset performance metrics
-        self.performance_metrics.reset()
+        # Reset performance metrics (create new instance as reset method not available)
+        self._setup_performance_metrics()
 
         return self._get_observation()
 
@@ -339,7 +359,11 @@ class FinRLAdapter(gym.Env):
         # Market data features
         for feature in self.observation_features:
             if feature in current_data:
-                obs.append(float(current_data[feature]))
+                value = float(current_data[feature])
+                # Handle NaN values
+                if np.isnan(value):
+                    value = 0.0
+                obs.append(value)
             elif feature == "balance":
                 obs.append(float(self.balance))
             elif feature == "position":
@@ -412,13 +436,35 @@ class FinRLAdapter(gym.Env):
 
     def get_performance_metrics(self) -> Dict:
         """Get comprehensive performance metrics."""
-        metrics = self.performance_metrics.calculate_metrics(
-            self.portfolio_values,
-            benchmark_data=self.market_data["close"].values[
-                : len(self.portfolio_values)
-            ],
+        # Import pandas for metrics calculation
+        import pandas as pd
+        
+        # Convert portfolio values to pandas Series for metrics calculation
+        # Create date range matching the portfolio values
+        dates = pd.date_range(start=self.start_date, periods=len(self.portfolio_values), freq='D')
+        equity_curve = pd.Series(self.portfolio_values, index=dates)
+        
+        # Create simple trades DataFrame (placeholder for now)
+        dates = pd.date_range(start=self.start_date, periods=len(self.portfolio_values), freq='D')
+        trades_data = {
+            'entry_time': [dates[0]],  # placeholder
+            'exit_time': [dates[-1]],  # placeholder
+            'entry_price': [self.initial_balance],  # placeholder
+            'exit_price': [self.total_value],  # placeholder
+            'quantity': [1],  # placeholder
+            'side': ['long'],  # placeholder
+            'pnl': [self.total_value - self.initial_balance],  # placeholder
+        }
+        trades_df = pd.DataFrame(trades_data)
+        
+        metrics_result = self.performance_metrics.calculate_all_metrics(
+            equity_curve=equity_curve,
+            trades=trades_df,
+            frequency="1d"
         )
 
+        # Convert MetricsResult to dict and add custom metrics
+        metrics = metrics_result.__dict__.copy()
         metrics.update(
             {
                 "total_return": (self.total_value - self.initial_balance)
