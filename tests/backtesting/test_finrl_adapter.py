@@ -39,7 +39,7 @@ class TestFinRLAdapter:
     def mock_connector(self, mock_market_data):
         """Create mock data connector."""
         connector = Mock()
-        connector.fetch_historical_data.return_value = mock_market_data
+        connector.get_historical_data.return_value = mock_market_data
         return connector
 
     @pytest.fixture
