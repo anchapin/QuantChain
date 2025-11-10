@@ -1,17 +1,1 @@
-Collecting ibapi
-  Downloading ibapi-9.81.1.post1.tar.gz (61 kB)
-     -------------------------------------- 61.1/61.1 kB 547.0 kB/s eta 0:00:00
-  Installing build dependencies: started
-  Installing build dependencies: finished with status 'done'
-  Getting requirements to build wheel: started
-  Getting requirements to build wheel: finished with status 'done'
-  Preparing metadata (pyproject.toml): started
-  Preparing metadata (pyproject.toml): finished with status 'done'
-Building wheels for collected packages: ibapi
-  Building wheel for ibapi (pyproject.toml): started
-  Building wheel for ibapi (pyproject.toml): finished with status 'done'
-  Created wheel for ibapi: filename=ibapi-9.81.1.post1-py3-none-any.whl size=68025 sha256=5192dda63f5f2b1a9b3eca1171304aac9949c6b1646476025fdba6a18a53059f
-  Stored in directory: c:\users\ancha\appdata\local\pip\cache\wheels\07\e7\d4\b94d0968474f56f8a2c3eafe3debcc340f15ef1ba362eb38a8
-Successfully built ibapi
-Installing collected packages: ibapi
-Successfully installed ibapi-9.81.1.post1
+Requirement already satisfied: ibapi in c:\users\ancha\.pyenv\pyenv-win\versions\3.12.0\lib\site-packages (9.81.1.post1)
