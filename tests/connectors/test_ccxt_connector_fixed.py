@@ -81,7 +81,7 @@ class TestCCXTDataConnector:
         exchange.fetch_ohlcv = MagicMock()
         exchange.fetch_order_book = MagicMock()
         exchange.set_sandbox_mode = MagicMock()
-        
+
         # Add dict-like behavior
         exchange.__getitem__ = lambda self, key: self.markets.get(key)
         exchange.__contains__ = lambda self, key: key in self.markets
