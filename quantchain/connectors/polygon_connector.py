@@ -1,19 +1,20 @@
 """Polygon.io data connector for equity and forex data."""
 
-import pandas as pd
-from typing import List, Dict, Optional, Any, Tuple
-from datetime import datetime, timezone
-import time
 import threading
+import time
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Tuple
+
+import pandas as pd
 from polygon import RESTClient
 
-from .base_interface import DataFeedInterface
 from ..core.exceptions import (
-    DataSourceError,
     AuthenticationError,
+    DataSourceError,
     RateLimitError,
     SymbolNotFoundError,
 )
+from .base_interface import DataFeedInterface
 
 
 class PolygonDataConnector(DataFeedInterface):

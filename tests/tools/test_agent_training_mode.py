@@ -1,25 +1,26 @@
 """Tests for AI model training mode functionality."""
 
-import pytest
-from datetime import datetime, timezone, timedelta
-from unittest.mock import Mock
 import uuid
+from datetime import datetime, timedelta, timezone
+from unittest.mock import Mock
 
+import pytest
+
+from quantchain.core.config import QuantChainConfig
+from quantchain.core.reflection import AgentAction
 from quantchain.tools.agent_training_mode import (
     AgentTrainingMode,
-    TrainingSession,
-    TrainingDecision,
-    PerformanceTracker,
     ModelOptimizer,
+    PerformanceTracker,
+    TrainingDecision,
+    TrainingSession,
 )
 from quantchain.tools.trading_execution import (
     OrderResult,
     OrderSide,
-    OrderType,
     OrderStatus,
+    OrderType,
 )
-from quantchain.core.reflection import AgentAction
-from quantchain.core.config import QuantChainConfig
 
 
 class TestTrainingSession:

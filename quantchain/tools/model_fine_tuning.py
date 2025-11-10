@@ -22,11 +22,11 @@ try:
     from transformers import (
         AutoModelForCausalLM,
         AutoTokenizer,
-        TrainingArguments as TransformersTrainingArguments,
-        Trainer,
         BitsAndBytesConfig,
         DataCollatorForLanguageModeling,
+        Trainer,
     )
+    from transformers import TrainingArguments as TransformersTrainingArguments
 except ImportError:
     AutoModelForCausalLM = None
     AutoTokenizer = None
@@ -41,11 +41,7 @@ except ImportError:
     load_dataset = None
 
 try:
-    from peft import (
-        LoraConfig,
-        get_peft_model,
-        prepare_model_for_kbit_training,
-    )
+    from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 except ImportError:
     LoraConfig = None
     get_peft_model = None
@@ -411,15 +407,15 @@ def fine_tune_model_qlora(
     try:
         # Import required libraries
         try:
+            from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
             from transformers import (
                 AutoModelForCausalLM,
                 AutoTokenizer,
                 BitsAndBytesConfig,
-                TrainingArguments,
-                Trainer,
                 DataCollatorForLanguageModeling,
+                Trainer,
+                TrainingArguments,
             )
-            from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
         except ImportError as e:
             raise TrainingError(f"Required libraries not available: {e}")
 

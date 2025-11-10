@@ -1,8 +1,9 @@
 """Tests for Web Dashboard components."""
 
-import pytest
-from unittest.mock import Mock, patch
 from datetime import datetime, timedelta
+from unittest.mock import Mock, patch
+
+import pytest
 
 
 # Test data structures that will be defined in implementation
@@ -380,6 +381,7 @@ class TestMonitoringServiceAdditional:
     def test_get_all_agents_with_registry(self) -> None:
         """Test getting all agents when registry is provided."""
         from unittest.mock import Mock
+
         from quantchain.tools.web_dashboard import MonitoringService
 
         mock_agent_registry = Mock()
@@ -453,8 +455,9 @@ class TestVisualizationServiceAdditional:
 
     def test_create_equity_curve_with_real_data(self) -> None:
         """Test equity curve with realistic data."""
-        from quantchain.tools.web_dashboard import VisualizationService
         import pandas as pd
+
+        from quantchain.tools.web_dashboard import VisualizationService
 
         service = VisualizationService()
 
@@ -635,7 +638,7 @@ class TestWebDashboardAppAdditional:
 
     def test_dashboard_app_initialization_with_custom_config(self) -> None:
         """Test WebDashboardApp initialization with custom configuration."""
-        from quantchain.tools.web_dashboard import WebDashboardApp, DashboardConfig
+        from quantchain.tools.web_dashboard import DashboardConfig, WebDashboardApp
 
         custom_config = DashboardConfig(
             refresh_interval=10,
@@ -659,7 +662,7 @@ class TestWebDashboardAppAdditional:
 
     def test_dashboard_service_initialization(self) -> None:
         """Test dashboard service initialization and basic methods."""
-        from quantchain.tools.web_dashboard import WebDashboardApp, DashboardConfig
+        from quantchain.tools.web_dashboard import DashboardConfig, WebDashboardApp
 
         config = DashboardConfig()
         app = WebDashboardApp(config)
@@ -675,7 +678,7 @@ class TestWebDashboardAppAdditional:
     @patch("streamlit.set_page_config")
     def test_dashboard_page_config_setup(self, mock_set_page_config) -> None:
         """Test dashboard page configuration setup."""
-        from quantchain.tools.web_dashboard import WebDashboardApp, DashboardConfig
+        from quantchain.tools.web_dashboard import DashboardConfig, WebDashboardApp
 
         config = DashboardConfig()
         app = WebDashboardApp(config)
@@ -686,7 +689,7 @@ class TestWebDashboardAppAdditional:
 
     def test_dashboard_helper_methods(self) -> None:
         """Test dashboard helper methods and utilities."""
-        from quantchain.tools.web_dashboard import WebDashboardApp, DashboardConfig
+        from quantchain.tools.web_dashboard import DashboardConfig, WebDashboardApp
 
         config = DashboardConfig()
         app = WebDashboardApp(config)
@@ -745,7 +748,7 @@ class TestWebDashboardIntegration:
 
     def test_dashboard_app_creation(self) -> None:
         """Test dashboard app creation with default config."""
-        from quantchain.tools.web_dashboard import create_dashboard, DashboardConfig
+        from quantchain.tools.web_dashboard import DashboardConfig, create_dashboard
 
         # Test with default config
         dashboard = create_dashboard()
@@ -760,7 +763,7 @@ class TestWebDashboardIntegration:
 
     def test_full_dashboard_workflow(self) -> None:
         """Test complete dashboard workflow from monitoring to visualization."""
-        from quantchain.tools.web_dashboard import WebDashboardApp, DashboardConfig
+        from quantchain.tools.web_dashboard import DashboardConfig, WebDashboardApp
 
         config = DashboardConfig()
         app = WebDashboardApp(config)

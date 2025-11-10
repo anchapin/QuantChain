@@ -3,22 +3,23 @@
 # The following file contains test-only values that resemble secrets
 # All addresses and keys in this file are mock/fake values for testing purposes only
 
-import pytest
-from unittest.mock import Mock, patch
 from datetime import datetime
+from unittest.mock import Mock, patch
+
+import pytest
 
 from quantchain.agents.smart_contract_auditor import (
+    ContractRetriever,
+    ContractSource,
+    FinancialAnalyzer,
+    InvestmentRecommendation,
+    ProtocolAnalysis,
     SmartContractAuditorAgent,
     SmartContractAuditorConfig,
-    ContractRetriever,
-    VulnerabilityScanner,
-    FinancialAnalyzer,
-    ContractSource,
+    TokenomicsAnalysis,
     Vulnerability,
     VulnerabilityReport,
-    TokenomicsAnalysis,
-    ProtocolAnalysis,
-    InvestmentRecommendation,
+    VulnerabilityScanner,
 )
 from quantchain.core.config import QuantChainConfig
 from quantchain.core.exceptions import QuantChainError

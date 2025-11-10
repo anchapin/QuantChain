@@ -3,14 +3,13 @@ Failing tests for Backtesting.py library integration.
 Following TDD principles - these tests will fail initially.
 """
 
-import pytest
-import pandas as pd
-import numpy as np
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from quantchain.backtesting.backtestingpy_engine import (
-    BacktestingPyEngine,
-)
+import numpy as np
+import pandas as pd
+import pytest
+
+from quantchain.backtesting.backtestingpy_engine import BacktestingPyEngine
 from quantchain.backtesting.engine import BacktestConfig, BacktestResult
 
 

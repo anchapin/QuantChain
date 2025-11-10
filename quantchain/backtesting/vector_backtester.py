@@ -2,17 +2,18 @@
 Vector-based backtesting engine for high-performance strategy testing.
 """
 
-from typing import Dict, Tuple, Optional, Any
-import pandas as pd
 from dataclasses import dataclass, field
+from typing import Any, Dict, Optional, Tuple
+
+import pandas as pd
 
 from .engine import BacktestConfig, DataValidationError
 from .market_friction import (
-    MarketFrictionSimulator,
-    MarketFrictionConfig,
-    PercentageCommission,
-    FixedSlippage,
     FixedLatency,
+    FixedSlippage,
+    MarketFrictionConfig,
+    MarketFrictionSimulator,
+    PercentageCommission,
 )
 
 

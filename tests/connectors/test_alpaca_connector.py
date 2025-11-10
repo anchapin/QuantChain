@@ -1,17 +1,18 @@
 """Tests for Alpaca data connector."""
 
-import pytest
-from unittest.mock import MagicMock, patch
 from datetime import datetime, timezone
+from unittest.mock import MagicMock, patch
+
 import pandas as pd
+import pytest
+from alpaca.trading.enums import AssetClass
 
 from quantchain.connectors.alpaca_connector import AlpacaDataConnector
 from quantchain.core.exceptions import (
+    AuthenticationError,
     DataSourceError,
     SymbolNotFoundError,
-    AuthenticationError,
 )
-from alpaca.trading.enums import AssetClass
 
 
 @pytest.mark.unit

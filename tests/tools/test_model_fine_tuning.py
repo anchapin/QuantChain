@@ -2,27 +2,31 @@
 Tests for Model Fine-Tuning Module
 
 Test suite for fine-tuning functionality including PEFT, quantization, and validation.
+
+# flake8: noqa (Functions are imported dynamically within test methods)
 """
 
-import pytest
 from unittest.mock import Mock, patch
 
-from quantchain.tools.model_fine_tuning import (  # noqa: F401
+import pytest
+
+# noqa: F401 (these functions are imported dynamically in test methods)
+from quantchain.tools.model_fine_tuning import EnvironmentError  # noqa: F401
+from quantchain.tools.model_fine_tuning import (
+    DatasetError,
     FineTuningConfig,
-    TrainingArguments,
-    TrainingResult,
+    FineTuningError,
+    QuantizationError,
     QuantizationResult,
+    TrainingArguments,
+    TrainingError,
+    TrainingResult,
+    ValidationError,
     ValidationReport,
-    setup_fine_tuning_environment,
     fine_tune_model_qlora,
     quantize_model,
+    setup_fine_tuning_environment,
     validate_fine_tuned_model,
-    FineTuningError,
-    EnvironmentError,
-    DatasetError,
-    TrainingError,
-    QuantizationError,
-    ValidationError,
 )
 
 
@@ -491,10 +495,10 @@ class TestIntegration:
 
             # Execute workflow
             from quantchain.tools.model_fine_tuning import (
-                setup_fine_tuning_environment,
-                prepare_financial_dataset,
                 fine_tune_model_qlora,
+                prepare_financial_dataset,
                 quantize_model,
+                setup_fine_tuning_environment,
                 validate_fine_tuned_model,
             )
 

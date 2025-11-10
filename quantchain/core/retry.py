@@ -1,11 +1,10 @@
 """Retry utilities for data connectors."""
 
 import time
-from typing import Callable, Type, Any, Optional, TypeVar
 from functools import wraps
+from typing import Any, Callable, Optional, Type, TypeVar
 
 from .exceptions import DataSourceError
-
 
 T = TypeVar("T")
 

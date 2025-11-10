@@ -1,10 +1,11 @@
 """Tests for retry utilities."""
 
-import pytest
 from unittest.mock import Mock, patch
 
-from quantchain.core.retry import with_retry, RetryHandler
+import pytest
+
 from quantchain.core.exceptions import DataSourceError
+from quantchain.core.retry import RetryHandler, with_retry
 
 
 @pytest.mark.unit

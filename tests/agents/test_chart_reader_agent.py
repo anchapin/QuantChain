@@ -1,20 +1,21 @@
 """Tests for the Chart Reader Agent."""
 
-import pytest
-from unittest.mock import Mock, patch
 from datetime import datetime, timedelta
+from unittest.mock import Mock, patch
+
 import numpy as np
+import pytest
 
 from quantchain.agents.chart_reader_agent import (
+    ChartImage,
     ChartReaderAgent,
     ChartReaderAgentConfig,
     ChartRenderer,
-    PatternRecognizer,
-    TechnicalIndicatorCalculator,
     OHLCVData,
-    ChartImage,
-    TechnicalIndicator,
     PatternAnalysis,
+    PatternRecognizer,
+    TechnicalIndicator,
+    TechnicalIndicatorCalculator,
 )
 from quantchain.core.config import QuantChainConfig
 

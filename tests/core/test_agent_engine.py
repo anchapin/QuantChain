@@ -1,10 +1,11 @@
 """Tests for the core agent engine."""
 
-import pytest
-from unittest.mock import MagicMock, patch
 from datetime import datetime
+from unittest.mock import MagicMock, patch
 
-from quantchain.core.agent_engine import QuantChainAgent, AgentResponse
+import pytest
+
+from quantchain.core.agent_engine import AgentResponse, QuantChainAgent
 from quantchain.core.config import QuantChainConfig
 from quantchain.core.llm_providers import LLMProvider, LLMResponse
 from quantchain.core.reflection import AgentAction

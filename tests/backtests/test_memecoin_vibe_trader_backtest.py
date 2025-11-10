@@ -1,8 +1,9 @@
 """Backtest tests for MemecoinVibeTrader agent."""
 
-import pytest
-from unittest.mock import MagicMock
 from datetime import datetime, timedelta
+from unittest.mock import MagicMock
+
+import pytest
 
 from quantchain.agents.memecoin_vibe_trader import (
     MemecoinVibeTrader,
@@ -10,8 +11,8 @@ from quantchain.agents.memecoin_vibe_trader import (
     SocialMetrics,
 )
 from quantchain.connectors.dexscreener_connector import DexscreenerDataConnector
-from quantchain.tools.social_media_scraper import SocialMediaScraper
 from quantchain.tools.execution import AlpacaExecutionTool
+from quantchain.tools.social_media_scraper import SocialMediaScraper
 
 
 class TestMemecoinVibeTraderBacktest:

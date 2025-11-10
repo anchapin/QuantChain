@@ -1,10 +1,19 @@
 """Tests for CCXT data connector."""
 
 import sys
-import pytest
+from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
-from datetime import datetime, timezone, timedelta
+
 import pandas as pd
+import pytest
+
+from quantchain.connectors.ccxt_connector import CCXTDataConnector
+from quantchain.core.exceptions import (
+    AuthenticationError,
+    DataSourceError,
+    RateLimitError,
+    SymbolNotFoundError,
+)
 
 # Mock ccxt before importing the connector
 ccxt_mock = MagicMock()
@@ -22,14 +31,6 @@ if "ccxt" in sys.modules:
 if "quantchain.connectors.ccxt_connector" in sys.modules:
     del sys.modules["quantchain.connectors.ccxt_connector"]
 sys.modules["ccxt"] = ccxt_mock
-
-from quantchain.connectors.ccxt_connector import CCXTDataConnector  # noqa: E402
-from quantchain.core.exceptions import (  # noqa: E402
-    DataSourceError,
-    SymbolNotFoundError,
-    AuthenticationError,
-    RateLimitError,
-)
 
 
 @pytest.mark.unit
@@ -200,6 +201,7 @@ class TestCCXTDataConnector:
     def test_initialization_auth_failure(self):
         """Test initialization failure due to authentication error."""
         import ccxt
+
         from quantchain.core.exceptions import AuthenticationError
 
         # Create custom exception class

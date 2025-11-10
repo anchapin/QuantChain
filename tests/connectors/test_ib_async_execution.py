@@ -1,24 +1,25 @@
 """Tests for Interactive Brokers execution connector."""
 
-import pytest
 import asyncio
-from datetime import datetime, timezone, timedelta
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
+from datetime import datetime, timedelta, timezone
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 from quantchain.connectors.ib_async_execution import IBExecutionConnector
 from quantchain.tools.trading_execution import (
+    AccountInfo,
+    ExecutionError,
+    InsufficientFundsError,
+    OrderNotFoundError,
     OrderRequest,
     OrderResult,
     OrderSide,
-    OrderType,
     OrderStatus,
-    TimeInForce,
+    OrderType,
     Position,
-    AccountInfo,
+    TimeInForce,
     ValidationError,
-    InsufficientFundsError,
-    OrderNotFoundError,
-    ExecutionError,
 )
 
 # Mock ib_async module before importing the connector

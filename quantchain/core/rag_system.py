@@ -1,11 +1,12 @@
 """RAG system for market data caching and retrieval."""
 
-from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional, TYPE_CHECKING
-from dataclasses import dataclass
 import json
 import os
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from datetime import datetime
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
 import numpy as np
 
 if TYPE_CHECKING:

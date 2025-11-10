@@ -3,12 +3,12 @@
 import pytest
 
 from quantchain.core.exceptions import (
-    QuantChainError,
-    DataSourceError,
     AuthenticationError,
+    ConfigurationError,
+    DataSourceError,
+    QuantChainError,
     RateLimitError,
     SymbolNotFoundError,
-    ConfigurationError,
     ValidationError,
 )
 

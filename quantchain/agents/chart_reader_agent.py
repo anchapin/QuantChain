@@ -1,18 +1,18 @@
 """Multimodal Chart-Reader Agent for visual pattern recognition in financial charts."""
 
+import base64
+import io
+import json
 import logging
-from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-import io
-import base64
-import json
+from typing import Any, Dict, List, Optional, Tuple
 
 # Required for chart rendering
 try:
-    import pandas as pd
     import matplotlib.pyplot as plt
     import mplfinance as mpf
+    import pandas as pd
 
     _PANDAS_AVAILABLE = True
 except Exception as e:
@@ -31,7 +31,6 @@ from ..core.agent_engine import QuantChainAgent
 from ..core.config import QuantChainConfig
 from ..core.exceptions import QuantChainError
 from ..core.llm_providers import LLMProvider
-
 
 logger = logging.getLogger(__name__)
 

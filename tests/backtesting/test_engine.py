@@ -3,20 +3,21 @@ Failing tests for the core backtesting engine.
 Following TDD principles - these tests will fail initially.
 """
 
-import pytest
-import pandas as pd
-import numpy as np
+import time
 from datetime import datetime
 from unittest.mock import MagicMock
-import time
+
+import numpy as np
+import pandas as pd
+import pytest
 
 from quantchain.backtesting.engine import (
-    BacktestEngine,
     BacktestConfig,
+    BacktestEngine,
     BacktestResult,
-    MetricsResult,
     ConfigurationError,
     DataValidationError,
+    MetricsResult,
 )
 
 

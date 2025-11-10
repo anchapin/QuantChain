@@ -1,43 +1,43 @@
 """Interactive Brokers execution connector using ib_async library."""
 
 import asyncio
-from datetime import datetime, timezone
-from typing import List, Optional, Dict, Any
 import re
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
 # Import QuantChain components
 from ..tools.trading_execution import (
-    TradingExecutionInterface,
-    OrderRequest,
-    OrderResult,
-    OrderSide,
-    OrderType,
-    OrderStatus,
-    TimeInForce,
-    Position,
     AccountInfo,
-    ValidationError,
     ExecutionError,
     InsufficientFundsError,
     OrderNotFoundError,
+    OrderRequest,
+    OrderResult,
+    OrderSide,
+    OrderStatus,
+    OrderType,
+    Position,
+    TimeInForce,
+    TradingExecutionInterface,
+    ValidationError,
 )
 
 # Import ib_async components
 try:
     from ib_async import (
         IB,
-        Stock,
+        Contract,
         Forex,
         Future,
-        Option,
-        Contract,
-        Order,
-        MarketOrder,
         LimitOrder,
-        StopOrder,
-        StopLimitOrder,
-        Trade,
+        MarketOrder,
+        Option,
+        Order,
         RequestError,
+        Stock,
+        StopLimitOrder,
+        StopOrder,
+        Trade,
     )
 except ImportError as e:
     raise ImportError(

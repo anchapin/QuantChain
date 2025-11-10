@@ -1,17 +1,18 @@
 """Tests for RAG system."""
 
 import os
-import pytest
-from unittest.mock import MagicMock, patch
 from datetime import datetime
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from quantchain.core.rag_system import (
-    MarketData,
-    VectorStore,
     ChromaVectorStore,
     EmbeddingProvider,
-    SentenceTransformerProvider,
+    MarketData,
     MarketDataRAG,
+    SentenceTransformerProvider,
+    VectorStore,
 )
 
 

@@ -1,16 +1,16 @@
 """Smart Contract Auditor Agent for security and financial analysis of smart
 contracts."""
 
+import json as json_lib
 import logging
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, field
-from datetime import datetime
 import re
+import urllib.parse
 
 # Required for blockchain interactions
 import urllib.request
-import urllib.parse
-import json as json_lib
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 try:
     from web3 import Web3
@@ -21,7 +21,6 @@ from ..core.agent_engine import QuantChainAgent
 from ..core.config import QuantChainConfig
 from ..core.exceptions import QuantChainError
 from ..core.llm_providers import LLMProvider
-
 
 logger = logging.getLogger(__name__)
 

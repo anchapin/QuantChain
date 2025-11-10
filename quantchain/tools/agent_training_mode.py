@@ -1,26 +1,25 @@
 """AI Model Training Mode for Agent Performance Improvement."""
 
-import uuid
-from datetime import datetime, timezone, timedelta
-from typing import List, Dict, Any, Optional
-from dataclasses import dataclass, field
 import json
 import logging
+import uuid
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
 
+from ..core.config import QuantChainConfig
+from ..core.reflection import AgentAction, ReflectionEngine
+from .paper_trading import PaperTradingExecutor, PerformanceMetrics
 from .trading_execution import (
-    TradingExecutionInterface,
+    AccountInfo,
+    OrderNotFoundError,
     OrderRequest,
     OrderResult,
     OrderStatus,
     Position,
-    AccountInfo,
-    OrderNotFoundError,
+    TradingExecutionInterface,
 )
-from .paper_trading import PaperTradingExecutor, PerformanceMetrics
-from .tutorial_mode import MarketDriverAnalysis, MistakeTracker, ConfidenceMetrics
-from ..core.reflection import ReflectionEngine, AgentAction
-from ..core.config import QuantChainConfig
-
+from .tutorial_mode import ConfidenceMetrics, MarketDriverAnalysis, MistakeTracker
 
 logger = logging.getLogger(__name__)
 

@@ -4,9 +4,10 @@ Core backtesting engine with abstract base class and data structures.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
-import pandas as pd
 from datetime import datetime
+from typing import Any, Dict, Optional
+
+import pandas as pd
 
 
 class BacktestEngine(ABC):

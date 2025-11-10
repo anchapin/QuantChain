@@ -2,11 +2,12 @@
 Pytest configuration and shared fixtures for backtesting tests.
 """
 
-import pytest
-import pandas as pd
-import numpy as np
 from datetime import datetime
 from unittest.mock import MagicMock
+
+import numpy as np
+import pandas as pd
+import pytest
 
 from quantchain.backtesting.engine import BacktestConfig
 

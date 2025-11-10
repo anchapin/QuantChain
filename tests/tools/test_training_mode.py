@@ -1,26 +1,27 @@
 """Tests for tutorial mode functionality."""
 
-import pytest
-from datetime import datetime, timezone, timedelta
-from unittest.mock import Mock
 import uuid
+from datetime import datetime, timedelta, timezone
+from unittest.mock import Mock
 
-from quantchain.tools.tutorial_mode import (
-    TutorialExecutor,
-    TutorialSession,
-    TutorialFeedback,
-    MarketDriverAnalysis,
-    MistakeTracker,
-    ConfidenceMetrics,
-)
+import pytest
+
+from quantchain.core.config import QuantChainConfig
 from quantchain.tools.trading_execution import (
     OrderRequest,
     OrderResult,
     OrderSide,
-    OrderType,
     OrderStatus,
+    OrderType,
 )
-from quantchain.core.config import QuantChainConfig
+from quantchain.tools.tutorial_mode import (
+    ConfidenceMetrics,
+    MarketDriverAnalysis,
+    MistakeTracker,
+    TutorialExecutor,
+    TutorialFeedback,
+    TutorialSession,
+)
 
 
 class TestTutorialSession:

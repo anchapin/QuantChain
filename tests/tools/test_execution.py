@@ -1,17 +1,18 @@
 """Tests for Alpaca execution tool."""
 
-import pytest
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from quantchain.tools.execution import AlpacaExecutionTool
 from quantchain.tools.trading_execution import (
-    OrderRequest,
-    OrderSide,
-    OrderType,
-    OrderResult,
-    OrderStatus,
     ExecutionError,
+    OrderRequest,
+    OrderResult,
+    OrderSide,
+    OrderStatus,
+    OrderType,
 )
 
 

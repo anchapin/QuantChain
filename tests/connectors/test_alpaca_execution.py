@@ -1,26 +1,24 @@
 """Tests for Alpaca execution connector."""
 
-import pytest
 from datetime import datetime, timezone
 from unittest.mock import Mock, patch
 
-from alpaca.trading.enums import (
-    OrderSide as AlpacaOrderSide,
-    OrderType as AlpacaOrderType,
-)
+import pytest
+from alpaca.trading.enums import OrderSide as AlpacaOrderSide
+from alpaca.trading.enums import OrderType as AlpacaOrderType
 
 from quantchain.connectors.alpaca_execution import AlpacaExecutionConnector
 from quantchain.tools.trading_execution import (
+    AccountInfo,
+    InsufficientFundsError,
+    OrderNotFoundError,
     OrderRequest,
     OrderResult,
     OrderSide,
-    OrderType,
     OrderStatus,
+    OrderType,
     Position,
-    AccountInfo,
     ValidationError,
-    InsufficientFundsError,
-    OrderNotFoundError,
 )
 
 

@@ -1,23 +1,23 @@
 """Comprehensive unit tests for the MemecoinVibeTrader agent."""
 
+from datetime import datetime
 from typing import Any
+from unittest.mock import MagicMock, patch
 
 import pytest
-from unittest.mock import MagicMock, patch
-from datetime import datetime
 
 from quantchain.agents.memecoin_vibe_trader import (
+    AgentState,
     MemecoinVibeTrader,
     MemecoinVibeTraderConfig,
+    MockLLM,
+    SocialMetrics,
     TokenPair,
     VibeAssessment,
-    AgentState,
-    SocialMetrics,
-    MockLLM,
 )
 from quantchain.connectors.dexscreener_connector import DexscreenerDataConnector
-from quantchain.tools.social_media_scraper import SocialMediaScraper
 from quantchain.tools.execution import AlpacaExecutionTool
+from quantchain.tools.social_media_scraper import SocialMediaScraper
 
 
 class TestMemecoinVibeTraderConfig:

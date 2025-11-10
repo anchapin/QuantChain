@@ -6,15 +6,16 @@ trading agents, visualizing their reasoning processes, and managing their
 configurations.
 """
 
-import streamlit as st
-import plotly.graph_objects as go
-import pandas as pd
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
-from dataclasses import dataclass
 import json
-import sys
 import os
+import sys
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
+import pandas as pd
+import plotly.graph_objects as go
+import streamlit as st
 
 # Add the project root to the path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -936,8 +937,8 @@ def main() -> None:
 
     # For direct execution, we run Streamlit
     if __name__ == "__main__":
-        import subprocess
         import os
+        import subprocess
 
         script_path = os.path.abspath(__file__)
         subprocess.run(

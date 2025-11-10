@@ -1,15 +1,14 @@
 """Tests for social media scraper tool - FINAL WORKING VERSION."""
 
-import pytest
-from unittest.mock import MagicMock, patch, Mock
 import sys
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 import requests.exceptions
-from quantchain.tools import social_media_scraper
-from quantchain.tools.social_media_scraper import (
-    SocialMediaScraper,
-    SocialMetrics,
-)
+
 from quantchain.core.exceptions import DataSourceError
+from quantchain.tools import social_media_scraper
+from quantchain.tools.social_media_scraper import SocialMediaScraper, SocialMetrics
 
 # Mock problematic imports before importing the target module
 sys.modules["torch"] = MagicMock()

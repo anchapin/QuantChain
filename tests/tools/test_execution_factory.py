@@ -1,8 +1,9 @@
 """Tests for execution interface factory."""
 
-import pytest
-from unittest.mock import Mock
 from typing import Any
+from unittest.mock import Mock
+
+import pytest
 
 from quantchain.core.config import QuantChainConfig
 from quantchain.core.exceptions import AuthenticationError, ConfigurationError

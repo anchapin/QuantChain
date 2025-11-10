@@ -1,11 +1,11 @@
 """Factory for creating trading execution interfaces."""
 
-from ..core.config import QuantChainConfig
-from ..core.exceptions import AuthenticationError, ConfigurationError
-from .trading_execution import TradingExecutionInterface
 from ..connectors.alpaca_execution import AlpacaExecutionConnector
 from ..connectors.ib_async_execution import IBExecutionConnector
+from ..core.config import QuantChainConfig
+from ..core.exceptions import AuthenticationError, ConfigurationError
 from .paper_trading import PaperTradingExecutor
+from .trading_execution import TradingExecutionInterface
 from .tutorial_mode import TutorialExecutor
 
 

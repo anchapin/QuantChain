@@ -1,16 +1,17 @@
 """Tests for Polygon.io data connector."""
 
-import pytest
-from unittest.mock import MagicMock, patch
 from datetime import datetime, timezone
+from unittest.mock import MagicMock, patch
+
 import pandas as pd
+import pytest
 
 from quantchain.connectors.polygon_connector import PolygonDataConnector
 from quantchain.core.exceptions import (
-    DataSourceError,
-    SymbolNotFoundError,
     AuthenticationError,
+    DataSourceError,
     RateLimitError,
+    SymbolNotFoundError,
 )
 
 

@@ -1,21 +1,22 @@
 """Tests for the trading execution base interface."""
 
-import pytest
 from datetime import datetime
 from typing import Optional
 
+import pytest
+
 from quantchain.tools.trading_execution import (
+    AccountInfo,
+    OrderNotFoundError,
     OrderRequest,
     OrderResult,
     OrderSide,
-    OrderType,
     OrderStatus,
-    TimeInForce,
+    OrderType,
     Position,
-    AccountInfo,
+    TimeInForce,
     TradingExecutionInterface,
     ValidationError,
-    OrderNotFoundError,
 )
 
 

@@ -5,21 +5,21 @@ This module provides a gym-compatible environment that bridges QuantChain's
 backtesting engine with FinRL's reinforcement learning framework.
 """
 
-import gymnasium as gym
-from gymnasium import spaces
-import numpy as np
-from datetime import datetime
-from typing import Dict, List, Optional, Tuple, Union, Any
 import logging
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import gymnasium as gym
+import numpy as np
+from gymnasium import spaces
 
 from quantchain.backtesting.market_friction import MarketFrictionSimulator
 from quantchain.backtesting.performance_metrics import PerformanceMetrics
 from quantchain.connectors import (
     AlpacaDataConnector,
-    PolygonDataConnector,
     CCXTDataConnector,
+    PolygonDataConnector,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,8 @@ def get_connector(
     if not connector_class:
         raise ValueError(f"Unknown connector: {connector_name}")
 
-    return connector_class(**kwargs)
+    # Explicitly cast to the correct union type
+    return connector_class(**kwargs)  # type: ignore
 
 
 class FinRLAdapter(gym.Env):
@@ -130,8 +131,11 @@ class FinRLAdapter(gym.Env):
         """Initialize the data connector and fetch market data."""
         try:
             connector = get_connector(connector_name, **self.kwargs)
-            self.market_data = connector.fetch_historical_data(
-                symbol=self.symbol, start=self.start_date, end=self.end_date
+            self.market_data = connector.get_historical_data(
+                symbol=self.symbol,
+                timeframe="1D",
+                start_date=self.start_date,
+                end_date=self.end_date,
             )
 
             # Add technical indicators
@@ -144,10 +148,10 @@ class FinRLAdapter(gym.Env):
     def _setup_market_friction(self, config: Optional[Dict]) -> None:
         """Initialize market friction model."""
         from quantchain.backtesting.market_friction import (
+            FixedLatency,
             MarketFrictionConfig,
             PercentageCommission,
             VolumeImpactSlippage,
-            FixedLatency,
         )
 
         # Use empty dict if config is None

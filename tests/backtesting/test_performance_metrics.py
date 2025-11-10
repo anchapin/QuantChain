@@ -1,12 +1,14 @@
-import pytest
 from unittest.mock import patch
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+import pytest
+
 from quantchain.backtesting.performance_metrics import (
-    PerformanceMetrics,
-    MetricsCalculationError,
-    LibraryImportError,
     InsufficientDataError,
+    LibraryImportError,
+    MetricsCalculationError,
+    PerformanceMetrics,
 )
 
 
@@ -635,9 +637,9 @@ class TestPerformanceMetricsAdditionalCoverage:
 
         # Create simple result data
         from quantchain.backtesting.engine import (
+            BacktestConfig,
             BacktestResult,
             MetricsResult,
-            BacktestConfig,
         )
 
         dates = pd.date_range("2023-01-01", periods=5, freq="D")

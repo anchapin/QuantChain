@@ -3,22 +3,22 @@
 import pytest
 
 from quantchain.tools.paper_trading import (
-    PaperTradingExecutor,
-    NoSlippage,
     FixedSlippage,
-    VolumeSlippage,
-    RandomSlippage,
     ImmediateFill,
+    NoSlippage,
+    PaperTradingExecutor,
     PerformanceMetrics,
+    RandomSlippage,
+    VolumeSlippage,
 )
 from quantchain.tools.trading_execution import (
-    OrderRequest,
-    OrderSide,
-    OrderType,
-    OrderStatus,
-    ValidationError,
     ExecutionError,
     OrderNotFoundError,
+    OrderRequest,
+    OrderSide,
+    OrderStatus,
+    OrderType,
+    ValidationError,
 )
 
 

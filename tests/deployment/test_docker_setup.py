@@ -1,11 +1,12 @@
 """Tests for Docker deployment configuration and GPU support."""
 
-import pytest
-import subprocess
 import os
-import yaml
+import subprocess
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
+
+import pytest
+import yaml
 
 
 class TestDockerConfiguration:

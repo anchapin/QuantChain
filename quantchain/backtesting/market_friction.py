@@ -3,11 +3,11 @@ Market friction simulation for realistic backtesting including commission, slipp
 and latency.
 """
 
-from typing import Dict, Any, List, Tuple, Optional
+import math
+import random
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-import random
-import math
+from typing import Any, Dict, List, Optional, Tuple
 
 
 # Custom Exceptions
