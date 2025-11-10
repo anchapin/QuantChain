@@ -7,38 +7,8 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-# Create custom exception classes before importing anything
-class CCXTAuthenticationError(Exception):
-    pass
-
-class CCXTBadSymbol(Exception):
-    pass
-
-class CCXTNetworkError(Exception):
-    pass
-
-class CCXTExchangeNotAvailable(Exception):
-    pass
-
-class CCXTRateLimitExceeded(Exception):
-    pass
-
-# Mock ccxt before importing the connector
-ccxt_mock = MagicMock()
-# Add the necessary exception classes to the mock
-ccxt_mock.AuthenticationError = CCXTAuthenticationError
-ccxt_mock.BadSymbol = CCXTBadSymbol
-ccxt_mock.NetworkError = CCXTNetworkError
-ccxt_mock.ExchangeNotAvailable = CCXTExchangeNotAvailable
-ccxt_mock.RateLimitExceeded = CCXTRateLimitExceeded
-# Set up mock before importing connector
-# Remove any existing ccxt module from cache
-if "ccxt" in sys.modules:
-    del sys.modules["ccxt"]
-# Also remove quantchain.connectors.ccxt_connector if already imported
-if "quantchain.connectors.ccxt_connector" in sys.modules:
-    del sys.modules["quantchain.connectors.ccxt_connector"]
-sys.modules["ccxt"] = ccxt_mock
+# Import ccxt for creating custom exception classes in test methods
+import ccxt
 
 # Import all needed modules at top to avoid E402 errors
 from quantchain.connectors.ccxt_connector import CCXTDataConnector
@@ -48,6 +18,23 @@ from quantchain.core.exceptions import (
     RateLimitError,
     SymbolNotFoundError,
 )
+
+# Mock ccxt before importing the connector
+ccxt_mock = MagicMock()
+# Add the necessary exception classes to the mock
+ccxt_mock.AuthenticationError = Exception
+ccxt_mock.BadSymbol = Exception
+ccxt_mock.NetworkError = Exception
+ccxt_mock.ExchangeNotAvailable = Exception
+ccxt_mock.RateLimitExceeded = Exception
+# Set up mock before importing connector
+# Remove any existing ccxt module from cache
+if "ccxt" in sys.modules:
+    del sys.modules["ccxt"]
+# Also remove quantchain.connectors.ccxt_connector if already imported
+if "quantchain.connectors.ccxt_connector" in sys.modules:
+    del sys.modules["quantchain.connectors.ccxt_connector"]
+sys.modules["ccxt"] = ccxt_mock
 
 
 @pytest.mark.unit
@@ -162,8 +149,11 @@ class TestCCXTDataConnector:
             "info": {},
         }
 
-    def test_initialization_success(self, mock_exchange):
+    def test_initialization_success(self):
         """Test successful initialization with default exchange."""
+        mock_exchange = MagicMock()
+        mock_exchange.load_markets.return_value = {}
+
         with patch(
             "quantchain.connectors.ccxt_connector.ccxt.binance",
             return_value=mock_exchange,
@@ -172,8 +162,11 @@ class TestCCXTDataConnector:
 
             assert connector.exchange == mock_exchange
 
-    def test_initialization_with_credentials(self, mock_exchange):
+    def test_initialization_with_credentials(self):
         """Test initialization with API credentials."""
+        mock_exchange = MagicMock()
+        mock_exchange.load_markets.return_value = {}
+
         with patch.object(ccxt_mock, "binance", return_value=mock_exchange):
             CCXTDataConnector(api_key="test_key", api_secret="test_secret")
 
@@ -183,8 +176,11 @@ class TestCCXTDataConnector:
                 assert params.get("apiKey") == "test_key"
                 assert params.get("secret") == "test_secret"
 
-    def test_initialization_custom_exchange(self, mock_exchange):
+    def test_initialization_custom_exchange(self):
         """Test initialization with custom exchange."""
+        mock_exchange = MagicMock()
+        mock_exchange.load_markets.return_value = {}
+
         with patch(
             "quantchain.connectors.ccxt_connector.ccxt.kraken",
             return_value=mock_exchange,
@@ -193,8 +189,10 @@ class TestCCXTDataConnector:
 
             assert connector.exchange == mock_exchange
 
-    def test_initialization_with_kwargs(self, mock_exchange):
+    def test_initialization_with_kwargs(self):
         """Test initialization with additional kwargs."""
+        mock_exchange = MagicMock()
+        mock_exchange.load_markets.return_value = {}
         mock_exchange.set_sandbox_mode = MagicMock()
 
         with patch.object(ccxt_mock, "binance", return_value=mock_exchange):
@@ -212,6 +210,14 @@ class TestCCXTDataConnector:
 
     def test_initialization_auth_failure(self):
         """Test initialization failure due to authentication error."""
+
+        # Create custom exception class
+        class CCXTAuthenticationError(Exception):
+            pass
+
+        # Override the mock's AuthenticationError
+        ccxt.AuthenticationError = CCXTAuthenticationError
+
         # Create a mock that raises AuthenticationError when initialized
         def raise_auth_error(*args, **kwargs):
             raise CCXTAuthenticationError("Invalid credentials")
@@ -272,29 +278,25 @@ class TestCCXTDataConnector:
 
     def test_get_historical_data_with_limit(self, connector, sample_ohlcv_data):
         """Test historical data retrieval with limit."""
-        # Mock the fetch_ohlcv method
-        mock_fetch = MagicMock(return_value=sample_ohlcv_data)
-        connector.exchange.fetch_ohlcv = mock_fetch
+        connector.exchange.fetch_ohlcv.return_value = sample_ohlcv_data
 
         start_date = datetime(2023, 1, 1)
         connector.get_historical_data("BTC/USDT", "1H", start_date, limit=100)
 
-        mock_fetch.assert_called_once_with(
+        connector.exchange.fetch_ohlcv.assert_called_once_with(
             "BTC/USDT", "1h", since=None, limit=100
         )
 
     def test_get_historical_data_with_date_range(self, connector, sample_ohlcv_data):
         """Test historical data retrieval with date range."""
-        # Mock the fetch_ohlcv method
-        mock_fetch = MagicMock(return_value=sample_ohlcv_data)
-        connector.exchange.fetch_ohlcv = mock_fetch
+        connector.exchange.fetch_ohlcv.return_value = sample_ohlcv_data
 
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 1, 2)
         connector.get_historical_data("BTC/USDT", "1H", start_date, end_date)
 
         # Verify start_date was converted to milliseconds
-        call_args = mock_fetch.call_args
+        call_args = connector.exchange.fetch_ohlcv.call_args
         assert call_args[0][0] == "BTC/USDT"  # symbol
         assert call_args[0][1] == "1h"  # timeframe
         # since should be start_date in milliseconds
@@ -302,9 +304,12 @@ class TestCCXTDataConnector:
 
     def test_get_historical_data_symbol_not_found(self, connector):
         """Test historical data with symbol not found."""
-        # Mock the fetch_ohlcv method
-        mock_fetch = MagicMock(side_effect=CCXTBadSymbol("Symbol not found"))
-        connector.exchange.fetch_ohlcv = mock_fetch
+
+        class CustomBadSymbol(Exception):
+            pass
+
+        ccxt.BadSymbol = CustomBadSymbol
+        connector.exchange.fetch_ohlcv.side_effect = CustomBadSymbol("Symbol not found")
 
         start_date = datetime(2023, 1, 1)
         with pytest.raises(SymbolNotFoundError):
@@ -312,9 +317,12 @@ class TestCCXTDataConnector:
 
     def test_get_historical_data_network_error(self, connector):
         """Test historical data with network error."""
-        # Mock the fetch_ohlcv method
-        mock_fetch = MagicMock(side_effect=CCXTNetworkError("Network error"))
-        connector.exchange.fetch_ohlcv = mock_fetch
+
+        class CustomNetworkError(Exception):
+            pass
+
+        ccxt.NetworkError = CustomNetworkError
+        connector.exchange.fetch_ohlcv.side_effect = CustomNetworkError("Network error")
 
         start_date = datetime(2023, 1, 1)
         with pytest.raises(DataSourceError):
@@ -322,9 +330,14 @@ class TestCCXTDataConnector:
 
     def test_get_historical_data_rate_limit_error(self, connector):
         """Test historical data with rate limit error."""
-        # Mock the fetch_ohlcv method
-        mock_fetch = MagicMock(side_effect=CCXTRateLimitExceeded("Rate limit exceeded"))
-        connector.exchange.fetch_ohlcv = mock_fetch
+
+        class CustomRateLimitExceeded(Exception):
+            pass
+
+        ccxt.RateLimitExceeded = CustomRateLimitExceeded
+        connector.exchange.fetch_ohlcv.side_effect = CustomRateLimitExceeded(
+            "Rate limit exceeded"
+        )
 
         start_date = datetime(2023, 1, 1)
         with pytest.raises(RateLimitError):
@@ -332,9 +345,7 @@ class TestCCXTDataConnector:
 
     def test_get_historical_data_empty_response(self, connector):
         """Test handling of empty OHLCV response."""
-        # Mock the fetch_ohlcv method
-        mock_fetch = MagicMock(return_value=[])
-        connector.exchange.fetch_ohlcv = mock_fetch
+        connector.exchange.fetch_ohlcv.return_value = []
 
         start_date = datetime(2023, 1, 1)
         df = connector.get_historical_data("BTC/USDT", "1H", start_date)
@@ -352,9 +363,7 @@ class TestCCXTDataConnector:
 
     def test_get_real_time_data_success(self, connector, sample_ticker_data):
         """Test successful real-time data retrieval."""
-        # Mock the fetch_ticker method
-        mock_fetch = MagicMock(return_value=sample_ticker_data)
-        connector.exchange.fetch_ticker = mock_fetch
+        connector.exchange.fetch_ticker.return_value = sample_ticker_data
 
         data = connector.get_real_time_data("BTC/USDT")
 
@@ -372,9 +381,7 @@ class TestCCXTDataConnector:
     def test_get_real_time_data_missing_bid_ask(self, connector):
         """Test real-time data with missing bid/ask."""
         ticker = {"symbol": "BTC/USDT", "last": 16550.0, "baseVolume": 100.5}
-        # Mock the fetch_ticker method
-        mock_fetch = MagicMock(return_value=ticker)
-        connector.exchange.fetch_ticker = mock_fetch
+        connector.exchange.fetch_ticker.return_value = ticker
 
         data = connector.get_real_time_data("BTC/USDT")
 
@@ -385,18 +392,21 @@ class TestCCXTDataConnector:
 
     def test_get_real_time_data_symbol_not_found(self, connector):
         """Test real-time data with symbol not found."""
-        # Mock the fetch_ticker method
-        mock_fetch = MagicMock(side_effect=CCXTBadSymbol("Symbol not found"))
-        connector.exchange.fetch_ticker = mock_fetch
+
+        class CustomBadSymbol(Exception):
+            pass
+
+        ccxt.BadSymbol = CustomBadSymbol
+        connector.exchange.fetch_ticker.side_effect = CustomBadSymbol(
+            "Symbol not found"
+        )
 
         with pytest.raises(SymbolNotFoundError):
             connector.get_real_time_data("INVALID/PAIR")
 
     def test_get_quote_success(self, connector, sample_ticker_data):
         """Test successful quote retrieval."""
-        # Mock the fetch_ticker method
-        mock_fetch = MagicMock(return_value=sample_ticker_data)
-        connector.exchange.fetch_ticker = mock_fetch
+        connector.exchange.fetch_ticker.return_value = sample_ticker_data
 
         quote = connector.get_quote("BTC/USDT")
 
@@ -420,9 +430,7 @@ class TestCCXTDataConnector:
             "baseVolume": 100.5,
             "quoteVolume": 1660075.0,
         }
-        # Mock the fetch_ticker method
-        mock_fetch = MagicMock(return_value=ticker)
-        connector.exchange.fetch_ticker = mock_fetch
+        connector.exchange.fetch_ticker.return_value = ticker
 
         quote = connector.get_quote("BTC/USDT")
 
@@ -433,9 +441,14 @@ class TestCCXTDataConnector:
 
     def test_get_quote_symbol_not_found(self, connector):
         """Test quote with symbol not found."""
-        # Mock the fetch_ticker method
-        mock_fetch = MagicMock(side_effect=CCXTBadSymbol("Symbol not found"))
-        connector.exchange.fetch_ticker = mock_fetch
+
+        class CustomBadSymbol(Exception):
+            pass
+
+        ccxt.BadSymbol = CustomBadSymbol
+        connector.exchange.fetch_ticker.side_effect = CustomBadSymbol(
+            "Symbol not found"
+        )
 
         with pytest.raises(SymbolNotFoundError):
             connector.get_quote("INVALID/PAIR")
@@ -470,15 +483,12 @@ class TestCCXTDataConnector:
         # First call
         connector.get_available_symbols()
 
-        # Reset call counter to avoid counting the setup call
-        connector.exchange.load_markets.reset_mock()
-
         # Expire cache
         connector._cache_timestamp = datetime.now() - timedelta(seconds=3700)
 
         # Second call should refresh cache
         connector.get_available_symbols()
-        assert connector.exchange.load_markets.call_count == 1
+        assert connector.exchange.load_markets.call_count == 2
 
     def test_get_symbol_info_success(self, connector):
         """Test successful symbol info retrieval."""
@@ -505,33 +515,51 @@ class TestCCXTDataConnector:
 
     def test_rate_limit_error_handling(self, connector):
         """Test rate limit error handling."""
-        # Mock the fetch_ticker method
-        mock_fetch = MagicMock(side_effect=CCXTRateLimitExceeded("Rate limit"))
-        connector.exchange.fetch_ticker = mock_fetch
+
+        class CustomRateLimitExceeded(Exception):
+            pass
+
+        ccxt.RateLimitExceeded = CustomRateLimitExceeded
+        connector.exchange.fetch_ticker.side_effect = CustomRateLimitExceeded(
+            "Rate limit"
+        )
 
         with pytest.raises(RateLimitError):
             connector.get_real_time_data("BTC/USDT")
 
     def test_authentication_error_handling(self, connector):
         """Test authentication error handling during operations."""
-        # Mock the fetch_ticker method
-        mock_fetch = MagicMock(side_effect=CCXTAuthenticationError("Invalid API key"))
-        connector.exchange.fetch_ticker = mock_fetch
+
+        class CustomAuthenticationError(Exception):
+            pass
+
+        ccxt.AuthenticationError = CustomAuthenticationError
+        connector.exchange.fetch_ticker.side_effect = CustomAuthenticationError(
+            "Invalid API key"
+        )
 
         with pytest.raises(AuthenticationError):
             connector.get_real_time_data("BTC/USDT")
 
     def test_exchange_not_available_error(self, connector):
         """Test exchange not available error handling."""
-        # Mock the fetch_ticker method
-        mock_fetch = MagicMock(side_effect=CCXTExchangeNotAvailable("Exchange down"))
-        connector.exchange.fetch_ticker = mock_fetch
+
+        # Create custom exception class that inherits from Exception
+        class ExchangeNotAvailable(Exception):
+            pass
+
+        ccxt.ExchangeNotAvailable = ExchangeNotAvailable
+        connector.exchange.fetch_ticker.side_effect = ExchangeNotAvailable(
+            "Exchange down"
+        )
 
         with pytest.raises(DataSourceError):
             connector.get_real_time_data("BTC/USDT")
 
-    def test_sandbox_mode_configuration(self, mock_exchange):
+    def test_sandbox_mode_configuration(self):
         """Test sandbox mode configuration."""
+        mock_exchange = MagicMock()
+        mock_exchange.load_markets.return_value = {}
         mock_exchange.set_sandbox_mode = MagicMock()
 
         with patch("ccxt.binance", return_value=mock_exchange):
@@ -539,8 +567,11 @@ class TestCCXTDataConnector:
 
             mock_exchange.set_sandbox_mode.assert_called_once_with(True)
 
-    def test_custom_timeout_configuration(self, mock_exchange):
+    def test_custom_timeout_configuration(self):
         """Test custom timeout configuration."""
+        mock_exchange = MagicMock()
+        mock_exchange.load_markets.return_value = {}
+
         with patch.object(ccxt_mock, "binance", return_value=mock_exchange):
             CCXTDataConnector(timeout=60)
 
@@ -549,8 +580,11 @@ class TestCCXTDataConnector:
                 params = args[0]
                 assert params.get("timeout") == 60
 
-    def test_rate_limit_configuration(self, mock_exchange):
+    def test_rate_limit_configuration(self):
         """Test rate limit configuration."""
+        mock_exchange = MagicMock()
+        mock_exchange.load_markets.return_value = {}
+
         with patch.object(ccxt_mock, "binance", return_value=mock_exchange):
             CCXTDataConnector(enableRateLimit=False)
 
@@ -561,12 +595,14 @@ class TestCCXTDataConnector:
 
     def test_refresh_market_cache_error(self, connector):
         """Test error handling in market cache refresh."""
-        # Mock the load_markets method
-        mock_load = MagicMock(side_effect=CCXTNetworkError("Network error"))
-        connector.exchange.load_markets = mock_load
 
-        # Clear cache to force refresh
-        connector._cache_timestamp = None
+        class CustomNetworkError(Exception):
+            pass
+
+        ccxt.NetworkError = CustomNetworkError
+        connector.exchange.load_markets.side_effect = CustomNetworkError(
+            "Network error"
+        )
 
         with pytest.raises(DataSourceError):
             connector._refresh_market_cache()
