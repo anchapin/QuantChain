@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
+
 # Custom exception classes for testing
 class CCXTAuthenticationError(Exception):
     pass
@@ -26,6 +27,7 @@ class CCXTExchangeNotAvailable(Exception):
 
 class CCXTRateLimitExceeded(Exception):
     pass
+
 
 # Import all needed modules at top to avoid E402 errors
 from quantchain.connectors.ccxt_connector import CCXTDataConnector
@@ -524,7 +526,7 @@ class TestCCXTDataConnector:
         # Test that sandbox property is set correctly
         connector.sandbox = True
         assert connector.sandbox is True
-        
+
         # When creating new connector, sandbox should be passed correctly
         with patch("ccxt.binance") as mock_binance:
             mock_binance.return_value = MagicMock()
