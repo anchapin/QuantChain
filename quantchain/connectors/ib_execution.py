@@ -38,7 +38,7 @@ except ImportError as e:
 
 class IBWrapper(EWrapper):
     """Wrapper class for IB API callbacks."""
-    
+
     def __init__(self):
         super().__init__()
         self._order_statuses = {}
@@ -55,10 +55,10 @@ class IBWrapper(EWrapper):
     def error(self, reqId: TickerId, errorCode: int, errorString: str):
         """Handle error messages from IB."""
         super().error(reqId, errorCode, errorString)
-        
+
         # Store error code for later use
         self._error_codes[reqId] = (errorCode, errorString)
-        
+
         # Signal waiting threads if this is a request-related error
         with self._lock:
             if reqId in self._events:
@@ -74,69 +74,100 @@ class IBWrapper(EWrapper):
         """Receive list of managed accounts."""
         super().managedAccounts(accountsList)
 
-    def orderStatus(self, orderId: OrderId, status: str, filled: float,
-                   remaining: float, avgFillPrice: float, permId: int,
-                   parentId: int, lastFillPrice: float, clientId: int,
-                   whyHeld: str, mktCapPrice: float):
+    def orderStatus(
+        self,
+        orderId: OrderId,
+        status: str,
+        filled: float,
+        remaining: float,
+        avgFillPrice: float,
+        permId: int,
+        parentId: int,
+        lastFillPrice: float,
+        clientId: int,
+        whyHeld: str,
+        mktCapPrice: float,
+    ):
         """Receive order status updates."""
-        super().orderStatus(orderId, status, filled, remaining, avgFillPrice,
-                          permId, parentId, lastFillPrice, clientId, whyHeld,
-                          mktCapPrice)
-        
+        super().orderStatus(
+            orderId,
+            status,
+            filled,
+            remaining,
+            avgFillPrice,
+            permId,
+            parentId,
+            lastFillPrice,
+            clientId,
+            whyHeld,
+            mktCapPrice,
+        )
+
         with self._lock:
             self._order_statuses[orderId] = {
-                'status': status,
-                'filled': filled,
-                'remaining': remaining,
-                'avgFillPrice': avgFillPrice,
-                'lastFillPrice': lastFillPrice,
+                "status": status,
+                "filled": filled,
+                "remaining": remaining,
+                "avgFillPrice": avgFillPrice,
+                "lastFillPrice": lastFillPrice,
             }
 
-    def openOrder(self, orderId: OrderId, contract: IBContract, order: IBOrder,
-                 orderState: OrderState):
+    def openOrder(
+        self,
+        orderId: OrderId,
+        contract: IBContract,
+        order: IBOrder,
+        orderState: OrderState,
+    ):
         """Receive open order information."""
         super().openOrder(orderId, contract, order, orderState)
 
     def execDetails(self, reqId: int, contract: IBContract, execution):
         """Receive execution details."""
         super().execDetails(reqId, contract, execution)
-        
-        with self._lock:
-            self._executions.append({
-                'orderId': execution.orderId,
-                'clientId': execution.clientId,
-                'symbol': contract.symbol,
-                'side': execution.side,
-                'shares': execution.shares,
-                'price': execution.price,
-                'time': execution.time,
-            })
 
-    def accountSummary(self, reqId: int, account: str, tag: str, value: str,
-                       currency: str):
+        with self._lock:
+            self._executions.append(
+                {
+                    "orderId": execution.orderId,
+                    "clientId": execution.clientId,
+                    "symbol": contract.symbol,
+                    "side": execution.side,
+                    "shares": execution.shares,
+                    "price": execution.price,
+                    "time": execution.time,
+                }
+            )
+
+    def accountSummary(
+        self, reqId: int, account: str, tag: str, value: str, currency: str
+    ):
         """Receive account summary information."""
         super().accountSummary(reqId, account, tag, value, currency)
-        
+
         with self._lock:
             self._account_summary[tag] = float(value)
 
-    def position(self, account: str, contract: IBContract, position: float,
-                avgCost: float):
+    def position(
+        self, account: str, contract: IBContract, position: float, avgCost: float
+    ):
         """Receive position information."""
         super().position(account, contract, position, avgCost)
-        
+
         with self._lock:
-            self._positions.append({
-                'symbol': contract.symbol,
-                'position': position,
-                'avgCost': avgCost,
-                'contract': contract,
-            })
+            self._positions.append(
+                {
+                    "symbol": contract.symbol,
+                    "position": position,
+                    "avgCost": avgCost,
+                    "contract": contract,
+                }
+            )
 
     def contractDetails(self, reqId: int, contractDetails):
         """Receive contract details."""
         super().contractDetails(reqId, contractDetails)
-        
+
         with self._lock:
             self._contracts[reqId] = contractDetails
 
@@ -153,12 +184,12 @@ class IBWrapper(EWrapper):
 
 class IBClient(EClient):
     """Client class for IB API interactions."""
-    
+
     def __init__(self, wrapper):
         super().__init__(wrapper)
         self._next_req_id = 1
         self._lock = threading.Lock()
-    
+
     def get_next_req_id(self):
         """Get next request ID."""
         with self._lock:
@@ -244,19 +275,21 @@ class IBExecutionConnector(TradingExecutionInterface):
         try:
             # Connect to IB
             self.client.connect(self.host, self.port, self.client_id)
-            
+
             # Start the message processing thread
-            self.api_thread = threading.Thread(target=self.run_message_loop, daemon=True)
+            self.api_thread = threading.Thread(
+                target=self.run_message_loop, daemon=True
+            )
             self.api_thread.start()
-            
+
             # Wait for connection and next valid ID
             if not self._ready_event.wait(timeout=self.timeout):
                 self.client.disconnect()
                 raise ExecutionError(f"Connection timeout after {self.timeout} seconds")
-            
+
             if not self.wrapper._connected:
                 raise ExecutionError("Failed to connect to IB Gateway/TWS")
-                
+
         except ConnectionRefusedError as e:
             raise ExecutionError(
                 "Cannot connect to IB Gateway/TWS. Ensure Gateway/TWS is running."
@@ -275,14 +308,14 @@ class IBExecutionConnector(TradingExecutionInterface):
         """Wait for a response to a request."""
         if req_id not in self.wrapper._events:
             self.wrapper._events[req_id] = threading.Event()
-        
+
         return self.wrapper._events[req_id].wait(timeout or self.timeout)
 
     def _create_contract(self, symbol: str) -> IBContract:
         """Create appropriate IB Contract based on symbol format."""
         symbol = symbol.upper().strip()
         contract = IBContract()
-        
+
         # Check for forex pair (e.g., EURUSD)
         if len(symbol) == 6 and symbol[:3].isalpha() and symbol[3:].isalpha():
             contract.symbol = symbol[:3]
@@ -301,7 +334,9 @@ class IBExecutionConnector(TradingExecutionInterface):
 
             # Validate components
             ticker_valid = ticker.isalpha()
-            date_valid = (len(date_str) == 6 or len(date_str) == 8) and date_str.isdigit()
+            date_valid = (
+                len(date_str) == 6 or len(date_str) == 8
+            ) and date_str.isdigit()
             strike_valid = (
                 strike_str.replace(".", "", 1).isdigit()
                 if "." in strike_str
@@ -314,7 +349,7 @@ class IBExecutionConnector(TradingExecutionInterface):
                 contract.secType = "OPT"
                 contract.currency = "USD"
                 contract.exchange = "SMART"
-                
+
                 # Convert date based on format
                 if len(date_str) == 6:
                     # YYMMDD to YYYYMMDD
@@ -332,19 +367,29 @@ class IBExecutionConnector(TradingExecutionInterface):
         if len(symbol) >= 2 and symbol[:-1].isalpha() and symbol[-1].isdigit():
             root = symbol[:-1]
             year_code = symbol[-1]
-            
+
             # Simple mapping for month codes if present
             month_map = {
-                "F": "01", "G": "02", "H": "03", "J": "04", "K": "05", "M": "06",
-                "N": "07", "Q": "08", "U": "09", "V": "10", "X": "11", "Z": "12",
+                "F": "01",
+                "G": "02",
+                "H": "03",
+                "J": "04",
+                "K": "05",
+                "M": "06",
+                "N": "07",
+                "Q": "08",
+                "U": "09",
+                "V": "10",
+                "X": "11",
+                "Z": "12",
             }
-            
+
             # Check if second to last character is a month code
             if len(root) >= 2 and root[-1].upper() in month_map:
                 month_code = root[-1].upper()
                 root = root[:-1]
                 month = month_map[month_code]
-                
+
                 # Handle year code - single digit maps to current decade
                 year_code_num = int(year_code)
                 current_year = 2023  # Should be dynamic
@@ -352,7 +397,7 @@ class IBExecutionConnector(TradingExecutionInterface):
                 year = decade + year_code_num
                 if year < current_year:
                     year += 10
-                
+
                 contract.symbol = root
                 contract.secType = "FUT"
                 contract.currency = "USD"
@@ -372,10 +417,10 @@ class IBExecutionConnector(TradingExecutionInterface):
         try:
             req_id = self.client.get_next_req_id()
             self.client.reqContractDetails(req_id, contract)
-            
+
             if not self._wait_for_response(req_id, timeout=5):
                 return False
-            
+
             return req_id in self.wrapper._contracts
         except Exception as e:
             raise ExecutionError(f"Failed to qualify contract: {str(e)}") from e
@@ -383,17 +428,17 @@ class IBExecutionConnector(TradingExecutionInterface):
     def _convert_order_to_ib(self, order: OrderRequest) -> IBOrder:
         """Convert OrderRequest to IB Order object."""
         ib_order = IBOrder()
-        
+
         # Set order type
         order_type = self.TYPE_MAPPING.get(order.order_type)
         if not order_type:
             raise ValidationError(f"Unsupported order type: {order.order_type}")
         ib_order.orderType = order_type
-        
+
         # Set action and quantity
         ib_order.action = self.SIDE_MAPPING[order.side]
         ib_order.totalQuantity = order.quantity
-        
+
         # Set price based on order type
         if order.order_type == OrderType.LIMIT:
             ib_order.lmtPrice = order.price
@@ -402,10 +447,10 @@ class IBExecutionConnector(TradingExecutionInterface):
         elif order.order_type == OrderType.STOP_LIMIT:
             ib_order.lmtPrice = order.price
             ib_order.auxPrice = order.stop_price
-        
+
         # Set time in force
         ib_order.tif = self.TIF_MAPPING.get(order.time_in_force, "DAY")
-        
+
         return ib_order
 
     def _convert_order_status(self, status: str) -> OrderStatus:
@@ -431,41 +476,41 @@ class IBExecutionConnector(TradingExecutionInterface):
             # Get next valid order ID
             if not self.wrapper._next_order_id:
                 time.sleep(1)  # Wait for nextValidId message
-            
+
             if not self.wrapper._next_order_id:
                 raise ExecutionError("No valid order ID available")
-            
+
             order_id = self.wrapper._next_order_id
             self.wrapper._next_order_id += 1
-            
+
             # Create and qualify contract
             contract = self._create_contract(order.symbol)
             if not self._qualify_contract(contract):
                 raise ValidationError(f"Invalid contract: {order.symbol}")
-            
+
             # Convert order to IB format
             ib_order = self._convert_order_to_ib(order)
-            
+
             # Place order
             self.client.placeOrder(order_id, contract, ib_order)
-            
+
             # Create result with pending status
             return OrderResult(
                 order_id=str(order_id),
-                client_order_id=getattr(order, 'client_order_id', None),
+                client_order_id=getattr(order, "client_order_id", None),
                 symbol=order.symbol,
                 side=order.side,
                 order_type=order.order_type,
                 quantity=order.quantity,
                 filled_quantity=0,
-                price=getattr(order, 'price', None),
-                stop_price=getattr(order, 'stop_price', None),
+                price=getattr(order, "price", None),
+                stop_price=getattr(order, "stop_price", None),
                 avg_fill_price=None,
                 status=OrderStatus.PENDING,
                 timestamp=datetime.now(timezone.utc),
                 updated_at=datetime.now(timezone.utc),
             )
-            
+
         except Exception as e:
             raise ExecutionError(f"Failed to place order: {str(e)}") from e
 
@@ -474,13 +519,13 @@ class IBExecutionConnector(TradingExecutionInterface):
         try:
             # Convert string order_id to int
             order_id_int = int(order_id)
-            
+
             # Cancel the order
             self.client.cancelOrder(order_id_int)
-            
+
             # Get updated order status
             return self.get_order(order_id)
-            
+
         except ValueError as e:
             raise ValidationError(f"Invalid order ID: {order_id}") from e
         except Exception as e:
@@ -491,14 +536,14 @@ class IBExecutionConnector(TradingExecutionInterface):
         try:
             # Convert string order_id to int
             order_id_int = int(order_id)
-            
+
             # Get order status from wrapper
             with self.wrapper._lock:
                 order_status = self.wrapper._order_statuses.get(order_id_int)
-            
+
             if not order_status:
                 raise OrderNotFoundError(f"Order not found: {order_id}")
-            
+
             # Convert to OrderResult
             return OrderResult(
                 order_id=order_id,
@@ -506,16 +551,17 @@ class IBExecutionConnector(TradingExecutionInterface):
                 symbol="UNKNOWN",  # Would need to track this separately
                 side=OrderSide.BUY,  # Would need to track this separately
                 order_type=OrderType.MARKET,  # Would need to track this separately
-                quantity=order_status.get('filled', 0) + order_status.get('remaining', 0),
-                filled_quantity=order_status.get('filled', 0),
+                quantity=order_status.get("filled", 0)
+                + order_status.get("remaining", 0),
+                filled_quantity=order_status.get("filled", 0),
                 price=None,  # Would need to track this separately
                 stop_price=None,
-                avg_fill_price=order_status.get('avgFillPrice'),
-                status=self._convert_order_status(order_status.get('status')),
+                avg_fill_price=order_status.get("avgFillPrice"),
+                status=self._convert_order_status(order_status.get("status")),
                 timestamp=datetime.now(timezone.utc),
                 updated_at=datetime.now(timezone.utc),
             )
-            
+
         except ValueError as e:
             raise ValidationError(f"Invalid order ID: {order_id}") from e
         except Exception as e:
@@ -528,36 +574,38 @@ class IBExecutionConnector(TradingExecutionInterface):
             req_id = self.client.get_next_req_id()
             tags = "NetLiquidation,AvailableFunds,BuyingPower,TotalCashValue"
             self.client.reqAccountSummary(req_id, "All", tags)
-            
+
             if not self._wait_for_response(req_id, timeout=5):
                 raise ExecutionError("Timeout getting account summary")
-            
+
             with self.wrapper._lock:
                 summary = self.wrapper._account_summary.copy()
                 positions = list(self.wrapper._positions)
-            
+
             # Extract key values
             net_liquidation = summary.get("NetLiquidation", 0.0)
             available_funds = summary.get("AvailableFunds", 0.0)
             buying_power = summary.get("BuyingPower", 0.0)
             total_cash = summary.get("TotalCashValue", 0.0)
-            
+
             # Convert positions
             quantchain_positions = []
             for pos in positions:
-                if pos['position'] != 0:
+                if pos["position"] != 0:
                     quantchain_positions.append(
                         Position(
-                            symbol=pos['symbol'],
-                            quantity=pos['position'],
-                            avg_entry_price=pos['avgCost'],
-                            current_price=pos['avgCost'],  # Using avg cost as current price
-                            market_value=pos['position'] * pos['avgCost'],
+                            symbol=pos["symbol"],
+                            quantity=pos["position"],
+                            avg_entry_price=pos["avgCost"],
+                            current_price=pos[
+                                "avgCost"
+                            ],  # Using avg cost as current price
+                            market_value=pos["position"] * pos["avgCost"],
                             unrealized_pnl=0.0,
                             unrealized_pnl_percent=0.0,
                         )
                     )
-            
+
             return AccountInfo(
                 account_id=self.account or str(self.client_id),
                 buying_power=buying_power,
@@ -566,7 +614,7 @@ class IBExecutionConnector(TradingExecutionInterface):
                 positions=quantchain_positions,
                 margin_available=available_funds,
             )
-            
+
         except Exception as e:
             raise ExecutionError(f"Failed to get account info: {str(e)}") from e
 
@@ -576,28 +624,30 @@ class IBExecutionConnector(TradingExecutionInterface):
             # Request positions
             self.client.reqPositions()
             time.sleep(1)  # Wait for position data
-            
+
             with self.wrapper._lock:
                 positions = list(self.wrapper._positions)
-            
+
             # Convert to Position objects
             quantchain_positions = []
             for pos in positions:
-                if pos['position'] != 0:
+                if pos["position"] != 0:
                     quantchain_positions.append(
                         Position(
-                            symbol=pos['symbol'],
-                            quantity=pos['position'],
-                            avg_entry_price=pos['avgCost'],
-                            current_price=pos['avgCost'],  # Using avg cost as current price
-                            market_value=pos['position'] * pos['avgCost'],
+                            symbol=pos["symbol"],
+                            quantity=pos["position"],
+                            avg_entry_price=pos["avgCost"],
+                            current_price=pos[
+                                "avgCost"
+                            ],  # Using avg cost as current price
+                            market_value=pos["position"] * pos["avgCost"],
                             unrealized_pnl=0.0,
                             unrealized_pnl_percent=0.0,
                         )
                     )
-            
+
             return quantchain_positions
-            
+
         except Exception as e:
             raise ExecutionError(f"Failed to get positions: {str(e)}") from e
 
@@ -614,31 +664,31 @@ class IBExecutionConnector(TradingExecutionInterface):
             # Request executions
             req_id = self.client.get_next_req_id()
             self.client.reqExecutions(req_id, ExecutionFilter())
-            
+
             if not self._wait_for_response(req_id, timeout=10):
                 raise ExecutionError("Timeout getting execution history")
-            
+
             with self.wrapper._lock:
                 executions = list(self.wrapper._executions)
-            
+
             # Convert to OrderResult objects
             orders = []
             for exec in executions:
                 order_result = OrderResult(
-                    order_id=str(exec['orderId']),
-                    client_order_id=exec.get('clientId'),
-                    symbol=exec['symbol'],
-                    side=OrderSide.BUY if exec['side'] == 'BOT' else OrderSide.SELL,
+                    order_id=str(exec["orderId"]),
+                    client_order_id=exec.get("clientId"),
+                    symbol=exec["symbol"],
+                    side=OrderSide.BUY if exec["side"] == "BOT" else OrderSide.SELL,
                     order_type=OrderType.MARKET,  # Default to market
-                    quantity=exec['shares'],
-                    filled_quantity=exec['shares'],
+                    quantity=exec["shares"],
+                    filled_quantity=exec["shares"],
                     price=None,
                     stop_price=None,
-                    avg_fill_price=exec['price'],
+                    avg_fill_price=exec["price"],
                     status=OrderStatus.FILLED,
-                    timestamp=exec['time'],
+                    timestamp=exec["time"],
                 )
-                
+
                 # Apply filters
                 if symbol and order_result.symbol != symbol:
                     continue
@@ -648,18 +698,18 @@ class IBExecutionConnector(TradingExecutionInterface):
                     continue
                 if end_date and order_result.timestamp > end_date:
                     continue
-                
+
                 orders.append(order_result)
-            
+
             # Sort by timestamp descending
             orders.sort(key=lambda x: x.timestamp, reverse=True)
-            
+
             # Apply limit
             if limit:
                 orders = orders[:limit]
-            
+
             return orders
-            
+
         except Exception as e:
             raise ExecutionError(f"Failed to get order history: {str(e)}") from e
 
@@ -673,7 +723,7 @@ class IBExecutionConnector(TradingExecutionInterface):
         """Validate order parameters."""
         # Call parent validation
         super().validate_order(order)
-        
+
         # IB-specific validation
         if not order.symbol or len(order.symbol.strip()) == 0:
             raise ValidationError("Symbol is required")
@@ -683,18 +733,18 @@ class IBExecutionConnector(TradingExecutionInterface):
         try:
             # Create and qualify contract
             contract = self._create_contract(symbol)
-            
+
             req_id = self.client.get_next_req_id()
             self.client.reqContractDetails(req_id, contract)
-            
+
             if not self._wait_for_response(req_id, timeout=5):
                 return {"symbol": symbol}
-            
+
             with self.wrapper._lock:
                 details = self.wrapper._contracts.get(req_id)
                 if not details:
                     return {"symbol": symbol}
-            
+
             return {
                 "symbol": symbol,
                 "name": details.longName or symbol,
@@ -709,7 +759,7 @@ class IBExecutionConnector(TradingExecutionInterface):
                 ),
                 "multiplier": details.multiplier,
             }
-            
+
         except Exception as e:
             raise ExecutionError(f"Failed to get symbol info: {str(e)}") from e
 
