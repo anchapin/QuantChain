@@ -7,6 +7,18 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
+# Import ccxt for creating custom exception classes in test methods
+import ccxt
+
+# Import all needed modules at top to avoid E402 errors
+from quantchain.connectors.ccxt_connector import CCXTDataConnector
+from quantchain.core.exceptions import (
+    AuthenticationError,
+    DataSourceError,
+    RateLimitError,
+    SymbolNotFoundError,
+)
+
 # Mock ccxt before importing the connector
 ccxt_mock = MagicMock()
 # Add the necessary exception classes to the mock
@@ -23,15 +35,6 @@ if "ccxt" in sys.modules:
 if "quantchain.connectors.ccxt_connector" in sys.modules:
     del sys.modules["quantchain.connectors.ccxt_connector"]
 sys.modules["ccxt"] = ccxt_mock
-
-# Now we can safely import after mocking
-from quantchain.connectors.ccxt_connector import CCXTDataConnector, CCXT_AVAILABLE
-from quantchain.core.exceptions import (
-    AuthenticationError,
-    DataSourceError,
-    RateLimitError,
-    SymbolNotFoundError,
-)
 
 
 @pytest.mark.unit
@@ -197,9 +200,6 @@ class TestCCXTDataConnector:
 
     def test_initialization_auth_failure(self):
         """Test initialization failure due to authentication error."""
-        import ccxt
-
-        from quantchain.core.exceptions import AuthenticationError
 
         # Create custom exception class
         class CCXTAuthenticationError(Exception):
@@ -294,7 +294,6 @@ class TestCCXTDataConnector:
 
     def test_get_historical_data_symbol_not_found(self, connector):
         """Test historical data with symbol not found."""
-        import ccxt
 
         class CustomBadSymbol(Exception):
             pass
@@ -308,7 +307,6 @@ class TestCCXTDataConnector:
 
     def test_get_historical_data_network_error(self, connector):
         """Test historical data with network error."""
-        import ccxt
 
         class CustomNetworkError(Exception):
             pass
@@ -322,7 +320,6 @@ class TestCCXTDataConnector:
 
     def test_get_historical_data_rate_limit_error(self, connector):
         """Test historical data with rate limit error."""
-        import ccxt
 
         class CustomRateLimitExceeded(Exception):
             pass
@@ -385,7 +382,6 @@ class TestCCXTDataConnector:
 
     def test_get_real_time_data_symbol_not_found(self, connector):
         """Test real-time data with symbol not found."""
-        import ccxt
 
         class CustomBadSymbol(Exception):
             pass
@@ -435,7 +431,6 @@ class TestCCXTDataConnector:
 
     def test_get_quote_symbol_not_found(self, connector):
         """Test quote with symbol not found."""
-        import ccxt
 
         class CustomBadSymbol(Exception):
             pass
@@ -510,7 +505,6 @@ class TestCCXTDataConnector:
 
     def test_rate_limit_error_handling(self, connector):
         """Test rate limit error handling."""
-        import ccxt
 
         class CustomRateLimitExceeded(Exception):
             pass
@@ -525,7 +519,6 @@ class TestCCXTDataConnector:
 
     def test_authentication_error_handling(self, connector):
         """Test authentication error handling during operations."""
-        import ccxt
 
         class CustomAuthenticationError(Exception):
             pass
@@ -540,7 +533,6 @@ class TestCCXTDataConnector:
 
     def test_exchange_not_available_error(self, connector):
         """Test exchange not available error handling."""
-        import ccxt
 
         # Create custom exception class that inherits from Exception
         class ExchangeNotAvailable(Exception):
@@ -593,7 +585,6 @@ class TestCCXTDataConnector:
 
     def test_refresh_market_cache_error(self, connector):
         """Test error handling in market cache refresh."""
-        import ccxt
 
         class CustomNetworkError(Exception):
             pass
