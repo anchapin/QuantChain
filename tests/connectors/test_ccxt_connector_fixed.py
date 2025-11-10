@@ -7,21 +7,27 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
+
 # Create custom exception classes before importing anything
 class CCXTAuthenticationError(Exception):
     pass
 
+
 class CCXTBadSymbol(Exception):
     pass
+
 
 class CCXTNetworkError(Exception):
     pass
 
+
 class CCXTExchangeNotAvailable(Exception):
     pass
 
+
 class CCXTRateLimitExceeded(Exception):
     pass
+
 
 # Mock ccxt before importing the connector
 ccxt_mock = MagicMock()
@@ -212,6 +218,7 @@ class TestCCXTDataConnector:
 
     def test_initialization_auth_failure(self):
         """Test initialization failure due to authentication error."""
+
         # Create a mock that raises AuthenticationError when initialized
         def raise_auth_error(*args, **kwargs):
             raise CCXTAuthenticationError("Invalid credentials")
@@ -279,9 +286,7 @@ class TestCCXTDataConnector:
         start_date = datetime(2023, 1, 1)
         connector.get_historical_data("BTC/USDT", "1H", start_date, limit=100)
 
-        mock_fetch.assert_called_once_with(
-            "BTC/USDT", "1h", since=None, limit=100
-        )
+        mock_fetch.assert_called_once_with("BTC/USDT", "1h", since=None, limit=100)
 
     def test_get_historical_data_with_date_range(self, connector, sample_ohlcv_data):
         """Test historical data retrieval with date range."""

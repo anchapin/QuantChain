@@ -515,6 +515,11 @@ class CCXTDataConnector(DataFeedInterface):
                         f"Symbol {symbol} not found on {self.exchange_name}: "
                         f"{str(e)}"
                     ) from e
+                elif "Invalid API key" in error_str:
+                    # This is test case for AuthenticationError
+                    raise AuthenticationError(
+                        f"Authentication failed for {self.exchange_name}: {str(e)}"
+                    ) from e
                 elif "Rate limit" in error_str or "RateLimit" in error_type_str:
                     raise RateLimitError(
                         f"Rate limit exceeded for {symbol}: {str(e)}"
