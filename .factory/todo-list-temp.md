@@ -1,10 +1,9 @@
 # Current Todo List
 
 ## In Progress
-- 
+- 🔄 [T10] Download and analyze CI failure logs from provided URLs
 
 ## Pending
-- ⏳ [T10] Download and analyze CI failure logs from provided URLs (awaiting access)
 - ⏳ [T2] Create specs/backtesting/finrl_adapter.spec.md outlining integration strategy
 - ⏳ [T3] Implement quantchain/backtesting/finrl_adapter.py integration layer
 - ⏳ [T4] Create tests/backtesting/test_finrl_adapter.py with unit tests and integration tests
