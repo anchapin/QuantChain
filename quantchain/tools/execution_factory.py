@@ -98,7 +98,7 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
 
         # Lazy import to avoid circular import
         from ..connectors.alpaca_execution import AlpacaExecutionConnector
-        
+
         return AlpacaExecutionConnector(
             api_key=api_key, api_secret=api_secret, use_paper=paper_trading
         )
@@ -118,7 +118,7 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
 
         # Lazy import to avoid circular import
         from ..connectors.ib_async_execution import IBExecutionConnector
-        
+
         return IBExecutionConnector(
             host=host, port=port, client_id=client_id, timeout=timeout, account=account
         )
