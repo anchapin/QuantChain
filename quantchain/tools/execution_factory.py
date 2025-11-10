@@ -117,7 +117,7 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
         account = config.get("trading.ib.account", None)
 
         # Lazy import to avoid circular import
-        from ..connectors.ib_async_execution import IBExecutionConnector
+        from ..connectors.ib_execution import IBExecutionConnector
 
         return IBExecutionConnector(
             host=host, port=port, client_id=client_id, timeout=timeout, account=account
