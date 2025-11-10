@@ -438,29 +438,31 @@ class FinRLAdapter(gym.Env):
         """Get comprehensive performance metrics."""
         # Import pandas for metrics calculation
         import pandas as pd
-        
+
         # Convert portfolio values to pandas Series for metrics calculation
         # Create date range matching the portfolio values
-        dates = pd.date_range(start=self.start_date, periods=len(self.portfolio_values), freq='D')
+        dates = pd.date_range(
+            start=self.start_date, periods=len(self.portfolio_values), freq="D"
+        )
         equity_curve = pd.Series(self.portfolio_values, index=dates)
-        
+
         # Create simple trades DataFrame (placeholder for now)
-        dates = pd.date_range(start=self.start_date, periods=len(self.portfolio_values), freq='D')
+        dates = pd.date_range(
+            start=self.start_date, periods=len(self.portfolio_values), freq="D"
+        )
         trades_data = {
-            'entry_time': [dates[0]],  # placeholder
-            'exit_time': [dates[-1]],  # placeholder
-            'entry_price': [self.initial_balance],  # placeholder
-            'exit_price': [self.total_value],  # placeholder
-            'quantity': [1],  # placeholder
-            'side': ['long'],  # placeholder
-            'pnl': [self.total_value - self.initial_balance],  # placeholder
+            "entry_time": [dates[0]],  # placeholder
+            "exit_time": [dates[-1]],  # placeholder
+            "entry_price": [self.initial_balance],  # placeholder
+            "exit_price": [self.total_value],  # placeholder
+            "quantity": [1],  # placeholder
+            "side": ["long"],  # placeholder
+            "pnl": [self.total_value - self.initial_balance],  # placeholder
         }
         trades_df = pd.DataFrame(trades_data)
-        
+
         metrics_result = self.performance_metrics.calculate_all_metrics(
-            equity_curve=equity_curve,
-            trades=trades_df,
-            frequency="1d"
+            equity_curve=equity_curve, trades=trades_df, frequency="1d"
         )
 
         # Convert MetricsResult to dict and add custom metrics

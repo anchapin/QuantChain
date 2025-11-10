@@ -3,8 +3,9 @@
 import pytest
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
+
+# from datetime import datetime, timedelta
+from unittest.mock import Mock, patch
 
 from quantchain.backtesting.finrl_adapter import FinRLAdapter
 
@@ -91,7 +92,7 @@ class TestFinRLAdapter:
         obs = adapter.reset()
 
         assert adapter.current_step == 0
-        assert adapter.done == False
+        assert not adapter.done
         assert adapter.balance == adapter.initial_balance
         assert adapter.position == 0
         assert adapter.total_value == adapter.initial_balance
@@ -206,7 +207,7 @@ class TestFinRLAdapter:
 
         obs, reward, done, info = adapter.step([0, 0])
 
-        assert done == True
+        assert done
         assert adapter.current_step == 5
 
     def test_render(self, adapter, capsys):
