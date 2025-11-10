@@ -1,24 +1,18 @@
 """Tests for Interactive Brokers execution connector."""
 
-import threading
-import time
 from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from quantchain.connectors.ib_execution import IBExecutionConnector
 from quantchain.tools.trading_execution import (
-    AccountInfo,
     ExecutionError,
-    InsufficientFundsError,
-    OrderNotFoundError,
     OrderRequest,
     OrderResult,
     OrderSide,
     OrderStatus,
     OrderType,
-    Position,
     TimeInForce,
     ValidationError,
 )

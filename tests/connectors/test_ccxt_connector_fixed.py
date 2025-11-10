@@ -1,5 +1,7 @@
 """Tests for CCXT data connector."""
 
+# flake8: noqa: E402 - Module level imports need to happen after mock setup to avoid import errors
+
 import sys
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
@@ -170,10 +172,7 @@ class TestCCXTDataConnector:
 
     def test_initialization_success(self, mock_exchange):
         """Test successful initialization with default exchange."""
-        with patch(
-            "quantchain.connectors.ccxt_connector.ccxt.binance",
-            return_value=mock_exchange,
-        ):
+        with patch.object(ccxt_mock, "binance", return_value=mock_exchange):
             connector = CCXTDataConnector()
 
             assert connector.exchange == mock_exchange
@@ -191,10 +190,7 @@ class TestCCXTDataConnector:
 
     def test_initialization_custom_exchange(self, mock_exchange):
         """Test initialization with custom exchange."""
-        with patch(
-            "quantchain.connectors.ccxt_connector.ccxt.kraken",
-            return_value=mock_exchange,
-        ):
+        with patch.object(ccxt_mock, "kraken", return_value=mock_exchange):
             connector = CCXTDataConnector(exchange="kraken")
 
             assert connector.exchange == mock_exchange
