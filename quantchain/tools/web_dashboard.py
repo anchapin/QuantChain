@@ -18,6 +18,7 @@ import pandas as pd
 # Optional imports for web dashboard
 try:
     import plotly.graph_objects as go
+
     HAS_PLOTLY = True
 except ImportError:
     go = None
@@ -25,6 +26,7 @@ except ImportError:
 
 try:
     import streamlit as st
+
     HAS_STREAMLIT = True
 except ImportError:
     st = None
@@ -296,7 +298,7 @@ class VisualizationService:
         """
         if not HAS_PLOTLY:
             return None
-        """
+
         # Create a simple flow diagram
         steps = agent_reasoning.get("decision_steps", [])
 
@@ -578,9 +580,11 @@ class WebDashboardApp:
             port: Port number to run on
         """
         if not HAS_STREAMLIT:
-            print("Error: Streamlit is not available. Install with: pip install streamlit")
+            print(
+                "Error: Streamlit is not available. Install with: pip install streamlit"
+            )
             return
-            
+
         # Streamlit runs the app directly, so we just set up the page
         self._setup_page_config()
         self._render_main_page()
@@ -589,7 +593,7 @@ class WebDashboardApp:
         """Setup Streamlit page configuration."""
         if not HAS_STREAMLIT:
             return
-            
+
         st.set_page_config(
             page_title="QuantChain Dashboard",
             page_icon="📈",
@@ -601,7 +605,7 @@ class WebDashboardApp:
         """Render the main dashboard page."""
         if not HAS_STREAMLIT:
             return
-            
+
         st.title("📈 QuantChain Dashboard")
         st.markdown("---")
 

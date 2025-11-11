@@ -13,24 +13,28 @@ import pytest
 # Check for optional dependencies
 try:
     import torch
+
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
 
 try:
     from transformers import AutoModelForCausalLM, AutoTokenizer
+
     HAS_TRANSFORMERS = True
 except ImportError:
     HAS_TRANSFORMERS = False
 
 try:
     from peft import LoraConfig
+
     HAS_PEFT = True
 except ImportError:
     HAS_PEFT = False
 
 try:
     from datasets import load_dataset
+
     HAS_DATASETS = True
 except ImportError:
     HAS_DATASETS = False
@@ -203,7 +207,10 @@ class TestPrepareFinancialDataset:
             )
 
 
-@pytest.mark.skipif(not (HAS_TORCH and HAS_PEFT and HAS_TRANSFORMERS), reason="torch, peft, or transformers not available")
+@pytest.mark.skipif(
+    not (HAS_TORCH and HAS_PEFT and HAS_TRANSFORMERS),
+    reason="torch, peft, or transformers not available",
+)
 class TestFineTuneModelQLoRA:
     """Test QLoRA fine-tuning functionality."""
 

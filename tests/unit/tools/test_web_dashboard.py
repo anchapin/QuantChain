@@ -7,13 +7,15 @@ import pytest
 
 # Check for optional dependencies
 try:
-    import plotly
+    import plotly  # noqa: F401
+
     HAS_PLOTLY = True
 except ImportError:
     HAS_PLOTLY = False
 
 try:
-    import streamlit
+    import streamlit  # noqa: F401
+
     HAS_STREAMLIT = True
 except ImportError:
     HAS_STREAMLIT = False
@@ -91,7 +93,9 @@ def mock_dashboard_config():
     }
 
 
-@pytest.mark.skipif(not (HAS_PLOTLY and HAS_STREAMLIT), reason="plotly and streamlit not available")
+@pytest.mark.skipif(
+    not (HAS_PLOTLY and HAS_STREAMLIT), reason="plotly and streamlit not available"
+)
 class TestWebDashboardApp:
     """Test cases for WebDashboardApp."""
 
