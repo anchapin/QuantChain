@@ -76,11 +76,18 @@ jobs:
       run: |
         if [ "${{ matrix.python-version }}" = "3.13" ]; then
           # Run all tests for Python 3.13 (has ML dependencies installed)
-          pytest tests/unit -v
+          pytest tests/unit -v --cov=quantchain --cov-report=xml --cov-report=html --cov-report=term-missing
         else
           # Skip ML-dependent tests for other Python versions
-          pytest tests/unit -v -m "not requires_ml"
+          pytest tests/unit -v -m "not requires_ml" --cov=quantchain --cov-report=xml --cov-report=html --cov-report=term-missing
         fi
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@9cc74bf7e13a810454a28846494ddbc3795eb693
+      if: matrix.python-version == '3.13'  # Only upload coverage for one Python version
+      with:
+        files: ./coverage.xml
+        fail_ci_if_error: false
 
   integration-tests:
     runs-on: ubuntu-latest
@@ -129,4 +136,10 @@ jobs:
 
     - name: Run integration tests
       run: |
-        python -m pytest -m "integration and not slow" -v
+        python -m pytest -m "integration and not slow" -v --cov=quantchain --cov-report=xml --cov-report=html --cov-report=term-missing
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@9cc74bf7e13a810454a28846494ddbc3795eb693
+      with:
+        files: ./coverage.xml
+        fail_ci_if_error: false
