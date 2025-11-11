@@ -7,7 +7,6 @@ from typing import Dict, List, Optional
 from .secret_managers import (
     create_secret_manager,
     get_default_secret_manager,
-    InvalidCredentialFormatError,
     SecurityConfigurationError,
 )
 
@@ -67,7 +66,7 @@ class APISecurityManager:
             # Old API: passing env file path as first argument
             kwargs['env_file'] = backend
             backend = 'env'
-        
+
         if backend or config or kwargs:
             # Use custom configuration
             self._secret_manager = create_secret_manager(backend, config, **kwargs)
@@ -263,6 +262,3 @@ class CredentialNotFoundError(Exception):
     """Raised when requested credentials are not found."""
 
     pass
-
-
-

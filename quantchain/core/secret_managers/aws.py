@@ -168,9 +168,9 @@ class AWSSecretsManager(SecretManager):
         """
         try:
             secret_name = f"quantchain/{service}"
-            # Try to describe the secret without retrieving it
-            response = self.client.describe_secret(SecretId=secret_name)
-            return response is not None and not response.get("DeletedDate")
+            # Try to get the secret value to validate it exists and is accessible
+            response = self.client.get_secret_value(SecretId=secret_name)
+            return response is not None and "SecretString" in response
         except ClientError as e:
             if e.response["Error"]["Code"] == "ResourceNotFoundException":
                 return False

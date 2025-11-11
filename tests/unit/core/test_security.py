@@ -9,9 +9,9 @@ import pytest
 from quantchain.core.security import (
     APISecurityManager,
     CredentialNotFoundError,
-    InvalidCredentialFormatError,
     SecurityConfigurationError,
 )
+from quantchain.core.secret_managers.env import InvalidCredentialFormatError
 
 
 @pytest.mark.unit
@@ -536,7 +536,7 @@ class TestAPISecurityManager:
         """Test validation behavior with None credentials."""
         # Clear environment variables and mock .env file to be empty
         with patch.dict(os.environ, {}, clear=True), patch(
-            "quantchain.core.security.Path.exists", return_value=False
+            "quantchain.core.secret_managers.env.Path.exists", return_value=False
         ):
             manager = APISecurityManager()
             # Test validation when no credentials are stored - should return False
@@ -550,11 +550,11 @@ class TestAPISecurityManager:
         manager = APISecurityManager()
         manager.set_api_key("openai", "sk-test1234567890abcdef")
 
-        # Attempt to directly modify the internal storage
-        manager._credentials["openai"]["key"] = "modified-key"
+        # Test that _credentials attribute doesn't exist in the new architecture
+        assert not hasattr(manager, '_credentials'), "APISecurityManager should not expose _credentials directly"
 
-        # The modification should be reflected since we're accessing internal storage
-        assert manager.get_api_key("openai") == "modified-key"
+        # Test that credentials can still be retrieved through proper API
+        assert manager.get_api_key("openai") == "sk-test1234567890abcdef"
 
     def test_multiple_service_mixing(self) -> None:
         """Test mixing credentials from different sources (env vars and set_api_key)."""
