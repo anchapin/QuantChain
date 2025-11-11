@@ -125,7 +125,7 @@ class TechnicalIndicatorCalculator:
     @staticmethod
     def calculate_sma(ohlcv: OHLCVData, period: int) -> TechnicalIndicator:
         closes = ohlcv.closes
-        values = []
+        values: List[Optional[float]] = []
         for i in range(len(closes)):
             if i + 1 < period:
                 values.append(None)
@@ -143,7 +143,7 @@ class TechnicalIndicatorCalculator:
     @staticmethod
     def calculate_ema(ohlcv: OHLCVData, period: int) -> TechnicalIndicator:
         closes = ohlcv.closes
-        values = []
+        values: List[Optional[float]] = []
         k = 2 / (period + 1)
         ema = None
         for i, price in enumerate(closes):
@@ -153,7 +153,10 @@ class TechnicalIndicatorCalculator:
                 ema = sum(closes[:period]) / period
                 values.append(ema)
             else:
-                ema = price * k + ema * (1 - k)
+                if ema is not None:
+                    ema = price * k + ema * (1 - k)
+                else:
+                    ema = price
                 values.append(ema)
         signal = TechnicalIndicatorCalculator._determine_signal(values, "EMA")
         return TechnicalIndicator(

@@ -1,17 +1,13 @@
 # Current Todo List
 
+## Completed
+- ✅ [COMMIT-01] Review git status and staged changes
+- ✅ [COMMIT-02] Review git diff to check all changes
+- ✅ [COMMIT-03] Review recent commit history for message style
+
 ## In Progress
-- 🔄 [9] Create PR with fixes
+- 🔄 [COMMIT-04] Add relevant files to staging area
 
 ## Pending
-- ⏳ [10] Push changes to remote
-
-## Completed
-- ✅ [1] Clean logs directory and set up environment
-- ✅ [2] Detect current PR on GitHub (PR #47: feat: add FinRL adapter)
-- ✅ [3] Identify failing CI jobs (4 failed: unit-tests 3.11, lint-and-format, unit-tests 3.9, integration-tests 3.13)
-- ✅ [4] Download failure logs from GitHub
-- ✅ [5] Skip log analysis (encoded logs unreadable)
-- ✅ [6] Run local tests to identify issues
-- ✅ [7] Fix linting issues (flake8 violations)
-- ✅ [8] Commit linting fixes
+- ⏳ [COMMIT-05] Create commit with appropriate message
+- ⏳ [COMMIT-06] Push changes to remote repository

@@ -3,7 +3,7 @@
 import threading
 import time
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 # Import QuantChain components
 from ..tools.trading_execution import (
@@ -39,20 +39,20 @@ except ImportError as e:
 class IBWrapper(EWrapper):
     """Wrapper class for IB API callbacks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self._order_statuses = {}
-        self._account_summary = {}
-        self._positions = []
-        self._executions = []
-        self._contracts = {}
-        self._error_codes = {}
-        self._next_order_id = None
+        self._order_statuses: dict[int, Dict[str, Any]] = {}
+        self._account_summary: dict[str, float] = {}
+        self._positions: list[Any] = []
+        self._executions: list[Any] = []
+        self._contracts: dict[int, Any] = {}
+        self._error_codes: dict[int, Tuple[int, str]] = {}
+        self._next_order_id: Optional[int] = None
         self._lock = threading.Lock()
-        self._events = {}
-        self._connected = False
+        self._events: dict[int, threading.Event] = {}
+        self._connected: bool = False
 
-    def error(self, reqId: TickerId, errorCode: int, errorString: str):
+    def error(self, reqId: TickerId, errorCode: int, errorString: str) -> None:
         """Handle error messages from IB."""
         super().error(reqId, errorCode, errorString)
 
@@ -64,13 +64,13 @@ class IBWrapper(EWrapper):
             if reqId in self._events:
                 self._events[reqId].set()
 
-    def nextValidId(self, orderId: int):
+    def nextValidId(self, orderId: int) -> None:
         """Receive next valid order ID."""
         super().nextValidId(orderId)
         with self._lock:
             self._next_order_id = orderId
 
-    def managedAccounts(self, accountsList: str):
+    def managedAccounts(self, accountsList: str) -> None:
         """Receive list of managed accounts."""
         super().managedAccounts(accountsList)
 
@@ -87,7 +87,7 @@ class IBWrapper(EWrapper):
         clientId: int,
         whyHeld: str,
         mktCapPrice: float,
-    ):
+    ) -> None:
         """Receive order status updates."""
         super().orderStatus(
             orderId,
@@ -118,11 +118,11 @@ class IBWrapper(EWrapper):
         contract: IBContract,
         order: IBOrder,
         orderState: OrderState,
-    ):
+    ) -> None:
         """Receive open order information."""
         super().openOrder(orderId, contract, order, orderState)
 
-    def execDetails(self, reqId: int, contract: IBContract, execution):
+    def execDetails(self, reqId: int, contract: IBContract, execution: Any) -> None:
         """Receive execution details."""
         super().execDetails(reqId, contract, execution)
 
@@ -141,7 +141,7 @@ class IBWrapper(EWrapper):
 
     def accountSummary(
         self, reqId: int, account: str, tag: str, value: str, currency: str
-    ):
+    ) -> None:
         """Receive account summary information."""
         super().accountSummary(reqId, account, tag, value, currency)
 
@@ -150,7 +150,7 @@ class IBWrapper(EWrapper):
 
     def position(
         self, account: str, contract: IBContract, position: float, avgCost: float
-    ):
+    ) -> None:
         """Receive position information."""
         super().position(account, contract, position, avgCost)
 
@@ -164,19 +164,19 @@ class IBWrapper(EWrapper):
                 }
             )
 
-    def contractDetails(self, reqId: int, contractDetails):
+    def contractDetails(self, reqId: int, contractDetails: Any) -> None:
         """Receive contract details."""
         super().contractDetails(reqId, contractDetails)
 
         with self._lock:
             self._contracts[reqId] = contractDetails
 
-    def connectAck(self):
+    def connectAck(self) -> None:
         """Acknowledge successful connection."""
         super().connectAck()
         self._connected = True
 
-    def connectionClosed(self):
+    def connectionClosed(self) -> None:
         """Handle connection closure."""
         super().connectionClosed()
         self._connected = False
@@ -185,12 +185,12 @@ class IBWrapper(EWrapper):
 class IBClient(EClient):
     """Client class for IB API interactions."""
 
-    def __init__(self, wrapper):
+    def __init__(self, wrapper: Any) -> None:
         super().__init__(wrapper)
         self._next_req_id = 1
         self._lock = threading.Lock()
 
-    def get_next_req_id(self):
+    def get_next_req_id(self) -> int:
         """Get next request ID."""
         with self._lock:
             req_id = self._next_req_id
@@ -297,7 +297,7 @@ class IBExecutionConnector(TradingExecutionInterface):
         except Exception as e:
             raise ExecutionError(f"Failed to connect to IB: {str(e)}") from e
 
-    def run_message_loop(self):
+    def run_message_loop(self) -> None:
         """Run the IB API message loop."""
         try:
             self.client.run()
@@ -309,7 +309,9 @@ class IBExecutionConnector(TradingExecutionInterface):
         if req_id not in self.wrapper._events:
             self.wrapper._events[req_id] = threading.Event()
 
-        return self.wrapper._events[req_id].wait(timeout or self.timeout)
+        return self.wrapper._events[req_id].wait(
+            timeout if timeout is not None else self.timeout
+        )
 
     def _create_contract(self, symbol: str) -> IBContract:
         """Create appropriate IB Contract based on symbol format."""
@@ -557,7 +559,7 @@ class IBExecutionConnector(TradingExecutionInterface):
                 price=None,  # Would need to track this separately
                 stop_price=None,
                 avg_fill_price=order_status.get("avgFillPrice"),
-                status=self._convert_order_status(order_status.get("status")),
+                status=self._convert_order_status(order_status.get("status", "")),
                 timestamp=datetime.now(timezone.utc),
                 updated_at=datetime.now(timezone.utc),
             )
