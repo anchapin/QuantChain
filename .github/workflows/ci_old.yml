@@ -94,7 +94,7 @@ jobs:
 
     - name: Run unit tests
       run: |
-        python -m pytest -m "not slow and not integration" --cov=quantchain --cov-report=xml --cov-report=term --timeout=240
+        python -m pytest -m "not slow and not integration" -v
 
     - name: Upload coverage reports
       uses: codecov/codecov-action@9cc74bf7e13a810454a28846494ddbc3795eb693
@@ -145,7 +145,7 @@ jobs:
 
     - name: Run integration tests
       run: |
-        python -m pytest -m "integration and not slow" --cov=quantchain --cov-report=xml --cov-report=term
+        python -m pytest -m "integration and not slow" -v
 
     - name: Upload coverage reports
       uses: codecov/codecov-action@9cc74bf7e13a810454a28846494ddbc3795eb693
@@ -197,7 +197,7 @@ jobs:
 
     - name: Run slow tests
       run: |
-        python -m pytest -m "slow" --cov=quantchain --cov-report=xml --cov-report=term
+        python -m pytest -m "slow" -v
 
     - name: Upload coverage reports
       uses: codecov/codecov-action@9cc74bf7e13a810454a28846494ddbc3795eb693
