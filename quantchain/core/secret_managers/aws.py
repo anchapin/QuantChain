@@ -3,7 +3,7 @@
 import json
 import logging
 import os
-from typing import Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 try:
     import boto3
@@ -28,7 +28,7 @@ class AWSSecretsManager(SecretManager):
         aws_secret_access_key: Optional[str] = None,
         aws_session_token: Optional[str] = None,
         profile_name: Optional[str] = None,
-        **kwargs: Dict,
+        **kwargs: Any,
     ) -> None:
         """Initialize AWS Secrets Manager.
 
@@ -70,7 +70,7 @@ class AWSSecretsManager(SecretManager):
                 client_kwargs["aws_session_token"] = self.aws_session_token
 
         # Override with any additional kwargs
-        client_kwargs.update(kwargs)
+        client_kwargs.update(kwargs)  # type: ignore[arg-type]
 
         # Initialize client
         self.client = session.client("secretsmanager", **client_kwargs)
@@ -95,23 +95,23 @@ class AWSSecretsManager(SecretManager):
         """
         try:
             # Try to get the secret by its name/ARN
-            response = self.client.get_secret_value(SecretId=key)
+            response: Dict[str, Any] = self.client.get_secret_value(SecretId=key)
 
             if "SecretString" in response:
-                secret_string = response["SecretString"]
+                secret_string: str = response["SecretString"]
                 # Try to parse as JSON first
                 try:
-                    secret_data = json.loads(secret_string)
+                    secret_data: Dict[str, Union[str, Any]] = json.loads(secret_string)
                     # If it's a simple key-value pair with a single key, return the value
                     if len(secret_data) == 1:
-                        return next(iter(secret_data.values()))
+                        return str(next(iter(secret_data.values())))
                     # Otherwise return the entire JSON string
                     return secret_string
                 except json.JSONDecodeError:
                     # Not JSON, return as is
                     return secret_string
             elif "SecretBinary" in response:
-                return response["SecretBinary"]
+                return str(response["SecretBinary"])
 
             return None
         except ClientError as e:
@@ -134,13 +134,14 @@ class AWSSecretsManager(SecretManager):
         """
         try:
             secret_name = f"quantchain/{service}"
-            response = self.client.get_secret_value(SecretId=secret_name)
+            response: Dict[str, Any] = self.client.get_secret_value(SecretId=secret_name)
 
             if "SecretString" in response:
-                secret_string = response["SecretString"]
+                secret_string: str = response["SecretString"]
                 try:
-                    # Parse as JSON and return as dict
-                    return json.loads(secret_string)
+                    # Parse as JSON and convert all values to strings
+                    secret_data: Dict[str, Union[str, Any]] = json.loads(secret_string)
+                    return {k: str(v) for k, v in secret_data.items()}
                 except json.JSONDecodeError:
                     # Not JSON, treat entire string as a single credential
                     return {"value": secret_string}

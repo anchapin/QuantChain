@@ -1,8 +1,9 @@
 """HashiCorp Vault secret manager implementation."""
 
+import json
 import logging
 import os
-from typing import Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 try:
     import hvac
@@ -93,22 +94,20 @@ class VaultSecretManager(SecretManager):
         """
         try:
             path = self._build_secret_path(key)
-            response = self.client.secrets.kv.v2.read_secret_version(path=path)
+            response: Dict[str, Any] = self.client.secrets.kv.v2.read_secret_version(path=path)
 
             if response and "data" in response and "data" in response["data"]:
                 # KV v2 stores the actual data under data.data
-                secret_data = response["data"]["data"]
+                secret_data: Dict[str, Union[str, Any]] = response["data"]["data"]
                 # If we have a simple key-value pair, return the value
                 # Otherwise, return the entire dict as JSON string
                 if len(secret_data) == 1 and "value" in secret_data:
-                    return secret_data["value"]
+                    return str(secret_data["value"])
                 elif len(secret_data) == 1:
                     # Return the single value
-                    return next(iter(secret_data.values()))
+                    return str(next(iter(secret_data.values())))
                 else:
                     # Multiple values, return as JSON string
-                    import json
-
                     return json.dumps(secret_data)
 
             return None
@@ -127,11 +126,13 @@ class VaultSecretManager(SecretManager):
         """
         try:
             path = self._build_secret_path(f"services/{service}")
-            response = self.client.secrets.kv.v2.read_secret_version(path=path)
+            response: Dict[str, Any] = self.client.secrets.kv.v2.read_secret_version(path=path)
 
             if response and "data" in response and "data" in response["data"]:
                 # KV v2 stores the actual data under data.data
-                return response["data"]["data"] or {}
+                secret_data: Dict[str, Any] = response["data"]["data"]
+                # Convert all values to strings
+                return {k: str(v) for k, v in secret_data.items()} if secret_data else {}
 
             return {}
         except Exception as e:

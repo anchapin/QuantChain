@@ -3,7 +3,7 @@
 import json
 import logging
 import os
-from typing import Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 try:
     from google.api_core import exceptions as gcp_exceptions
@@ -123,17 +123,17 @@ class GCPSecretManager(SecretManager):
                 full_key = key
 
             name = self._build_secret_version_name(full_key)
-            response = self.client.access_secret_version(request={"name": name})
+            response: Any = self.client.access_secret_version(request={"name": name})
 
             if response.payload and response.payload.data:
-                secret_value = response.payload.data.decode("UTF-8")
+                secret_value: str = response.payload.data.decode("UTF-8")
 
                 # Try to parse as JSON first
                 try:
-                    secret_data = json.loads(secret_value)
+                    secret_data: Dict[str, Union[str, Any]] = json.loads(secret_value)
                     # If it's a simple key-value pair with a single key, return the value
                     if len(secret_data) == 1:
-                        return next(iter(secret_data.values()))
+                        return str(next(iter(secret_data.values())))
                     # Otherwise return the entire JSON string
                     return secret_value
                 except json.JSONDecodeError:
@@ -162,13 +162,14 @@ class GCPSecretManager(SecretManager):
         try:
             secret_key = f"quantchain/{service}"
             name = self._build_secret_version_name(secret_key)
-            response = self.client.access_secret_version(request={"name": name})
+            response: Any = self.client.access_secret_version(request={"name": name})
 
             if response.payload and response.payload.data:
-                secret_value = response.payload.data.decode("UTF-8")
+                secret_value: str = response.payload.data.decode("UTF-8")
                 try:
-                    # Parse as JSON and return as dict
-                    return json.loads(secret_value)
+                    # Parse as JSON and convert all values to strings
+                    secret_data: Dict[str, Union[str, Any]] = json.loads(secret_value)
+                    return {k: str(v) for k, v in secret_data.items()}
                 except json.JSONDecodeError:
                     # Not JSON, treat entire string as a single credential
                     return {"value": secret_value}

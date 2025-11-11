@@ -2,7 +2,7 @@
 
 import logging
 import os
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional, Type, Union
 
 from .base import SecretManager
 from .env import EnvSecretManager
@@ -10,18 +10,24 @@ from .env import EnvSecretManager
 # Optional dependencies - only import if available
 try:
     from .aws import AWSSecretsManager
+    _aws_available = True
 except ImportError:
-    AWSSecretsManager = None
+    AWSSecretsManager = None  # type: ignore
+    _aws_available = False
 
 try:
     from .gcp import GCPSecretManager
+    _gcp_available = True
 except ImportError:
-    GCPSecretManager = None
+    GCPSecretManager = None  # type: ignore
+    _gcp_available = False
 
 try:
     from .vault import VaultSecretManager
+    _vault_available = True
 except ImportError:
-    VaultSecretManager = None
+    VaultSecretManager = None  # type: ignore
+    _vault_available = False
 
 logger = logging.getLogger(__name__)
 
@@ -31,14 +37,14 @@ SECRET_MANAGERS: Dict[str, Type[SecretManager]] = {
 }
 
 # Add optional managers if available
-if VaultSecretManager:
-    SECRET_MANAGERS["vault"] = VaultSecretManager
+if _vault_available:
+    SECRET_MANAGERS["vault"] = VaultSecretManager  # type: ignore
 
-if AWSSecretsManager:
-    SECRET_MANAGERS["aws"] = AWSSecretsManager
+if _aws_available:
+    SECRET_MANAGERS["aws"] = AWSSecretsManager  # type: ignore
 
-if GCPSecretManager:
-    SECRET_MANAGERS["gcp"] = GCPSecretManager
+if _gcp_available:
+    SECRET_MANAGERS["gcp"] = GCPSecretManager  # type: ignore
 
 
 def create_secret_manager(
