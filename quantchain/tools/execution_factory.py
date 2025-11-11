@@ -75,11 +75,25 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
 
     if broker == "alpaca":
         # Get API credentials
-        from ..core.security import APISecurityManager
+        from ..core.security import APISecurityManager, CredentialNotFoundError
 
         security_manager = APISecurityManager()
-        api_key = security_manager.get_api_key("alpaca")
-        api_secret = security_manager.get_api_secret("alpaca")
+        try:
+            api_key = security_manager.get_api_key("alpaca")
+            api_secret = security_manager.get_api_secret("alpaca")
+        except CredentialNotFoundError:
+            # For paper trading, check for credentials or raise proper error
+            if paper_trading:
+                raise AuthenticationError(
+                    "Alpaca API credentials required for paper trading. "
+                    "Set ALPACA_API_KEY and ALPACA_API_SECRET environment variables, "
+                    "or configure them in your config file."
+                )
+            else:
+                raise AuthenticationError(
+                    "Alpaca API key and secret required for live trading. "
+                    "Set ALPACA_API_KEY and ALPACA_API_SECRET environment variables."
+                )
 
         # For paper trading, check for credentials or raise proper error
         if not api_key or not api_secret:
