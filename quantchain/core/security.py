@@ -56,10 +56,18 @@ class APISecurityManager:
         Args:
             backend: Secret backend to use ('vault', 'aws', 'gcp', 'env').
                      If None, checks QUANTCHAIN_SECRET_BACKEND env var.
+                     For backward compatibility, if this is a file path ending in .env,
+                     will use 'env' backend with that file.
             config: Configuration dictionary for the secret manager
             **kwargs: Additional configuration parameters passed to secret manager
         """
         # Initialize the appropriate secret manager
+        # Handle backward compatibility: if backend looks like a file path, use env backend
+        if backend and isinstance(backend, str) and backend.endswith('.env'):
+            # Old API: passing env file path as first argument
+            kwargs['env_file'] = backend
+            backend = 'env'
+        
         if backend or config or kwargs:
             # Use custom configuration
             self._secret_manager = create_secret_manager(backend, config, **kwargs)
