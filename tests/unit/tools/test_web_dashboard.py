@@ -96,6 +96,7 @@ def mock_dashboard_config():
 @pytest.mark.skipif(
     not (HAS_PLOTLY and HAS_STREAMLIT), reason="plotly and streamlit not available"
 )
+@pytest.mark.requires_web
 class TestWebDashboardApp:
     """Test cases for WebDashboardApp."""
 
@@ -137,6 +138,7 @@ class TestWebDashboardApp:
         assert app.config == mock_config
 
 
+@pytest.mark.requires_web
 class TestMonitoringService:
     """Test cases for MonitoringService."""
 
@@ -215,6 +217,7 @@ class TestMonitoringService:
 
 
 @pytest.mark.skipif(not HAS_PLOTLY, reason="plotly not available")
+@pytest.mark.requires_web
 class TestVisualizationService:
     """Test cases for VisualizationService."""
 
@@ -310,6 +313,7 @@ class TestVisualizationService:
 
 
 @pytest.mark.skipif(not HAS_STREAMLIT, reason="streamlit not available")
+@pytest.mark.requires_web
 class TestConfigurationWizard:
     """Test cases for ConfigurationWizard."""
 
@@ -395,6 +399,7 @@ class TestConfigurationWizard:
                 mock_dump.assert_called_once()
 
 
+@pytest.mark.requires_web
 class TestMonitoringServiceAdditional:
     """Additional test cases for MonitoringService to improve coverage."""
 
@@ -470,6 +475,7 @@ class TestMonitoringServiceAdditional:
         assert len(status["recent_trades"]) > 0
 
 
+@pytest.mark.requires_web
 class TestVisualizationServiceAdditional:
     """Additional test cases for VisualizationService to improve coverage."""
 
@@ -579,6 +585,7 @@ class TestVisualizationServiceAdditional:
             assert hasattr(figure, "data")
 
 
+@pytest.mark.requires_web
 class TestConfigurationWizardAdditional:
     """Additional test cases for ConfigurationWizard to improve coverage."""
 
@@ -653,6 +660,7 @@ class TestConfigurationWizardAdditional:
         assert result is False
 
 
+@pytest.mark.requires_web
 class TestWebDashboardAppAdditional:
     """Additional test cases for WebDashboardApp to improve coverage."""
 
@@ -723,6 +731,7 @@ class TestWebDashboardAppAdditional:
         assert app.config_wizard is not None
 
 
+@pytest.mark.requires_web
 class TestDataStructures:
     """Test data structure classes for proper initialization."""
 
@@ -763,6 +772,7 @@ class TestDataStructures:
         assert config.host == "custom.host"
 
 
+@pytest.mark.requires_web
 class TestWebDashboardIntegration:
     """Integration tests for Web Dashboard components."""
 

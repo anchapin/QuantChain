@@ -13,6 +13,12 @@ polygon-api-client>=1.0.0
 ibapi>=9.81.1.post1
 ccxt>=4.0.0
 
+# Web dashboard dependencies needed for tests
+streamlit>=1.20.0
+plotly>=5.0.0
+narwhals>=1.0.0
+blinker>=1.6.0
+
 # Type stubs for mypy
 types-requests
 types-PyYAML

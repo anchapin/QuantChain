@@ -122,6 +122,7 @@ class TestTrainingArguments:
 
 
 @pytest.mark.skipif(not HAS_TORCH, reason="torch not available")
+@pytest.mark.requires_ml
 class TestSetupFineTuningEnvironment:
     """Test fine-tuning environment setup."""
 
@@ -163,6 +164,7 @@ class TestSetupFineTuningEnvironment:
 
 
 @pytest.mark.skipif(not HAS_DATASETS, reason="datasets not available")
+@pytest.mark.requires_ml
 class TestPrepareFinancialDataset:
     """Test financial dataset preparation."""
 
@@ -211,6 +213,7 @@ class TestPrepareFinancialDataset:
     not (HAS_TORCH and HAS_PEFT and HAS_TRANSFORMERS),
     reason="torch, peft, or transformers not available",
 )
+@pytest.mark.requires_ml
 class TestFineTuneModelQLoRA:
     """Test QLoRA fine-tuning functionality."""
 
@@ -332,6 +335,7 @@ class TestFineTuneModelQLoRA:
             mock_fine_tune.assert_called_once_with(config, mock_dataset, training_args)
 
 
+@pytest.mark.requires_ml
 class TestQuantizeModel:
     """Test model quantization functionality."""
 
@@ -407,6 +411,7 @@ class TestQuantizeModel:
             )
 
 
+@pytest.mark.requires_ml
 class TestValidateFineTunedModel:
     """Test model validation functionality."""
 
@@ -468,6 +473,7 @@ class TestErrorClasses:
         assert isinstance(validation_error, FineTuningError)
 
 
+@pytest.mark.requires_ml
 class TestIntegration:
     """Integration tests for fine-tuning workflow."""
 
