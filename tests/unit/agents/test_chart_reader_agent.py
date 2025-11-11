@@ -40,9 +40,9 @@ class TestTechnicalIndicatorCalculator:
     """Test the TechnicalIndicatorCalculator."""
 
     @pytest.fixture(autouse=True)
-    def setup_pandas(self, mocker):
+    def setup_pandas(self):
         """Mock pandas to be available for technical indicator tests."""
-        mocker.patch("quantchain.agents.chart_reader_agent._PANDAS_AVAILABLE", True)
+        from unittest.mock import patch, Mock
 
         # Create a comprehensive pandas Series mock
         class MockSeries:
@@ -72,7 +72,10 @@ class TestTechnicalIndicatorCalculator:
 
         mock_pd = Mock()
         mock_pd.Series = MockSeries
-        mocker.patch("quantchain.agents.chart_reader_agent.pd", mock_pd)
+        
+        with patch("quantchain.agents.chart_reader_agent._PANDAS_AVAILABLE", True):
+            with patch("quantchain.agents.chart_reader_agent.pd", mock_pd):
+                yield
 
     @pytest.fixture
     def sample_ohlcv(self) -> None:
@@ -274,11 +277,12 @@ class TestChartRenderer:
     """Test the ChartRenderer."""
 
     @pytest.fixture(autouse=True)
-    def setup_pandas_and_mocks(self, mocker):
+    def setup_pandas_and_mocks(self):
         """Mock pandas and chart dependencies for ChartRenderer tests."""
-        mocker.patch("quantchain.agents.chart_reader_agent._PANDAS_AVAILABLE", True)
-        mock_pd = Mock()
+        from unittest.mock import patch, Mock
+        
         # Mock DataFrame conversion
+        mock_pd = Mock()
         mock_pd.DataFrame.return_value = Mock()
         mock_df = Mock()
 
@@ -324,18 +328,21 @@ class TestChartRenderer:
 
         mock_df = MockDataFrame()
         mock_pd.DataFrame = Mock(return_value=mock_df)
-        mocker.patch("quantchain.agents.chart_reader_agent.pd", mock_pd)
-
+        
         mock_plt = Mock()
         mock_plt.BytesIO.return_value = Mock(
             getvalue=Mock(return_value=b"fake_chart_data")
         )
-        mocker.patch("quantchain.agents.chart_reader_agent.plt", mock_plt)
-
+        
         mock_mpf = Mock()
         mock_mpf.plot.return_value = (Mock(), [Mock(), Mock()])
         mock_mpf.make_addplot.return_value = Mock()
-        mocker.patch("quantchain.agents.chart_reader_agent.mpf", mock_mpf)
+        
+        with patch("quantchain.agents.chart_reader_agent._PANDAS_AVAILABLE", True):
+            with patch("quantchain.agents.chart_reader_agent.pd", mock_pd):
+                with patch("quantchain.agents.chart_reader_agent.plt", mock_plt):
+                    with patch("quantchain.agents.chart_reader_agent.mpf", mock_mpf):
+                        yield
 
     @pytest.fixture
     def renderer(self) -> ChartRenderer:
