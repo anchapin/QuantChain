@@ -1,35 +1,32 @@
 """Alpaca execution connector for equity and crypto trading."""
 
 from datetime import datetime, timezone
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 
-from alpaca.trading import (
-    TradingClient,
-    OrderRequest as AlpacaOrderRequest,
-    OrderSide as AlpacaOrderSide,
-    OrderType as AlpacaOrderType,
-    TimeInForce as AlpacaTimeInForce,
-    GetAssetsRequest,
-    TakeProfitRequest,
-    StopLossRequest,
-)
+from alpaca.trading import GetAssetsRequest
+from alpaca.trading import OrderRequest as AlpacaOrderRequest
+from alpaca.trading import OrderSide as AlpacaOrderSide
+from alpaca.trading import OrderType as AlpacaOrderType
+from alpaca.trading import StopLossRequest, TakeProfitRequest
+from alpaca.trading import TimeInForce as AlpacaTimeInForce
+from alpaca.trading import TradingClient
 
+from ..core.exceptions import AuthenticationError
 from ..tools.trading_execution import (
-    TradingExecutionInterface,
+    AccountInfo,
+    ExecutionError,
+    InsufficientFundsError,
+    OrderNotFoundError,
     OrderRequest,
     OrderResult,
     OrderSide,
-    OrderType,
     OrderStatus,
-    TimeInForce,
+    OrderType,
     Position,
-    AccountInfo,
-    ExecutionError,
+    TimeInForce,
+    TradingExecutionInterface,
     ValidationError,
-    InsufficientFundsError,
-    OrderNotFoundError,
 )
-from ..core.exceptions import AuthenticationError
 
 
 class AlpacaExecutionConnector(TradingExecutionInterface):

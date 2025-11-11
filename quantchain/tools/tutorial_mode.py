@@ -1,22 +1,22 @@
 """Tutorial mode for human learning-focused trading simulation."""
 
 import uuid
-from datetime import datetime, timezone
-from typing import List, Dict, Any, Optional
-from dataclasses import dataclass, field
 import warnings
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
+from ..core.config import QuantChainConfig
+from ..core.reflection import AgentAction, ReflectionEngine
+from .paper_trading import PaperTradingExecutor, PerformanceMetrics
 from .trading_execution import (
-    TradingExecutionInterface,
+    AccountInfo,
     OrderRequest,
     OrderResult,
     OrderStatus,
     Position,
-    AccountInfo,
+    TradingExecutionInterface,
 )
-from .paper_trading import PaperTradingExecutor, PerformanceMetrics
-from ..core.reflection import ReflectionEngine, AgentAction
-from ..core.config import QuantChainConfig
 
 
 @dataclass
@@ -615,8 +615,8 @@ class TutorialExecutor(TradingExecutionInterface):
         self.rag_system = None
         try:
             from ..core.rag_system import (
-                MarketDataRAG,
                 ChromaVectorStore,
+                MarketDataRAG,
                 SentenceTransformerProvider,
             )
 

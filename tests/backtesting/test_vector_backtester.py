@@ -3,17 +3,17 @@ Failing tests for custom vector backtester.
 Following TDD principles - these tests will fail initially.
 """
 
-import pytest
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
 
-from quantchain.backtesting.vector_backtester import (
-    VectorBacktester,
-    VectorizedPositionManager,
-    VectorBacktestError,
-    SignalProcessingError,
-)
 from quantchain.backtesting.engine import BacktestConfig
+from quantchain.backtesting.vector_backtester import (
+    SignalProcessingError,
+    VectorBacktester,
+    VectorBacktestError,
+    VectorizedPositionManager,
+)
 
 
 @pytest.mark.skip(

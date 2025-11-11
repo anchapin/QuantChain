@@ -2,12 +2,13 @@
 Performance metrics calculation using QuantStats and Empyrical libraries.
 """
 
-from typing import Dict, Any, Optional
-import pandas as pd
+from typing import Any, Dict, Optional
+
 import numpy as np
+import pandas as pd
 
 # Import from engine for type annotations
-from .engine import BacktestResult, MetricsResult
+from .engine import MetricsResult, BacktestResult
 
 # Try to import optional libraries
 try:

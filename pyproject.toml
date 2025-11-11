@@ -171,4 +171,7 @@ markers = [
     "integration: mark test as an integration test (component interaction)",
     "slow: mark test as slow running (backtesting, complex scenarios)",
     "requires_backtestingpy: mark test that requires Backtesting.py",
+    "coverage: mark test as additional coverage test",
+    "requires_ml: mark test that requires ML dependencies (torch, transformers, etc.)",
+    "requires_web: mark test that requires web dashboard dependencies (streamlit, plotly, narwhals, blinker)",
 ]

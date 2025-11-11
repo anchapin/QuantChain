@@ -1,0 +1,2 @@
+class EWrapper:
+    pass

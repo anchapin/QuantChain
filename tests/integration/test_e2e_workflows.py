@@ -1,13 +1,14 @@
 """Integration tests for end-to-end workflows in QuantChain."""
 
-import pytest
-import pandas as pd
 from datetime import datetime
 from unittest.mock import Mock, patch
 
+import pandas as pd
+import pytest
+
 from quantchain.backtesting.engine import (
-    BacktestEngine,
     BacktestConfig,
+    BacktestEngine,
     BacktestResult,
     MetricsResult,
     filter_data_by_date_range,
@@ -15,8 +16,8 @@ from quantchain.backtesting.engine import (
 )
 from quantchain.backtesting.langgraph_adapter import LangGraphBacktestAdapter
 from quantchain.connectors.dexscreener_connector import DexscreenerDataConnector
-from quantchain.tools.social_media_scraper import SocialMediaScraper
 from quantchain.tools.execution import AlpacaExecutionTool
+from quantchain.tools.social_media_scraper import SocialMediaScraper
 
 
 @pytest.fixture

@@ -1,33 +1,34 @@
 """Alpaca data connector for equity and crypto data."""
 
-import pandas as pd
-from typing import List, Dict, Optional, Any, Tuple
-from datetime import datetime, timezone
 import time
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Tuple
+
+import pandas as pd
 from alpaca.data import (
     CryptoHistoricalDataClient,
     StockHistoricalDataClient,
     TimeFrame,
     TimeFrameUnit,
 )
+from alpaca.data.enums import DataFeed
 from alpaca.data.requests import (
     CryptoBarsRequest,
-    StockBarsRequest,
     CryptoLatestQuoteRequest,
+    StockBarsRequest,
     StockLatestQuoteRequest,
 )
-from alpaca.data.enums import DataFeed
 from alpaca.trading import TradingClient
-from alpaca.trading.requests import GetAssetsRequest
 from alpaca.trading.enums import AssetClass
+from alpaca.trading.requests import GetAssetsRequest
 
-from .base_interface import DataFeedInterface
 from ..core.exceptions import (
-    DataSourceError,
     AuthenticationError,
+    DataSourceError,
     RateLimitError,
     SymbolNotFoundError,
 )
+from .base_interface import DataFeedInterface
 
 
 class AlpacaDataConnector(DataFeedInterface):

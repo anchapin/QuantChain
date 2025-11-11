@@ -4,10 +4,6 @@ __version__ = "0.1.0"
 __author__ = "QuantChain Team"
 __email__ = "team@quantchain.dev"
 
-from . import agents
-from . import tools
-from . import connectors
-from . import backtesting
-from . import core
+from . import agents, backtesting, connectors, core, tools
 
 __all__ = ["agents", "tools", "connectors", "backtesting", "core"]

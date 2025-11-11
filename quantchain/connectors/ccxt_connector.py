@@ -8,18 +8,19 @@ except ImportError:
     CCXT_AVAILABLE = False
     ccxt = None
 
-import pandas as pd
-from typing import List, Dict, Optional, Any
-from datetime import datetime, timezone
 import logging
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
 
-from .base_interface import DataFeedInterface
+import pandas as pd
+
 from ..core.exceptions import (
-    DataSourceError,
     AuthenticationError,
+    DataSourceError,
     RateLimitError,
     SymbolNotFoundError,
 )
+from .base_interface import DataFeedInterface
 
 
 class CCXTDataConnector(DataFeedInterface):
@@ -513,6 +514,11 @@ class CCXTDataConnector(DataFeedInterface):
                     raise SymbolNotFoundError(
                         f"Symbol {symbol} not found on {self.exchange_name}: "
                         f"{str(e)}"
+                    ) from e
+                elif "Invalid API key" in error_str:
+                    # This is test case for AuthenticationError
+                    raise AuthenticationError(
+                        f"Authentication failed for {self.exchange_name}: {str(e)}"
                     ) from e
                 elif "Rate limit" in error_str or "RateLimit" in error_type_str:
                     raise RateLimitError(

@@ -2,9 +2,10 @@
 Integration with Backtesting.py library for vectorized backtesting.
 """
 
-from typing import Any, Optional
-import pandas as pd
 from dataclasses import dataclass
+from typing import Any, Optional
+
+import pandas as pd
 
 try:
     from backtesting import Backtest, Strategy
@@ -13,8 +14,8 @@ except ImportError:
     Strategy = None
 
 from quantchain.backtesting.engine import (
-    BacktestEngine,
     BacktestConfig,
+    BacktestEngine,
     BacktestResult,
     MetricsResult,
 )

@@ -1,16 +1,16 @@
 """Core agent engine using LangGraph for QuantChain."""
 
-from typing import Dict, Any, List, Optional, TypedDict, TYPE_CHECKING
 from dataclasses import dataclass
 from datetime import datetime
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypedDict
 
 if TYPE_CHECKING:
-    from langgraph.graph import StateGraph, END
     from langchain_core.tools import BaseTool
+    from langgraph.graph import END, StateGraph
 
 try:
-    from langgraph.graph import StateGraph, END  # noqa: F811
     from langchain_core.tools import BaseTool  # noqa: F811
+    from langgraph.graph import END, StateGraph  # noqa: F811
 except ImportError:
     StateGraph = None  # type: ignore[assignment,misc]
     END = None  # type: ignore[assignment,misc]
@@ -18,7 +18,7 @@ except ImportError:
 
 from .config import QuantChainConfig
 from .llm_providers import LLMProvider, create_llm_provider
-from .reflection import ReflectionEngine, AgentAction, ReflectionReport
+from .reflection import AgentAction, ReflectionEngine, ReflectionReport
 
 
 @dataclass
@@ -76,8 +76,8 @@ class QuantChainAgent:
         if rag_config.get("enabled", False):
             from .rag_system import (
                 ChromaVectorStore,
-                SentenceTransformerProvider,
                 MarketDataRAG,
+                SentenceTransformerProvider,
             )
 
             vector_store = ChromaVectorStore(

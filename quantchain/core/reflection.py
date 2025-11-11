@@ -1,9 +1,9 @@
 """Reflection system for agent performance analysis."""
 
-from typing import List, Dict, Any, Optional
+import statistics
 from dataclasses import dataclass
 from datetime import datetime
-import statistics
+from typing import Any, Dict, List, Optional
 
 
 @dataclass

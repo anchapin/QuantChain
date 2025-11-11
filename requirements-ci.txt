@@ -1,14 +1,24 @@
-# Minimal CI dependencies for Docker build testing
-# Core dependencies only - skip heavy ML libraries for CI
-
-# Essential core
+# Minimal CI dependencies - excludes heavy ML packages to save disk space
+langchain>=0.1.0
+langgraph>=0.1.0
+openai>=1.0.0
+anthropic>=0.20.0
 PyYAML>=6.0.0
 numpy>=1.21.0
+pandas>=1.3.0
+
+# Trading and data dependencies (minimal)
+alpaca-py>=0.43.1
+polygon-api-client>=1.0.0
+ibapi>=9.81.1.post1
+ccxt>=4.0.0
+
+# Web dashboard dependencies needed for tests
+streamlit>=1.20.0
+plotly>=5.0.0
+narwhals>=1.0.0
+blinker>=1.6.0
 
 # Type stubs for mypy
 types-requests
 types-PyYAML
-
-# Note: Heavy dependencies like langchain, chromadb, sentence-transformers, 
-# torch, and onnxruntime are excluded to speed up CI builds
-# They will be installed in full builds when needed

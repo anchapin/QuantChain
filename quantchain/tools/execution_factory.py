@@ -2,10 +2,8 @@
 
 from ..core.config import QuantChainConfig
 from ..core.exceptions import AuthenticationError, ConfigurationError
-from .trading_execution import TradingExecutionInterface
-from ..connectors.alpaca_execution import AlpacaExecutionConnector
-from ..connectors.ib_async_execution import IBExecutionConnector
 from .paper_trading import PaperTradingExecutor
+from .trading_execution import TradingExecutionInterface
 from .tutorial_mode import TutorialExecutor
 
 
@@ -98,6 +96,9 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
         assert api_key is not None
         assert api_secret is not None
 
+        # Lazy import to avoid circular import
+        from ..connectors.alpaca_execution import AlpacaExecutionConnector
+
         return AlpacaExecutionConnector(
             api_key=api_key, api_secret=api_secret, use_paper=paper_trading
         )
@@ -115,6 +116,9 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
         timeout = config.get("trading.ib.timeout", 10)
         account = config.get("trading.ib.account", None)
 
+        # Lazy import to avoid circular import
+        from ..connectors.ib_execution import IBExecutionConnector
+
         return IBExecutionConnector(
             host=host, port=port, client_id=client_id, timeout=timeout, account=account
         )
@@ -125,8 +129,6 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
 
     else:
         raise ConfigurationError(
-            (
-                f"Unsupported broker: {broker}. "
-                "Supported: alpaca, ib, interactive_brokers, paper, tutorial, ai_training"
-            )
+            f"Unsupported broker: {broker}. "
+            "Supported: alpaca, ib, interactive_brokers, paper, tutorial, ai_training"
         )

@@ -1,66 +1,64 @@
 """Backtesting engine for QuantChain trading strategies."""
 
 from .engine import (
-    BacktestEngine,
     BacktestConfig,
+    BacktestEngine,
+    BacktestExecutionError,
     BacktestResult,
-    MetricsResult,
     ConfigurationError,
     DataValidationError,
-    BacktestExecutionError,
-    validate_ohlcv_data,
-    filter_data_by_date_range,
+    MetricsResult,
     calculate_basic_statistics,
+    filter_data_by_date_range,
+    validate_ohlcv_data,
 )
-
-from .market_friction import (
-    MarketFrictionSimulator,
-    MarketFrictionConfig,
-    CommissionModel,
-    FlatCommission,
-    PercentageCommission,
-    TieredCommission,
-    SlippageModel,
-    FixedSlippage,
-    VolumeImpactSlippage,
-    BidAskSpreadSlippage,
-    LatencyModel,
-    FixedLatency,
-    UniformRandomLatency,
-    NormalRandomLatency,
-    InvalidFrictionModel,
-    InvalidParameter,
-    FrictionCalculationError,
-    CustomFrictionModel,
-)
-
-from .performance_metrics import (
-    PerformanceMetrics,
-    InsufficientDataError,
-    InvalidFrequencyError,
-    MissingColumnError,
-    MetricsCalculationError,
-    LibraryImportError,
-)
-
+from .finrl_adapter import FinRLAdapter
 from .langgraph_adapter import (
-    LangGraphBacktestAdapter,
-    AgentStrategy,
+    AgentExecutionError,
     AgentState,
+    AgentStrategy,
     DeterministicLLMWrapper,
-    ReasoningEntry,
+    DeterministicRuleError,
+    LangGraphBacktestAdapter,
+    PositionError,
     PositionManager,
-    bar_to_agent_state,
+    ReasoningEntry,
+    ScenarioLoadError,
+    SignalConversionError,
+    StateValidationError,
+    TimeoutError,
     agent_state_to_signal,
+    bar_to_agent_state,
     capture_reasoning,
     create_standard_trading_agent,
-    AgentExecutionError,
-    TimeoutError,
-    StateValidationError,
-    SignalConversionError,
-    PositionError,
-    DeterministicRuleError,
-    ScenarioLoadError,
+)
+from .market_friction import (
+    BidAskSpreadSlippage,
+    CommissionModel,
+    CustomFrictionModel,
+    FixedLatency,
+    FixedSlippage,
+    FlatCommission,
+    FrictionCalculationError,
+    InvalidFrictionModel,
+    InvalidParameter,
+    LatencyModel,
+    MarketFrictionConfig,
+    MarketFrictionSimulator,
+    NormalRandomLatency,
+    PercentageCommission,
+    SlippageModel,
+    TieredCommission,
+    UniformRandomLatency,
+    VolumeImpactSlippage,
+)
+from .performance_metrics import (
+    InsufficientDataError,
+    InvalidFrequencyError,
+    LibraryImportError,
+    MetricsCalculationError,
+    MissingColumnError,
+    PerformanceMetrics,
 )
 
 __all__ = [
@@ -115,4 +113,5 @@ __all__ = [
     "PositionError",
     "DeterministicRuleError",
     "ScenarioLoadError",
+    "FinRLAdapter",
 ]

@@ -1,14 +1,14 @@
 """LLM Provider abstractions for QuantChain agents."""
 
-from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, TYPE_CHECKING
 import os
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 if TYPE_CHECKING:
-    from openai import OpenAI
     import anthropic
     import ollama
+    from openai import OpenAI
     from vllm import LLM
 
 try:
