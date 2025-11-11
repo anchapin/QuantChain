@@ -24,6 +24,15 @@ except ImportError:
     go = None
     HAS_PLOTLY = False
 
+
+# Helper function to safely create plotly figures
+def _create_figure() -> Optional[Any]:
+    """Create a plotly Figure object if plotly is available."""
+    if not HAS_PLOTLY:
+        return None
+    return go.Figure()
+
+
 try:
     import streamlit as st
 
@@ -236,7 +245,7 @@ class MonitoringService:
 class VisualizationService:
     """Service for creating visualizations."""
 
-    def create_equity_curve(self, data: List[Dict[str, Any]]) -> Optional[go.Figure]:
+    def create_equity_curve(self, data: List[Dict[str, Any]]) -> Optional[Any]:
         """
         Create equity curve visualization.
 
@@ -250,30 +259,32 @@ class VisualizationService:
             return None
         if not data:
             # Create empty chart
-            fig = go.Figure()
-            fig.add_annotation(
-                text="No data available",
-                xref="paper",
-                yref="paper",
-                x=0.5,
-                y=0.5,
-                showarrow=False,
-                font=dict(size=16),
-            )
+            fig = _create_figure()
+            if fig is not None:
+                fig.add_annotation(
+                    text="No data available",
+                    xref="paper",
+                    yref="paper",
+                    x=0.5,
+                    y=0.5,
+                    showarrow=False,
+                    font=dict(size=16),
+                )
             return fig
 
         df = pd.DataFrame(data)
 
-        fig = go.Figure()
-        fig.add_trace(
-            go.Scatter(
-                x=df["timestamp"],
-                y=df["total_value"],
-                mode="lines+markers",
-                name="Portfolio Value",
-                line=dict(color="blue", width=2),
+        fig = _create_figure()
+        if fig is not None:
+            fig.add_trace(
+                go.Scatter(
+                    x=df["timestamp"],
+                    y=df["total_value"],
+                    mode="lines+markers",
+                    name="Portfolio Value",
+                    line=dict(color="blue", width=2),
+                )
             )
-        )
 
         fig.update_layout(
             title="Portfolio Equity Curve",
@@ -286,7 +297,7 @@ class VisualizationService:
 
     def create_decision_flow_diagram(
         self, agent_reasoning: Dict[str, Any]
-    ) -> Optional[go.Figure]:
+    ) -> Optional[Any]:
         """
         Create visual representation of agent decision flow.
 
@@ -303,65 +314,66 @@ class VisualizationService:
         steps = agent_reasoning.get("decision_steps", [])
 
         if not steps:
-            fig = go.Figure()
-            fig.add_annotation(
-                text="No reasoning data available",
-                xref="paper",
-                yref="paper",
-                x=0.5,
-                y=0.5,
-                showarrow=False,
-                font=dict(size=16),
-            )
+            fig = _create_figure()
+            if fig is not None:
+                fig.add_annotation(
+                    text="No reasoning data available",
+                    xref="paper",
+                    yref="paper",
+                    x=0.5,
+                    y=0.5,
+                    showarrow=False,
+                    font=dict(size=16),
+                )
             return fig
 
-        fig = go.Figure()
-
-        # Add nodes for each step
-        for i, step in enumerate(steps):
-            fig.add_shape(
-                type="rect",
-                x0=i,
-                y0=0,
-                x1=i + 0.8,
-                y1=1,
-                line=dict(color="blue"),
-                fillcolor="lightblue",
-            )
-            fig.add_annotation(
-                x=i + 0.4,
-                y=0.5,
-                text=f"{step['step']}<br>Status: {step['status']}",
-                showarrow=False,
-                font=dict(size=10),
-            )
-
-            # Add arrow to next step
-            if i < len(steps) - 1:
+        fig = _create_figure()
+        if fig is not None:
+            # Add nodes for each step
+            for i, step in enumerate(steps):
+                fig.add_shape(
+                    type="rect",
+                    x0=i,
+                    y0=0,
+                    x1=i + 0.8,
+                    y1=1,
+                    line=dict(color="blue"),
+                    fillcolor="lightblue",
+                )
                 fig.add_annotation(
-                    x=i + 0.8,
+                    x=i + 0.4,
                     y=0.5,
-                    ax=i + 1,
-                    ay=0.5,
-                    arrowhead=2,
-                    arrowsize=1,
-                    arrowwidth=2,
-                    arrowcolor="black",
+                    text=f"{step['step']}<br>Status: {step['status']}",
+                    showarrow=False,
+                    font=dict(size=10),
                 )
 
-        fig.update_layout(
-            title="Agent Decision Flow",
-            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-            showlegend=False,
-            height=200,
-        )
+                # Add arrow to next step
+                if i < len(steps) - 1:
+                    fig.add_annotation(
+                        x=i + 0.8,
+                        y=0.5,
+                        ax=i + 1,
+                        ay=0.5,
+                        arrowhead=2,
+                        arrowsize=1,
+                        arrowwidth=2,
+                        arrowcolor="black",
+                    )
+
+            fig.update_layout(
+                title="Agent Decision Flow",
+                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                showlegend=False,
+                height=200,
+            )
 
         return fig
 
     def create_performance_charts(
         self, metrics: Dict[str, Any]
-    ) -> Optional[Dict[str, go.Figure]]:
+    ) -> Optional[Dict[str, Any]]:
         """
         Create performance visualization charts.
 
@@ -373,6 +385,7 @@ class VisualizationService:
         """
         if not HAS_PLOTLY:
             return None
+
         charts = {}
 
         # Win rate gauge

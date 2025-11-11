@@ -100,18 +100,22 @@ class TestExecutionFactory:
 
         # Mock the APISecurityManager to simulate missing credentials
         from quantchain.core.security import APISecurityManager, CredentialNotFoundError
-        
+
         original_get_api_key = APISecurityManager.get_api_key
         original_get_api_secret = APISecurityManager.get_api_secret
-        
+
         def mock_get_api_key(self, service):
             if service == "alpaca":
-                raise CredentialNotFoundError(f"No API key found for service: {service}")
+                raise CredentialNotFoundError(
+                    f"No API key found for service: {service}"
+                )
             return original_get_api_key(self, service)
-            
+
         def mock_get_api_secret(self, service):
             if service == "alpaca":
-                raise CredentialNotFoundError(f"No API secret found for service: {service}")
+                raise CredentialNotFoundError(
+                    f"No API secret found for service: {service}"
+                )
             return original_get_api_secret(self, service)
 
         APISecurityManager.get_api_key = mock_get_api_key

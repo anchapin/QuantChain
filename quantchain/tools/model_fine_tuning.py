@@ -231,7 +231,7 @@ def setup_fine_tuning_environment(
         raise ImportError("PyTorch is not available. Install with: pip install torch")
 
     # Check if torch.cuda is available (in case torch is installed but CUDA is not)
-    if not hasattr(torch, 'cuda') or not torch.cuda.is_available():
+    if not hasattr(torch, "cuda") or not torch.cuda.is_available():
         raise EnvironmentError("CUDA GPU not available for fine-tuning")
 
     try:

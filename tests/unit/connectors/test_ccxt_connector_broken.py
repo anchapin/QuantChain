@@ -1,4 +1,4 @@
-"""Tests for CCXT data connector - Fixed version with proper mocking."""
+"""Tests for CCXT data connector."""
 
 import sys
 from datetime import datetime, timedelta, timezone
@@ -8,13 +8,16 @@ import pandas as pd
 import pytest
 
 # Import all needed modules at top to avoid E402 errors
-from quantchain.connectors.ccxt_connector import CCXTDataConnector
+from quantchain.connectors.ccxt_connector import CCXT_AVAILABLE, CCXTDataConnector
 from quantchain.core.exceptions import (
     AuthenticationError,
     DataSourceError,
     RateLimitError,
     SymbolNotFoundError,
 )
+
+# Skip all tests if CCXT is not available
+pytestmark = pytest.mark.skipif(not CCXT_AVAILABLE, reason="CCXT library not installed")
 
 
 # Custom exception classes for testing
@@ -36,24 +39,6 @@ class CCXTExchangeNotAvailable(Exception):
 
 class CCXTRateLimitExceeded(Exception):
     pass
-
-
-# Mock ccxt before importing connector
-ccxt_mock = MagicMock()
-# Add necessary exception classes to mock
-ccxt_mock.AuthenticationError = CCXTAuthenticationError
-ccxt_mock.BadSymbol = CCXTBadSymbol
-ccxt_mock.NetworkError = CCXTNetworkError
-ccxt_mock.ExchangeNotAvailable = CCXTExchangeNotAvailable
-ccxt_mock.RateLimitExceeded = CCXTRateLimitExceeded
-# Set up mock before importing connector
-# Remove any existing ccxt module from cache
-if "ccxt" in sys.modules:
-    del sys.modules["ccxt"]
-# Also remove quantchain.connectors.ccxt_connector if already imported
-if "quantchain.connectors.ccxt_connector" in sys.modules:
-    del sys.modules["quantchain.connectors.ccxt_connector"]
-sys.modules["ccxt"] = ccxt_mock
 
 
 @pytest.mark.unit
