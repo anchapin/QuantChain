@@ -8,6 +8,16 @@ from typing import Dict, Optional
 
 from .base import SecretManager
 
+
+class InvalidCredentialFormatError(Exception):
+    """Raised when credentials don't match expected format."""
+    pass
+
+
+class SecurityConfigurationError(Exception):
+    """Raised when security configuration is invalid."""
+    pass
+
 logger = logging.getLogger(__name__)
 
 # Service-specific validation patterns (copied from original security.py)
@@ -213,10 +223,10 @@ class EnvSecretManager(SecretManager):
             secret: Optional API secret
         """
         if service not in API_KEY_PATTERNS:
-            raise ValueError(f"Unsupported service: {service}")
+            raise SecurityConfigurationError(f"Unsupported service: {service}")
 
         if not self.validate_credentials(service, key, secret):
-            raise ValueError(f"Invalid credentials format for {service}")
+            raise InvalidCredentialFormatError(f"Invalid credentials format for {service}")
 
         if service not in self._credentials:
             self._credentials[service] = {}

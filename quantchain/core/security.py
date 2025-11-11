@@ -7,9 +7,9 @@ from typing import Dict, List, Optional
 from .secret_managers import (
     create_secret_manager,
     get_default_secret_manager,
+    InvalidCredentialFormatError,
+    SecurityConfigurationError,
 )
-
-# Exception classes defined below
 
 logger = logging.getLogger(__name__)
 
@@ -265,13 +265,4 @@ class CredentialNotFoundError(Exception):
     pass
 
 
-class InvalidCredentialFormatError(Exception):
-    """Raised when credentials don't match expected format."""
 
-    pass
-
-
-class SecurityConfigurationError(Exception):
-    """Raised when security configuration is invalid."""
-
-    pass
