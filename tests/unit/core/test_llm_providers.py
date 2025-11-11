@@ -138,8 +138,10 @@ class TestAnthropicProvider:
 
     def test_anthropic_provider_init_no_key(self) -> None:
         """Test Anthropic provider initialization without API key."""
-        with pytest.raises(ValueError, match="Anthropic API key required"):
-            AnthropicProvider()
+        with patch("quantchain.core.llm_providers.anthropic") as mock_anthropic:
+            mock_anthropic.Anthropic.return_value = MagicMock()
+            with pytest.raises(ValueError, match="Anthropic API key required"):
+                AnthropicProvider()
 
     @patch("quantchain.core.llm_providers.anthropic")
     def test_anthropic_provider_generate(self, mock_anthropic) -> None:
