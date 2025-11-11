@@ -230,9 +230,16 @@ class TestVLLMProvider:
     """Test VLLM provider."""
 
     def test_vllm_provider_init_raises(self) -> None:
-        """Test VLLM provider initialization raises ImportError."""
-        with pytest.raises(ImportError, match="vLLM package not installed"):
+        """Test VLLM provider initialization raises appropriate error."""
+        # Handle both scenarios: vLLM not available (ImportError) or available but not implemented (NotImplementedError)
+        with pytest.raises((ImportError, NotImplementedError)) as exc_info:
             VLLMProvider("test-model")
+        
+        # Check if it's the expected error for either case
+        if isinstance(exc_info.value, ImportError):
+            assert "vLLM package not installed" in str(exc_info.value)
+        else:
+            assert "vLLM provider not yet implemented" in str(exc_info.value)
 
     def test_vllm_provider_generate_raises(self) -> None:
         """Test VLLM provider generate raises NotImplementedError."""

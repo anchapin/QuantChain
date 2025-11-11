@@ -1,6 +1,7 @@
 """Tests for the Chart Reader Agent."""
 
 from datetime import datetime, timedelta
+from typing import List
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -337,13 +338,13 @@ class TestChartRenderer:
         mocker.patch("quantchain.agents.chart_reader_agent.mpf", mock_mpf)
 
     @pytest.fixture
-    def renderer(self) -> None:
+    def renderer(self) -> ChartRenderer:
         """Create a ChartRenderer instance."""
         config = ChartReaderAgentConfig()
         return ChartRenderer(config)
 
     @pytest.fixture
-    def sample_ohlcv(self) -> None:
+    def sample_ohlcv(self) -> OHLCVData:
         """Create sample OHLCV data for rendering."""
         num_points = 100
         base_price = 100
@@ -364,7 +365,7 @@ class TestChartRenderer:
         )
 
     @pytest.fixture
-    def sample_indicators(self) -> None:
+    def sample_indicators(self) -> List[TechnicalIndicator]:
         """Create sample technical indicators."""
         num_points = 100
 
