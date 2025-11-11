@@ -1,7 +1,7 @@
 """Tests for the Chart Reader Agent."""
 
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Generator
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -40,28 +40,28 @@ class TestTechnicalIndicatorCalculator:
     """Test the TechnicalIndicatorCalculator."""
 
     @pytest.fixture(autouse=True)
-    def setup_pandas(self):
+    def setup_pandas(self) -> Generator[None, None, None]:
         """Mock pandas to be available for technical indicator tests."""
         from unittest.mock import patch, Mock
 
         # Create a comprehensive pandas Series mock
         class MockSeries:
-            def __init__(self, values):
+            def __init__(self, values: list[float]):
                 self.values = values
 
-            def rolling(self, window):
+            def rolling(self, window: int) -> Mock:
                 # Return None for first (window-1) values, then calculate SMA
                 period = window
-                result: list[float] = [None] * (period - 1)
+                result: list[float | None] = [None] * (period - 1)
                 for i in range(period - 1, len(self.values)):
                     result.append(sum(self.values[i - period + 1 : i + 1]) / period)
                 return Mock(mean=lambda: Mock(tolist=lambda: result))
 
-            def ewm(self, span):
+            def ewm(self, span: int) -> Mock:
                 # Simple EMA mock - just return the values
                 return Mock(mean=lambda: Mock(tolist=lambda: self.values))
 
-            def diff(self) -> None:
+            def diff(self) -> list[float]:
                 # Return mock diff values as plain list, not MockSeries
                 if len(self.values) < 2:
                     return [0]
@@ -72,13 +72,13 @@ class TestTechnicalIndicatorCalculator:
 
         mock_pd = Mock()
         mock_pd.Series = MockSeries
-        
+
         with patch("quantchain.agents.chart_reader_agent._PANDAS_AVAILABLE", True):
             with patch("quantchain.agents.chart_reader_agent.pd", mock_pd):
                 yield
 
     @pytest.fixture
-    def sample_ohlcv(self) -> None:
+    def sample_ohlcv(self) -> OHLCVData:
         """Create sample OHLCV data."""
         num_points = 50
         base_price = 100
@@ -110,7 +110,7 @@ class TestTechnicalIndicatorCalculator:
 
         return OHLCVData(symbol="TEST", **ohlcv_data)
 
-    def test_calculate_sma(self, sample_ohlcv) -> None:
+    def test_calculate_sma(self, sample_ohlcv: OHLCVData) -> None:
         """Test SMA calculation."""
         indicator = TechnicalIndicatorCalculator.calculate_sma(sample_ohlcv, period=10)
 
@@ -125,7 +125,7 @@ class TestTechnicalIndicatorCalculator:
         # Later values should be valid
         assert any(v is not None and not np.isnan(v) for v in indicator.values[10:])
 
-    def test_calculate_ema(self, sample_ohlcv) -> None:
+    def test_calculate_ema(self, sample_ohlcv: OHLCVData) -> None:
         """Test EMA calculation."""
         indicator = TechnicalIndicatorCalculator.calculate_ema(sample_ohlcv, period=10)
 
@@ -134,7 +134,7 @@ class TestTechnicalIndicatorCalculator:
         assert len(indicator.values) == len(sample_ohlcv.closes)
         assert indicator.signal in ["BULLISH", "BEARISH", "NEUTRAL"]
 
-    def test_calculate_rsi(self, sample_ohlcv) -> None:
+    def test_calculate_rsi(self, sample_ohlcv: OHLCVData) -> None:
         """Test RSI calculation."""
         indicator = TechnicalIndicatorCalculator.calculate_rsi(sample_ohlcv, period=14)
 
@@ -155,7 +155,7 @@ class TestPatternRecognizer:
     """Test the PatternRecognizer."""
 
     @pytest.fixture
-    def mock_llm_provider(self) -> None:
+    def mock_llm_provider(self) -> Mock:
         """Create a mock LLM provider."""
         mock_provider = Mock()
         response = Mock()
@@ -171,13 +171,13 @@ class TestPatternRecognizer:
         return mock_provider
 
     @pytest.fixture
-    def pattern_recognizer(self, mock_llm_provider):
+    def pattern_recognizer(self, mock_llm_provider: Mock) -> PatternRecognizer:
         """Create a PatternRecognizer instance."""
         config = ChartReaderAgentConfig()
         return PatternRecognizer(config, mock_llm_provider)
 
     @pytest.fixture
-    def sample_chart_image(self) -> None:
+    def sample_chart_image(self) -> ChartImage:
         """Create a sample chart image."""
         image_data = b"fake_image_data"
         return ChartImage(
@@ -190,7 +190,7 @@ class TestPatternRecognizer:
         )
 
     @pytest.fixture
-    def sample_ohlcv(self) -> None:
+    def sample_ohlcv(self) -> OHLCVData:
         """Create sample OHLCV data."""
         return OHLCVData(
             symbol="TEST",
@@ -203,7 +203,7 @@ class TestPatternRecognizer:
         )
 
     @pytest.fixture
-    def sample_indicators(self) -> None:
+    def sample_indicators(self) -> List[TechnicalIndicator]:
         """Create sample technical indicators."""
         return [
             TechnicalIndicator(
@@ -225,8 +225,12 @@ class TestPatternRecognizer:
         ]
 
     def test_analyze_chart_with_vision_model(
-        self, pattern_recognizer, sample_chart_image, sample_ohlcv, sample_indicators
-    ):
+        self,
+        pattern_recognizer: PatternRecognizer,
+        sample_chart_image: ChartImage,
+        sample_ohlcv: OHLCVData,
+        sample_indicators: List[TechnicalIndicator],
+    ) -> None:
         """Test chart analysis with vision model."""
         analysis = pattern_recognizer.analyze_chart(
             sample_chart_image, sample_ohlcv, sample_indicators
@@ -240,8 +244,12 @@ class TestPatternRecognizer:
         assert 0 <= analysis.confidence <= 100
 
     def test_analyze_chart_vision_model_failure(
-        self, pattern_recognizer, sample_chart_image, sample_ohlcv, sample_indicators
-    ):
+        self,
+        pattern_recognizer: PatternRecognizer,
+        sample_chart_image: ChartImage,
+        sample_ohlcv: OHLCVData,
+        sample_indicators: List[TechnicalIndicator],
+    ) -> None:
         """Test chart analysis when vision model fails."""
         pattern_recognizer.llm_provider.generate_vision.side_effect = Exception(
             "Vision model failed"
@@ -257,7 +265,9 @@ class TestPatternRecognizer:
             or "without visual" in analysis.reasoning.lower()
         )
 
-    def test_parse_patterns_from_response(self, pattern_recognizer) -> None:
+    def test_parse_patterns_from_response(
+        self, pattern_recognizer: PatternRecognizer
+    ) -> None:
         """Test pattern parsing from model response."""
         response_text = """
         The chart shows a head_and_shoulders pattern forming.
@@ -277,35 +287,34 @@ class TestChartRenderer:
     """Test the ChartRenderer."""
 
     @pytest.fixture(autouse=True)
-    def setup_pandas_and_mocks(self):
+    def setup_pandas_and_mocks(self) -> Generator[None, None, None]:
         """Mock pandas and chart dependencies for ChartRenderer tests."""
         from unittest.mock import patch, Mock
-        
+
         # Mock DataFrame conversion
         mock_pd = Mock()
         mock_pd.DataFrame.return_value = Mock()
-        mock_df = Mock()
 
         # Create a realistic mock DataFrame
         class MockDataFrame:
-            def __len__(self) -> None:
+            def __len__(self) -> int:
                 return 50
 
-            def tail(self, n):
+            def tail(self, n: int) -> "MockDataFrameTail":
                 return MockDataFrameTail()
 
-            def __getitem__(self, key):
+            def __getitem__(self, key: str) -> "MockSeries":
                 return MockSeries(key)
 
         class MockDataFrameTail:
-            def __len__(self) -> None:
+            def __len__(self) -> int:
                 return 50
 
-            def __getitem__(self, key):
+            def __getitem__(self, key: str) -> "MockSeries":
                 return MockSeries(key)
 
         class MockSeries:
-            def __init__(self, name):
+            def __init__(self, name: str):
                 if name == "Low":
                     self.min_val = 90.0
                 elif name == "High":
@@ -317,27 +326,27 @@ class TestChartRenderer:
                     self.min_val = 0.0
                     self.max_val = 0.0
 
-            def min(self) -> None:
+            def min(self) -> float:
                 return float(self.min_val)
 
-            def max(self) -> None:
+            def max(self) -> float:
                 return float(self.max_val)
 
-            def __float__(self) -> None:
+            def __float__(self) -> float:
                 return float(self.min_val) if hasattr(self, "min_val") else 0.0
 
-        mock_df = MockDataFrame()
+        mock_df: "MockDataFrame" = MockDataFrame()
         mock_pd.DataFrame = Mock(return_value=mock_df)
-        
+
         mock_plt = Mock()
         mock_plt.BytesIO.return_value = Mock(
             getvalue=Mock(return_value=b"fake_chart_data")
         )
-        
+
         mock_mpf = Mock()
         mock_mpf.plot.return_value = (Mock(), [Mock(), Mock()])
         mock_mpf.make_addplot.return_value = Mock()
-        
+
         with patch("quantchain.agents.chart_reader_agent._PANDAS_AVAILABLE", True):
             with patch("quantchain.agents.chart_reader_agent.pd", mock_pd):
                 with patch("quantchain.agents.chart_reader_agent.plt", mock_plt):
@@ -390,8 +399,13 @@ class TestChartRenderer:
     @patch("quantchain.agents.chart_reader_agent.mpf")
     @patch("quantchain.agents.chart_reader_agent.plt")
     def test_render_candlestick_chart(
-        self, mock_plt, mock_mpf, renderer, sample_ohlcv, sample_indicators
-    ):
+        self,
+        mock_plt: Mock,
+        mock_mpf: Mock,
+        renderer: ChartRenderer,
+        sample_ohlcv: OHLCVData,
+        sample_indicators: List[TechnicalIndicator],
+    ) -> None:
         """Test chart rendering."""
         # Mock the plot function
         mock_fig = Mock()
@@ -420,7 +434,7 @@ class TestChartReaderAgent:
     """Test the ChartReaderAgent."""
 
     @pytest.fixture
-    def mock_config(self) -> None:
+    def mock_config(self) -> Mock:
         """Create a mock QuantChainConfig."""
         config = Mock(spec=QuantChainConfig)
         config.agent_type = "chart_reader"
@@ -437,7 +451,7 @@ class TestChartReaderAgent:
         config.retry_delay = 1
 
         # Add get method for config
-        def get_side_effect(key, default=None):
+        def get_side_effect(key: str, default: object = None) -> object:
             if key == "rag":
                 return {
                     "enabled": config.enable_rag,
@@ -462,11 +476,11 @@ class TestChartReaderAgent:
         return config
 
     @pytest.fixture
-    def mock_data_connector(self) -> None:
+    def mock_data_connector(self) -> Mock:
         """Create a mock data connector."""
         connector = Mock()
         # Mock OHLCV data response
-        bars: list[float] = []
+        bars: list[dict[str, object]] = []
         for i in range(100):
             bars.append(
                 {
@@ -482,7 +496,7 @@ class TestChartReaderAgent:
         return connector
 
     @pytest.fixture
-    def mock_llm_provider(self) -> None:
+    def mock_llm_provider(self) -> Mock:
         """Create a mock LLM provider."""
         mock_provider = Mock()
         response = Mock()
@@ -493,11 +507,15 @@ class TestChartReaderAgent:
     @pytest.fixture
     @patch("quantchain.core.rag_system.ChromaVectorStore")
     @patch("quantchain.core.rag_system.SentenceTransformerProvider")
-    def agent(self, mock_config, mock_data_connector, mock_llm_provider):
+    def agent(
+        self, mock_config: Mock, mock_data_connector: Mock, mock_llm_provider: Mock
+    ) -> ChartReaderAgent:
         """Create a ChartReaderAgent instance."""
         return ChartReaderAgent(mock_config, mock_data_connector, mock_llm_provider)
 
-    def test_analyze_symbol_success(self, agent, mock_data_connector) -> None:
+    def test_analyze_symbol_success(
+        self, agent: ChartReaderAgent, mock_data_connector: Mock
+    ) -> None:
         """Test successful symbol analysis."""
         results = agent.analyze_symbol("TEST", timeframes=["1h"])
 
@@ -506,7 +524,9 @@ class TestChartReaderAgent:
         assert isinstance(analysis, PatternAnalysis)
         assert analysis.symbol == "TEST"
 
-    def test_analyze_symbol_no_data(self, agent, mock_data_connector) -> None:
+    def test_analyze_symbol_no_data(
+        self, agent: ChartReaderAgent, mock_data_connector: Mock
+    ) -> None:
         """Test symbol analysis when no data is available."""
         mock_data_connector.get_bars.return_value = None
 
@@ -521,7 +541,9 @@ class TestChartReaderAgent:
             or "failed" in analysis.reasoning.lower()
         )
 
-    def test_analyze_symbol_with_error(self, agent, mock_data_connector) -> None:
+    def test_analyze_symbol_with_error(
+        self, agent: ChartReaderAgent, mock_data_connector: Mock
+    ) -> None:
         """Test symbol analysis when an error occurs."""
         mock_data_connector.get_bars.side_effect = Exception("Data fetch failed")
 
@@ -532,7 +554,7 @@ class TestChartReaderAgent:
         assert analysis.confidence == 0.0
         assert "Analysis failed" in analysis.reasoning
 
-    def test_generate_trading_recommendation(self, agent) -> None:
+    def test_generate_trading_recommendation(self, agent: ChartReaderAgent) -> None:
         """Test trading recommendation generation."""
         with patch.object(agent, "analyze_symbol") as mock_analyze:
             # Mock analysis results
@@ -576,7 +598,9 @@ class TestChartReaderAgent:
             assert "reasoning" in recommendation
             assert "timeframe_analyses" in recommendation
 
-    def test_generate_trading_recommendation_no_analyses(self, agent) -> None:
+    def test_generate_trading_recommendation_no_analyses(
+        self, agent: ChartReaderAgent
+    ) -> None:
         """Test recommendation when no analyses are available."""
         with patch.object(agent, "analyze_symbol") as mock_analyze:
             mock_analyze.return_value = {}
