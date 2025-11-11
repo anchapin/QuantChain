@@ -204,6 +204,7 @@ class TestPatternRecognizer:
         return [
             TechnicalIndicator(
                 name="SMA",
+                parameters={"period": 10},
                 values=[100],
                 signal="BULLISH",
                 divergence=None,
@@ -211,6 +212,7 @@ class TestPatternRecognizer:
             ),
             TechnicalIndicator(
                 name="RSI",
+                parameters={"period": 14},
                 values=[60],
                 signal="NEUTRAL",
                 divergence=None,
@@ -369,6 +371,7 @@ class TestChartRenderer:
         return [
             TechnicalIndicator(
                 name="SMA",
+                parameters={"period": 10},
                 values=[100 + i * 0.1 for i in range(num_points)],
                 signal="BULLISH",
                 divergence=None,
