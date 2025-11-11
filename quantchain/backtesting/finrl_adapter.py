@@ -321,21 +321,23 @@ class FinRLAdapter(gym.Env):
             max_shares = available_balance / current_price
             shares_to_buy = max_shares * amount
 
-            # Apply market frictions
-            cost_info = self.market_friction.get_total_cost(
-                price=current_price,
-                quantity=int(shares_to_buy),
-                side="buy",
-                symbol=self.symbol,
-            )
-            execution_price = float(cost_info["executed_price"])
-            cost = float(cost_info["total"])
+            # Only execute if shares_to_buy is positive
+            if shares_to_buy > 0:
+                # Apply market frictions
+                cost_info = self.market_friction.get_total_cost(
+                    price=current_price,
+                    quantity=int(shares_to_buy),
+                    side="buy",
+                    symbol=self.symbol,
+                )
+                execution_price = float(cost_info["executed_price"])
+                cost = float(cost_info["total"])
 
-            # Execute trade if sufficient balance
-            if shares_to_buy * execution_price + cost <= self.balance:
-                self.position += shares_to_buy
-                self.balance -= shares_to_buy * execution_price + cost
-                self.transaction_costs += cost
+                # Execute trade if sufficient balance
+                if shares_to_buy * execution_price + cost <= self.balance:
+                    self.position += shares_to_buy
+                    self.balance -= shares_to_buy * execution_price + cost
+                    self.transaction_costs += cost
 
         elif action_type == 2:  # Sell
             # Calculate sell amount
