@@ -40,9 +40,20 @@ class TestEnvSecretManager:
 
     def test_init_with_defaults(self) -> None:
         """Test initialization with default settings."""
-        with patch.dict(os.environ, {}):
-            manager = EnvSecretManager()
-            assert manager._credentials == {}
+        # Create a temporary directory for test to avoid .env file loading
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Manually patch environment
+            original_env = os.environ.copy()
+            os.environ.clear()
+            try:
+                # Ensure no .env file exists in temp dir
+                manager = EnvSecretManager(env_file=os.path.join(tmpdir, "nonexistent.env"))
+                assert manager._credentials == {}
+            finally:
+                # Restore environment
+                os.environ.clear()
+                os.environ.update(original_env)
 
     def test_init_with_custom_env_file(self, tmp_path) -> None:
         """Test initialization with custom .env file."""
@@ -54,47 +65,92 @@ class TestEnvSecretManager:
 
     def test_get_api_key_from_env(self) -> None:
         """Test retrieving API key from environment."""
-        with patch.dict(os.environ, {"ALPACA_API_KEY": "test_key"}):
+        # Manually patch environment
+        original_env = os.environ.copy()
+        os.environ.clear()
+        os.environ["ALPACA_API_KEY"] = "test_key"
+        try:
             manager = EnvSecretManager()
             assert manager.get_api_key("alpaca") == "test_key"
+        finally:
+            # Restore environment
+            os.environ.clear()
+            os.environ.update(original_env)
 
     def test_get_api_secret_from_env(self) -> None:
         """Test retrieving API secret from environment."""
-        with patch.dict(os.environ, {"ALPACA_API_SECRET": "test_secret"}):
-            manager = EnvSecretManager()
-            assert manager.get_api_secret("alpaca") == "test_secret"
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Manually patch environment
+            original_env = os.environ.copy()
+            os.environ.clear()
+            os.environ.update({
+                "ALPACA_API_KEY": "test_key",
+                "ALPACA_API_SECRET": "test_secret"
+            })
+            try:
+                manager = EnvSecretManager(env_file=os.path.join(tmpdir, "nonexistent.env"))
+                assert manager.get_api_secret("alpaca") == "test_secret"
+            finally:
+                # Restore environment
+                os.environ.clear()
+                os.environ.update(original_env)
 
     def test_get_service_credentials(self) -> None:
         """Test retrieving all service credentials."""
-        with patch.dict(
-            os.environ,
-            {"ALPACA_API_KEY": "test_key", "ALPACA_API_SECRET": "test_secret"},
-        ):
-            manager = EnvSecretManager()
-            creds = manager.get_service_credentials("alpaca")
-            assert creds["key"] == "test_key"
-            assert creds["secret"] == "test_secret"
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Manually patch environment
+            original_env = os.environ.copy()
+            os.environ.clear()
+            os.environ.update({
+                "ALPACA_API_KEY": "test_key", 
+                "ALPACA_API_SECRET": "test_secret"
+            })
+            try:
+                manager = EnvSecretManager(env_file=os.path.join(tmpdir, "nonexistent.env"))
+                creds = manager.get_service_credentials("alpaca")
+                assert creds["key"] == "test_key"
+                assert creds["secret"] == "test_secret"
+            finally:
+                # Restore environment
+                os.environ.clear()
+                os.environ.update(original_env)
 
     def test_validate_service(self) -> None:
         """Test service validation."""
-        with patch.dict(os.environ, {"ALPACA_API_KEY": "test_key"}):
-            manager = EnvSecretManager()
-            assert manager.validate_service("alpaca") is True
-            assert manager.validate_service("nonexistent") is False
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Manually patch environment
+            original_env = os.environ.copy()
+            os.environ.clear()
+            os.environ["ALPACA_API_KEY"] = "test_key"
+            try:
+                manager = EnvSecretManager(env_file=os.path.join(tmpdir, "nonexistent.env"))
+                assert manager.validate_service("alpaca") is True
+                assert manager.validate_service("nonexistent") is False
+            finally:
+                # Restore environment
+                os.environ.clear()
+                os.environ.update(original_env)
 
     def test_set_api_key(self) -> None:
         """Test setting API key."""
-        manager = EnvSecretManager()
-        manager.set_api_key("alpaca", "test_key", "test_secret")
-        assert manager.get_api_key("alpaca") == "test_key"
-        assert manager.get_api_secret("alpaca") == "test_secret"
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = EnvSecretManager(env_file=os.path.join(tmpdir, "test.env"))
+            manager.set_api_key("alpaca", "ABCDEFGHIJKLMNOPQR", "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890AB++")
+            assert manager.get_api_key("alpaca") == "ABCDEFGHIJKLMNOPQR"
+            assert manager.get_api_secret("alpaca") == "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890AB++"
 
     def test_remove_service(self) -> None:
         """Test removing service credentials."""
-        manager = EnvSecretManager()
-        manager.set_api_key("alpaca", "test_key")
-        manager.remove_service("alpaca")
-        assert manager.get_api_key("alpaca") is None
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = EnvSecretManager(env_file=os.path.join(tmpdir, "test.env"))
+            manager.set_api_key("alpaca", "ABCDEFGHIJKLMNOPQR")
+            manager.remove_service("alpaca")
+            assert manager.get_api_key("alpaca") is None
 
 
 @pytest.mark.unit
@@ -103,9 +159,17 @@ class TestSecretManagerFactory:
 
     def test_create_env_manager(self) -> None:
         """Test creating environment secret manager."""
-        with patch.dict(os.environ, {"QUANTCHAIN_SECRET_BACKEND": "env"}):
+        # Manually patch environment
+        original_env = os.environ.copy()
+        os.environ.clear()
+        os.environ["QUANTCHAIN_SECRET_BACKEND"] = "env"
+        try:
             manager = create_secret_manager()
             assert isinstance(manager, EnvSecretManager)
+        finally:
+            # Restore environment
+            os.environ.clear()
+            os.environ.update(original_env)
 
     @pytest.mark.skipif(not _VAULT_AVAILABLE, reason="hvac not installed")
     def test_create_vault_manager(self) -> None:
@@ -191,12 +255,12 @@ class TestProductionSecretManagers:
 
             # Mock successful secret retrieval
             mock_client.get_secret_value.return_value = {
-                "SecretString": '{"key": "test_value"}'
+                "SecretString": "test_value"
             }
 
             manager = AWSSecretsManager(region_name="us-east-1")
 
-            assert manager.get_secret("quantchain/alpaca") == '{"key": "test_value"}'
+            assert manager.get_secret("quantchain/alpaca") == "test_value"
             assert manager.validate_service("alpaca") is True
 
     @pytest.mark.skipif(
