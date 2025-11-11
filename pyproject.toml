@@ -137,6 +137,9 @@ full = [
     "plotly>=5.0.0",
 ]
 
+[project.scripts]
+quantchain = "quantchain.tools.__main__:main"
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["quantchain*"]

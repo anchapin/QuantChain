@@ -1,7 +1,11 @@
 """Secret management module for QuantChain."""
 
 from .base import SecretManager
-from .env import EnvSecretManager, InvalidCredentialFormatError, SecurityConfigurationError
+from .env import (
+    EnvSecretManager,
+    InvalidCredentialFormatError,
+    SecurityConfigurationError,
+)
 from .factory import (
     create_secret_manager,
     get_default_secret_manager,

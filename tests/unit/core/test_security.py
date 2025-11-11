@@ -551,7 +551,9 @@ class TestAPISecurityManager:
         manager.set_api_key("openai", "sk-test1234567890abcdef")
 
         # Test that _credentials attribute doesn't exist in the new architecture
-        assert not hasattr(manager, '_credentials'), "APISecurityManager should not expose _credentials directly"
+        assert not hasattr(
+            manager, "_credentials"
+        ), "APISecurityManager should not expose _credentials directly"
 
         # Test that credentials can still be retrieved through proper API
         assert manager.get_api_key("openai") == "sk-test1234567890abcdef"

@@ -11,11 +11,13 @@ from .base import SecretManager
 
 class InvalidCredentialFormatError(Exception):
     """Raised when credentials don't match expected format."""
+
     pass
 
 
 class SecurityConfigurationError(Exception):
     """Raised when security configuration is invalid."""
+
     pass
 
 
@@ -228,7 +230,9 @@ class EnvSecretManager(SecretManager):
             raise SecurityConfigurationError(f"Unsupported service: {service}")
 
         if not self.validate_credentials(service, key, secret):
-            raise InvalidCredentialFormatError(f"Invalid credentials format for {service}")
+            raise InvalidCredentialFormatError(
+                f"Invalid credentials format for {service}"
+            )
 
         if service not in self._credentials:
             self._credentials[service] = {}
