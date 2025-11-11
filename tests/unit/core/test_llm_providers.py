@@ -234,7 +234,7 @@ class TestVLLMProvider:
         # Handle both scenarios: vLLM not available (ImportError) or available but not implemented (NotImplementedError)
         with pytest.raises((ImportError, NotImplementedError)) as exc_info:
             VLLMProvider("test-model")
-        
+
         # Check if it's the expected error for either case
         if isinstance(exc_info.value, ImportError):
             assert "vLLM package not installed" in str(exc_info.value)
