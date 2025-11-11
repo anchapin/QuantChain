@@ -2,7 +2,7 @@
 
 import os
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 from quantchain.core.secret_managers import (
     SecretManager,
@@ -45,7 +45,7 @@ class TestEnvSecretManager:
         """Test initialization with custom .env file."""
         env_file = tmp_path / "test.env"
         env_file.write_text("ALPACA_API_KEY=\"test_key\"\n")
-        
+
         manager = EnvSecretManager(env_file=str(env_file))
         assert manager.get_service_credentials("alpaca")["key"] == "test_key"
 
@@ -111,7 +111,7 @@ class TestSecretManagerFactory:
             mock_instance = Mock()
             mock_instance.is_authenticated.return_value = True
             mock_client.return_value = mock_instance
-            
+
             manager = create_secret_manager(
                 backend="vault",
                 url="https://vault.example.com",
@@ -126,7 +126,7 @@ class TestSecretManagerFactory:
             mock_client = Mock()
             mock_session.return_value.client.return_value = mock_client
             mock_client.list_secrets.return_value = {"SecretList": []}
-            
+
             manager = create_secret_manager(
                 backend="aws",
                 region_name="us-east-1"
@@ -140,7 +140,7 @@ class TestSecretManagerFactory:
             mock_instance = Mock()
             mock_client.return_value = mock_instance
             mock_instance.list_secrets.return_value = Mock()
-            
+
             manager = create_secret_manager(
                 backend="gcp",
                 project_id="test-project"
@@ -169,19 +169,19 @@ class TestProductionSecretManagers:
             mock_instance = Mock()
             mock_instance.is_authenticated.return_value = True
             mock_client.return_value = mock_instance
-            
+
             # Mock successful secret retrieval
             mock_instance.secrets.kv.v2.read_secret_version.return_value = {
                 "data": {
                     "data": {"key": "test_value"}
                 }
             }
-            
+
             manager = VaultSecretManager(
                 url="https://vault.example.com",
                 token="test_token"
             )
-            
+
             assert manager.get_secret("test/secret") == "test_value"
             assert manager.validate_service("alpaca") is True
 
@@ -192,14 +192,14 @@ class TestProductionSecretManagers:
             mock_client = Mock()
             mock_session.return_value.client.return_value = mock_client
             mock_client.list_secrets.return_value = {"SecretList": []}
-            
+
             # Mock successful secret retrieval
             mock_client.get_secret_value.return_value = {
                 "SecretString": '{"key": "test_value"}'
             }
-            
+
             manager = AWSSecretsManager(region_name="us-east-1")
-            
+
             assert manager.get_secret("quantchain/alpaca") == '{"key": "test_value"}'
             assert manager.validate_service("alpaca") is True
 
@@ -209,7 +209,7 @@ class TestProductionSecretManagers:
         with patch("google.cloud.secretmanager.SecretManagerServiceClient") as mock_client:
             mock_instance = Mock()
             mock_client.return_value = mock_instance
-            
+
             # Mock successful secret retrieval
             mock_payload = Mock()
             mock_payload.data = b'{"key": "test_value"}'
@@ -217,8 +217,8 @@ class TestProductionSecretManagers:
                 "payload": mock_payload
             }
             mock_instance.list_secrets.return_value = Mock()
-            
+
             manager = GCPSecretManager(project_id="test-project")
-            
+
             assert manager.get_secret("quantchain/alpaca") == '{"key": "test_value"}'
             assert manager.validate_service("alpaca") is True

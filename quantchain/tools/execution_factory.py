@@ -76,7 +76,7 @@ def create_execution_interface(config: QuantChainConfig) -> TradingExecutionInte
     if broker == "alpaca":
         # Get API credentials
         from ..core.security import APISecurityManager
-        
+
         security_manager = APISecurityManager()
         api_key = security_manager.get_api_key("alpaca")
         api_secret = security_manager.get_api_secret("alpaca")

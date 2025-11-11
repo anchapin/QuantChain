@@ -38,7 +38,7 @@ class GCPSecretManager(SecretManager):
             **kwargs: Additional SecretManagerServiceClient parameters
         """
         self.project_id = project_id or os.getenv("GCP_PROJECT")
-        
+
         if not self.project_id:
             raise ValueError(
                 "GCP project ID must be provided or set in GCP_PROJECT environment variable"
@@ -57,9 +57,9 @@ class GCPSecretManager(SecretManager):
         elif os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
             # Use the default ADC path
             pass
-        
+
         client_kwargs.update(kwargs)
-        
+
         try:
             self.client = secretmanager.SecretManagerServiceClient(**client_kwargs)
             # Test connection by listing a single secret
@@ -116,10 +116,10 @@ class GCPSecretManager(SecretManager):
 
             name = self._build_secret_version_name(full_key)
             response = self.client.access_secret_version(request={"name": name})
-            
+
             if response.payload and response.payload.data:
                 secret_value = response.payload.data.decode("UTF-8")
-                
+
                 # Try to parse as JSON first
                 try:
                     secret_data = json.loads(secret_value)
@@ -131,7 +131,7 @@ class GCPSecretManager(SecretManager):
                 except json.JSONDecodeError:
                     # Not JSON, return as is
                     return secret_value
-            
+
             return None
         except gcp_exceptions.NotFound:
             logger.debug(f"Secret {key} not found in GCP Secret Manager")
@@ -153,7 +153,7 @@ class GCPSecretManager(SecretManager):
             secret_key = f"quantchain/{service}"
             name = self._build_secret_version_name(secret_key)
             response = self.client.access_secret_version(request={"name": name})
-            
+
             if response.payload and response.payload.data:
                 secret_value = response.payload.data.decode("UTF-8")
                 try:
@@ -162,7 +162,7 @@ class GCPSecretManager(SecretManager):
                 except json.JSONDecodeError:
                     # Not JSON, treat entire string as a single credential
                     return {"value": secret_value}
-            
+
             return {}
         except gcp_exceptions.NotFound:
             logger.debug(f"Credentials for {service} not found in GCP Secret Manager")

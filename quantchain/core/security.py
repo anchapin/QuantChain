@@ -5,8 +5,6 @@ import re
 from typing import Dict, List, Optional
 
 from .secret_managers import (
-    EnvSecretManager,
-    SecretManager,
     create_secret_manager,
     get_default_secret_manager,
 )
@@ -68,7 +66,7 @@ class APISecurityManager:
         else:
             # Use default configuration from environment
             self._secret_manager = get_default_secret_manager()
-        
+
         # Store validation patterns for compatibility
         self.api_key_patterns = API_KEY_PATTERNS
 
@@ -115,7 +113,7 @@ class APISecurityManager:
             "set_api_key() is deprecated and only works with EnvSecretManager. "
             "Store secrets directly in your production secret management system."
         )
-        
+
         # Only implement for EnvSecretManager
         if hasattr(self._secret_manager, 'set_api_key'):
             self._secret_manager.set_api_key(service, key, secret)
@@ -218,7 +216,7 @@ class APISecurityManager:
             "remove_service() is deprecated and not supported for production secret managers. "
             "Remove secrets directly from your secret management system."
         )
-        
+
         # Only implement for EnvSecretManager
         if hasattr(self._secret_manager, 'remove_service'):
             self._secret_manager.remove_service(service)
@@ -233,7 +231,7 @@ class APISecurityManager:
             "save_to_env_file() is deprecated and only works with EnvSecretManager. "
             "Use your secret management system's export/import features instead."
         )
-        
+
         # Only implement for EnvSecretManager
         if hasattr(self._secret_manager, 'save_to_env_file'):
             self._secret_manager.save_to_env_file()

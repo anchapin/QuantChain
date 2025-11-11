@@ -193,10 +193,10 @@ class QuantChainConfig:
     def get_api_key(self, provider: str) -> Optional[str]:
         """Get API key for a specific provider."""
         from .security import APISecurityManager
-        
+
         try:
             security_manager = APISecurityManager()
-            
+
             # Map provider names to service names used in security module
             service_map = {
                 "alpaca": "alpaca",
@@ -208,9 +208,9 @@ class QuantChainConfig:
                 "ib": "ib_async",
                 "interactive_brokers": "ib_async",
             }
-            
+
             service = service_map.get(provider, provider)
-            
+
             # Handle alpaca_secret specially
             if provider == "alpaca_secret":
                 return security_manager.get_api_secret(service)

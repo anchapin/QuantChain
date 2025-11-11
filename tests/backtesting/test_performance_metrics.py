@@ -633,6 +633,12 @@ class TestPerformanceMetricsAdditionalCoverage:
 
     def test_generate_tear_sheet_library_import_error(self) -> None:
         """Test tear sheet generation handles library import error."""
+        from quantchain.backtesting.performance_metrics import QUANTSTATS_AVAILABLE
+
+        # Skip test if QuantStats is actually available
+        if QUANTSTATS_AVAILABLE:
+            pytest.skip("QuantStats is available - cannot test import error scenario")
+
         metrics = PerformanceMetrics()
 
         # Create simple result data
@@ -669,7 +675,7 @@ class TestPerformanceMetricsAdditionalCoverage:
         )
 
         # Test that tear sheet method raises LibraryImportError
-        with pytest.raises(Exception):  # Should raise some form of import error
+        with pytest.raises(LibraryImportError):  # Should raise LibraryImportError when QuantStats is not available
             metrics.generate_tear_sheet(result)
 
     def test_edge_cases_for_methods(self) -> None:

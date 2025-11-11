@@ -59,7 +59,7 @@ class AWSSecretsManager(SecretManager):
 
         # Create client kwargs
         client_kwargs = {"region_name": self.region_name}
-        
+
         # Add credentials if explicitly provided (not from env)
         if self.aws_access_key_id and self.aws_secret_access_key:
             client_kwargs["aws_access_key_id"] = self.aws_access_key_id
@@ -92,7 +92,7 @@ class AWSSecretsManager(SecretManager):
         try:
             # Try to get the secret by its name/ARN
             response = self.client.get_secret_value(SecretId=key)
-            
+
             if "SecretString" in response:
                 secret_string = response["SecretString"]
                 # Try to parse as JSON first
@@ -108,7 +108,7 @@ class AWSSecretsManager(SecretManager):
                     return secret_string
             elif "SecretBinary" in response:
                 return response["SecretBinary"]
-            
+
             return None
         except ClientError as e:
             if e.response["Error"]["Code"] == "ResourceNotFoundException":
@@ -129,7 +129,7 @@ class AWSSecretsManager(SecretManager):
         try:
             secret_name = f"quantchain/{service}"
             response = self.client.get_secret_value(SecretId=secret_name)
-            
+
             if "SecretString" in response:
                 secret_string = response["SecretString"]
                 try:
@@ -138,7 +138,7 @@ class AWSSecretsManager(SecretManager):
                 except json.JSONDecodeError:
                     # Not JSON, treat entire string as a single credential
                     return {"value": secret_string}
-            
+
             return {}
         except ClientError as e:
             if e.response["Error"]["Code"] == "ResourceNotFoundException":

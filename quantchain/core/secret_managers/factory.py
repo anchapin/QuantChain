@@ -65,12 +65,12 @@ def create_secret_manager(
     # Determine backend
     if backend is None:
         backend = os.getenv("QUANTCHAIN_SECRET_BACKEND", "env")
-    
+
     backend = backend.lower()
-    
+
     if backend not in SECRET_MANAGERS:
         available_backends = list(SECRET_MANAGERS.keys())
-        
+
         # Suggest installing missing dependencies
         if backend in ["vault", "aws", "gcp"] and backend not in available_backends:
             install_msg = {
@@ -78,18 +78,18 @@ def create_secret_manager(
                 "aws": "pip install boto3",
                 "gcp": "pip install google-cloud-secret-manager"
             }
-            
+
             raise ValueError(
                 f"Backend '{backend}' is not available. "
                 f"To enable it, install the required package: {install_msg.get(backend)}. "
                 f"Currently available backends: {available_backends}"
             )
-        
+
         raise ValueError(
             f"Unsupported secret backend: {backend}. "
             f"Supported backends: {available_backends}"
         )
-    
+
     # Show warning for production use of env backend
     if backend == "env" and not os.getenv("QUANTCHAIN_DEV_MODE"):
         logger.warning(
@@ -97,14 +97,14 @@ def create_secret_manager(
             "This is NOT recommended for production. "
             "Set QUANTCHAIN_SECRET_BACKEND to 'vault', 'aws', or 'gcp' for production use."
         )
-    
+
     # Get the secret manager class
     manager_class = SECRET_MANAGERS[backend]
-    
+
     # Merge config with kwargs
     final_config = config or {}
     final_config.update(kwargs)
-    
+
     try:
         # Create and return the secret manager
         return manager_class(**final_config)

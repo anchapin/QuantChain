@@ -113,12 +113,12 @@ class EnvSecretManager(SecretManager):
                     return self._credentials.get(service, {}).get("key")
                 elif parts[-1] == "SECRET":
                     return self._credentials.get(service, {}).get("secret")
-        
+
         # Try direct environment variable lookup
         value = os.getenv(key)
         if value:
             return value
-        
+
         return None
 
     def get_service_credentials(self, service: str) -> Dict[str, str]:
@@ -251,17 +251,3 @@ class EnvSecretManager(SecretManager):
             f.writelines(filtered_lines)
 
         logger.info(f"Credentials saved to {self.env_file}")
-
-        # Validate key
-        if not test_key or not re.match(patterns["key_pattern"], test_key):
-            return False
-
-        # Validate secret if required
-        if "secret_pattern" not in patterns:
-            return True  # No secret required for this service
-
-        # For services that require secrets, secret must be provided and valid
-        if test_secret is None:
-            return False  # Secret is required but not provided
-
-        return bool(re.match(patterns["secret_pattern"], test_secret))

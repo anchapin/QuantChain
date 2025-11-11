@@ -46,7 +46,7 @@ class VaultSecretManager(SecretManager):
 
         if not self.url:
             raise ValueError("Vault URL must be provided or set in VAULT_ADDR environment variable")
-        
+
         if not self.token:
             raise ValueError("Vault token must be provided or set in VAULT_TOKEN environment variable")
 
@@ -90,7 +90,7 @@ class VaultSecretManager(SecretManager):
         try:
             path = self._build_secret_path(key)
             response = self.client.secrets.kv.v2.read_secret_version(path=path)
-            
+
             if response and "data" in response and "data" in response["data"]:
                 # KV v2 stores the actual data under data.data
                 secret_data = response["data"]["data"]
@@ -105,7 +105,7 @@ class VaultSecretManager(SecretManager):
                     # Multiple values, return as JSON string
                     import json
                     return json.dumps(secret_data)
-            
+
             return None
         except Exception as e:
             logger.error(f"Failed to retrieve secret {key} from Vault: {e}")
@@ -123,11 +123,11 @@ class VaultSecretManager(SecretManager):
         try:
             path = self._build_secret_path(f"services/{service}")
             response = self.client.secrets.kv.v2.read_secret_version(path=path)
-            
+
             if response and "data" in response and "data" in response["data"]:
                 # KV v2 stores the actual data under data.data
                 return response["data"]["data"] or {}
-            
+
             return {}
         except Exception as e:
             logger.error(f"Failed to retrieve credentials for {service} from Vault: {e}")
