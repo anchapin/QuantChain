@@ -39,7 +39,9 @@ class EnvSecretManager(SecretManager):
     AWSSecretsManager, or GCPSecretManager instead.
     """
 
-    def __init__(self, env_file: str = ".env", allow_production_warning: bool = True) -> None:
+    def __init__(
+        self, env_file: str = ".env", allow_production_warning: bool = True
+    ) -> None:
         """Initialize environment variable secret manager.
 
         Args:
