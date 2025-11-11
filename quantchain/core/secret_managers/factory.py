@@ -76,7 +76,7 @@ def create_secret_manager(
             install_msg = {
                 "vault": "pip install hvac",
                 "aws": "pip install boto3",
-                "gcp": "pip install google-cloud-secret-manager"
+                "gcp": "pip install google-cloud-secret-manager",
             }
 
             raise ValueError(

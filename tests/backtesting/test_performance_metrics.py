@@ -675,7 +675,9 @@ class TestPerformanceMetricsAdditionalCoverage:
         )
 
         # Test that tear sheet method raises LibraryImportError
-        with pytest.raises(LibraryImportError):  # Should raise LibraryImportError when QuantStats is not available
+        with pytest.raises(
+            LibraryImportError
+        ):  # Should raise LibraryImportError when QuantStats is not available
             metrics.generate_tear_sheet(result)
 
     def test_edge_cases_for_methods(self) -> None:

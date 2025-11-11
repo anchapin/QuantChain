@@ -42,7 +42,9 @@ class AWSSecretsManager(SecretManager):
         """
         self.region_name = region_name or os.getenv("AWS_REGION", "us-east-1")
         self.aws_access_key_id = aws_access_key_id or os.getenv("AWS_ACCESS_KEY_ID")
-        self.aws_secret_access_key = aws_secret_access_key or os.getenv("AWS_SECRET_ACCESS_KEY")
+        self.aws_secret_access_key = aws_secret_access_key or os.getenv(
+            "AWS_SECRET_ACCESS_KEY"
+        )
         self.aws_session_token = aws_session_token or os.getenv("AWS_SESSION_TOKEN")
         self.profile_name = profile_name or os.getenv("AWS_PROFILE")
 
@@ -76,7 +78,9 @@ class AWSSecretsManager(SecretManager):
         # Verify connection by listing secrets (will fail if credentials are invalid)
         try:
             self.client.list_secrets(MaxResults=1)
-            logger.info(f"Connected to AWS Secrets Manager in region {self.region_name}")
+            logger.info(
+                f"Connected to AWS Secrets Manager in region {self.region_name}"
+            )
         except Exception as e:
             raise RuntimeError(f"Failed to connect to AWS Secrets Manager: {e}") from e
 
@@ -114,7 +118,9 @@ class AWSSecretsManager(SecretManager):
             if e.response["Error"]["Code"] == "ResourceNotFoundException":
                 logger.debug(f"Secret {key} not found in AWS Secrets Manager")
                 return None
-            logger.error(f"Failed to retrieve secret {key} from AWS Secrets Manager: {e}")
+            logger.error(
+                f"Failed to retrieve secret {key} from AWS Secrets Manager: {e}"
+            )
             return None
 
     def get_service_credentials(self, service: str) -> Dict[str, str]:
@@ -142,9 +148,13 @@ class AWSSecretsManager(SecretManager):
             return {}
         except ClientError as e:
             if e.response["Error"]["Code"] == "ResourceNotFoundException":
-                logger.debug(f"Credentials for {service} not found in AWS Secrets Manager")
+                logger.debug(
+                    f"Credentials for {service} not found in AWS Secrets Manager"
+                )
                 return {}
-            logger.error(f"Failed to retrieve credentials for {service} from AWS Secrets Manager: {e}")
+            logger.error(
+                f"Failed to retrieve credentials for {service} from AWS Secrets Manager: {e}"
+            )
             return {}
 
     def validate_service(self, service: str) -> bool:

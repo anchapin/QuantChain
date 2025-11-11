@@ -16,15 +16,17 @@ from quantchain.core.secret_managers import (
 print("=== Example 1: Default Secret Manager ===")
 try:
     manager = APISecurityManager()
-    
+
     # Try to get credentials (will fail if not set)
     try:
         api_key = manager.get_api_key("alpaca")
         api_secret = manager.get_api_secret("alpaca")
-        print(f"Alpaca credentials found (key: {api_key[:8] if api_key else 'None'}...)")
+        print(
+            f"Alpaca credentials found (key: {api_key[:8] if api_key else 'None'}...)"
+        )
     except Exception as e:
         print(f"No Alpaca credentials: {e}")
-        
+
 except Exception as e:
     print(f"Error initializing security manager: {e}")
 
@@ -47,7 +49,7 @@ try:
         backend="vault",
         url="https://vault.example.com",
         token="your-vault-token",
-        namespace="quantchain"
+        namespace="quantchain",
     )
     print("Vault secret manager configured successfully")
 except Exception as e:
@@ -57,9 +59,7 @@ except Exception as e:
 print("\n=== Example 4: AWS Secrets Manager ===")
 try:
     aws_manager = create_secret_manager(
-        backend="aws",
-        region_name="us-east-1",
-        profile_name="quantchain"
+        backend="aws", region_name="us-east-1", profile_name="quantchain"
     )
     print("AWS Secrets Manager configured successfully")
 except Exception as e:
@@ -71,7 +71,7 @@ try:
     gcp_manager = create_secret_manager(
         backend="gcp",
         project_id="your-project-id",
-        credentials_path="/path/to/service-account.json"
+        credentials_path="/path/to/service-account.json",
     )
     print("GCP Secret Manager configured successfully")
 except Exception as e:
@@ -95,11 +95,14 @@ for service in services:
         has_secret = manager.get_api_secret(service) is not None
     except:
         has_secret = False
-    print(f"{service:15} | Valid: {valid} | Has Key: {has_key} | Has Secret: {has_secret}")
+    print(
+        f"{service:15} | Valid: {valid} | Has Key: {has_key} | Has Secret: {has_secret}"
+    )
 
 # Example 8: Production configuration guide
 print("\n=== Example 8: Production Setup Guide ===")
-print("""
+print(
+    """
 For production deployment, configure your environment:
 
 1. HashiCorp Vault:
@@ -122,11 +125,13 @@ For production deployment, configure your environment:
    - quantchain/alpaca: {"key": "your-key", "secret": "your-secret"}
    - quantchain/openai: {"key": "your-openai-key"}
    - quantchain/anthropic: {"key": "your-anthropic-key"}
-""")
+"""
+)
 
 # Example 9: Migration from .env to production
 print("\n=== Example 9: Migration Guide ===")
-print("""
+print(
+    """
 To migrate from .env files to production secret management:
 
 1. Install required packages:
@@ -142,6 +147,7 @@ To migrate from .env files to production secret management:
 5. Remove .env files from production systems
 
 6. Test with this script to ensure everything works
-""")
+"""
+)
 
 print("\n=== Secret Management Example Complete ===")

@@ -115,7 +115,7 @@ class APISecurityManager:
         )
 
         # Only implement for EnvSecretManager
-        if hasattr(self._secret_manager, 'set_api_key'):
+        if hasattr(self._secret_manager, "set_api_key"):
             self._secret_manager.set_api_key(service, key, secret)
             logger.info(f"Credentials set for service: {service}")
         else:
@@ -218,7 +218,7 @@ class APISecurityManager:
         )
 
         # Only implement for EnvSecretManager
-        if hasattr(self._secret_manager, 'remove_service'):
+        if hasattr(self._secret_manager, "remove_service"):
             self._secret_manager.remove_service(service)
             logger.info(f"Credentials removed for service: {service}")
 
@@ -233,9 +233,11 @@ class APISecurityManager:
         )
 
         # Only implement for EnvSecretManager
-        if hasattr(self._secret_manager, 'save_to_env_file'):
+        if hasattr(self._secret_manager, "save_to_env_file"):
             self._secret_manager.save_to_env_file()
-            logger.info(f"Credentials saved to {getattr(self._secret_manager, 'env_file', '.env')}")
+            logger.info(
+                f"Credentials saved to {getattr(self._secret_manager, 'env_file', '.env')}"
+            )
 
     def get_service_credentials(self, service: str) -> Dict[str, str]:
         """Retrieve all credentials for a service.

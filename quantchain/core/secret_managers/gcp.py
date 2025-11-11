@@ -48,11 +48,17 @@ class GCPSecretManager(SecretManager):
         client_kwargs = {}
         if service_account_key:
             from google.oauth2 import service_account
-            credentials = service_account.Credentials.from_service_account_info(service_account_key)
+
+            credentials = service_account.Credentials.from_service_account_info(
+                service_account_key
+            )
             client_kwargs["credentials"] = credentials
         elif credentials_path:
             from google.oauth2 import service_account
-            credentials = service_account.Credentials.from_service_account_file(credentials_path)
+
+            credentials = service_account.Credentials.from_service_account_file(
+                credentials_path
+            )
             client_kwargs["credentials"] = credentials
         elif os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
             # Use the default ADC path
@@ -65,7 +71,9 @@ class GCPSecretManager(SecretManager):
             # Test connection by listing a single secret
             parent = f"projects/{self.project_id}"
             self.client.list_secrets(request={"parent": parent, "page_size": 1})
-            logger.info(f"Connected to GCP Secret Manager for project {self.project_id}")
+            logger.info(
+                f"Connected to GCP Secret Manager for project {self.project_id}"
+            )
         except Exception as e:
             raise RuntimeError(f"Failed to connect to GCP Secret Manager: {e}") from e
 
@@ -137,7 +145,9 @@ class GCPSecretManager(SecretManager):
             logger.debug(f"Secret {key} not found in GCP Secret Manager")
             return None
         except Exception as e:
-            logger.error(f"Failed to retrieve secret {key} from GCP Secret Manager: {e}")
+            logger.error(
+                f"Failed to retrieve secret {key} from GCP Secret Manager: {e}"
+            )
             return None
 
     def get_service_credentials(self, service: str) -> Dict[str, str]:
@@ -168,7 +178,9 @@ class GCPSecretManager(SecretManager):
             logger.debug(f"Credentials for {service} not found in GCP Secret Manager")
             return {}
         except Exception as e:
-            logger.error(f"Failed to retrieve credentials for {service} from GCP Secret Manager: {e}")
+            logger.error(
+                f"Failed to retrieve credentials for {service} from GCP Secret Manager: {e}"
+            )
             return {}
 
     def validate_service(self, service: str) -> bool:

@@ -45,10 +45,14 @@ class VaultSecretManager(SecretManager):
         self.mount_point = mount_point
 
         if not self.url:
-            raise ValueError("Vault URL must be provided or set in VAULT_ADDR environment variable")
+            raise ValueError(
+                "Vault URL must be provided or set in VAULT_ADDR environment variable"
+            )
 
         if not self.token:
-            raise ValueError("Vault token must be provided or set in VAULT_TOKEN environment variable")
+            raise ValueError(
+                "Vault token must be provided or set in VAULT_TOKEN environment variable"
+            )
 
         # Initialize Vault client
         self.client = hvac.Client(
@@ -56,7 +60,7 @@ class VaultSecretManager(SecretManager):
             token=self.token,
             namespace=self.namespace,
             verify=self.verify,
-            **kwargs
+            **kwargs,
         )
 
         # Verify connection
@@ -104,6 +108,7 @@ class VaultSecretManager(SecretManager):
                 else:
                     # Multiple values, return as JSON string
                     import json
+
                     return json.dumps(secret_data)
 
             return None
@@ -130,7 +135,9 @@ class VaultSecretManager(SecretManager):
 
             return {}
         except Exception as e:
-            logger.error(f"Failed to retrieve credentials for {service} from Vault: {e}")
+            logger.error(
+                f"Failed to retrieve credentials for {service} from Vault: {e}"
+            )
             return {}
 
     def validate_service(self, service: str) -> bool:
@@ -145,7 +152,11 @@ class VaultSecretManager(SecretManager):
         try:
             path = self._build_secret_path(f"services/{service}")
             response = self.client.secrets.kv.v2.read_secret_version(path=path)
-            return response is not None and "data" in response and "data" in response["data"]
+            return (
+                response is not None
+                and "data" in response
+                and "data" in response["data"]
+            )
         except Exception as e:
             logger.debug(f"Service {service} validation failed: {e}")
             return False
