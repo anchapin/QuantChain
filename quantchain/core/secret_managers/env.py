@@ -190,6 +190,20 @@ class EnvSecretManager(SecretManager):
 
             return bool(re.match(patterns["secret_pattern"], test_secret))
 
+        # Normal case: validate both key and secret
+        if not test_key or not re.match(patterns["key_pattern"], test_key):
+            return False
+        
+        # For services that don't require secrets, just key validation is enough
+        if "secret_pattern" not in patterns:
+            return True
+            
+        # For services that require secrets, secret must be provided and valid
+        if test_secret is None:
+            return False
+            
+        return bool(re.match(patterns["secret_pattern"], test_secret))
+
     def set_api_key(self, service: str, key: str, secret: Optional[str] = None) -> None:
         """Store API key for a service.
 

@@ -167,7 +167,7 @@ class TestEnvSecretManager:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = EnvSecretManager(env_file=os.path.join(tmpdir, "test.env"))
-            manager.set_api_key("alpaca", "ABCDEFGHIJKLMNOPQR")
+            manager.set_api_key("alpaca", "ABCDEFGHIJKLMNOPQR", "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890AB++")
             manager.remove_service("alpaca")
             assert manager.get_api_key("alpaca") is None
 
