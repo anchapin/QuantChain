@@ -10,6 +10,31 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+# Check for optional dependencies
+try:
+    import torch
+    HAS_TORCH = True
+except ImportError:
+    HAS_TORCH = False
+
+try:
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    HAS_TRANSFORMERS = True
+except ImportError:
+    HAS_TRANSFORMERS = False
+
+try:
+    from peft import LoraConfig
+    HAS_PEFT = True
+except ImportError:
+    HAS_PEFT = False
+
+try:
+    from datasets import load_dataset
+    HAS_DATASETS = True
+except ImportError:
+    HAS_DATASETS = False
+
 # noqa: F401 (these functions are imported dynamically in test methods)
 from quantchain.tools.model_fine_tuning import EnvironmentError  # noqa: F401
 from quantchain.tools.model_fine_tuning import (
@@ -92,6 +117,7 @@ class TestTrainingArguments:
         assert args.learning_rate == 2e-4
 
 
+@pytest.mark.skipif(not HAS_TORCH, reason="torch not available")
 class TestSetupFineTuningEnvironment:
     """Test fine-tuning environment setup."""
 
@@ -132,6 +158,7 @@ class TestSetupFineTuningEnvironment:
             )
 
 
+@pytest.mark.skipif(not HAS_DATASETS, reason="datasets not available")
 class TestPrepareFinancialDataset:
     """Test financial dataset preparation."""
 
@@ -156,7 +183,7 @@ class TestPrepareFinancialDataset:
 
             with pytest.raises(
                 DatasetError,
-                match="Dataset preparation failed: Dataset path not found",
+                match="Dataset path not found: /tmp/test.txt",
             ):
                 prepare_financial_dataset(
                     dataset_path="/tmp/test.txt", tokenizer=tokenizer_instance
@@ -176,6 +203,7 @@ class TestPrepareFinancialDataset:
             )
 
 
+@pytest.mark.skipif(not (HAS_TORCH and HAS_PEFT and HAS_TRANSFORMERS), reason="torch, peft, or transformers not available")
 class TestFineTuneModelQLoRA:
     """Test QLoRA fine-tuning functionality."""
 

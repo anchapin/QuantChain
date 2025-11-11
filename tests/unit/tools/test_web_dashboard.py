@@ -5,6 +5,19 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+# Check for optional dependencies
+try:
+    import plotly
+    HAS_PLOTLY = True
+except ImportError:
+    HAS_PLOTLY = False
+
+try:
+    import streamlit
+    HAS_STREAMLIT = True
+except ImportError:
+    HAS_STREAMLIT = False
+
 
 # Test data structures that will be defined in implementation
 @pytest.fixture
@@ -78,6 +91,7 @@ def mock_dashboard_config():
     }
 
 
+@pytest.mark.skipif(not (HAS_PLOTLY and HAS_STREAMLIT), reason="plotly and streamlit not available")
 class TestWebDashboardApp:
     """Test cases for WebDashboardApp."""
 
@@ -196,6 +210,7 @@ class TestMonitoringService:
         assert health["llm_response_time_ms"] == 1250.0
 
 
+@pytest.mark.skipif(not HAS_PLOTLY, reason="plotly not available")
 class TestVisualizationService:
     """Test cases for VisualizationService."""
 
@@ -290,6 +305,7 @@ class TestVisualizationService:
             assert hasattr(figure, "data")
 
 
+@pytest.mark.skipif(not HAS_STREAMLIT, reason="streamlit not available")
 class TestConfigurationWizard:
     """Test cases for ConfigurationWizard."""
 

@@ -14,8 +14,21 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
-import plotly.graph_objects as go
-import streamlit as st
+
+# Optional imports for web dashboard
+try:
+    import plotly.graph_objects as go
+    HAS_PLOTLY = True
+except ImportError:
+    go = None
+    HAS_PLOTLY = False
+
+try:
+    import streamlit as st
+    HAS_STREAMLIT = True
+except ImportError:
+    st = None
+    HAS_STREAMLIT = False
 
 # Add the project root to the path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -221,7 +234,7 @@ class MonitoringService:
 class VisualizationService:
     """Service for creating visualizations."""
 
-    def create_equity_curve(self, data: List[Dict[str, Any]]) -> go.Figure:
+    def create_equity_curve(self, data: List[Dict[str, Any]]) -> Optional[go.Figure]:
         """
         Create equity curve visualization.
 
@@ -229,8 +242,10 @@ class VisualizationService:
             data: List of portfolio snapshots over time
 
         Returns:
-            Plotly Figure object
+            Plotly Figure object or None if plotly unavailable
         """
+        if not HAS_PLOTLY:
+            return None
         if not data:
             # Create empty chart
             fig = go.Figure()
@@ -269,7 +284,7 @@ class VisualizationService:
 
     def create_decision_flow_diagram(
         self, agent_reasoning: Dict[str, Any]
-    ) -> go.Figure:
+    ) -> Optional[go.Figure]:
         """
         Create visual representation of agent decision flow.
 
@@ -277,7 +292,10 @@ class VisualizationService:
             agent_reasoning: Agent reasoning data
 
         Returns:
-            Plotly Figure object
+            Plotly Figure object or None if plotly unavailable
+        """
+        if not HAS_PLOTLY:
+            return None
         """
         # Create a simple flow diagram
         steps = agent_reasoning.get("decision_steps", [])
@@ -341,7 +359,7 @@ class VisualizationService:
 
     def create_performance_charts(
         self, metrics: Dict[str, Any]
-    ) -> Dict[str, go.Figure]:
+    ) -> Optional[Dict[str, go.Figure]]:
         """
         Create performance visualization charts.
 
@@ -349,8 +367,10 @@ class VisualizationService:
             metrics: Portfolio performance metrics
 
         Returns:
-            Dictionary of Plotly Figure objects
+            Dictionary of Plotly Figure objects or None if plotly unavailable
         """
+        if not HAS_PLOTLY:
+            return None
         charts = {}
 
         # Win rate gauge
@@ -557,12 +577,19 @@ class WebDashboardApp:
             host: Host address to bind to
             port: Port number to run on
         """
+        if not HAS_STREAMLIT:
+            print("Error: Streamlit is not available. Install with: pip install streamlit")
+            return
+            
         # Streamlit runs the app directly, so we just set up the page
         self._setup_page_config()
         self._render_main_page()
 
     def _setup_page_config(self) -> None:
         """Setup Streamlit page configuration."""
+        if not HAS_STREAMLIT:
+            return
+            
         st.set_page_config(
             page_title="QuantChain Dashboard",
             page_icon="📈",
@@ -572,6 +599,9 @@ class WebDashboardApp:
 
     def _render_main_page(self) -> None:
         """Render the main dashboard page."""
+        if not HAS_STREAMLIT:
+            return
+            
         st.title("📈 QuantChain Dashboard")
         st.markdown("---")
 

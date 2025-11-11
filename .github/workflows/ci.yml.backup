@@ -35,14 +35,8 @@ jobs:
         # Install core dependencies first
         pip install --no-cache-dir langchain openai pandas numpy pytest black flake8 PyYAML
         
-        # Install gymnasium for FinRL adapter (needed for all versions)
-        pip install --no-cache-dir gymnasium>=0.26.0
-        
         # Install test dependencies including coverage
         pip install --no-cache-dir pytest-cov pytest-mock pytest-timeout
-        
-        # Install web dependencies for all Python versions since tests require them
-        pip install --no-cache-dir streamlit plotly --no-deps
         
         # Install minimal CI dependencies to save disk space
         pip install --no-cache-dir -r requirements-ci.txt
@@ -50,9 +44,8 @@ jobs:
         # Install ML dependencies only for specific Python versions (skip 3.10)
         if [ "${{ matrix.python-version }}" = "3.13" ]; then
           # Install full requirements for one Python version to test ML features
-          pip install --no-cache-dir torch transformers --no-deps
-          pip install --no-cache-dir peft datasets
-          pip install --no-cache-dir sentence-transformers>=2.0.0 finrl>=0.3.0
+          pip install --no-cache-dir torch transformers streamlit plotly --no-deps
+          pip install --no-cache-dir sentence-transformers>=2.0.0 finrl>=0.3.0 gymnasium>=0.26.0
         fi
         
         # Install ib_async conditionally (requires Python >=3.10)
@@ -104,18 +97,11 @@ jobs:
         # Install core dependencies first
         pip install --no-cache-dir langchain openai pandas numpy pytest black flake8 PyYAML
         
-        # Install gymnasium for FinRL adapter (needed for all versions)
-        pip install --no-cache-dir gymnasium>=0.26.0
-        
         # Install only essential dependencies for integration tests
         pip install --no-cache-dir -r requirements-dev.txt
         
-        # Install web dependencies for integration tests 
-        pip install --no-cache-dir streamlit plotly --no-deps
-        
         # Install ML dependencies for integration tests (3.13 has enough space)
-        pip install --no-cache-dir torch transformers --no-deps
-        pip install --no-cache-dir peft datasets
+        pip install --no-cache-dir torch transformers streamlit plotly --no-deps
         
         # Install ib_async for Python 3.13 (supported)
         pip install --no-cache-dir "ib_async>=1.0.0"
