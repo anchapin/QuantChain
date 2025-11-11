@@ -17,20 +17,23 @@ from quantchain.core.security import (
 
 @pytest.mark.unit
 class TestAPISecurityManager:
-    """Comprehensive test suite for API Security Manager with full coverage."""
+    """Comprehensive test suite for API Security Manager with new secret management."""
 
-    def test_init_with_default_env_file(self) -> None:
-        """Test initialization with default .env file."""
+    @patch.dict(os.environ, {"QUANTCHAIN_SECRET_BACKEND": "env"})
+    def test_init_with_default_backend(self) -> None:
+        """Test initialization with default backend."""
         manager = APISecurityManager()
-        assert manager.env_file == Path(".env")
+        assert manager._secret_manager is not None
 
-    def test_init_with_custom_env_file(self) -> None:
-        """Test initialization with custom env file path."""
-        manager = APISecurityManager("custom.env")
-        assert manager.env_file == Path("custom.env")
+    @patch.dict(os.environ, {"QUANTCHAIN_SECRET_BACKEND": "env"})
+    def test_init_with_custom_backend(self) -> None:
+        """Test initialization with custom backend."""
+        manager = APISecurityManager(backend="env")
+        assert manager._secret_manager is not None
 
     # ===== Environment Variable Loading Tests =====
 
+    @patch.dict(os.environ, {"QUANTCHAIN_SECRET_BACKEND": "env"})
     def test_load_credentials_from_env_variables(self) -> None:
         """Test loading credentials from environment variables."""
         with patch.dict(
