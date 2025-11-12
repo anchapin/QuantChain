@@ -13,29 +13,33 @@ import pytest
 # Check for optional dependencies
 try:
     import torch
+
     torch.tensor([1])  # Basic test to ensure torch works
     HAS_TORCH = True
 except (ImportError, RuntimeError) as e:
     HAS_TORCH = False
     # If torch has import issues, skip this test module entirely
-    pytest.skip(f"Skipping model fine-tuning tests due to torch import error: {e}", allow_module_level=True)
+    pytest.skip(
+        f"Skipping model fine-tuning tests due to torch import error: {e}",
+        allow_module_level=True,
+    )
 
 try:
-    from transformers import AutoModelForCausalLM, AutoTokenizer
+    pass
 
     HAS_TRANSFORMERS = True
 except ImportError:
     HAS_TRANSFORMERS = False
 
 try:
-    from peft import LoraConfig
+    pass
 
     HAS_PEFT = True
 except ImportError:
     HAS_PEFT = False
 
 try:
-    from datasets import load_dataset
+    pass
 
     HAS_DATASETS = True
 except ImportError:
@@ -54,10 +58,7 @@ from quantchain.tools.model_fine_tuning import (
     TrainingResult,
     ValidationError,
     ValidationReport,
-    fine_tune_model_qlora,
-    quantize_model,
     setup_fine_tuning_environment,
-    validate_fine_tuned_model,
 )
 
 

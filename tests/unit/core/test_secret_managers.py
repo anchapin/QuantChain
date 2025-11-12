@@ -331,7 +331,9 @@ class TestGCPSecretManagerDetailed:
             with pytest.raises(ValueError, match="GCP project ID must be provided"):
                 GCPSecretManager()
 
-    @patch("quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient")
+    @patch(
+        "quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient"
+    )
     def test_get_secret_success(self, mock_client: Mock) -> None:
         """Test successful secret retrieval."""
         # Mock client and response
@@ -347,13 +349,17 @@ class TestGCPSecretManagerDetailed:
         assert value == "test-value"
         mock_client_instance.access_secret_version.assert_called_once()
 
-    @patch("quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient")
+    @patch(
+        "quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient"
+    )
     def test_get_secret_not_found(self, mock_client: Mock) -> None:
         """Test secret not found."""
         from google.api_core import exceptions
 
         mock_client_instance = Mock()
-        mock_client_instance.access_secret_version.side_effect = exceptions.NotFound("Secret not found")
+        mock_client_instance.access_secret_version.side_effect = exceptions.NotFound(
+            "Secret not found"
+        )
         mock_client.return_value = mock_client_instance
 
         manager = GCPSecretManager(project_id="test-project")
@@ -361,7 +367,9 @@ class TestGCPSecretManagerDetailed:
 
         assert value is None
 
-    @patch("quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient")
+    @patch(
+        "quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient"
+    )
     def test_set_secret_success(self, mock_client: Mock) -> None:
         """Test successful secret creation/update."""
         # Mock client and response
@@ -378,9 +386,7 @@ class TestGCPSecretManagerDetailed:
         mock_client_instance.add_secret_version.assert_called_once()
 
 
-@pytest.mark.skipif(
-    not _VAULT_AVAILABLE, reason="hvac not installed"
-)
+@pytest.mark.skipif(not _VAULT_AVAILABLE, reason="hvac not installed")
 @pytest.mark.unit
 class TestVaultSecretManagerDetailed:
     """Detailed tests for Vault secret manager."""
@@ -404,10 +410,9 @@ class TestVaultSecretManagerDetailed:
         mock_client_instance.is_authenticated.return_value = True
         mock_client.return_value = mock_client_instance
 
-        with patch.dict(os.environ, {
-            "VAULT_ADDR": "http://vault:8200",
-            "VAULT_TOKEN": "test-token"
-        }):
+        with patch.dict(
+            os.environ, {"VAULT_ADDR": "http://vault:8200", "VAULT_TOKEN": "test-token"}
+        ):
             manager = VaultSecretManager()
             assert manager.url == "http://vault:8200"
             assert manager.token == "test-token"
@@ -422,10 +427,9 @@ class TestVaultSecretManagerDetailed:
         }
         mock_client.return_value = mock_client_instance
 
-        with patch.dict(os.environ, {
-            "VAULT_ADDR": "http://vault:8200",
-            "VAULT_TOKEN": "test-token"
-        }):
+        with patch.dict(
+            os.environ, {"VAULT_ADDR": "http://vault:8200", "VAULT_TOKEN": "test-token"}
+        ):
             manager = VaultSecretManager()
             result = manager.get_secret("test-secret")
             assert result == {"key": "value"}
@@ -434,15 +438,17 @@ class TestVaultSecretManagerDetailed:
     def test_get_secret_not_found(self, mock_client: Mock) -> None:
         """Test secret not found."""
         import hvac
+
         mock_client_instance = Mock()
         mock_client_instance.is_authenticated.return_value = True
-        mock_client_instance.secrets.kv.v2.read_secret_version.side_effect = hvac.exceptions.InvalidPath()
+        mock_client_instance.secrets.kv.v2.read_secret_version.side_effect = (
+            hvac.exceptions.InvalidPath()
+        )
         mock_client.return_value = mock_client_instance
 
-        with patch.dict(os.environ, {
-            "VAULT_ADDR": "http://vault:8200",
-            "VAULT_TOKEN": "test-token"
-        }):
+        with patch.dict(
+            os.environ, {"VAULT_ADDR": "http://vault:8200", "VAULT_TOKEN": "test-token"}
+        ):
             manager = VaultSecretManager()
             result = manager.get_secret("test-secret")
             assert result is None
@@ -452,13 +458,14 @@ class TestVaultSecretManagerDetailed:
         """Test successful secret creation/update."""
         mock_client_instance = Mock()
         mock_client_instance.is_authenticated.return_value = True
-        mock_client_instance.secrets.kv.v2.create_or_update_secret.return_value = {"success": True}
+        mock_client_instance.secrets.kv.v2.create_or_update_secret.return_value = {
+            "success": True
+        }
         mock_client.return_value = mock_client_instance
 
-        with patch.dict(os.environ, {
-            "VAULT_ADDR": "http://vault:8200",
-            "VAULT_TOKEN": "test-token"
-        }):
+        with patch.dict(
+            os.environ, {"VAULT_ADDR": "http://vault:8200", "VAULT_TOKEN": "test-token"}
+        ):
             manager = VaultSecretManager()
             success = manager.set_secret("test-secret", {"key": "value"})
             assert success is True

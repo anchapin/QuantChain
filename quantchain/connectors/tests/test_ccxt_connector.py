@@ -4,7 +4,7 @@
 import pytest
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 # Add the parent directory to the path to import the module
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -13,10 +13,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pytest
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 import pandas as pd
 
-from ccxt_connector import CCXTDataConnector, CCXT_AVAILABLE
+from ccxt_connector import CCXTDataConnector
 from core.exceptions import (
     AuthenticationError,
     DataSourceError,
@@ -76,7 +76,7 @@ def connector(mock_ccxt, mock_exchange):
     mock_ccxt.ExchangeNotAvailable = Exception
     mock_ccxt.RateLimitExceeded = Exception
     mock_ccxt.BadSymbol = Exception
-    
+
     with patch("ccxt_connector.CCXT_AVAILABLE", True):
         return CCXTDataConnector(api_key="test_key", api_secret="test_secret")
 
@@ -87,10 +87,10 @@ class TestCCXTDataConnectorInit:
     def test_init_with_default_parameters(self, mock_ccxt, mock_exchange):
         """Test initialization with default parameters."""
         mock_ccxt.binance = mock_exchange
-        
+
         with patch("ccxt_connector.CCXT_AVAILABLE", True):
             connector = CCXTDataConnector()
-            
+
         assert connector.exchange_name == "binance"
         assert connector.sandbox is False
         assert connector.enable_rate_limit is True
@@ -100,7 +100,7 @@ class TestCCXTDataConnectorInit:
     def test_init_with_custom_parameters(self, mock_ccxt, mock_exchange):
         """Test initialization with custom parameters."""
         mock_ccxt.kraken = mock_exchange
-        
+
         with patch("ccxt_connector.CCXT_AVAILABLE", True):
             connector = CCXTDataConnector(
                 api_key="custom_key",
@@ -111,7 +111,7 @@ class TestCCXTDataConnectorInit:
                 cache_ttl=7200,
                 timeout=60,
             )
-            
+
         assert connector.exchange_name == "kraken"
         assert connector.sandbox is True
         assert connector.enable_rate_limit is False
@@ -127,15 +127,19 @@ class TestCCXTDataConnectorInit:
     def test_init_with_invalid_exchange(self, mock_ccxt):
         """Test initialization with invalid exchange name."""
         mock_ccxt.invalid_exchange = None
-        
+
         with patch("ccxt_connector.CCXT_AVAILABLE", True):
-            with pytest.raises(ValueError, match="Exchange 'invalid_exchange' not found"):
+            with pytest.raises(
+                ValueError, match="Exchange 'invalid_exchange' not found"
+            ):
                 CCXTDataConnector(exchange="invalid_exchange")
 
     def test_init_with_authentication_error(self, mock_ccxt):
         """Test initialization with authentication error."""
-        mock_ccxt.binance.side_effect = mock_ccxt.AuthenticationError("Invalid credentials")
-        
+        mock_ccxt.binance.side_effect = mock_ccxt.AuthenticationError(
+            "Invalid credentials"
+        )
+
         with patch("ccxt_connector.CCXT_AVAILABLE", True):
             with pytest.raises(AuthenticationError, match="Failed to authenticate"):
                 CCXTDataConnector(api_key="invalid", api_secret="invalid")
@@ -144,7 +148,7 @@ class TestCCXTDataConnectorInit:
         """Test initialization with sandbox mode when not supported."""
         del mock_exchange.set_sandbox_mode
         mock_ccxt.binance = mock_exchange
-        
+
         with patch("ccxt_connector.CCXT_AVAILABLE", True):
             with patch("ccxt_connector.logging.getLogger") as mock_logger:
                 connector = CCXTDataConnector(sandbox=True)
@@ -201,7 +205,7 @@ class TestRefreshMarketCache:
     def test_refresh_cache_first_time(self, connector):
         """Test refreshing cache for the first time."""
         connector._refresh_market_cache()
-        
+
         assert connector._market_cache is not None
         assert connector._cache_timestamp is not None
         connector.exchange.load_markets.assert_called_once()
@@ -210,9 +214,9 @@ class TestRefreshMarketCache:
         """Test refreshing cache when expired."""
         # Set old timestamp
         connector._cache_timestamp = 1000000.0
-        
+
         connector._refresh_market_cache()
-        
+
         assert connector._cache_timestamp > 1000000.0
         connector.exchange.load_markets.assert_called_once()
 
@@ -221,23 +225,23 @@ class TestRefreshMarketCache:
         # Set fresh timestamp
         connector._cache_timestamp = datetime.now().timestamp()
         connector._market_cache = {"test": "data"}
-        
+
         connector._refresh_market_cache()
-        
+
         # Should not call load_markets again
         connector.exchange.load_markets.assert_not_called()
 
     def test_refresh_cache_rate_limit_error(self, connector):
         """Test refreshing cache with rate limit error."""
         connector.exchange.load_markets.side_effect = Exception("RateLimitExceeded")
-        
+
         with pytest.raises(RateLimitError, match="Rate limit exceeded"):
             connector._refresh_market_cache()
 
     def test_refresh_cache_network_error(self, connector):
         """Test refreshing cache with network error."""
         connector.exchange.load_markets.side_effect = Exception("NetworkError")
-        
+
         with pytest.raises(DataSourceError, match="Failed to load markets"):
             connector._refresh_market_cache()
 
@@ -254,61 +258,77 @@ class TestGetHistoricalData:
     def test_get_historical_data_success(self, connector):
         """Test successful retrieval of historical data."""
         start_date = datetime(2021, 1, 1, tzinfo=timezone.utc)
-        
+
         df = connector.get_historical_data("BTC/USDT", "1H", start_date)
-        
+
         assert isinstance(df, pd.DataFrame)
-        assert list(df.columns) == ["timestamp", "open", "high", "low", "close", "volume"]
+        assert list(df.columns) == [
+            "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+        ]
         assert len(df) == 2
-        assert df["timestamp"].iloc[0] == pd.to_datetime(1609459200000, unit="ms", utc=True)
+        assert df["timestamp"].iloc[0] == pd.to_datetime(
+            1609459200000, unit="ms", utc=True
+        )
 
     def test_get_historical_data_with_end_date(self, connector):
         """Test retrieval of historical data with end date."""
         start_date = datetime(2021, 1, 1, tzinfo=timezone.utc)
         end_date = datetime(2021, 1, 1, 0, 1, tzinfo=timezone.utc)
-        
+
         df = connector.get_historical_data("BTC/USDT", "1H", start_date, end_date)
-        
+
         assert isinstance(df, pd.DataFrame)
         connector.exchange.fetch_ohlcv.assert_called_once()
 
     def test_get_historical_data_with_limit(self, connector):
         """Test retrieval of historical data with limit."""
         start_date = datetime(2021, 1, 1, tzinfo=timezone.utc)
-        
+
         df = connector.get_historical_data("BTC/USDT", "1H", start_date, limit=100)
-        
+
         assert isinstance(df, pd.DataFrame)
         connector.exchange.fetch_ohlcv.assert_called_once()
 
     def test_get_historical_data_empty_result(self, connector):
         """Test retrieval of historical data with empty result."""
         connector.exchange.fetch_ohlcv.return_value = []
-        
+
         df = connector.get_historical_data("BTC/USDT", "1H", datetime.now())
-        
+
         assert isinstance(df, pd.DataFrame)
         assert len(df) == 0
-        assert list(df.columns) == ["timestamp", "open", "high", "low", "close", "volume"]
+        assert list(df.columns) == [
+            "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+        ]
 
     def test_get_historical_data_symbol_not_found(self, connector):
         """Test retrieval with symbol not found."""
         connector.exchange.fetch_ohlcv.side_effect = Exception("BadSymbol")
-        
+
         with pytest.raises(SymbolNotFoundError, match="Symbol INVALID not found"):
             connector.get_historical_data("INVALID", "1H", datetime.now())
 
     def test_get_historical_data_rate_limit(self, connector):
         """Test retrieval with rate limit error."""
         connector.exchange.fetch_ohlcv.side_effect = Exception("RateLimitExceeded")
-        
+
         with pytest.raises(RateLimitError, match="Rate limit exceeded"):
             connector.get_historical_data("BTC/USDT", "1H", datetime.now())
 
     def test_get_historical_data_network_error(self, connector):
         """Test retrieval with network error."""
         connector.exchange.fetch_ohlcv.side_effect = Exception("NetworkError")
-        
+
         with pytest.raises(DataSourceError, match="Failed to fetch data"):
             connector.get_historical_data("BTC/USDT", "1H", datetime.now())
 
@@ -324,7 +344,7 @@ class TestGetRealTimeData:
     def test_get_real_time_data_success(self, connector):
         """Test successful retrieval of real-time data."""
         data = connector.get_real_time_data("BTC/USDT")
-        
+
         assert isinstance(data, dict)
         assert "timestamp" in data
         assert "price" in data
@@ -342,36 +362,36 @@ class TestGetRealTimeData:
             "ask": 30050.0,
             "baseVolume": 1000.0,
         }
-        
+
         data = connector.get_real_time_data("BTC/USDT")
-        
+
         assert data["price"] == 30000.0  # (bid + ask) / 2
 
     def test_get_real_time_data_symbol_not_found(self, connector):
         """Test retrieval with symbol not found."""
         connector.exchange.fetch_ticker.side_effect = Exception("BadSymbol")
-        
+
         with pytest.raises(SymbolNotFoundError, match="Symbol INVALID not found"):
             connector.get_real_time_data("INVALID")
 
     def test_get_real_time_data_rate_limit(self, connector):
         """Test retrieval with rate limit error."""
         connector.exchange.fetch_ticker.side_effect = Exception("RateLimitExceeded")
-        
+
         with pytest.raises(RateLimitError, match="Rate limit exceeded"):
             connector.get_real_time_data("BTC/USDT")
 
     def test_get_real_time_data_authentication_error(self, connector):
         """Test retrieval with authentication error."""
         connector.exchange.fetch_ticker.side_effect = Exception("Invalid API key")
-        
+
         with pytest.raises(AuthenticationError, match="Authentication failed"):
             connector.get_real_time_data("BTC/USDT")
 
     def test_get_real_time_data_exchange_down(self, connector):
         """Test retrieval when exchange is down."""
         connector.exchange.fetch_ticker.side_effect = Exception("Exchange down")
-        
+
         with pytest.raises(DataSourceError, match="Failed to fetch ticker"):
             connector.get_real_time_data("BTC/USDT")
 
@@ -382,7 +402,7 @@ class TestGetQuote:
     def test_get_quote_success(self, connector):
         """Test successful retrieval of quote data."""
         quote = connector.get_quote("BTC/USDT")
-        
+
         assert isinstance(quote, dict)
         assert "symbol" in quote
         assert "timestamp" in quote
@@ -404,30 +424,30 @@ class TestGetQuote:
             "ask": 30050.0,
             "baseVolume": 1000.0,
         }
-        
+
         quote = connector.get_quote("BTC/USDT")
-        
+
         assert quote["bid_size"] == 500.0  # Estimated from volume
         assert quote["ask_size"] == 500.0  # Estimated from volume
 
     def test_get_quote_symbol_not_found(self, connector):
         """Test retrieval with symbol not found."""
         connector.exchange.fetch_ticker.side_effect = Exception("BadSymbol")
-        
+
         with pytest.raises(SymbolNotFoundError, match="Symbol INVALID not found"):
             connector.get_quote("INVALID")
 
     def test_get_quote_rate_limit(self, connector):
         """Test retrieval with rate limit error."""
         connector.exchange.fetch_ticker.side_effect = Exception("RateLimitExceeded")
-        
+
         with pytest.raises(RateLimitError, match="Rate limit exceeded"):
             connector.get_quote("BTC/USDT")
 
     def test_get_quote_authentication_error(self, connector):
         """Test retrieval with authentication error."""
         connector.exchange.fetch_ticker.side_effect = Exception("Invalid API key")
-        
+
         with pytest.raises(AuthenticationError, match="Authentication failed"):
             connector.get_quote("BTC/USDT")
 
@@ -438,7 +458,7 @@ class TestGetAvailableSymbols:
     def test_get_available_symbols_success(self, connector):
         """Test successful retrieval of available symbols."""
         symbols = connector.get_available_symbols()
-        
+
         assert isinstance(symbols, list)
         assert "BTC/USDT" in symbols
         assert "ETH/USDT" in symbols
@@ -447,14 +467,14 @@ class TestGetAvailableSymbols:
     def test_get_available_symbols_with_limit(self, connector):
         """Test retrieval with limit."""
         symbols = connector.get_available_symbols(limit=1)
-        
+
         assert len(symbols) == 1
 
     def test_get_available_symbols_rate_limit(self, connector):
         """Test retrieval with rate limit error."""
         connector.exchange.load_markets.side_effect = Exception("RateLimitExceeded")
-        
+
         with pytest.raises(Exception) as excinfo:
             connector.get_available_symbols()
-        
+
         assert "RateLimitExceeded" in str(excinfo.value)

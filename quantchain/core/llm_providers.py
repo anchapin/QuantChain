@@ -47,12 +47,10 @@ class LLMProvider(ABC):
     @abstractmethod
     def generate(self, prompt: str, **kwargs: Any) -> LLMResponse:
         """Generate response from LLM."""
-        pass
 
     @abstractmethod
     def get_model_name(self) -> str:
         """Get the model name."""
-        pass
 
 
 class OpenAIProvider(LLMProvider):

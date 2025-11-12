@@ -14,19 +14,16 @@ from typing import Any, Dict, List, Optional, Tuple
 class InvalidFrictionModel(Exception):
     """Raised for unsupported friction model types."""
 
-    pass
 
 
 class InvalidParameter(Exception):
     """Raised for invalid parameter values."""
 
-    pass
 
 
 class FrictionCalculationError(Exception):
     """Raised for friction calculation failures."""
 
-    pass
 
 
 # Commission Models
@@ -467,7 +464,6 @@ class CustomFrictionModel:
 
     def initialize(self, config: Dict[str, Any]) -> None:
         """Initialize plugin with configuration."""
-        pass
 
     def calculate_cost(self, trade_info: Dict[str, Any]) -> float:
         """Calculate custom friction cost."""

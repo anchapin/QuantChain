@@ -6,4 +6,4 @@ __email__ = "team@quantchain.dev"
 
 from . import agents, backtesting, connectors, core, tools
 
-__all__ = ["agents", "tools", "connectors", "backtesting", "core", "CIFixer"]
+__all__ = ["agents", "tools", "connectors", "backtesting", "core"]

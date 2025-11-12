@@ -5,7 +5,6 @@ This example demonstrates how to use different secret managers and
 how to migrate from development (.env) to production secret management.
 """
 
-import os
 from quantchain.core.security import APISecurityManager
 from quantchain.core.secret_managers import (
     create_secret_manager,

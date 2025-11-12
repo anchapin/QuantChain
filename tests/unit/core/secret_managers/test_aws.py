@@ -1,299 +1,322 @@
-"""Tests for AWS secret manager."""
+"""Comprehensive tests for AWS Secrets Manager implementation."""
 
+import json
+import os
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-
-# Mock boto3 before importing the module
-with patch.dict('sys.modules', {'boto3': Mock(), 'botocore.exceptions': Mock()}):
-    from botocore.exceptions import ClientError
+# Import the module under test
+try:
     from quantchain.core.secret_managers.aws import (
         AWSSecretsManager,
-        AWSSecretManagerError,
-        create_aws_secret_manager,
         AWSSecretManagerConfig,
-        AWSSecretManager,
+        create_aws_secret_manager,
+        AWSSecretManagerError,
     )
+    try:
+        from botocore.exceptions import ClientError, NoCredentialsError
+    except ImportError:
+        # Mock ClientError for testing when botocore is not available
+        class ClientError(Exception):
+            def __init__(self, error_response, operation_name):
+                self.response = error_response
+        
+    _AWS_AVAILABLE = True
+except ImportError:
+    _AWS_AVAILABLE = False
+    # Mock classes for when boto3 is not available
+    class ClientError(Exception):
+        def __init__(self, error_response, operation_name):
+            self.response = error_response
 
 
-class TestAWSSecretManagerError:
-    """Test AWSSecretManagerError exception."""
-    
-    def test_error_creation(self):
-        """Test error can be created with message."""
-        error = AWSSecretManagerError("Test AWS error")
-        assert str(error) == "Test AWS error"
-        assert isinstance(error, Exception)
-
-
+@pytest.mark.skipif(not _AWS_AVAILABLE, reason="boto3 not installed")
+@pytest.mark.unit
 class TestAWSSecretManagerConfig:
-    """Test AWSSecretManagerConfig dataclass."""
-    
-    def test_creation_default(self):
-        """Test config creation with defaults."""
+    """Test AWS Secrets Manager configuration."""
+
+    def test_default_config(self) -> None:
+        """Test default configuration values."""
         config = AWSSecretManagerConfig()
         assert config.region_name == "us-east-1"
         assert config.max_retries == 3
         assert config.backoff_factor == 1.0
-    
-    def test_creation_custom(self):
-        """Test config creation with custom values."""
+
+    def test_custom_config(self) -> None:
+        """Test custom configuration values."""
         config = AWSSecretManagerConfig(
-            region_name="eu-west-1",
+            region_name="us-west-2",
             max_retries=5,
             backoff_factor=2.0
         )
-        assert config.region_name == "eu-west-1"
+        assert config.region_name == "us-west-2"
         assert config.max_retries == 5
         assert config.backoff_factor == 2.0
 
 
+@pytest.mark.skipif(not _AWS_AVAILABLE, reason="boto3 not installed")
+@pytest.mark.unit
 class TestAWSSecretsManager:
-    """Test AWSSecretsManager class."""
-    
-    @patch('quantchain.core.secret_managers.aws.boto3.client')
-    def test_init(self, mock_client):
-        """Test initialization."""
-        mock_boto_client = Mock()
-        mock_client.return_value = mock_boto_client
-        
-        manager = AWSSecretsManager(region_name="us-west-1")
-        
-        assert manager.region_name == "us-west-1"
-        mock_client.assert_called_once_with(
-            'secretsmanager',
-            region_name='us-west-1'
+    """Test AWS Secrets Manager implementation."""
+
+    @patch("boto3.Session")
+    def test_init_with_explicit_credentials(self, mock_session: Mock) -> None:
+        """Test initialization with explicit credentials."""
+        mock_client = Mock()
+        mock_client.list_secrets.return_value = {"SecretList": []}
+        mock_session.return_value.client.return_value = mock_client
+
+        manager = AWSSecretsManager(
+            region_name="us-west-2",
+            aws_access_key_id="test_key",
+            aws_secret_access_key="test_secret"
         )
 
+        assert manager.region_name == "us-west-2"
+        assert manager.aws_access_key_id == "test_key"
+        assert manager.aws_secret_access_key == "test_secret"
+        mock_client.list_secrets.assert_called_once_with(MaxResults=1)
 
+    @patch("boto3.Session")
+    def test_init_with_env_credentials(self, mock_session: Mock) -> None:
+        """Test initialization with environment variables."""
+        mock_client = Mock()
+        mock_client.list_secrets.return_value = {"SecretList": []}
+        mock_session.return_value.client.return_value = mock_client
+
+        with patch.dict(os.environ, {
+            "AWS_REGION": "us-east-1",
+            "AWS_ACCESS_KEY_ID": "env_key",
+            "AWS_SECRET_ACCESS_KEY": "env_secret"
+        }):
+            manager = AWSSecretsManager()
+
+            assert manager.region_name == "us-east-1"
+            assert manager.aws_access_key_id == "env_key"
+            assert manager.aws_secret_access_key == "env_secret"
+
+    @patch("boto3.Session")
+    def test_init_with_profile(self, mock_session: Mock) -> None:
+        """Test initialization with AWS profile."""
+        mock_client = Mock()
+        mock_client.list_secrets.return_value = {"SecretList": []}
+        mock_session.return_value.client.return_value = mock_client
+
+        manager = AWSSecretsManager(profile_name="test-profile")
+
+        mock_session.assert_called_once_with(profile_name="test-profile")
+
+    @patch("boto3.Session")
+    def test_init_connection_failure(self, mock_session: Mock) -> None:
+        """Test initialization with connection failure."""
+        mock_client = Mock()
+        mock_client.list_secrets.side_effect = Exception("Connection failed")
+        mock_session.return_value.client.return_value = mock_client
+
+        with pytest.raises(RuntimeError, match="Failed to connect to AWS Secrets Manager"):
+            AWSSecretsManager()
+
+    @patch("boto3.Session")
+    def test_get_secret_success_string(self, mock_session: Mock) -> None:
+        """Test successful secret retrieval as string."""
+        mock_client = Mock()
+        mock_client.list_secrets.return_value = {"SecretList": []}
+        mock_client.get_secret_value.return_value = {"SecretString": "test_secret_value"}
+        mock_session.return_value.client.return_value = mock_client
+
+        manager = AWSSecretsManager()
+        result = manager.get_secret("test_secret")
+
+        assert result == "test_secret_value"
+        mock_client.get_secret_value.assert_called_once_with(SecretId="test_secret")
+
+    @patch("boto3.Session")
+    def test_get_secret_success_json_single_value(self, mock_session: Mock) -> None:
+        """Test successful secret retrieval as JSON with single value."""
+        mock_client = Mock()
+        mock_client.list_secrets.return_value = {"SecretList": []}
+        mock_client.get_secret_value.return_value = {
+            "SecretString": json.dumps({"key": "value"})
+        }
+        mock_session.return_value.client.return_value = mock_client
+
+        manager = AWSSecretsManager()
+        result = manager.get_secret("test_secret")
+
+        assert result == "value"
+
+    @patch("boto3.Session")
+    def test_get_secret_success_json_multiple_values(self, mock_session: Mock) -> None:
+        """Test successful secret retrieval as JSON with multiple values."""
+        mock_client = Mock()
+        mock_client.list_secrets.return_value = {"SecretList": []}
+        mock_client.get_secret_value.return_value = {
+            "SecretString": json.dumps({"key1": "value1", "key2": "value2"})
+        }
+        mock_session.return_value.client.return_value = mock_client
+
+        manager = AWSSecretsManager()
+        result = manager.get_secret("test_secret")
+
+        assert result == '{"key1": "value1", "key2": "value2"}'
+
+    @patch("boto3.Session")
+    def test_get_secret_success_binary(self, mock_session: Mock) -> None:
+        """Test successful secret retrieval as binary data."""
+        mock_client = Mock()
+        mock_client.list_secrets.return_value = {"SecretList": []}
+        mock_client.get_secret_value.return_value = {"SecretBinary": b"binary_data"}
+        mock_session.return_value.client.return_value = mock_client
+
+        manager = AWSSecretsManager()
+        result = manager.get_secret("test_secret")
+
+        assert result == "binary_data"
+
+    @patch("boto3.Session")
+    def test_get_secret_not_found(self, mock_session: Mock) -> None:
+        """Test secret not found case."""
+        mock_client = Mock()
+        mock_client.list_secrets.return_value = {"SecretList": []}
+        mock_client.get_secret_value.side_effect = ClientError(
+            {"Error": {"Code": "ResourceNotFoundException"}}, "GetSecretValue"
+        )
+        mock_session.return_value.client.return_value = mock_client
+
+        manager = AWSSecretsManager()
+        result = manager.get_secret("nonexistent_secret")
+
+        assert result is None
+
+    @patch("boto3.Session")
+    def test_get_secret_client_error(self, mock_session: Mock) -> None:
+        """Test client error during secret retrieval."""
+        mock_client = Mock()
+        mock_client.list_secrets.return_value = {"SecretList": []}
+        mock_client.get_secret_value.side_effect = ClientError(
+            {"Error": {"Code": "InvalidParameterException", "Message": "Invalid secret"}}, 
+            "GetSecretValue"
+        )
+        mock_session.return_value.client.return_value = mock_client
+
+        manager = AWSSecretsManager()
+        result = manager.get_secret("test_secret")
+
+        assert result is None
+
+    @patch("boto3.Session")
+    def test_get_service_credentials_success(self, mock_session: Mock) -> None:
+        """Test successful service credentials retrieval."""
+        mock_client = Mock()
+        mock_client.list_secrets.return_value = {"SecretList": []}
+        mock_client.get_secret_value.return_value = {
+            "SecretString": json.dumps({"api_key": "key123", "api_secret": "secret123"})
+        }
+        mock_session.return_value.client.return_value = mock_client
+
+        manager = AWSSecretsManager()
+        result = manager.get_service_credentials("alpaca")
+
+        assert result == {"api_key": "key123", "api_secret": "secret123"}
+        mock_client.get_secret_value.assert_called_once_with(SecretId="quantchain/alpaca")
+
+    @patch("boto3.Session")
+    def test_get_service_credentials_not_json(self, mock_session: Mock) -> None:
+        """Test service credentials retrieval with non-JSON string."""
+        mock_client = Mock()
+        mock_client.list_secrets.return_value = {"SecretList": []}
+        mock_client.get_secret_value.return_value = {"SecretString": "plain_text_secret"}
+        mock_session.return_value.client.return_value = mock_client
+
+        manager = AWSSecretsManager()
+        result = manager.get_service_credentials("alpaca")
+
+        assert result == {"value": "plain_text_secret"}
+
+    @patch("boto3.Session")
+    def test_get_service_credentials_not_found(self, mock_session: Mock) -> None:
+        """Test service credentials not found."""
+        mock_client = Mock()
+        mock_client.list_secrets.return_value = {"SecretList": []}
+        mock_client.get_secret_value.side_effect = ClientError(
+            {"Error": {"Code": "ResourceNotFoundException"}}, "GetSecretValue"
+        )
+        mock_session.return_value.client.return_value = mock_client
+
+        manager = AWSSecretsManager()
+        result = manager.get_service_credentials("nonexistent_service")
+
+        assert result == {}
+
+    @patch("boto3.Session")
+    def test_validate_service_success(self, mock_session: Mock) -> None:
+        """Test successful service validation."""
+        mock_client = Mock()
+        mock_client.list_secrets.return_value = {"SecretList": []}
+        mock_client.get_secret_value.return_value = {"SecretString": "some_secret"}
+        mock_session.return_value.client.return_value = mock_client
+
+        manager = AWSSecretsManager()
+        result = manager.validate_service("alpaca")
+
+        assert result is True
+        mock_client.get_secret_value.assert_called_once_with(SecretId="quantchain/alpaca")
+
+    @patch("boto3.Session")
+    def test_validate_service_not_found(self, mock_session: Mock) -> None:
+        """Test service validation when not found."""
+        mock_client = Mock()
+        mock_client.list_secrets.return_value = {"SecretList": []}
+        mock_client.get_secret_value.side_effect = ClientError(
+            {"Error": {"Code": "ResourceNotFoundException"}}, "GetSecretValue"
+        )
+        mock_session.return_value.client.return_value = mock_client
+
+        manager = AWSSecretsManager()
+        result = manager.validate_service("nonexistent_service")
+
+        assert result is False
+
+    @patch("boto3.Session")
+    def test_validate_service_other_error(self, mock_session: Mock) -> None:
+        """Test service validation with other error."""
+        mock_client = Mock()
+        mock_client.list_secrets.return_value = {"SecretList": []}
+        mock_client.get_secret_value.side_effect = ClientError(
+            {"Error": {"Code": "AccessDeniedException", "Message": "Access denied"}}, 
+            "GetSecretValue"
+        )
+        mock_session.return_value.client.return_value = mock_client
+
+        manager = AWSSecretsManager()
+        result = manager.validate_service("alpaca")
+
+        assert result is False
+
+
+@pytest.mark.skipif(not _AWS_AVAILABLE, reason="boto3 not installed")
+@pytest.mark.unit
 class TestCreateAWSSecretManager:
-    """Test the create_aws_secret_manager convenience function."""
-    
-    @patch('quantchain.core.secret_managers.aws.AWSSecretsManager')
-    def test_create_convenience_function(self, mock_manager_class):
-        """Test the convenience function creates manager."""
-        mock_manager = Mock()
-        mock_manager_class.return_value = mock_manager
-        
-        manager = create_aws_secret_manager(region_name="eu-central-1")
-        
-        mock_manager_class.assert_called_once_with(region_name="eu-central-1")
-        assert manager == mock_manager
+    """Test factory function for AWS Secrets Manager."""
 
+    @patch("boto3.Session")
+    def test_create_aws_secret_manager(self, mock_session: Mock) -> None:
+        """Test creating AWS Secret Manager with factory function."""
+        mock_client = Mock()
+        mock_client.list_secrets.return_value = {"SecretList": []}
+        mock_session.return_value.client.return_value = mock_client
 
-class TestAWSSecretManager:
-    """Test AWSSecretManager class."""
-    
-    @patch('quantchain.core.secret_managers.aws.boto3.client')
-    def test_init_default(self, mock_client):
-        """Test initialization with default config."""
-        mock_boto_client = Mock()
-        mock_client.return_value = mock_boto_client
-        
-        manager = AWSSecretManager()
-        
+        manager = create_aws_secret_manager(region_name="us-east-1")
+
+        assert isinstance(manager, AWSSecretsManager)
         assert manager.region_name == "us-east-1"
-        assert manager.client == mock_boto_client
-        mock_client.assert_called_once_with(
-            'secretsmanager',
-            region_name='us-east-1'
-        )
-    
-    @patch('quantchain.core.secret_managers.aws.boto3.client')
-    def test_init_custom_config(self, mock_client):
-        """Test initialization with custom config."""
-        mock_boto_client = Mock()
-        mock_client.return_value = mock_boto_client
-        
-        manager = AWSSecretManager(region_name="ap-southeast-1")
-        
-        assert manager.region_name == "ap-southeast-1"
-        assert manager.client == mock_boto_client
-        mock_client.assert_called_once_with(
-            'secretsmanager',
-            region_name='ap-southeast-1'
-        )
-    
-    @patch('quantchain.core.secret_managers.aws.boto3.client')
-    def test_get_secret_success(self, mock_client):
-        """Test successful secret retrieval."""
-        mock_boto_client = Mock()
-        mock_client.return_value = mock_boto_client
-        
-        # Mock successful response
-        mock_response = {
-            'SecretString': 'my-secret-value',
-            'VersionId': 'v1',
-            'CreatedDate': 1234567890
-        }
-        mock_boto_client.get_secret_value.return_value = mock_response
-        
-        manager = AWSSecretManager()
-        secret = manager.get_secret("test-secret")
-        
-        assert secret == 'my-secret-value'
-        mock_boto_client.get_secret_value.assert_called_once_with(
-            SecretId='test-secret'
-        )
-    
-    @patch('quantchain.core.secret_managers.aws.boto3.client')
-    def test_get_secret_not_found(self, mock_client):
-        """Test secret not found error."""
-        mock_boto_client = Mock()
-        mock_client.return_value = mock_boto_client
-        
-        # Mock ResourceNotFoundException
-        error = ClientError(
-            error_response={'Error': {'Code': 'ResourceNotFoundException'}},
-            operation_name='GetSecretValue'
-        )
-        mock_boto_client.get_secret_value.side_effect = error
-        
-        manager = AWSSecretManager()
-        
-        with pytest.raises(AWSSecretManagerError) as exc_info:
-            manager.get_secret("non-existent-secret")
-        
-        assert "not found" in str(exc_info.value).lower()
-    
-    @patch('quantchain.core.secret_managers.aws.boto3.client')
-    def test_get_secret_access_denied(self, mock_client):
-        """Test access denied error."""
-        mock_boto_client = Mock()
-        mock_client.return_value = mock_boto_client
-        
-        # Mock AccessDeniedException
-        error = ClientError(
-            error_response={'Error': {'Code': 'AccessDeniedException'}},
-            operation_name='GetSecretValue'
-        )
-        mock_boto_client.get_secret_value.side_effect = error
-        
-        manager = AWSSecretManager()
-        
-        with pytest.raises(AWSSecretManagerError) as exc_info:
-            manager.get_secret("restricted-secret")
-        
-        assert "access denied" in str(exc_info.value).lower()
-    
-    @patch('quantchain.core.secret_managers.aws.boto3.client')
-    def test_set_secret_success(self, mock_client):
-        """Test successful secret creation/update."""
-        mock_boto_client = Mock()
-        mock_client.return_value = mock_boto_client
-        
-        # Mock successful response
-        mock_response = {
-            'ARN': 'arn:aws:secretsmanager:us-east-1:123456789012:secret:test-secret',
-            'Name': 'test-secret',
-            'VersionId': 'v2'
-        }
-        mock_boto_client.create_secret.return_value = mock_response
-        
-        manager = AWSSecretManager()
-        result = manager.set_secret("test-secret", "new-secret-value")
-        
-        assert result['VersionId'] == 'v2'
-        mock_boto_client.create_secret.assert_called_once_with(
-            Name='test-secret',
-            SecretString='new-secret-value'
-        )
-    
-    @patch('quantchain.core.secret_managers.aws.boto3.client')
-    def test_set_secret_binary(self, mock_client):
-        """Test setting binary secret."""
-        mock_boto_client = Mock()
-        mock_client.return_value = mock_boto_client
-        
-        # Mock successful response
-        mock_response = {
-            'ARN': 'arn:aws:secretsmanager:us-east-1:123456789012:secret:binary-secret',
-            'Name': 'binary-secret',
-            'VersionId': 'v1'
-        }
-        mock_boto_client.create_secret.return_value = mock_response
-        
-        manager = AWSSecretManager()
-        binary_data = b'\x00\x01\x02\x03'
-        result = manager.set_secret("binary-secret", binary_data)
-        
-        assert result['VersionId'] == 'v1'
-        mock_boto_client.create_secret.assert_called_once_with(
-            Name='binary-secret',
-            SecretBinary=binary_data
-        )
-    
-    @patch('quantchain.core.secret_managers.aws.boto3.client')
-    def test_delete_secret_success(self, mock_client):
-        """Test successful secret deletion."""
-        mock_boto_client = Mock()
-        mock_client.return_value = mock_boto_client
-        
-        # Mock successful response
-        mock_response = {
-            'ARN': 'arn:aws:secretsmanager:us-east-1:123456789012:secret:test-secret',
-            'Name': 'test-secret',
-            'DeletionDate': 1234567890
-        }
-        mock_boto_client.delete_secret.return_value = mock_response
-        
-        manager = AWSSecretManager()
-        result = manager.delete_secret("test-secret")
-        
-        assert result['Name'] == 'test-secret'
-        mock_boto_client.delete_secret.assert_called_once_with(
-            SecretId='test-secret'
-        )
-    
-    @patch('quantchain.core.secret_managers.aws.boto3.client')
-    def test_list_secrets_success(self, mock_client):
-        """Test successful secret listing."""
-        mock_boto_client = Mock()
-        mock_client.return_value = mock_boto_client
-        
-        # Mock paginated response
-        first_page = {
-            'SecretList': [
-                {'ARN': 'arn:aws:secretsmanager:us-east-1:123456:secret:secret1', 'Name': 'secret1'},
-                {'ARN': 'arn:aws:secretsmanager:us-east-1:123456:secret:secret2', 'Name': 'secret2'}
-            ],
-            'NextToken': 'token123'
-        }
-        second_page = {
-            'SecretList': [
-                {'ARN': 'arn:aws:secretsmanager:us-east-1:123456:secret:secret3', 'Name': 'secret3'}
-            ]
-        }
-        
-        mock_paginator = Mock()
-        mock_paginator.paginate.return_value = [first_page, second_page]
-        mock_boto_client.get_paginator.return_value = mock_paginator
-        
-        manager = AWSSecretManager()
-        secrets = manager.list_secrets()
-        
-        assert len(secrets) == 3
-        assert secrets[0]['Name'] == 'secret1'
-        assert secrets[1]['Name'] == 'secret2'
-        assert secrets[2]['Name'] == 'secret3'
-        mock_boto_client.get_paginator.assert_called_once_with('list_secrets')
-    
-    @patch('quantchain.core.secret_managers.aws.boto3.client')
-    def test_rotate_secret_success(self, mock_client):
-        """Test successful secret rotation."""
-        mock_boto_client = Mock()
-        mock_client.return_value = mock_boto_client
-        
-        # Mock successful response
-        mock_response = {
-            'SecretId': 'test-secret',
-            'VersionId': 'v2'
-        }
-        mock_boto_client.rotate_secret.return_value = mock_response
-        
-        manager = AWSSecretManager()
-        result = manager.rotate_secret("test-secret")
-        
-        assert result['VersionId'] == 'v2'
-        mock_boto_client.rotate_secret.assert_called_once_with(
-            SecretId='test-secret'
-        )
+
+
+@pytest.mark.skipif(not _AWS_AVAILABLE, reason="boto3 not installed")
+@pytest.mark.unit
+class TestAWSSecretManagerError:
+    """Test AWS Secret Manager error class."""
+
+    def test_error_instantiation(self) -> None:
+        """Test creating an AWS Secret Manager error."""
+        error = AWSSecretManagerError("Test error")
+        assert str(error) == "Test error"

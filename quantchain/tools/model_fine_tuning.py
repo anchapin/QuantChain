@@ -55,7 +55,6 @@ logger = logging.getLogger(__name__)
 class TimeoutError(Exception):
     """Exception raised when operation times out."""
 
-    pass
 
 
 def timeout_handler(
@@ -91,37 +90,31 @@ def timeout_handler(
 class FineTuningError(Exception):
     """Base exception for fine-tuning operations."""
 
-    pass
 
 
 class EnvironmentError(FineTuningError):
     """Exception for environment/resource issues."""
 
-    pass
 
 
 class DatasetError(FineTuningError):
     """Exception for dataset processing issues."""
 
-    pass
 
 
 class TrainingError(FineTuningError):
     """Exception for training process failures."""
 
-    pass
 
 
 class QuantizationError(FineTuningError):
     """Exception for quantization failures."""
 
-    pass
 
 
 class ValidationError(FineTuningError):
     """Exception for model validation failures."""
 
-    pass
 
 
 @dataclass

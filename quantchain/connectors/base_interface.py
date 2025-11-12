@@ -51,7 +51,6 @@ class DataFeedInterface(ABC):
             DataSourceError: If data cannot be fetched
             ValueError: If parameters are invalid
         """
-        pass
 
     @abstractmethod
     def get_real_time_data(self, symbol: str) -> Dict[str, Any]:
@@ -71,7 +70,6 @@ class DataFeedInterface(ABC):
         Raises:
             DataSourceError: If data cannot be fetched
         """
-        pass
 
     @abstractmethod
     def get_quote(self, symbol: str) -> Dict[str, Any]:
@@ -94,7 +92,6 @@ class DataFeedInterface(ABC):
         Raises:
             DataSourceError: If quote cannot be fetched
         """
-        pass
 
     @abstractmethod
     def get_available_symbols(self, market: Optional[str] = None) -> List[str]:
@@ -109,7 +106,6 @@ class DataFeedInterface(ABC):
         Raises:
             DataSourceError: If symbols cannot be fetched
         """
-        pass
 
     @abstractmethod
     def get_symbol_info(self, symbol: str) -> Dict[str, Any]:
@@ -133,7 +129,6 @@ class DataFeedInterface(ABC):
             DataSourceError: If symbol info cannot be fetched
             ValueError: If symbol is not found
         """
-        pass
 
     @abstractmethod
     def is_market_open(self, market: Optional[str] = None) -> bool:
@@ -148,4 +143,3 @@ class DataFeedInterface(ABC):
         Raises:
             DataSourceError: If market status cannot be determined
         """
-        pass

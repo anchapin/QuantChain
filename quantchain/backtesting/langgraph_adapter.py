@@ -16,49 +16,41 @@ import pandas as pd
 class AgentExecutionError(Exception):
     """Raised for agent runtime failures."""
 
-    pass
 
 
 class TimeoutError(Exception):
     """Raised for agent execution timeouts."""
 
-    pass
 
 
 class StateValidationError(Exception):
     """Raised for invalid agent state."""
 
-    pass
 
 
 class SignalConversionError(Exception):
     """Raised for signal conversion failures."""
 
-    pass
 
 
 class PositionError(Exception):
     """Raised for position management errors."""
 
-    pass
 
 
 class DeterministicRuleError(Exception):
     """Raised for rule evaluation failures."""
 
-    pass
 
 
 class ScenarioLoadError(Exception):
     """Raised for scenario loading failures."""
 
-    pass
 
 
 class ReproducibilityError(Exception):
     """Raised when deterministic behavior cannot be guaranteed."""
 
-    pass
 
 
 @dataclass

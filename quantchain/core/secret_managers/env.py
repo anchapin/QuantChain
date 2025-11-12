@@ -12,13 +12,11 @@ from .base import SecretManager
 class InvalidCredentialFormatError(Exception):
     """Raised when credentials don't match expected format."""
 
-    pass
 
 
 class SecurityConfigurationError(Exception):
     """Raised when security configuration is invalid."""
 
-    pass
 
 
 logger = logging.getLogger(__name__)

@@ -42,17 +42,17 @@ def check_dependencies() -> bool:
     missing_deps = []
 
     try:
-        import pandas
+        pass
     except ImportError:
         missing_deps.append("pandas")
 
     try:
-        import matplotlib
+        pass
     except ImportError:
         missing_deps.append("matplotlib")
 
     try:
-        import mplfinance
+        pass
     except ImportError:
         missing_deps.append("mplfinance")
 

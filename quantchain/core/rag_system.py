@@ -41,17 +41,14 @@ class VectorStore(ABC):
     @abstractmethod
     def store(self, data: MarketData, embedding: List[float]) -> str:
         """Store data with embedding, return ID."""
-        pass
 
     @abstractmethod
     def search(self, query_embedding: List[float], limit: int = 10) -> List[MarketData]:
         """Search for similar data."""
-        pass
 
     @abstractmethod
     def delete(self, data_id: str) -> bool:
         """Delete data by ID."""
-        pass
 
 
 class ChromaVectorStore(VectorStore):
@@ -144,7 +141,6 @@ class EmbeddingProvider(ABC):
     @abstractmethod
     def encode(self, text: str) -> List[float]:
         """Generate embedding for text."""
-        pass
 
 
 class SentenceTransformerProvider(EmbeddingProvider):

@@ -621,10 +621,8 @@ class TestAPISecurityManager:
     def test_vault_backend_initialization(self) -> None:
         """Test initialization with Vault backend."""
         # TODO: Implement test
-        pass
 
     @pytest.mark.skip(reason="Production backends not yet implemented")
     def test_aws_secrets_manager_backend(self) -> None:
         """Test initialization with AWS Secrets Manager backend."""
         # TODO: Implement test
-        pass

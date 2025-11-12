@@ -16,7 +16,7 @@ class TestMain:
         with patch.object(sys, "argv", ["script"]):
             with pytest.raises(SystemExit) as exc_info:
                 main()
-            
+
             assert exc_info.value.code == 1
             captured = capsys.readouterr()
             assert "Usage:" in captured.out
@@ -27,7 +27,7 @@ class TestMain:
         with patch.object(sys, "argv", ["script", "help"]):
             # Help doesn't exit, it just prints
             main()
-            
+
             captured = capsys.readouterr()
             assert "Usage:" in captured.out
             assert "Available commands:" in captured.out
@@ -44,7 +44,7 @@ class TestMain:
         with patch.object(sys, "argv", ["script", "fix-failing-ci-checks"]):
             with pytest.raises(SystemExit) as exc_info:
                 main()
-            
+
             assert exc_info.value.code == 0
             mock_fixer.run_fix_process.assert_called_once()
 
@@ -58,7 +58,7 @@ class TestMain:
         with patch.object(sys, "argv", ["script", "fix-failing-ci-checks"]):
             with pytest.raises(SystemExit) as exc_info:
                 main()
-            
+
             assert exc_info.value.code == 1
             mock_fixer.run_fix_process.assert_called_once()
 
@@ -68,9 +68,11 @@ class TestMain:
         mock_ci_fixer.side_effect = Exception("Test error")
 
         with patch.object(sys, "argv", ["script", "fix-failing-ci-checks"]):
-            with pytest.raises(SystemExit) as exc_info, patch("builtins.print") as mock_print:
+            with pytest.raises(SystemExit) as exc_info, patch(
+                "builtins.print"
+            ) as mock_print:
                 main()
-            
+
             assert exc_info.value.code == 1
             mock_print.assert_called_with("Error: Test error")
 
@@ -82,9 +84,11 @@ class TestMain:
         mock_ci_fixer.return_value = mock_fixer
 
         with patch.object(sys, "argv", ["script", "fix-failing-ci-checks"]):
-            with pytest.raises(SystemExit) as exc_info, patch("builtins.print") as mock_print:
+            with pytest.raises(SystemExit) as exc_info, patch(
+                "builtins.print"
+            ) as mock_print:
                 main()
-            
+
             assert exc_info.value.code == 1
             mock_print.assert_called_with("\nProcess interrupted by user")
 
@@ -93,7 +97,7 @@ class TestMain:
         with patch.object(sys, "argv", ["script", "unknown-command"]):
             with pytest.raises(SystemExit) as exc_info:
                 main()
-            
+
             assert exc_info.value.code == 1
             captured = capsys.readouterr()
             assert "Unknown command: unknown-command" in captured.out
@@ -105,8 +109,9 @@ class TestMain:
         with patch.object(sys, "argv", ["__main__"]):
             with pytest.raises(SystemExit) as exc_info:
                 from quantchain.tools.__main__ import main
+
                 main()
-            
+
             assert exc_info.value.code == 1
             captured = capsys.readouterr()
             assert "Usage:" in captured.out

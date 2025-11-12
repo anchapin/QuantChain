@@ -18,17 +18,14 @@ class BacktestEngine(ABC):
         self, strategy: Any, data: pd.DataFrame, config: "BacktestConfig"
     ) -> "BacktestResult":
         """Run backtest with given strategy, data, and configuration."""
-        pass
 
     @abstractmethod
     def get_results(self) -> Optional["BacktestResult"]:
         """Get results of the last backtest."""
-        pass
 
     @abstractmethod
     def get_equity_curve(self) -> Optional[pd.Series]:
         """Get equity curve from the last backtest."""
-        pass
 
 
 @dataclass
@@ -150,19 +147,16 @@ class BacktestResult:
 class ConfigurationError(Exception):
     """Raised for invalid backtest configuration."""
 
-    pass
 
 
 class DataValidationError(Exception):
     """Raised for invalid input data."""
 
-    pass
 
 
 class BacktestExecutionError(Exception):
     """Raised for errors during backtest execution."""
 
-    pass
 
 
 def validate_ohlcv_data(data: pd.DataFrame) -> None:

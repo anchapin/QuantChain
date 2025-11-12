@@ -49,25 +49,21 @@ class TimeInForce(Enum):
 class ExecutionError(QuantChainError):
     """Raised when order execution fails."""
 
-    pass
 
 
 class ValidationError(QuantChainError):
     """Raised when order parameters are invalid."""
 
-    pass
 
 
 class InsufficientFundsError(ExecutionError):
     """Raised when insufficient funds are available for order."""
 
-    pass
 
 
 class OrderNotFoundError(ExecutionError):
     """Raised when order cannot be found."""
 
-    pass
 
 
 @dataclass
@@ -190,27 +186,22 @@ class TradingExecutionInterface(ABC):
     @abstractmethod
     def place_order(self, order: OrderRequest) -> OrderResult:
         """Place a trading order and return the result."""
-        pass
 
     @abstractmethod
     def cancel_order(self, order_id: str) -> OrderResult:
         """Cancel an existing order."""
-        pass
 
     @abstractmethod
     def get_order(self, order_id: str) -> OrderResult:
         """Retrieve order status and details."""
-        pass
 
     @abstractmethod
     def get_account(self) -> AccountInfo:
         """Retrieve account information."""
-        pass
 
     @abstractmethod
     def get_positions(self) -> List[Position]:
         """Retrieve current open positions."""
-        pass
 
     @abstractmethod
     def get_order_history(
@@ -222,12 +213,10 @@ class TradingExecutionInterface(ABC):
         limit: Optional[int] = None,
     ) -> List[OrderResult]:
         """Retrieve historical orders with optional filtering."""
-        pass
 
     @abstractmethod
     def is_market_open(self, symbol: Optional[str] = None) -> bool:
         """Check if the market is open for trading."""
-        pass
 
     def validate_order(self, order: OrderRequest) -> None:
         """

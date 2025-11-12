@@ -17,7 +17,6 @@ class SecretManager(ABC):
         Returns:
             The secret value or None if not found
         """
-        pass
 
     @abstractmethod
     def get_service_credentials(self, service: str) -> Dict[str, str]:
@@ -29,7 +28,6 @@ class SecretManager(ABC):
         Returns:
             Dictionary containing the service's credentials
         """
-        pass
 
     @abstractmethod
     def validate_service(self, service: str) -> bool:
@@ -41,7 +39,6 @@ class SecretManager(ABC):
         Returns:
             True if credentials are available, False otherwise
         """
-        pass
 
     def get_api_key(self, service: str) -> Optional[str]:
         """Convenience method to get API key for a service.

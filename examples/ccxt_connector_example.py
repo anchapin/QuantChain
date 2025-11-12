@@ -2,7 +2,6 @@
 
 from quantchain.connectors.ccxt_connector import CCXTDataConnector
 from datetime import datetime, timedelta
-import pandas as pd
 
 
 def main():

@@ -261,4 +261,3 @@ class APISecurityManager:
 class CredentialNotFoundError(Exception):
     """Raised when requested credentials are not found."""
 
-    pass

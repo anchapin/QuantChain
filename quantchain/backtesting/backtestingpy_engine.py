@@ -24,13 +24,11 @@ from quantchain.backtesting.engine import (
 class BacktestingPyError(Exception):
     """Base exception for backtesting.py engine errors."""
 
-    pass
 
 
 class ConversionError(BacktestingPyError):
     """Exception raised when data conversion fails."""
 
-    pass
 
 
 if Strategy is not None:
@@ -48,7 +46,6 @@ if Strategy is not None:
         def next(self) -> None:
             """Called for each bar of data."""
             # This would be implemented based on the quantchain strategy
-            pass
 
 else:
     StrategyAdapter = None  # type: ignore

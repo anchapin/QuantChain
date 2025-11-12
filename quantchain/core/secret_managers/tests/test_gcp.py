@@ -4,7 +4,7 @@
 import pytest
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 # Add the parent directory to the path to import the module
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import json
 import os
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 from google.api_core import exceptions as gcp_exceptions
@@ -63,7 +63,9 @@ class TestGCPSecretManagerInit:
     def test_init_with_service_account_key(self, mock_service_account, mock_client):
         """Test initialization with service account key dict."""
         mock_credentials = Mock()
-        mock_service_account.Credentials.from_service_account_info.return_value = mock_credentials
+        mock_service_account.Credentials.from_service_account_info.return_value = (
+            mock_credentials
+        )
         mock_client_instance = Mock()
         mock_client_instance.list_secrets.return_value = Mock()
         mock_client.return_value = mock_client_instance
@@ -71,7 +73,9 @@ class TestGCPSecretManagerInit:
         service_key = {"type": "service_account", "project_id": "test"}
         manager = GCPSecretManager(project_id="test", service_account_key=service_key)
 
-        mock_service_account.Credentials.from_service_account_info.assert_called_once_with(service_key)
+        mock_service_account.Credentials.from_service_account_info.assert_called_once_with(
+            service_key
+        )
         mock_client.assert_called_once_with(credentials=mock_credentials)
 
     @patch("gcp.secretmanager.SecretManagerServiceClient")
@@ -79,14 +83,15 @@ class TestGCPSecretManagerInit:
     def test_init_with_credentials_path(self, mock_service_account, mock_client):
         """Test initialization with credentials file path."""
         mock_credentials = Mock()
-        mock_service_account.Credentials.from_service_account_file.return_value = mock_credentials
+        mock_service_account.Credentials.from_service_account_file.return_value = (
+            mock_credentials
+        )
         mock_client_instance = Mock()
         mock_client_instance.list_secrets.return_value = Mock()
         mock_client.return_value = mock_client_instance
 
         manager = GCPSecretManager(
-            project_id="test",
-            credentials_path="/path/to/credentials.json"
+            project_id="test", credentials_path="/path/to/credentials.json"
         )
 
         mock_service_account.Credentials.from_service_account_file.assert_called_once_with(
@@ -111,7 +116,9 @@ class TestGCPSecretManagerInit:
         """Test initialization raises error on connection failure."""
         mock_client.side_effect = Exception("Connection failed")
 
-        with pytest.raises(RuntimeError, match="Failed to connect to GCP Secret Manager"):
+        with pytest.raises(
+            RuntimeError, match="Failed to connect to GCP Secret Manager"
+        ):
             GCPSecretManager(project_id="test")
 
     @patch("gcp.secretmanager.SecretManagerServiceClient")
@@ -122,8 +129,7 @@ class TestGCPSecretManagerInit:
         mock_client.return_value = mock_client_instance
 
         manager = GCPSecretManager(
-            project_id="test",
-            client_options={"api_endpoint": "custom.endpoint.com"}
+            project_id="test", client_options={"api_endpoint": "custom.endpoint.com"}
         )
 
         mock_client.assert_called_once_with(
@@ -233,14 +239,18 @@ class TestGCPSecretManagerGetSecret:
         result = self.manager.get_secret("quantchain/mysecret")
 
         assert result == "secret_value"
-        expected_name = "projects/test-project/secrets/quantchain/mysecret/versions/latest"
+        expected_name = (
+            "projects/test-project/secrets/quantchain/mysecret/versions/latest"
+        )
         self.manager.client.access_secret_version.assert_called_once_with(
             request={"name": expected_name}
         )
 
     def test_get_secret_not_found(self):
         """Test retrieving non-existent secret returns None."""
-        self.manager.client.access_secret_version.side_effect = gcp_exceptions.NotFound("Not found")
+        self.manager.client.access_secret_version.side_effect = gcp_exceptions.NotFound(
+            "Not found"
+        )
 
         result = self.manager.get_secret("nonexistent")
 
@@ -329,7 +339,9 @@ class TestGCPSecretManagerGetServiceCredentials:
 
     def test_get_service_credentials_not_found(self):
         """Test retrieving non-existent service credentials returns empty dict."""
-        self.manager.client.access_secret_version.side_effect = gcp_exceptions.NotFound("Not found")
+        self.manager.client.access_secret_version.side_effect = gcp_exceptions.NotFound(
+            "Not found"
+        )
 
         result = self.manager.get_service_credentials("nonexistent")
 
@@ -406,7 +418,9 @@ class TestGCPSecretManagerValidateService:
 
         assert result is True
         expected_name = "projects/test-project/secrets/quantchain/myservice"
-        self.manager.client.get_secret.assert_called_once_with(request={"name": expected_name})
+        self.manager.client.get_secret.assert_called_once_with(
+            request={"name": expected_name}
+        )
 
     def test_validate_service_destroyed(self):
         """Test validating destroyed service returns False."""
@@ -420,7 +434,9 @@ class TestGCPSecretManagerValidateService:
 
     def test_validate_service_not_found(self):
         """Test validating non-existent service returns False."""
-        self.manager.client.get_secret.side_effect = gcp_exceptions.NotFound("Not found")
+        self.manager.client.get_secret.side_effect = gcp_exceptions.NotFound(
+            "Not found"
+        )
 
         result = self.manager.validate_service("nonexistent")
 
@@ -462,39 +478,39 @@ class TestGCPSecretManagerIntegration:
         # Setup mock client
         mock_client_instance = Mock()
         mock_client_instance.list_secrets.return_value = Mock()
-        
+
         # Mock secret retrieval
         mock_secret_response = Mock()
         mock_secret_response.payload.data = b'{"api_key": "test123"}'
         mock_client_instance.access_secret_version.return_value = mock_secret_response
-        
+
         # Mock service validation
         mock_validate_response = Mock()
         mock_validate_response.state.name = "ENABLED"
         mock_client_instance.get_secret.return_value = mock_validate_response
-        
+
         mock_client.return_value = mock_client_instance
 
         # Initialize manager
         manager = GCPSecretManager(project_id="integration-test")
-        
+
         # Test secret name building
         secret_name = manager._build_secret_name("test_secret")
         assert "integration-test" in secret_name
         assert "quantchain/test_secret" in secret_name
-        
+
         # Test version name building
         version_name = manager._build_secret_version_name("test_secret", "v1")
         assert version_name.endswith("/versions/v1")
-        
+
         # Test secret retrieval
         secret = manager.get_secret("test_secret")
         assert secret == '{"api_key": "test123"}'
-        
+
         # Test service credentials
         creds = manager.get_service_credentials("test_service")
         assert creds == {"api_key": "test123"}
-        
+
         # Test service validation
         is_valid = manager.validate_service("test_service")
         assert is_valid is True
@@ -502,5 +518,7 @@ class TestGCPSecretManagerIntegration:
     def test_import_error_handling(self):
         """Test ImportError is raised when google-cloud-secret-manager is not available."""
         with patch.dict("sys.modules", {"google.cloud.secretmanager": None}):
-            with pytest.raises(ImportError, match="google-cloud-secret-manager library is required"):
+            with pytest.raises(
+                ImportError, match="google-cloud-secret-manager library is required"
+            ):
                 pass  # The import error will be raised when trying to import the module

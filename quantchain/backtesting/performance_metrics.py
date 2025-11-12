@@ -32,31 +32,26 @@ except ImportError:
 class InsufficientDataError(Exception):
     """Raised when there's insufficient data for calculation."""
 
-    pass
 
 
 class InvalidFrequencyError(Exception):
     """Raised for unsupported data frequencies."""
 
-    pass
 
 
 class MissingColumnError(Exception):
     """Raised when required columns are missing from trade data."""
 
-    pass
 
 
 class MetricsCalculationError(Exception):
     """Raised for general calculation failures."""
 
-    pass
 
 
 class LibraryImportError(Exception):
     """Raised when required libraries are not available."""
 
-    pass
 
 
 class PerformanceMetrics:

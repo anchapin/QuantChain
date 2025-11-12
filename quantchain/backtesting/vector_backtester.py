@@ -21,13 +21,11 @@ from .market_friction import (
 class VectorBacktestError(Exception):
     """Raised for vector backtester specific errors."""
 
-    pass
 
 
 class SignalProcessingError(Exception):
     """Raised for signal processing errors."""
 
-    pass
 
 
 @dataclass
@@ -396,7 +394,7 @@ class VectorBacktester:
         invalid_signals = signals[~signals.isin([-1, 0, 1])]
         if not invalid_signals.empty:
             # Get unique invalid values - signals could be Series
-            if hasattr(invalid_signals, 'unique'):
+            if hasattr(invalid_signals, "unique"):
                 invalid_values = invalid_signals.unique()
             else:
                 invalid_values = list(set(invalid_signals))

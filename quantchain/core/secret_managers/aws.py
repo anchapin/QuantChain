@@ -20,15 +20,15 @@ logger = logging.getLogger(__name__)
 
 class AWSSecretManagerError(Exception):
     """Exception raised by AWS Secrets Manager operations."""
-    pass
+
 
 
 def create_aws_secret_manager(**kwargs):
     """Create an AWS Secrets Manager instance.
-    
+
     Args:
         **kwargs: Arguments to pass to AWSSecretsManager constructor
-        
+
     Returns:
         AWSSecretsManager instance
     """
@@ -37,15 +37,15 @@ def create_aws_secret_manager(**kwargs):
 
 class AWSSecretManagerConfig:
     """Configuration for AWS Secrets Manager."""
-    
+
     def __init__(
         self,
         region_name: str = "us-east-1",
         max_retries: int = 3,
-        backoff_factor: float = 1.0
+        backoff_factor: float = 1.0,
     ):
         """Initialize config.
-        
+
         Args:
             region_name: AWS region name
             max_retries: Maximum number of retries
@@ -149,7 +149,11 @@ class AWSSecretsManager(SecretManager):
                     # Not JSON, return as is
                     return secret_string
             elif "SecretBinary" in response:
-                return str(response["SecretBinary"])
+                # SecretBinary is returned as bytes, decode it to string
+                binary_data = response["SecretBinary"]
+                if isinstance(binary_data, bytes):
+                    return binary_data.decode('utf-8')
+                return str(binary_data)
 
             return None
         except ClientError as e:

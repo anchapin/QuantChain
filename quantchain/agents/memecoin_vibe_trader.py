@@ -102,7 +102,6 @@ class MemecoinVibeTraderConfig:
 class MemecoinVibeTraderError(QuantChainError):
     """Custom exception for Memecoin Vibe Trader."""
 
-    pass
 
 
 class MemecoinVibeTrader:

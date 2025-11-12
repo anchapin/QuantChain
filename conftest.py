@@ -49,12 +49,12 @@ def log_resources(context: str) -> None:
     try:
         # Create logs directory if it doesn't exist
         os.makedirs("logs", exist_ok=True)
-        
+
         # Get resource statistics
         timestamp = datetime.now().isoformat()
-        disk = psutil.disk_usage('/')
+        disk = psutil.disk_usage("/")
         memory = psutil.virtual_memory()
-        
+
         stats = {
             "context": context,
             "timestamp": timestamp,
@@ -62,26 +62,26 @@ def log_resources(context: str) -> None:
                 "total_gb": round(disk.total / (1024**3), 2),
                 "used_gb": round(disk.used / (1024**3), 2),
                 "free_gb": round(disk.free / (1024**3), 2),
-                "percent": disk.percent
+                "percent": disk.percent,
             },
             "memory": {
                 "total_gb": round(memory.total / (1024**3), 2),
                 "available_gb": round(memory.available / (1024**3), 2),
                 "used_gb": round(memory.used / (1024**3), 2),
-                "percent": memory.percent
+                "percent": memory.percent,
             },
             "cpu": {
                 "percent": psutil.cpu_percent(interval=0.1),
-                "count": psutil.cpu_count()
-            }
+                "count": psutil.cpu_count(),
+            },
         }
-        
+
         # Write to log file
         log_file = "logs/test_resources.jsonl"
         with open(log_file, "a") as f:
             json.dump(stats, f)
             f.write("\n")
-            
+
     except Exception:
         # Silently ignore errors to not interfere with tests
         pass

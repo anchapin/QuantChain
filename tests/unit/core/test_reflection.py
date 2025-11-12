@@ -310,7 +310,9 @@ class TestReflectionEngine:
 
         insights = engine.generate_insights(metrics)
 
-        assert "Poor risk-adjusted returns - high risk for low reward" in " ".join(insights)
+        assert "Poor risk-adjusted returns - high risk for low reward" in " ".join(
+            insights
+        )
 
     def test_update_strategy_low_win_rate(self, engine) -> None:
         """Test strategy updates for low win rate."""

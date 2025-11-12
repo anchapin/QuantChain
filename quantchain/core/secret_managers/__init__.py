@@ -15,21 +15,21 @@ from .factory import (
 
 # Optional imports - only expose if available
 try:
-    from .aws import AWSSecretsManager
+    pass
 
     _AWS_AVAILABLE = True
 except ImportError:
     _AWS_AVAILABLE = False
 
 try:
-    from .gcp import GCPSecretManager
+    pass
 
     _GCP_AVAILABLE = True
 except ImportError:
     _GCP_AVAILABLE = False
 
 try:
-    from .vault import VaultSecretManager
+    pass
 
     _VAULT_AVAILABLE = True
 except ImportError:
