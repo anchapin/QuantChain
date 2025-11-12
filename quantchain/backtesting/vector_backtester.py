@@ -332,7 +332,7 @@ class VectorBacktester:
             )
 
         # Validate inputs
-        self._validate_inputs(signals, data)
+        self._validate_inputs(data, signals)
 
         # Extract price data
         if "close" not in data.columns:
@@ -379,7 +379,7 @@ class VectorBacktester:
         """Get equity curve from the last backtest."""
         return self._result.equity_curve if self._result else None
 
-    def _validate_inputs(self, signals: pd.Series, data: pd.DataFrame) -> None:
+    def _validate_inputs(self, data: pd.DataFrame, signals: pd.Series) -> None:
         """Validate input data and signals."""
         if data.empty:
             raise VectorBacktestError("Empty data provided")
@@ -395,7 +395,12 @@ class VectorBacktester:
         # Check signal values are valid (-1, 0, 1)
         invalid_signals = signals[~signals.isin([-1, 0, 1])]
         if not invalid_signals.empty:
+            # Get unique invalid values - signals could be Series
+            if hasattr(invalid_signals, 'unique'):
+                invalid_values = invalid_signals.unique()
+            else:
+                invalid_values = list(set(invalid_signals))
             raise SignalProcessingError(
-                f"Invalid signal values found: {invalid_signals.unique()}. "
+                f"Invalid signal values found: {invalid_values}. "
                 "Signals must be -1 (sell), 0 (hold), or 1 (buy)"
             )
