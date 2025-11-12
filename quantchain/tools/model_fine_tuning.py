@@ -230,14 +230,19 @@ def setup_fine_tuning_environment(
     if torch is None:
         raise ImportError("PyTorch is not available. Install with: pip install torch")
 
-    if not torch.cuda.is_available():
+    # Check if torch.cuda is available (in case torch is installed but CUDA is not)
+    if not hasattr(torch, "cuda") or not torch.cuda.is_available():
         raise EnvironmentError("CUDA GPU not available for fine-tuning")
 
-    gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024**3)
-    if gpu_memory < 16:  # Minimum 16GB VRAM for practical fine-tuning
-        logger.warning(
-            f"Low GPU memory detected: {gpu_memory:.1f}GB. Minimum 16GB recommended."
-        )
+    try:
+        gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+        if gpu_memory < 16:  # Minimum 16GB VRAM for practical fine-tuning
+            logger.warning(
+                f"Low GPU memory detected: {gpu_memory:.1f}GB. Minimum 16GB recommended."
+            )
+    except Exception:
+        # If we can't get GPU properties, just warn and continue
+        logger.warning("Could not determine GPU memory, continuing anyway")
 
     # Create output directory
     os.makedirs(output_dir, exist_ok=True)

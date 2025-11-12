@@ -42,7 +42,7 @@ jobs:
         pip install --no-cache-dir pytest-cov pytest-mock pytest-timeout
         
         # Install web dependencies for all Python versions since tests require them
-        pip install --no-cache-dir streamlit plotly narwhals blinker --no-deps
+        pip install --no-cache-dir streamlit plotly>=5.0.0 narwhals blinker
         
         # Install minimal CI dependencies to save disk space
         pip install --no-cache-dir -r requirements-ci.txt
@@ -124,7 +124,7 @@ jobs:
         pip install --no-cache-dir -r requirements-dev.txt
         
         # Install web dependencies for integration tests 
-        pip install --no-cache-dir streamlit plotly narwhals blinker --no-deps
+        pip install --no-cache-dir streamlit plotly>=5.0.0 narwhals blinker
         
         # Install ML dependencies for integration tests (3.13 has enough space)
         pip install --no-cache-dir torch transformers --no-deps

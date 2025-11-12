@@ -7,6 +7,7 @@ from .agent_training_mode import (
     TrainingDecision,
     TrainingSession,
 )
+from .ci_fixer import CIFixer
 from .execution_factory import create_execution_interface
 from .paper_trading import (
     FillModel,
@@ -82,4 +83,5 @@ __all__ = [
     "PerformanceTracker",
     "ModelOptimizer",
     "create_execution_interface",
+    "CIFixer",
 ]

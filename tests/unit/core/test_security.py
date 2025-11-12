@@ -2,7 +2,6 @@
 
 import os
 import tempfile
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -10,27 +9,30 @@ import pytest
 from quantchain.core.security import (
     APISecurityManager,
     CredentialNotFoundError,
-    InvalidCredentialFormatError,
     SecurityConfigurationError,
 )
+from quantchain.core.secret_managers.env import InvalidCredentialFormatError
 
 
 @pytest.mark.unit
 class TestAPISecurityManager:
-    """Comprehensive test suite for API Security Manager with full coverage."""
+    """Comprehensive test suite for API Security Manager with new secret management."""
 
-    def test_init_with_default_env_file(self) -> None:
-        """Test initialization with default .env file."""
+    @patch.dict(os.environ, {"QUANTCHAIN_SECRET_BACKEND": "env"})
+    def test_init_with_default_backend(self) -> None:
+        """Test initialization with default backend."""
         manager = APISecurityManager()
-        assert manager.env_file == Path(".env")
+        assert manager._secret_manager is not None
 
-    def test_init_with_custom_env_file(self) -> None:
-        """Test initialization with custom env file path."""
-        manager = APISecurityManager("custom.env")
-        assert manager.env_file == Path("custom.env")
+    @patch.dict(os.environ, {"QUANTCHAIN_SECRET_BACKEND": "env"})
+    def test_init_with_custom_backend(self) -> None:
+        """Test initialization with custom backend."""
+        manager = APISecurityManager(backend="env")
+        assert manager._secret_manager is not None
 
     # ===== Environment Variable Loading Tests =====
 
+    @patch.dict(os.environ, {"QUANTCHAIN_SECRET_BACKEND": "env"})
     def test_load_credentials_from_env_variables(self) -> None:
         """Test loading credentials from environment variables."""
         with patch.dict(
@@ -534,7 +536,7 @@ class TestAPISecurityManager:
         """Test validation behavior with None credentials."""
         # Clear environment variables and mock .env file to be empty
         with patch.dict(os.environ, {}, clear=True), patch(
-            "quantchain.core.security.Path.exists", return_value=False
+            "quantchain.core.secret_managers.env.Path.exists", return_value=False
         ):
             manager = APISecurityManager()
             # Test validation when no credentials are stored - should return False
@@ -548,11 +550,13 @@ class TestAPISecurityManager:
         manager = APISecurityManager()
         manager.set_api_key("openai", "sk-test1234567890abcdef")
 
-        # Attempt to directly modify the internal storage
-        manager._credentials["openai"]["key"] = "modified-key"
+        # Test that _credentials attribute doesn't exist in the new architecture
+        assert not hasattr(
+            manager, "_credentials"
+        ), "APISecurityManager should not expose _credentials directly"
 
-        # The modification should be reflected since we're accessing internal storage
-        assert manager.get_api_key("openai") == "modified-key"
+        # Test that credentials can still be retrieved through proper API
+        assert manager.get_api_key("openai") == "sk-test1234567890abcdef"
 
     def test_multiple_service_mixing(self) -> None:
         """Test mixing credentials from different sources (env vars and set_api_key)."""

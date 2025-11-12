@@ -1,12 +1,14 @@
 """Security module for API key management and credential handling."""
 
 import logging
-import os
 import re
-from pathlib import Path
 from typing import Dict, List, Optional
 
-# Exception classes defined below
+from .secret_managers import (
+    create_secret_manager,
+    get_default_secret_manager,
+    SecurityConfigurationError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -32,81 +34,48 @@ API_KEY_PATTERNS = {
 
 
 class APISecurityManager:
-    """Manages API credentials securely using environment variables and .env files."""
+    """Manages API credentials securely using production-grade secret managers.
 
-    def __init__(self, env_file: str = ".env") -> None:
+    This class provides a unified interface for accessing API credentials from
+    various secret management backends including HashiCorp Vault, AWS Secrets Manager,
+    Google Cloud Secret Manager, and environment variables (development only).
+
+    For production use, configure QUANTCHAIN_SECRET_BACKEND environment variable
+    to one of: 'vault', 'aws', 'gcp'. For development, 'env' can be used.
+    """
+
+    def __init__(
+        self,
+        backend: Optional[str] = None,
+        config: Optional[Dict] = None,
+        **kwargs,
+    ) -> None:
         """Initialize security manager.
 
         Args:
-            env_file: Path to .env file for local development
+            backend: Secret backend to use ('vault', 'aws', 'gcp', 'env').
+                     If None, checks QUANTCHAIN_SECRET_BACKEND env var.
+                     For backward compatibility, if this is a file path ending in .env,
+                     will use 'env' backend with that file.
+            config: Configuration dictionary for the secret manager
+            **kwargs: Additional configuration parameters passed to secret manager
         """
-        self.env_file = Path(env_file)
-        self._credentials: Dict[str, Dict[str, str]] = {}
-        self._load_credentials()
+        # Initialize the appropriate secret manager
+        # Handle backward compatibility: if backend looks like a file path, use env backend
+        if backend and isinstance(backend, str) and backend.endswith(".env"):
+            # Old API: passing env file path as first argument
+            kwargs["env_file"] = backend
+            backend = "env"
 
-    def _load_credentials(self) -> None:
-        """Load credentials from environment variables and .env file."""
-        # Load from .env file first (lower priority)
-        if self.env_file.exists():
-            try:
-                with open(self.env_file, "r", encoding="utf-8") as f:
-                    for line in f:
-                        line = line.strip()
-                        if line and not line.startswith("#") and "=" in line:
-                            key, value = line.split("=", 1)
-                            key = key.strip()
-                            value = value.strip().strip('"').strip("'")
+        if backend or config or kwargs:
+            # Use custom configuration
+            self._secret_manager = create_secret_manager(backend, config, **kwargs)
+        else:
+            # Use default configuration from environment
+            self._secret_manager = get_default_secret_manager()
 
-                            # Parse service and type from key
-                            if key.endswith("_API_KEY"):
-                                service = key[:-8].lower()  # Remove _API_KEY
-                                if service not in self._credentials:
-                                    self._credentials[service] = {}
-                                self._credentials[service]["key"] = value
-                            elif key.endswith("_API_SECRET"):
-                                service = key[:-11].lower()  # Remove _API_SECRET
-                                if service not in self._credentials:
-                                    self._credentials[service] = {}
-                                self._credentials[service]["secret"] = value
-            except Exception as e:
-                logger.warning(f"Failed to load .env file {self.env_file}: {e}")
-
-        # Load from environment variables last (highest priority)
-        for service in API_KEY_PATTERNS.keys():
-            key_env = f"{service.upper()}_API_KEY"
-            secret_env = f"{service.upper()}_API_SECRET"
-
-            if key_env in os.environ:
-                if service not in self._credentials:
-                    self._credentials[service] = {}
-                self._credentials[service]["key"] = os.environ[key_env]
-                if secret_env in os.environ:
-                    self._credentials[service]["secret"] = os.environ[secret_env]
-
-    def set_api_key(self, service: str, key: str, secret: Optional[str] = None) -> None:
-        """Store API key for a service.
-
-        Args:
-            service: Service identifier (e.g., 'alpaca', 'polygon')
-            key: API key
-            secret: Optional API secret
-        """
-        if service not in API_KEY_PATTERNS:
-            raise SecurityConfigurationError(f"Unsupported service: {service}")
-
-        if not self.validate_credentials(service, key, secret):
-            raise InvalidCredentialFormatError(
-                f"Invalid credentials format for {service}"
-            )
-
-        if service not in self._credentials:
-            self._credentials[service] = {}
-
-        self._credentials[service]["key"] = key
-        if secret:
-            self._credentials[service]["secret"] = secret
-
-        logger.info(f"Credentials set for service: {service}")
+        # Store validation patterns for compatibility
+        self.api_key_patterns = API_KEY_PATTERNS
 
     def get_api_key(self, service: str) -> str:
         """Retrieve API key for a service.
@@ -120,10 +89,10 @@ class APISecurityManager:
         Raises:
             CredentialNotFoundError: If credentials don't exist
         """
-        if service not in self._credentials or "key" not in self._credentials[service]:
+        key = self._secret_manager.get_api_key(service)
+        if not key:
             raise CredentialNotFoundError(f"No API key found for service: {service}")
-
-        return self._credentials[service]["key"]
+        return key
 
     def get_api_secret(self, service: str) -> Optional[str]:
         """Retrieve API secret for a service.
@@ -134,10 +103,33 @@ class APISecurityManager:
         Returns:
             API secret string or None if not set
         """
-        if service not in self._credentials:
-            return None
+        return self._secret_manager.get_api_secret(service)
 
-        return self._credentials[service].get("secret")
+    def set_api_key(self, service: str, key: str, secret: Optional[str] = None) -> None:
+        """Store API key for a service.
+
+        Note: This method is deprecated and only works with EnvSecretManager.
+        Production secret managers don't support writing credentials.
+
+        Args:
+            service: Service identifier (e.g., 'alpaca', 'polygon')
+            key: API key
+            secret: Optional API secret
+        """
+        logger.warning(
+            "set_api_key() is deprecated and only works with EnvSecretManager. "
+            "Store secrets directly in your production secret management system."
+        )
+
+        # Only implement for EnvSecretManager
+        if hasattr(self._secret_manager, "set_api_key"):
+            self._secret_manager.set_api_key(service, key, secret)
+            logger.info(f"Credentials set for service: {service}")
+        else:
+            raise SecurityConfigurationError(
+                "Cannot set credentials in production secret managers. "
+                "Configure secrets directly in your secret management system."
+            )
 
     def validate_credentials(
         self, service: str, key: Optional[str] = None, secret: Optional[str] = None
@@ -158,17 +150,13 @@ class APISecurityManager:
         patterns = API_KEY_PATTERNS[service]
 
         # Use provided values or stored values
-        test_key = (
-            key if key is not None else self._credentials.get(service, {}).get("key")
-        )
-        test_secret = (
-            secret
-            if secret is not None
-            else self._credentials.get(service, {}).get("secret")
-        )
+        if key is None:
+            key = self._secret_manager.get_api_key(service)
+        if secret is None:
+            secret = self._secret_manager.get_api_secret(service)
 
         # If no credentials are stored and none are provided, return False
-        if test_key is None and test_secret is None and key is None and secret is None:
+        if key is None and secret is None:
             return False
 
         # If key is explicitly None (but secret is provided), only validate secret
@@ -178,13 +166,13 @@ class APISecurityManager:
                 return True  # No secret required for this service
 
             # For services that require secrets, secret must be provided and valid
-            if test_secret is None:
+            if secret is None:
                 return False  # Secret is required but not provided
 
-            return bool(re.match(patterns["secret_pattern"], test_secret))
+            return bool(re.match(patterns["secret_pattern"], secret))
 
         # Validate key
-        if not test_key or not re.match(patterns["key_pattern"], test_key):
+        if not key or not re.match(patterns["key_pattern"], key):
             return False
 
         # Validate secret if required
@@ -192,10 +180,21 @@ class APISecurityManager:
             return True  # No secret required for this service
 
         # For services that require secrets, secret must be provided and valid
-        if test_secret is None:
+        if secret is None:
             return False  # Secret is required but not provided
 
-        return bool(re.match(patterns["secret_pattern"], test_secret))
+        return bool(re.match(patterns["secret_pattern"], secret))
+
+    def validate_service(self, service: str) -> bool:
+        """Validate if credentials exist for a service.
+
+        Args:
+            service: Service name
+
+        Returns:
+            True if credentials are available, False otherwise
+        """
+        return self._secret_manager.validate_service(service)
 
     def list_services(self) -> List[str]:
         """List all configured services.
@@ -203,63 +202,63 @@ class APISecurityManager:
         Returns:
             List of service names with stored credentials
         """
-        return list(self._credentials.keys())
+        # Note: This is a best-effort implementation as some secret managers
+        # don't support listing all services directly
+        services = []
+        for service in API_KEY_PATTERNS.keys():
+            if self.validate_service(service):
+                services.append(service)
+        return services
 
     def remove_service(self, service: str) -> None:
         """Remove stored credentials for a service.
 
+        Note: This method is not supported for most production secret managers.
+        It's kept for backward compatibility with the EnvSecretManager.
+
         Args:
             service: Service identifier
         """
-        if service in self._credentials:
-            del self._credentials[service]
+        logger.warning(
+            "remove_service() is deprecated and not supported for production secret managers. "
+            "Remove secrets directly from your secret management system."
+        )
+
+        # Only implement for EnvSecretManager
+        if hasattr(self._secret_manager, "remove_service"):
+            self._secret_manager.remove_service(service)
             logger.info(f"Credentials removed for service: {service}")
 
     def save_to_env_file(self) -> None:
-        """Save current credentials to .env file (development only)."""
-        if not self.env_file.exists():
-            self.env_file.touch()
+        """Save current credentials to .env file (development only).
 
-        env_lines = []
-        if self.env_file.exists():
-            with open(self.env_file, "r", encoding="utf-8") as f:
-                env_lines = f.readlines()
+        Note: This method is deprecated and only works with EnvSecretManager.
+        """
+        logger.warning(
+            "save_to_env_file() is deprecated and only works with EnvSecretManager. "
+            "Use your secret management system's export/import features instead."
+        )
 
-        filtered_lines = [
-            line
-            for line in env_lines
-            if all(
-                f"{service.upper()}_API" not in line
-                for service in self._credentials.keys()
+        # Only implement for EnvSecretManager
+        if hasattr(self._secret_manager, "save_to_env_file"):
+            self._secret_manager.save_to_env_file()
+            logger.info(
+                f"Credentials saved to {getattr(self._secret_manager, 'env_file', '.env')}"
             )
-        ]
-        # Add current credentials
-        for service, creds in self._credentials.items():
-            filtered_lines.append(f'{service.upper()}_API_KEY="{creds["key"]}"\n')
-            if "secret" in creds:
-                filtered_lines.append(
-                    f'{service.upper()}_API_SECRET="{creds["secret"]}"\n'
-                )
 
-        with open(self.env_file, "w", encoding="utf-8") as f:
-            f.writelines(filtered_lines)
+    def get_service_credentials(self, service: str) -> Dict[str, str]:
+        """Retrieve all credentials for a service.
 
-        logger.info(f"Credentials saved to {self.env_file}")
+        Args:
+            service: Service identifier
+
+        Returns:
+            Dictionary containing the service's credentials
+        """
+        return self._secret_manager.get_service_credentials(service)
 
 
 class CredentialNotFoundError(Exception):
     """Raised when requested credentials are not found."""
-
-    pass
-
-
-class InvalidCredentialFormatError(Exception):
-    """Raised when credentials don't match expected format."""
-
-    pass
-
-
-class SecurityConfigurationError(Exception):
-    """Raised when security configuration is invalid."""
 
     pass

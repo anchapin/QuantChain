@@ -192,13 +192,39 @@ class QuantChainConfig:
 
     def get_api_key(self, provider: str) -> Optional[str]:
         """Get API key for a specific provider."""
-        key_map = {
-            "alpaca": "alpaca_key",
-            "alpha_vantage": "alpha_vantage_key",
-        }
-        if key_name := key_map.get(provider):
-            return self._api_keys.get(key_name)
-        return None
+        from .security import APISecurityManager
+
+        try:
+            security_manager = APISecurityManager()
+
+            # Map provider names to service names used in security module
+            service_map = {
+                "alpaca": "alpaca",
+                "alpaca_secret": "alpaca",  # For backward compatibility
+                "alpha_vantage": "alpha_vantage",
+                "anthropic": "anthropic",
+                "openai": "openai",
+                "polygon": "polygon",
+                "ib": "ib_async",
+                "interactive_brokers": "ib_async",
+            }
+
+            service = service_map.get(provider, provider)
+
+            # Handle alpaca_secret specially
+            if provider == "alpaca_secret":
+                return security_manager.get_api_secret(service)
+            else:
+                return security_manager.get_api_key(service)
+        except Exception:
+            # Fallback to old method for backward compatibility
+            key_map = {
+                "alpaca": "alpaca_key",
+                "alpha_vantage": "alpha_vantage_key",
+            }
+            if key_name := key_map.get(provider):
+                return self._api_keys.get(key_name)
+            return None
 
     def to_dict(self) -> Dict[str, Any]:
         """Return configuration as dictionary."""
