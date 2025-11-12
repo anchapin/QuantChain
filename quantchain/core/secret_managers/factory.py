@@ -2,7 +2,7 @@
 
 import logging
 import os
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any, Dict, Optional, Type
 
 from .base import SecretManager
 from .env import EnvSecretManager
@@ -10,6 +10,7 @@ from .env import EnvSecretManager
 # Optional dependencies - only import if available
 try:
     from .aws import AWSSecretsManager
+
     _aws_available = True
 except ImportError:
     AWSSecretsManager = None  # type: ignore
@@ -17,6 +18,7 @@ except ImportError:
 
 try:
     from .gcp import GCPSecretManager
+
     _gcp_available = True
 except ImportError:
     GCPSecretManager = None  # type: ignore
@@ -24,6 +26,7 @@ except ImportError:
 
 try:
     from .vault import VaultSecretManager
+
     _vault_available = True
 except ImportError:
     VaultSecretManager = None  # type: ignore

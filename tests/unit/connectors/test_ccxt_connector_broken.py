@@ -1,6 +1,5 @@
 """Tests for CCXT data connector."""
 
-import sys
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 

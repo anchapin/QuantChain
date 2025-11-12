@@ -134,7 +134,9 @@ class AWSSecretsManager(SecretManager):
         """
         try:
             secret_name = f"quantchain/{service}"
-            response: Dict[str, Any] = self.client.get_secret_value(SecretId=secret_name)
+            response: Dict[str, Any] = self.client.get_secret_value(
+                SecretId=secret_name
+            )
 
             if "SecretString" in response:
                 secret_string: str = response["SecretString"]

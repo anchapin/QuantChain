@@ -94,7 +94,9 @@ class VaultSecretManager(SecretManager):
         """
         try:
             path = self._build_secret_path(key)
-            response: Dict[str, Any] = self.client.secrets.kv.v2.read_secret_version(path=path)
+            response: Dict[str, Any] = self.client.secrets.kv.v2.read_secret_version(
+                path=path
+            )
 
             if response and "data" in response and "data" in response["data"]:
                 # KV v2 stores the actual data under data.data
@@ -126,13 +128,17 @@ class VaultSecretManager(SecretManager):
         """
         try:
             path = self._build_secret_path(f"services/{service}")
-            response: Dict[str, Any] = self.client.secrets.kv.v2.read_secret_version(path=path)
+            response: Dict[str, Any] = self.client.secrets.kv.v2.read_secret_version(
+                path=path
+            )
 
             if response and "data" in response and "data" in response["data"]:
                 # KV v2 stores the actual data under data.data
                 secret_data: Dict[str, Any] = response["data"]["data"]
                 # Convert all values to strings
-                return {k: str(v) for k, v in secret_data.items()} if secret_data else {}
+                return (
+                    {k: str(v) for k, v in secret_data.items()} if secret_data else {}
+                )
 
             return {}
         except Exception as e:

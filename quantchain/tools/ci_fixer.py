@@ -660,7 +660,7 @@ CI Fixer Command
 
 Usage: python -m quantchain.tools.ci_fixer
 
-This command automates the process of identifying, diagnosing, and fixing 
+This command automates the process of identifying, diagnosing, and fixing
 failing CI checks for the current pull request.
 
 Prerequisites:
