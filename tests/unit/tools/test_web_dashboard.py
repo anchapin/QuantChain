@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
-import pytest\npytest.mark.requires_web  # Mark the marker as used
+import pytest  # Mark the marker as used
 
 # Check for optional dependencies
 try:
