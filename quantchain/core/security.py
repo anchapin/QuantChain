@@ -5,9 +5,9 @@ import re
 from typing import Dict, List, Optional
 
 from .secret_managers import (
+    SecurityConfigurationError,
     create_secret_manager,
     get_default_secret_manager,
-    SecurityConfigurationError,
 )
 
 logger = logging.getLogger(__name__)
@@ -260,4 +260,3 @@ class APISecurityManager:
 
 class CredentialNotFoundError(Exception):
     """Raised when requested credentials are not found."""
-

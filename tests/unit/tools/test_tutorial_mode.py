@@ -1,6 +1,5 @@
 """Tests for tutorial mode functionality."""
 
-import os
 import uuid
 from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock
@@ -341,7 +340,9 @@ class TestTutorialExecutor:
         # Session should be ended
         assert tutorial_executor.current_session.end_time is not None
 
-    def test_order_placement_with_analysis(self, tutorial_executor: TutorialExecutor) -> None:
+    def test_order_placement_with_analysis(
+        self, tutorial_executor: TutorialExecutor
+    ) -> None:
         """Test order placement with decision analysis."""
         # Start session
         tutorial_executor.start_tutorial_session(["AAPL"])
@@ -363,7 +364,9 @@ class TestTutorialExecutor:
         assert 0.0 <= analysis.decision_quality <= 1.0
         assert analysis.market_drivers is not None
 
-    def test_tutorial_feedback_generation(self, tutorial_executor: TutorialExecutor) -> None:
+    def test_tutorial_feedback_generation(
+        self, tutorial_executor: TutorialExecutor
+    ) -> None:
         """Test tutorial feedback generation."""
         # Start session and make trades
         tutorial_executor.start_tutorial_session(["AAPL"])
@@ -388,7 +391,9 @@ class TestTutorialExecutor:
         assert 0.0 <= feedback.risk_management_score <= 1.0
         assert "learning_progress" in feedback.to_dict()
 
-    def test_confidence_score_tracking(self, tutorial_executor: TutorialExecutor) -> None:
+    def test_confidence_score_tracking(
+        self, tutorial_executor: TutorialExecutor
+    ) -> None:
         """Test confidence score tracking."""
         confidence = tutorial_executor.get_confidence_score()
         assert 0.0 <= confidence <= 1.0
@@ -469,8 +474,9 @@ class TestTutorialExecutorFactoryIntegration:
         """Test tutorial executor with RAG system enabled."""
         # For now, skip ChromaDB tests in CI due to locking issues
         import pytest
+
         pytest.skip("ChromaDB tests disabled due to file locking issues")
-        
+
         mock_config = Mock(spec=QuantChainConfig)
         mock_config.get.side_effect = lambda key, default=None: {
             "rag.enabled": True,

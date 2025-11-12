@@ -22,7 +22,6 @@ class AWSSecretManagerError(Exception):
     """Exception raised by AWS Secrets Manager operations."""
 
 
-
 def create_aws_secret_manager(**kwargs):
     """Create an AWS Secrets Manager instance.
 
@@ -152,7 +151,7 @@ class AWSSecretsManager(SecretManager):
                 # SecretBinary is returned as bytes, decode it to string
                 binary_data = response["SecretBinary"]
                 if isinstance(binary_data, bytes):
-                    return binary_data.decode('utf-8')
+                    return binary_data.decode("utf-8")
                 return str(binary_data)
 
             return None

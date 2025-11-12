@@ -4,12 +4,13 @@ Resource monitoring script for QuantChain testing.
 This script monitors disk, memory, and CPU usage during test execution.
 """
 
-import os
-import time
-import psutil
-import subprocess
 import json
+import os
+import subprocess
+import time
 from datetime import datetime
+
+import psutil
 
 
 def get_disk_usage(path="/"):

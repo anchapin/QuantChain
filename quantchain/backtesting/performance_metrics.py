@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 # Import from engine for type annotations
-from .engine import MetricsResult, BacktestResult
+from .engine import BacktestResult, MetricsResult
 
 # Try to import optional libraries
 try:
@@ -33,25 +33,20 @@ class InsufficientDataError(Exception):
     """Raised when there's insufficient data for calculation."""
 
 
-
 class InvalidFrequencyError(Exception):
     """Raised for unsupported data frequencies."""
-
 
 
 class MissingColumnError(Exception):
     """Raised when required columns are missing from trade data."""
 
 
-
 class MetricsCalculationError(Exception):
     """Raised for general calculation failures."""
 
 
-
 class LibraryImportError(Exception):
     """Raised when required libraries are not available."""
-
 
 
 class PerformanceMetrics:

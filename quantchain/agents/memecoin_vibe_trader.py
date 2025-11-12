@@ -103,7 +103,6 @@ class MemecoinVibeTraderError(QuantChainError):
     """Custom exception for Memecoin Vibe Trader."""
 
 
-
 class MemecoinVibeTrader:
     """Autonomous trading agent for memecoin opportunities.
 

@@ -15,7 +15,6 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 
-
 class CIFixTool:
     def __init__(self, repo_path: str = "."):
         self.repo_path = Path(repo_path).resolve()

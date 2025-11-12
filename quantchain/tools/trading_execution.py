@@ -50,20 +50,16 @@ class ExecutionError(QuantChainError):
     """Raised when order execution fails."""
 
 
-
 class ValidationError(QuantChainError):
     """Raised when order parameters are invalid."""
-
 
 
 class InsufficientFundsError(ExecutionError):
     """Raised when insufficient funds are available for order."""
 
 
-
 class OrderNotFoundError(ExecutionError):
     """Raised when order cannot be found."""
-
 
 
 @dataclass

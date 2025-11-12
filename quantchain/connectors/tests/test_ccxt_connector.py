@@ -1,21 +1,22 @@
 # Auto-generated test file for ccxt_connector.py
 # Generated using Z.AI GLM-4.6 API
 
-import pytest
 import sys
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Add the parent directory to the path to import the module
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 """Test cases for CCXT data connector."""
 
-import pytest
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
-import pandas as pd
 
+import pandas as pd
+import pytest
 from ccxt_connector import CCXTDataConnector
 from core.exceptions import (
     AuthenticationError,

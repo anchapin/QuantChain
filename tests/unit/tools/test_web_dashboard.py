@@ -866,13 +866,13 @@ class TestWebDashboardMissingCoverage:
     def test_create_figure_with_plotly(self) -> None:
         """Test creating figure when plotly is available."""
         from quantchain.tools.web_dashboard import _create_figure
-        
+
         with patch("plotly.graph_objects.Figure") as mock_figure:
             mock_figure_instance = Mock()
             mock_figure.return_value = mock_figure_instance
-            
+
             result = _create_figure()
-            
+
             assert result is mock_figure_instance
             mock_figure.assert_called_once()
 
@@ -880,7 +880,7 @@ class TestWebDashboardMissingCoverage:
     def test_create_figure_without_plotly(self) -> None:
         """Test creating figure when plotly is not available."""
         from quantchain.tools.web_dashboard import _create_figure
-        
+
         result = _create_figure()
         assert result is None
 
@@ -888,15 +888,15 @@ class TestWebDashboardMissingCoverage:
     def test_agent_id_validation_invalid_chars(self) -> None:
         """Test agent ID validation with invalid characters."""
         from quantchain.tools.web_dashboard import ConfigurationWizard
-        
+
         wizard = ConfigurationWizard()
-        
+
         # Test with special characters
         config = {"agent_id": "agent@123"}
         result = wizard.validate_config(config)
         assert not result["is_valid"]
         assert any("alphanumeric characters" in error for error in result["errors"])
-        
+
         # Test with valid characters
         config["agent_id"] = "agent-123_valid"
         result = wizard.validate_config(config)
@@ -908,26 +908,26 @@ class TestWebDashboardMissingCoverage:
     def test_max_allocation_validation_edge_cases(self) -> None:
         """Test max allocation parameter validation with edge cases."""
         from quantchain.tools.web_dashboard import ConfigurationWizard
-        
+
         wizard = ConfigurationWizard()
-        
+
         # Test invalid values
         invalid_values = [-0.1, 0, 1.1, "invalid"]
         for value in invalid_values:
             config = {
                 "agent_id": "test-agent",
-                "parameters": {"max_allocation_per_trade": value}
+                "parameters": {"max_allocation_per_trade": value},
             }
             result = wizard.validate_config(config)
             assert not result["is_valid"]
             assert any("between 0 and 1" in error for error in result["errors"])
-        
+
         # Test valid values
         valid_values = [0.1, 0.5, 0.99, 1.0]
         for value in valid_values:
             config = {
-                "agent_id": "test-agent", 
-                "parameters": {"max_allocation_per_trade": value}
+                "agent_id": "test-agent",
+                "parameters": {"max_allocation_per_trade": value},
             }
             result = wizard.validate_config(config)
             # Should be valid unless there are other validation errors
@@ -938,10 +938,10 @@ class TestWebDashboardMissingCoverage:
     def test_save_config_permission_error(self, mock_open) -> None:
         """Test saving config with permission error."""
         from quantchain.tools.web_dashboard import ConfigurationWizard
-        
+
         wizard = ConfigurationWizard()
         config = {"agent_id": "test-agent"}
-        
+
         result = wizard.save_config(config, "/tmp/test_config.json")
         assert result is False
 
@@ -950,70 +950,104 @@ class TestWebDashboardMissingCoverage:
     def test_save_config_invalid_path(self, mock_open) -> None:
         """Test saving config with invalid path."""
         from quantchain.tools.web_dashboard import ConfigurationWizard
-        
+
         wizard = ConfigurationWizard()
         config = {"agent_id": "test-agent"}
-        
+
         result = wizard.save_config(config, "/invalid/path/config.json")
         assert result is False
 
     @patch("quantchain.tools.web_dashboard.st")
     def test_render_agent_detail_page_no_agents(self, mock_st) -> None:
         """Test rendering agent detail page when no agents are registered."""
-        from quantchain.tools.web_dashboard import WebDashboardApp
-        from quantchain.tools.web_dashboard import MonitoringService, DashboardConfig
-        
+        from quantchain.tools.web_dashboard import (
+            DashboardConfig,
+            MonitoringService,
+            WebDashboardApp,
+        )
+
         mock_st.info = Mock()
-        
+
         with patch.object(MonitoringService, "get_all_agents", return_value=[]):
             dashboard = WebDashboardApp(DashboardConfig())
             dashboard._render_agent_detail_page()
-            
+
             mock_st.info.assert_called_with("No agents are currently registered.")
 
     @patch("quantchain.tools.web_dashboard.st")
     def test_render_agent_detail_page_with_agents(self, mock_st) -> None:
         """Test rendering agent detail page with agents."""
-        from quantchain.tools.web_dashboard import WebDashboardApp
-        from quantchain.tools.web_dashboard import MonitoringService, DashboardConfig
-        
+        from quantchain.tools.web_dashboard import (
+            DashboardConfig,
+            MonitoringService,
+            WebDashboardApp,
+        )
+
         mock_st.info = Mock()
         mock_st.header = Mock()
         mock_st.selectbox = Mock(return_value="agent-1 (running)")
         mock_col = Mock()
         mock_col.__enter__ = Mock(return_value=mock_col)
         mock_col.__exit__ = Mock(return_value=None)
-        mock_st.columns = Mock(side_effect=[[mock_col, mock_col, mock_col], [mock_col, mock_col]])
+        mock_st.columns = Mock(
+            side_effect=[[mock_col, mock_col, mock_col], [mock_col, mock_col]]
+        )
         mock_st.metric = Mock()
         mock_st.subheader = Mock()
         mock_st.dataframe = Mock()
         mock_st.plotly_chart = Mock()
-        
+
         agents = [
             {"agent_id": "agent-1", "status": "running"},
-            {"agent_id": "agent-2", "status": "stopped"}
+            {"agent_id": "agent-2", "status": "stopped"},
         ]
-        
-        with patch.object(MonitoringService, "get_all_agents", return_value=agents), \
-             patch.object(MonitoringService, "get_agent_status", return_value={"status": "running", "uptime": "1:00:00", "error_count": 0, "current_positions": [], "recent_trades": []}), \
-             patch.object(MonitoringService, "get_portfolio_metrics", return_value={"total_value": 10000, "win_rate": 0.6, "total_trades": 100, "total_pnl": 5000, "profit_loss": 5000, "max_drawdown": 0.1, "sharpe_ratio": 1.5, "pnl_percentage": 50.0}):
+
+        with patch.object(
+            MonitoringService, "get_all_agents", return_value=agents
+        ), patch.object(
+            MonitoringService,
+            "get_agent_status",
+            return_value={
+                "status": "running",
+                "uptime": "1:00:00",
+                "error_count": 0,
+                "current_positions": [],
+                "recent_trades": [],
+            },
+        ), patch.object(
+            MonitoringService,
+            "get_portfolio_metrics",
+            return_value={
+                "total_value": 10000,
+                "win_rate": 0.6,
+                "total_trades": 100,
+                "total_pnl": 5000,
+                "profit_loss": 5000,
+                "max_drawdown": 0.1,
+                "sharpe_ratio": 1.5,
+                "pnl_percentage": 50.0,
+            },
+        ):
             dashboard = WebDashboardApp(DashboardConfig())
             dashboard._render_agent_detail_page()
-            
+
             mock_st.header.assert_called_with("Agent Details")
             # Check that info was called for empty positions and trades
             assert mock_st.info.call_count == 2
-            assert any("No current positions" in str(call) for call in mock_st.info.call_args_list)
-            assert any("No recent trades" in str(call) for call in mock_st.info.call_args_list)
-
-    
+            assert any(
+                "No current positions" in str(call)
+                for call in mock_st.info.call_args_list
+            )
+            assert any(
+                "No recent trades" in str(call) for call in mock_st.info.call_args_list
+            )
 
     @patch("sys.argv", ["dashboard.py", "8080"])
     @patch("quantchain.tools.web_dashboard.create_dashboard")
     def test_main_with_valid_port(self, mock_create) -> None:
         """Test main function with valid port argument."""
         from quantchain.tools.web_dashboard import main
-        
+
         main()
         mock_create.assert_called_once()
 
@@ -1023,7 +1057,7 @@ class TestWebDashboardMissingCoverage:
     def test_main_with_invalid_port(self, mock_exit, mock_print) -> None:
         """Test main function with invalid port argument."""
         from quantchain.tools.web_dashboard import main
-        
+
         main()
         mock_print.assert_called_with("Port must be a number")
         mock_exit.assert_called_once_with(1)
@@ -1033,6 +1067,6 @@ class TestWebDashboardMissingCoverage:
     def test_main_without_port(self, mock_create) -> None:
         """Test main function without port argument."""
         from quantchain.tools.web_dashboard import main
-        
+
         main()
         mock_create.assert_called_once()

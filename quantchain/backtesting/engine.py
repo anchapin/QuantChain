@@ -148,15 +148,12 @@ class ConfigurationError(Exception):
     """Raised for invalid backtest configuration."""
 
 
-
 class DataValidationError(Exception):
     """Raised for invalid input data."""
 
 
-
 class BacktestExecutionError(Exception):
     """Raised for errors during backtest execution."""
-
 
 
 def validate_ohlcv_data(data: pd.DataFrame) -> None:

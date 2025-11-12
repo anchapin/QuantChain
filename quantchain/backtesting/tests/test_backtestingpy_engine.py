@@ -1,20 +1,21 @@
 # Auto-generated test file for backtestingpy_engine.py
 # Generated using OpenAI API
 
-import pytest
 import sys
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Add the parent directory to the path to import the module
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pandas as pd
 from backtestingpy_engine import (
-    BacktestingPyEngine,
     BacktestConfig,
-    ConversionError,
+    BacktestingPyEngine,
     BacktestingPyError,
+    ConversionError,
     StrategyAdapter,
 )
 

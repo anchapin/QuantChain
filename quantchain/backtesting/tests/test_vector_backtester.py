@@ -1,24 +1,24 @@
 # Auto-generated test file for vector_backtester.py
 # Generated using Z.AI GLM-4.6 API
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add the parent directory to the path to import the module
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
-import pytest
 import pandas as pd
-
+import pytest
+from engine import BacktestConfig
 from vector_backtester import (
     SignalProcessingError,
+    VectorBacktester,
     VectorBacktestResult,
     VectorizedPositionManager,
-    VectorBacktester,
 )
-from engine import BacktestConfig
 
 
 @pytest.fixture

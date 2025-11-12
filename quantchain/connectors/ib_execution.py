@@ -24,12 +24,12 @@ from ..tools.trading_execution import (
 # Import ibapi components
 try:
     from ibapi.client import EClient
+    from ibapi.common import OrderId, TickerId
     from ibapi.contract import Contract as IBContract
+    from ibapi.execution import ExecutionFilter
     from ibapi.order import Order as IBOrder
     from ibapi.order_state import OrderState
     from ibapi.wrapper import EWrapper
-    from ibapi.common import OrderId, TickerId
-    from ibapi.execution import ExecutionFilter
 except ImportError as e:
     raise ImportError(
         "ibapi library is required. Install with: pip install ibapi>=9.81.1.post1"

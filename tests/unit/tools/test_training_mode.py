@@ -183,7 +183,10 @@ class TestMarketDriverAnalysis:
         )
 
         drivers = analysis.analyze_market_drivers("AAPL", large_order)
-        assert any("large position" in driver.lower() or "position sizing" in driver.lower() for driver in drivers)
+        assert any(
+            "large position" in driver.lower() or "position sizing" in driver.lower()
+            for driver in drivers
+        )
 
         # Small position
         small_order = OrderResult(
@@ -202,7 +205,11 @@ class TestMarketDriverAnalysis:
         )
 
         drivers = analysis.analyze_market_drivers("AAPL", small_order)
-        assert any("conservative position" in driver.lower() or "position sizing" in driver.lower() for driver in drivers)
+        assert any(
+            "conservative position" in driver.lower()
+            or "position sizing" in driver.lower()
+            for driver in drivers
+        )
 
     def test_educational_context_generation(self) -> None:
         """Test educational context generation."""
@@ -789,21 +796,25 @@ class TestTutorialExecutorFactoryIntegration:
         }.get(key, default)
 
         # Mock the RAG system to avoid ChromaDB initialization issues
-        with patch('quantchain.core.rag_system.ChromaVectorStore') as mock_chroma, \
-             patch('quantchain.core.rag_system.MarketDataRAG') as mock_rag, \
-             patch('quantchain.core.rag_system.SentenceTransformerProvider') as mock_transformer:
-            
+        with patch(
+            "quantchain.core.rag_system.ChromaVectorStore"
+        ) as mock_chroma, patch(
+            "quantchain.core.rag_system.MarketDataRAG"
+        ) as mock_rag, patch(
+            "quantchain.core.rag_system.SentenceTransformerProvider"
+        ) as mock_transformer:
+
             mock_chroma_instance = Mock()
             mock_chroma.return_value = mock_chroma_instance
-            
+
             mock_transformer_instance = Mock()
             mock_transformer.return_value = mock_transformer_instance
-            
+
             mock_rag_instance = Mock()
             mock_rag.return_value = mock_rag_instance
-            
+
             executor = TutorialExecutor(config=mock_config)
-            
+
             # Should initialize RAG system when enabled
             assert executor is not None
             # RAG system should be mocked

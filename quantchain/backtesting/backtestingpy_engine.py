@@ -25,10 +25,8 @@ class BacktestingPyError(Exception):
     """Base exception for backtesting.py engine errors."""
 
 
-
 class ConversionError(BacktestingPyError):
     """Exception raised when data conversion fails."""
-
 
 
 if Strategy is not None:

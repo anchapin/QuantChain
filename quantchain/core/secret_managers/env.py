@@ -13,10 +13,8 @@ class InvalidCredentialFormatError(Exception):
     """Raised when credentials don't match expected format."""
 
 
-
 class SecurityConfigurationError(Exception):
     """Raised when security configuration is invalid."""
-
 
 
 logger = logging.getLogger(__name__)

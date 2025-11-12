@@ -6,6 +6,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
+
 import pytest
 
 from quantchain.tools.ci_fixer import CIFixer
@@ -660,6 +661,7 @@ class TestMainCLI:
     def test_main_no_args(self, capsys: pytest.CaptureFixture[str]) -> None:
         """Test main function with no arguments."""
         import sys
+
         from quantchain.tools.__main__ import main
 
         with patch.object(sys, "argv", ["python -m quantchain.tools"]):
@@ -675,6 +677,7 @@ class TestMainCLI:
     def test_main_fix_failing_ci_checks_success(self, mock_fixer: Mock) -> None:
         """Test fixing failing CI checks successfully."""
         import sys
+
         from quantchain.tools.__main__ import main
 
         mock_fixer.return_value.run_fix_process.return_value = True
@@ -693,6 +696,7 @@ class TestMainCLI:
     def test_main_fix_failing_ci_checks_failure(self, mock_fixer: Mock) -> None:
         """Test fixing failing CI checks with failure."""
         import sys
+
         from quantchain.tools.__main__ import main
 
         mock_fixer.return_value.run_fix_process.return_value = False
@@ -713,6 +717,7 @@ class TestMainCLI:
     ) -> None:
         """Test keyboard interrupt during CI fix process."""
         import sys
+
         from quantchain.tools.__main__ import main
 
         mock_fixer.return_value.run_fix_process.side_effect = KeyboardInterrupt()
@@ -732,6 +737,7 @@ class TestMainCLI:
     ) -> None:
         """Test runtime exception during CI fix process."""
         import sys
+
         from quantchain.tools.__main__ import main
 
         mock_fixer.return_value.run_fix_process.side_effect = RuntimeError(
@@ -753,6 +759,7 @@ class TestMainCLI:
     def test_main_help_command(self, capsys: pytest.CaptureFixture[str]) -> None:
         """Test help command."""
         import sys
+
         from quantchain.tools.__main__ import main
 
         with patch.object(sys, "argv", ["python -m quantchain.tools", "help"]):
@@ -767,6 +774,7 @@ class TestMainCLI:
     def test_main_unknown_command(self, capsys: pytest.CaptureFixture[str]) -> None:
         """Test unknown command."""
         import sys
+
         from quantchain.tools.__main__ import main
 
         with patch.object(sys, "argv", ["python -m quantchain.tools", "unknown"]):
@@ -781,6 +789,7 @@ class TestMainCLI:
     def test_main_module_entry_point(self, capsys: pytest.CaptureFixture[str]) -> None:
         """Test calling the module entry point by simulating if __name__ == '__main__'."""
         import sys
+
         from quantchain.tools import __main__
 
         # Save original argv and sys.modules state

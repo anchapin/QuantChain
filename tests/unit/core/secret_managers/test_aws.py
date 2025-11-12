@@ -2,27 +2,31 @@
 
 import json
 import os
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+
 # Import the module under test
 try:
     from quantchain.core.secret_managers.aws import (
-        AWSSecretsManager,
         AWSSecretManagerConfig,
-        create_aws_secret_manager,
         AWSSecretManagerError,
+        AWSSecretsManager,
+        create_aws_secret_manager,
     )
+
     try:
-        from botocore.exceptions import ClientError, NoCredentialsError
+        from botocore.exceptions import ClientError
     except ImportError:
         # Mock ClientError for testing when botocore is not available
         class ClientError(Exception):
             def __init__(self, error_response, operation_name):
                 self.response = error_response
-        
+
     _AWS_AVAILABLE = True
 except ImportError:
     _AWS_AVAILABLE = False
+
     # Mock classes for when boto3 is not available
     class ClientError(Exception):
         def __init__(self, error_response, operation_name):
@@ -44,9 +48,7 @@ class TestAWSSecretManagerConfig:
     def test_custom_config(self) -> None:
         """Test custom configuration values."""
         config = AWSSecretManagerConfig(
-            region_name="us-west-2",
-            max_retries=5,
-            backoff_factor=2.0
+            region_name="us-west-2", max_retries=5, backoff_factor=2.0
         )
         assert config.region_name == "us-west-2"
         assert config.max_retries == 5
@@ -68,7 +70,7 @@ class TestAWSSecretsManager:
         manager = AWSSecretsManager(
             region_name="us-west-2",
             aws_access_key_id="test_key",
-            aws_secret_access_key="test_secret"
+            aws_secret_access_key="test_secret",
         )
 
         assert manager.region_name == "us-west-2"
@@ -83,11 +85,14 @@ class TestAWSSecretsManager:
         mock_client.list_secrets.return_value = {"SecretList": []}
         mock_session.return_value.client.return_value = mock_client
 
-        with patch.dict(os.environ, {
-            "AWS_REGION": "us-east-1",
-            "AWS_ACCESS_KEY_ID": "env_key",
-            "AWS_SECRET_ACCESS_KEY": "env_secret"
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "AWS_REGION": "us-east-1",
+                "AWS_ACCESS_KEY_ID": "env_key",
+                "AWS_SECRET_ACCESS_KEY": "env_secret",
+            },
+        ):
             manager = AWSSecretsManager()
 
             assert manager.region_name == "us-east-1"
@@ -112,7 +117,9 @@ class TestAWSSecretsManager:
         mock_client.list_secrets.side_effect = Exception("Connection failed")
         mock_session.return_value.client.return_value = mock_client
 
-        with pytest.raises(RuntimeError, match="Failed to connect to AWS Secrets Manager"):
+        with pytest.raises(
+            RuntimeError, match="Failed to connect to AWS Secrets Manager"
+        ):
             AWSSecretsManager()
 
     @patch("boto3.Session")
@@ -120,7 +127,9 @@ class TestAWSSecretsManager:
         """Test successful secret retrieval as string."""
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
-        mock_client.get_secret_value.return_value = {"SecretString": "test_secret_value"}
+        mock_client.get_secret_value.return_value = {
+            "SecretString": "test_secret_value"
+        }
         mock_session.return_value.client.return_value = mock_client
 
         manager = AWSSecretsManager()
@@ -193,8 +202,13 @@ class TestAWSSecretsManager:
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
         mock_client.get_secret_value.side_effect = ClientError(
-            {"Error": {"Code": "InvalidParameterException", "Message": "Invalid secret"}}, 
-            "GetSecretValue"
+            {
+                "Error": {
+                    "Code": "InvalidParameterException",
+                    "Message": "Invalid secret",
+                }
+            },
+            "GetSecretValue",
         )
         mock_session.return_value.client.return_value = mock_client
 
@@ -217,14 +231,18 @@ class TestAWSSecretsManager:
         result = manager.get_service_credentials("alpaca")
 
         assert result == {"api_key": "key123", "api_secret": "secret123"}
-        mock_client.get_secret_value.assert_called_once_with(SecretId="quantchain/alpaca")
+        mock_client.get_secret_value.assert_called_once_with(
+            SecretId="quantchain/alpaca"
+        )
 
     @patch("boto3.Session")
     def test_get_service_credentials_not_json(self, mock_session: Mock) -> None:
         """Test service credentials retrieval with non-JSON string."""
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
-        mock_client.get_secret_value.return_value = {"SecretString": "plain_text_secret"}
+        mock_client.get_secret_value.return_value = {
+            "SecretString": "plain_text_secret"
+        }
         mock_session.return_value.client.return_value = mock_client
 
         manager = AWSSecretsManager()
@@ -259,7 +277,9 @@ class TestAWSSecretsManager:
         result = manager.validate_service("alpaca")
 
         assert result is True
-        mock_client.get_secret_value.assert_called_once_with(SecretId="quantchain/alpaca")
+        mock_client.get_secret_value.assert_called_once_with(
+            SecretId="quantchain/alpaca"
+        )
 
     @patch("boto3.Session")
     def test_validate_service_not_found(self, mock_session: Mock) -> None:
@@ -282,8 +302,8 @@ class TestAWSSecretsManager:
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
         mock_client.get_secret_value.side_effect = ClientError(
-            {"Error": {"Code": "AccessDeniedException", "Message": "Access denied"}}, 
-            "GetSecretValue"
+            {"Error": {"Code": "AccessDeniedException", "Message": "Access denied"}},
+            "GetSecretValue",
         )
         mock_session.return_value.client.return_value = mock_client
 

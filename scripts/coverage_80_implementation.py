@@ -9,7 +9,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 
 def run_command(cmd: List[str], description: str) -> Tuple[bool, str]:
@@ -17,16 +17,13 @@ def run_command(cmd: List[str], description: str) -> Tuple[bool, str]:
     print(f"\n{'='*60}")
     print(f"Executing: {description}")
     print(f"Command: {' '.join(cmd)}")
-    print('='*60)
-    
+    print("=" * 60)
+
     try:
         result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=300  # 5 minute timeout
+            cmd, capture_output=True, text=True, timeout=300  # 5 minute timeout
         )
-        
+
         if result.returncode == 0:
             print("✅ SUCCESS")
             if result.stdout:
@@ -47,16 +44,24 @@ def run_command(cmd: List[str], description: str) -> Tuple[bool, str]:
 def get_current_coverage() -> float:
     """Get current test coverage percentage."""
     print("\n📊 Getting current coverage...")
-    
+
     success, _ = run_command(
-        ["python", "-m", "pytest", "tests/unit", "--cov=quantchain", "--cov-report=json", "--cov-report=term-missing"],
-        "Running coverage tests"
+        [
+            "python",
+            "-m",
+            "pytest",
+            "tests/unit",
+            "--cov=quantchain",
+            "--cov-report=json",
+            "--cov-report=term-missing",
+        ],
+        "Running coverage tests",
     )
-    
+
     if not success:
         print("Failed to run coverage tests")
         return 0.0
-    
+
     try:
         with open("coverage.json") as f:
             data = json.load(f)
@@ -71,7 +76,7 @@ def get_current_coverage() -> float:
 def fix_failing_tests() -> bool:
     """Phase 1: Fix all failing tests that block coverage calculation."""
     print("\n🔧 Phase 1: Fixing failing tests...")
-    
+
     # Fix AWS secret manager binary test
     fix_script = """
 import sys
@@ -93,26 +98,32 @@ if old_assert in content:
 else:
     print("Binary assertion not found or already fixed")
 """
-    
+
     with open("temp_fix.py", "w") as f:
         f.write(fix_script)
-    
+
     run_command(["python", "temp_fix.py"], "Fixing AWS test assertion")
     os.remove("temp_fix.py")
-    
+
     # Run the specific test to verify
     success, _ = run_command(
-        ["python", "-m", "pytest", "tests/unit/core/secret_managers/test_aws.py::TestAWSSecretsManager::test_get_secret_success_binary", "-xvs"],
-        "Verifying AWS test fix"
+        [
+            "python",
+            "-m",
+            "pytest",
+            "tests/unit/core/secret_managers/test_aws.py::TestAWSSecretsManager::test_get_secret_success_binary",
+            "-xvs",
+        ],
+        "Verifying AWS test fix",
     )
-    
+
     return success
 
 
 def generate_ib_async_tests() -> bool:
     """Generate comprehensive tests for ib_async_execution.py."""
     print("\n🤖 Generating tests for ib_async_execution.py...")
-    
+
     # Create a comprehensive test template
     test_template = '''"""Tests for ib_async_execution module."""
 
@@ -297,13 +308,13 @@ class TestIBAsyncExecution:
         results = await asyncio.gather(*tasks, return_exceptions=True)
         assert len(results) == 2
 '''
-    
+
     test_path = Path("tests/unit/connectors/test_ib_async_execution.py")
     test_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     with open(test_path, "w") as f:
         f.write(test_template)
-    
+
     print(f"Created comprehensive test file: {test_path}")
     return True
 
@@ -311,16 +322,16 @@ class TestIBAsyncExecution:
 def generate_secret_manager_tests() -> bool:
     """Generate tests for secret managers."""
     print("\n🔐 Generating tests for secret managers...")
-    
+
     secret_managers = [
         ("aws", "AWSSecretsManager", "boto3"),
         ("gcp", "GCPSecretManager", "google.cloud.secretmanager"),
-        ("vault", "VaultSecretManager", "hvac")
+        ("vault", "VaultSecretManager", "hvac"),
     ]
-    
+
     for manager_name, class_name, import_module in secret_managers:
         print(f"Generating tests for {manager_name}...")
-        
+
         test_template = f'''"""Tests for {manager_name} secret manager."""
 
 import pytest
@@ -427,41 +438,43 @@ class Test{class_name}:
         result = manager.get_secret("test_secret")
         assert result is None
 '''
-        
-        test_path = Path(f"tests/unit/core/secret_managers/test_{manager_name}_comprehensive.py")
+
+        test_path = Path(
+            f"tests/unit/core/secret_managers/test_{manager_name}_comprehensive.py"
+        )
         test_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with open(test_path, "w") as f:
             f.write(test_template)
-        
+
         print(f"Created comprehensive test file: {test_path}")
-    
+
     return True
 
 
 def run_phase(phase_num: int) -> bool:
     """Run a specific phase of the implementation."""
-    
+
     if phase_num == 1:
         print("\n🚀 Starting Phase 1: Quick Wins")
         return fix_failing_tests()
-    
+
     elif phase_num == 2:
         print("\n🚀 Starting Phase 2: Core Modules")
         return generate_ib_async_tests() and generate_secret_manager_tests()
-    
+
     elif phase_num == 3:
         print("\n🚀 Starting Phase 3: Advanced Features")
         # Would include vector_backtester and performance_metrics tests
         print("Phase 3 implementation pending...")
         return True
-    
+
     elif phase_num == 4:
         print("\n🚀 Starting Phase 4: Final Polish")
         # Would include edge case tests and optimization
         print("Phase 4 implementation pending...")
         return True
-    
+
     else:
         print(f"Invalid phase number: {phase_num}")
         return False
@@ -472,15 +485,15 @@ def main():
     print("=" * 60)
     print("Test Coverage 80% Implementation Script")
     print("=" * 60)
-    
+
     # Get current coverage
     initial_coverage = get_current_coverage()
     print(f"Initial coverage: {initial_coverage:.2f}%")
-    
+
     if initial_coverage >= 80:
         print("✅ Target coverage already achieved!")
         return
-    
+
     # Parse command line arguments
     if len(sys.argv) > 1:
         phase = int(sys.argv[1])
@@ -491,38 +504,38 @@ def main():
         for phase in range(1, 5):
             print(f"\n{'='*60}")
             print(f"Starting Phase {phase}")
-            print('='*60)
-            
+            print("=" * 60)
+
             success = run_phase(phase)
             if not success:
                 print(f"❌ Phase {phase} failed. Stopping execution.")
                 break
-            
+
             # Check coverage after each phase
             new_coverage = get_current_coverage()
             improvement = new_coverage - initial_coverage
             print(f"Coverage improvement after Phase {phase}: {improvement:.2f}%")
-            
+
             if new_coverage >= 80:
                 print("🎉 Target coverage achieved!")
                 break
-    
+
     # Final coverage check
     final_coverage = get_current_coverage()
     total_improvement = final_coverage - initial_coverage
-    
+
     print("\n" + "=" * 60)
     print("FINAL RESULTS")
     print("=" * 60)
     print(f"Initial coverage: {initial_coverage:.2f}%")
     print(f"Final coverage: {final_coverage:.2f}%")
     print(f"Total improvement: {total_improvement:.2f}%")
-    
+
     if final_coverage >= 80:
         print("✅ SUCCESS: 80% coverage target achieved!")
     else:
         print(f"⚠️  Coverage target not yet met. {80 - final_coverage:.2f}% to go.")
-        
+
     print("=" * 60)
 
 

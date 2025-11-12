@@ -11,8 +11,8 @@ from pathlib import Path
 # Add the scripts directory to the path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from generate_tests import TestGenerator
 from dotenv import load_dotenv
+from generate_tests import TestGenerator
 
 # Load environment variables
 load_dotenv()

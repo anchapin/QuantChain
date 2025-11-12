@@ -2,8 +2,9 @@
 
 import json
 import os
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 from quantchain.core.secret_managers import (
     EnvSecretManager,

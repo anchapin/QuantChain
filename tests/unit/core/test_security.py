@@ -6,12 +6,12 @@ from unittest.mock import patch
 
 import pytest
 
+from quantchain.core.secret_managers.env import InvalidCredentialFormatError
 from quantchain.core.security import (
     APISecurityManager,
     CredentialNotFoundError,
     SecurityConfigurationError,
 )
-from quantchain.core.secret_managers.env import InvalidCredentialFormatError
 
 
 @pytest.mark.unit

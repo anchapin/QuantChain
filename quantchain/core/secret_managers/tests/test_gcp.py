@@ -1,10 +1,11 @@
 # Auto-generated test file for gcp.py
 # Generated using Z.AI GLM-4.6 API
 
-import pytest
 import sys
 from pathlib import Path
 from unittest.mock import Mock, patch
+
+import pytest
 
 # Add the parent directory to the path to import the module
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -17,9 +18,8 @@ import os
 from unittest.mock import Mock, patch
 
 import pytest
-from google.api_core import exceptions as gcp_exceptions
-
 from gcp import GCPSecretManager
+from google.api_core import exceptions as gcp_exceptions
 
 
 class TestGCPSecretManagerInit:

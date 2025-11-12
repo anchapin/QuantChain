@@ -22,10 +22,8 @@ class VectorBacktestError(Exception):
     """Raised for vector backtester specific errors."""
 
 
-
 class SignalProcessingError(Exception):
     """Raised for signal processing errors."""
-
 
 
 @dataclass

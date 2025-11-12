@@ -1,17 +1,18 @@
 """Tests for BacktestingPyEngine."""
 
-import pytest
-from unittest.mock import Mock, patch
-import pandas as pd
-from pathlib import Path
 import sys
+from pathlib import Path
+from unittest.mock import Mock, patch
+
+import pandas as pd
+import pytest
 
 # Add the parent directory to the path to import the module
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from quantchain.backtesting.backtestingpy_engine import (
-    BacktestingPyEngine,
     BacktestingPyConfig,
+    BacktestingPyEngine,
     BacktestingPyError,
     ConversionError,
     StrategyAdapter,

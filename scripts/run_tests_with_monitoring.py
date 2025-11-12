@@ -5,8 +5,8 @@ This script runs tests while monitoring system resources.
 """
 
 import os
-import sys
 import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 

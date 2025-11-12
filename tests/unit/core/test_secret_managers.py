@@ -1,12 +1,13 @@
 """Tests for secret manager implementations."""
 
 import os
-import pytest
 from unittest.mock import Mock, patch
 
+import pytest
+
 from quantchain.core.secret_managers import (
-    SecretManager,
     EnvSecretManager,
+    SecretManager,
     create_secret_manager,
     get_default_secret_manager,
 )

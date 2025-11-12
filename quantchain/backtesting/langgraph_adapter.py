@@ -17,40 +17,32 @@ class AgentExecutionError(Exception):
     """Raised for agent runtime failures."""
 
 
-
 class TimeoutError(Exception):
     """Raised for agent execution timeouts."""
-
 
 
 class StateValidationError(Exception):
     """Raised for invalid agent state."""
 
 
-
 class SignalConversionError(Exception):
     """Raised for signal conversion failures."""
-
 
 
 class PositionError(Exception):
     """Raised for position management errors."""
 
 
-
 class DeterministicRuleError(Exception):
     """Raised for rule evaluation failures."""
-
 
 
 class ScenarioLoadError(Exception):
     """Raised for scenario loading failures."""
 
 
-
 class ReproducibilityError(Exception):
     """Raised when deterministic behavior cannot be guaranteed."""
-
 
 
 @dataclass

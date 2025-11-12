@@ -15,15 +15,12 @@ class InvalidFrictionModel(Exception):
     """Raised for unsupported friction model types."""
 
 
-
 class InvalidParameter(Exception):
     """Raised for invalid parameter values."""
 
 
-
 class FrictionCalculationError(Exception):
     """Raised for friction calculation failures."""
-
 
 
 # Commission Models

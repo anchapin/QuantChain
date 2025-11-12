@@ -1,7 +1,7 @@
 """Tests for the Chart Reader Agent."""
 
 from datetime import datetime, timedelta
-from typing import List, Generator
+from typing import Generator, List
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -42,7 +42,7 @@ class TestTechnicalIndicatorCalculator:
     @pytest.fixture(autouse=True)
     def setup_pandas(self) -> Generator[None, None, None]:
         """Mock pandas to be available for technical indicator tests."""
-        from unittest.mock import patch, Mock
+        from unittest.mock import Mock, patch
 
         # Create a comprehensive pandas Series mock
         class MockSeries:
@@ -289,7 +289,7 @@ class TestChartRenderer:
     @pytest.fixture(autouse=True)
     def setup_pandas_and_mocks(self) -> Generator[None, None, None]:
         """Mock pandas and chart dependencies for ChartRenderer tests."""
-        from unittest.mock import patch, Mock
+        from unittest.mock import Mock, patch
 
         # Mock DataFrame conversion
         mock_pd = Mock()

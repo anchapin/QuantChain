@@ -2,6 +2,7 @@
 
 import sys
 from unittest.mock import Mock, patch
+
 import pytest
 
 from quantchain.tools.__main__ import main

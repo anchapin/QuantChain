@@ -1,17 +1,18 @@
 """Tests for vector_backtester module."""
 
-import pytest
-import pandas as pd
 from unittest.mock import patch
 
+import pandas as pd
+import pytest
+
+from quantchain.backtesting.engine import BacktestConfig
 from quantchain.backtesting.vector_backtester import (
+    SignalProcessingError,
+    VectorBacktester,
     VectorBacktestError,
     VectorBacktestResult,
     VectorizedPositionManager,
-    VectorBacktester,
-    SignalProcessingError,
 )
-from quantchain.backtesting.engine import BacktestConfig
 
 
 class TestVectorBacktestError:
