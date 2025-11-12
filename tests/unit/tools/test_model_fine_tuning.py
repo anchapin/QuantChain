@@ -13,10 +13,12 @@ import pytest
 # Check for optional dependencies
 try:
     import torch
-
+    torch.tensor([1])  # Basic test to ensure torch works
     HAS_TORCH = True
-except ImportError:
+except (ImportError, RuntimeError) as e:
     HAS_TORCH = False
+    # If torch has import issues, skip this test module entirely
+    pytest.skip(f"Skipping model fine-tuning tests due to torch import error: {e}", allow_module_level=True)
 
 try:
     from transformers import AutoModelForCausalLM, AutoTokenizer

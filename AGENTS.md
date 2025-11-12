@@ -84,4 +84,33 @@ Todo Structure:
 <!-- END_TODO_MANAGEMENT_INSTRUCTIONS -->
 
 ---
+# TEST COVERAGE REQUIREMENTS
+
+## MANDATORY 80% TEST COVERAGE
+
+All code contributions to QuantChain must maintain a minimum of 80% test coverage. This requirement is strictly enforced through:
+
+1. **Pre-commit Hook**: Every commit must meet 80% test coverage before being allowed
+2. **CI/CD Pipeline**: The unit test workflow will fail if coverage falls below 80%
+3. **Codecov Configuration**: Coverage reports must meet the 80% threshold
+4. **Pull Request Validation**: All PRs must pass coverage checks before merging
+
+### Pre-commit Enforcement
+- A pre-commit hook automatically runs before each commit
+- The hook fails and blocks the commit if coverage is below 80%
+- This prevents developers from committing code that doesn't meet coverage requirements
+- Run `pytest tests/unit -v --cov=quantchain --cov-fail-under=80` to verify coverage locally
+
+### Coverage Measurement
+- Coverage is measured using pytest-cov
+- Both line and branch coverage are considered
+- Test files and configuration files are excluded from coverage calculations
+
+### Coverage Guidelines
+- Focus on testing critical paths and edge cases
+- Unit tests should cover individual functions and methods
+- Integration tests should cover component interactions
+- Mock external dependencies to ensure test isolation
+
+---
 

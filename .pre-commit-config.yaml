@@ -18,3 +18,12 @@ repos:
         additional_dependencies: [types-PyYAML, types-requests]
         args: [--python-version=3.12]
         exclude: ^tests/
+
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: pytest-check
+        entry: pytest tests/unit -v --cov=quantchain --cov-fail-under=80
+        language: system
+        pass_filenames: false
+        always_run: true

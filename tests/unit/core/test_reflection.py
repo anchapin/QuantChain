@@ -296,6 +296,22 @@ class TestReflectionEngine:
         insights_high = engine.generate_insights(metrics_high)
         assert "High action diversity" in " ".join(insights_high)
 
+    def test_generate_insights_poor_risk_adjusted_return(self, engine) -> None:
+        """Test insights generation for poor risk-adjusted returns."""
+        metrics = PerformanceMetrics(
+            total_actions=10,
+            successful_actions=5,
+            win_rate=0.5,
+            average_confidence=0.7,
+            profit_loss=0.0,
+            risk_adjusted_return=0.5,  # Less than 1.0 threshold
+            action_type_breakdown={"trade": 10},
+        )
+
+        insights = engine.generate_insights(metrics)
+
+        assert "Poor risk-adjusted returns - high risk for low reward" in " ".join(insights)
+
     def test_update_strategy_low_win_rate(self, engine) -> None:
         """Test strategy updates for low win rate."""
         insights: list[float] = ["Low win rate - consider reviewing decision logic"]

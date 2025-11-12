@@ -76,10 +76,10 @@ jobs:
       run: |
         if [ "${{ matrix.python-version }}" = "3.13" ]; then
           # Run all tests for Python 3.13 (has ML dependencies installed)
-          pytest tests/unit -v --cov=quantchain --cov-report=xml --cov-report=html --cov-report=term-missing
+          pytest tests/unit -v --cov=quantchain --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=80
         else
           # Skip ML-dependent tests for other Python versions
-          pytest tests/unit -v -m "not requires_ml" --cov=quantchain --cov-report=xml --cov-report=html --cov-report=term-missing
+          pytest tests/unit -v -m "not requires_ml" --cov=quantchain --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=80
         fi
 
     - name: Upload coverage reports
@@ -136,7 +136,7 @@ jobs:
 
     - name: Run integration tests
       run: |
-        python -m pytest -m "integration and not slow" -v --cov=quantchain --cov-report=xml --cov-report=html --cov-report=term-missing
+        python -m pytest -m "integration and not slow" -v --cov=quantchain --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=80
 
     - name: Upload coverage reports
       uses: codecov/codecov-action@9cc74bf7e13a810454a28846494ddbc3795eb693
