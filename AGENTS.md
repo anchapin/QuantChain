@@ -84,6 +84,150 @@ Todo Structure:
 <!-- END_TODO_MANAGEMENT_INSTRUCTIONS -->
 
 ---
+# DROID TOOLS REFERENCE
+
+## DROID-SPECIFIC TOOLS
+
+### File Operations
+- **Read**: `Read(file_path, offset=0, limit=2400)`
+  - Reads file contents. Use absolute paths
+  - For image files, returns actual image content
+  - Example: `Read("/path/to/file.py")`
+
+- **Edit**: `Edit(file_path, old_str, new_str, change_all=False)`
+  - Edits file by finding and replacing text
+  - Must call Read tool first
+  - old_str must be unique or use change_all=True
+  - Example: `Edit("/path/to/file.py", "old code", "new code")`
+
+- **Create**: `Create(file_path, content)`
+  - Creates new file with specified content
+  - Use absolute paths
+  - Example: `Create("/path/to/new_file.py", "print('hello')")`
+
+- **LS**: `LS(directory_path, ignorePatterns=[])`
+  - Lists directory contents with optional filtering
+  - Use absolute paths
+  - Example: `LS("/path/to/dir")`
+
+### Search Operations
+- **Grep**: `Grep(pattern, path=None, glob_pattern=None, output_mode="file_paths", ...)`
+  - High-performance file content search using ripgrep
+  - Supports regex, file type filtering, context lines
+  - Example: `Grep("import numpy", type="py", line_numbers=True)`
+
+- **Glob**: `Glob(patterns, excludePatterns=[], folder=None)`
+  - Advanced file path search using glob patterns
+  - Example: `Glob(["*.py", "*.js"], excludePatterns=["node_modules/**"])`
+
+### Execution
+- **Execute**: `Execute(command, timeout=60, riskLevel="high", riskLevelReason="")`
+  - Runs shell commands in isolated environment
+  - Risk levels: low (read-only), medium (file changes), high (system-wide changes)
+  - Each command runs in new shell - must chain related commands
+  - Example: `Execute("python3 --version", riskLevel="low", riskLevelReason="Display version info only")`
+
+### Project Management
+- **TodoWrite**: `TodoWrite(todos=[...])`
+  - Creates/manages task list for complex work
+  - Structure: `{"id": "unique", "content": "task", "status": "pending|in_progress|completed", "priority": "high|medium|low"}`
+  - Only ONE task can be "in_progress" at a time
+
+- **ExitSpecMode**: `ExitSpecMode(plan, title=None)`
+  - Used when ready to code after planning phase
+
+### Web & API Tools
+- **WebSearch**: `WebSearch(query, category=None, includeDomains=[], excludeDomains=[], ...)`
+  - Searches web for current information
+  - Use for factual information, trends, documentation
+  - Example: `WebSearch("Python async patterns", category="research paper")`
+
+- **FetchUrl**: `FetchUrl(url)`
+  - Scrapes content from provided URLs
+  - Avoid local/private network URLs
+  - Example: `FetchUrl("https://docs.example.com/api")`
+
+- **context7_resolve-library-id**: `context7_resolve-library_id(libraryName)`
+  - Resolves package names to Context7-compatible library IDs
+  - Must call before context7_get-library-docs
+
+- **context7_get-library-docs**: `context7_get-library-docs(context7CompatibleLibraryID, topic=None, tokens=5000)`
+  - Fetches up-to-date library documentation
+
+## CLI TOOLS REFERENCE
+
+### Git & GitHub
+- **git**: Basic operations
+  - `git status` - Check repository state
+  - `git diff` - Show unstaged changes
+  - `git diff --cached` - Show staged changes
+  - `git log --oneline -5` - Recent commits
+  - `git rev-parse --abbrev-ref HEAD` - Current branch
+
+- **gh**: GitHub CLI
+  - `gh pr create` - Create pull request
+  - `gh issue create` - Create issue
+  - `gh workflow list` - List workflows
+  - `gh run list` - List workflow runs
+
+### Search & Filtering
+- **rg** (ripgrep): Fast text search
+  - `rg "pattern" --type py` - Search Python files
+  - `rg "pattern" -C 3` - Show 3 lines context
+  - `rg "pattern" --glob "*.js"` - Glob pattern filtering
+
+- **grep**: Traditional grep (avoid, use rg instead)
+- **find**: File search (avoid, use Glob tool instead)
+- **ls**: Directory listing (avoid, use LS tool instead)
+
+### Development Tools
+- **curl**: HTTP requests
+  - `curl -X GET https://api.example.com` - GET request
+  - `curl -H "Authorization: Bearer $TOKEN" https://api.example.com` - With headers
+
+- **jq**: JSON processing
+  - `echo '{"key": "value"}' | jq .key` - Extract value
+  - `curl ... | jq '.items[] | select(.name=="test")'` - Filter response
+
+### Python Tools
+- **python3**: Python interpreter
+  - `python3 -m pip install package` - Install package
+  - `python3 -m pytest tests/` - Run tests
+  - `python3 -m venv venv` - Create virtual environment
+
+- **pytest**: Test runner
+  - `pytest tests/ -v --cov=quantchain` - Verbose with coverage
+  - `pytest tests/ -k "test_specific"` - Run specific tests
+
+- **pip**: Package manager (use python3 -m pip for consistency)
+
+### System Tools
+- **which**: Command location
+- **uname**: System information
+- **pwd**: Current directory
+- **cat**: View files (avoid, use Read tool instead)
+
+## BEST PRACTICES
+
+### Tool Selection
+- **Prefer Droid tools over shell commands**: Use Read over cat, LS over ls, Grep over grep
+- **Use absolute paths**: Avoid relative path issues
+- **Chain Execute commands**: Each command runs in new shell environment
+- **Quote paths with spaces**: Use double quotes for paths with special characters
+
+### Security & Risk
+- **Always provide riskLevelReason** for Execute tool
+- **Never expose secrets** in logs or outputs
+- **Check for sensitive data** before git commits
+- **Avoid destructive commands** like rm -rf without confirmation
+
+### Performance
+- **Use parallel tool calls** when exploring codebase
+- **Search efficiently** with Grep/Glob tools
+- **Read only necessary file portions** with offset/limit parameters
+- **Cache results** when possible for repeated operations
+
+---
 # TEST COVERAGE REQUIREMENTS
 
 ## MANDATORY 80% TEST COVERAGE

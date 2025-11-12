@@ -24,10 +24,12 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-test-${{ hashFiles('**/requirements-test.txt') }}
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-test-${{ hashFiles('**/requirements-test.txt') }}
         restore-keys: |
-          ${{ runner.os }}-pip-test-
-          ${{ runner.os }}-pip-
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-test-
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+      # Temporarily skip caching:
+      if: false
 
     - name: Log system resources before
       run: |
@@ -62,6 +64,9 @@ jobs:
         else
           pip install --no-cache-dir "ib_async>=1.0.0"
         fi
+        
+        # Clean up pip cache after installation to reduce memory pressure
+        pip cache purge
 
     - name: Log system resources after install
       run: |
@@ -94,7 +99,7 @@ jobs:
         fail_ci_if_error: false
 
   ml-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-4-cores  # Use larger runner with 16GB RAM for ML tests
     strategy:
       matrix:
         python-version: [3.13]  # Only run ML tests on one version to save resources
@@ -110,10 +115,12 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-ml-${{ hashFiles('**/requirements.txt') }}
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-ml-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
-          ${{ runner.os }}-pip-ml-
-          ${{ runner.os }}-pip-
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-ml-
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+      # Temporarily skip caching:
+      if: false
 
     - name: Log system resources before
       run: |
@@ -140,6 +147,9 @@ jobs:
         
         # Install ib_async for Python 3.13
         pip install --no-cache-dir "ib_async>=1.0.0"
+        
+        # Clean up pip cache after installation to reduce memory pressure
+        pip cache purge
 
     - name: Log system resources after install
       run: |
@@ -171,7 +181,7 @@ jobs:
         fail_ci_if_error: false
 
   integration-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-4-cores  # Use larger runner with 16GB RAM for integration tests
     strategy:
       matrix:
         python-version: [3.13]
@@ -187,10 +197,12 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-integration-${{ hashFiles('**/requirements-dev.txt') }}
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-integration-${{ hashFiles('**/requirements-dev.txt') }}
         restore-keys: |
-          ${{ runner.os }}-pip-integration-
-          ${{ runner.os }}-pip-
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-integration-
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+      # Temporarily skip caching:
+      if: false
 
     - name: Log system resources before
       run: |
@@ -229,6 +241,9 @@ jobs:
         # Install ib_async for Python 3.13 (supported)
         pip install --no-cache-dir "ib_async>=1.0.0"
         pip install --no-cache-dir -e .
+        
+        # Clean up pip cache after installation to reduce memory pressure
+        pip cache purge
 
     - name: Log system resources after install
       run: |
