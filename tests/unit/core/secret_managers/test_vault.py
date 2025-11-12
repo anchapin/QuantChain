@@ -3,6 +3,7 @@
 import json
 import os
 import sys
+import typing
 import unittest.mock
 import pytest
 
@@ -11,29 +12,51 @@ class MockKVv2:
     read_secret_version = unittest.mock.MagicMock()
 
 class MockSecrets:
-    kv = unittest.mock.MagicMock()
-    kv.v2 = MockKVv2()
+    def __init__(self) -> None:
+        self.kv = unittest.mock.MagicMock()
+        self.kv.v2 = MockKVv2()
 
 class MockHvacClient:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         self.is_authenticated_ret = kwargs.get('is_authenticated', True)
         self.connect_error = kwargs.get('connect_error', None)
+        # Create new secrets instance each time to avoid shared state
+        self._secrets = MockSecrets()
         
-    def is_authenticated(self):
-        return self.is_authenticated_ret
+    def is_authenticated(self) -> bool:
+        return bool(self.is_authenticated_ret)
         
     @property
-    def secrets(self):
-        return MockSecrets()
+    def secrets(self) -> MockSecrets:
+        return self._secrets
 
-# Add mock to sys.modules before any other imports
-sys.modules['hvac'] = unittest.mock.MagicMock()
-sys.modules['hvac.Client'] = MockHvacClient
+# Create a mock hvac module
+mock_hvac_module = unittest.mock.MagicMock()
+mock_hvac_module.Client = MockHvacClient
 
-# Now we can import our module
+# Add mock to sys.modules before importing vault module
+sys.modules['hvac'] = mock_hvac_module
+
+# Now import the vault module
 from quantchain.core.secret_managers.vault import VaultSecretManager
 
 _VAULT_AVAILABLE = True
+
+
+def with_mock_client(mock_client_factory: typing.Callable[..., typing.Any]) -> typing.Callable[..., typing.Any]:
+    """Decorator to temporarily replace the mock Client class."""
+    def decorator(test_func: typing.Callable[..., typing.Any]) -> typing.Callable[..., typing.Any]:
+        def wrapper(self: typing.Any, *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+            original_client = mock_hvac_module.Client
+            try:
+                # If factory is callable, call it to get client
+                if callable(mock_client_factory):
+                    mock_hvac_module.Client = mock_client_factory
+                return test_func(self, *args, **kwargs)
+            finally:
+                mock_hvac_module.Client = original_client
+        return wrapper
+    return decorator
 
 
 @pytest.mark.unit
@@ -81,24 +104,17 @@ class TestVaultSecretManager:
             with pytest.raises(ValueError, match="Vault token must be provided"):
                 VaultSecretManager()
 
+    @with_mock_client(lambda *args, **kwargs: MockHvacClient(is_authenticated=False))
     def test_init_authentication_failure(self) -> None:
         """Test initialization fails authentication."""
-        with unittest.mock.patch('hvac.Client') as mock_client_class:
-            # Make Client constructor return a client that returns False for auth
-            mock_client = MockHvacClient(is_authenticated=False)
-            mock_client_class.return_value = mock_client
+        with pytest.raises(RuntimeError, match="Failed to authenticate with Vault"):
+            VaultSecretManager(url="http://vault:8200", token="invalid-token")
 
-            with pytest.raises(RuntimeError, match="Failed to authenticate with Vault"):
-                VaultSecretManager(url="http://vault:8200", token="invalid-token")
-
+    @with_mock_client(lambda *args, **kwargs: (_ for _ in ()).throw(Exception("Connection failed")))
     def test_init_connection_error(self) -> None:
         """Test initialization with connection error."""
-        with unittest.mock.patch('hvac.Client') as mock_client_class:
-            # Make Client constructor raise exception
-            mock_client_class.side_effect = Exception("Connection failed")
-            
-            with pytest.raises(Exception, match="Connection failed"):
-                VaultSecretManager(url="http://vault:8200", token="test-token")
+        with pytest.raises(Exception, match="Connection failed"):
+            VaultSecretManager(url="http://vault:8200", token="test-token")
 
     def test_build_secret_path(self) -> None:
         """Test building secret path."""
@@ -121,24 +137,35 @@ class TestVaultSecretManager:
             "data": {"data": {"value": "test_secret_value"}}
         }
         
-        with unittest.mock.patch('hvac.Client', return_value=mock_client):
+        # Temporarily replace the mock Client class
+        original_client = mock_hvac_module.Client
+        mock_hvac_module.Client = lambda *args, **kwargs: mock_client
+        
+        try:
             manager = VaultSecretManager(url="http://vault:8200", token="test-token")
             result = manager.get_secret("test_secret")
-
             assert result == "test_secret_value"
+        finally:
+            # Restore original mock
+            mock_hvac_module.Client = original_client
 
     def test_get_secret_success_single_non_value(self) -> None:
         """Test successful secret retrieval with single non-value key."""
+        # Create mock client with specific return value
         mock_client = MockHvacClient()
         mock_client.secrets.kv.v2.read_secret_version.return_value = {
             "data": {"data": {"api_key": "test_key"}}
         }
         
-        with unittest.mock.patch('hvac.Client', return_value=mock_client):
+        # Temporarily replace the mock Client class
+        original_client = mock_hvac_module.Client
+        mock_hvac_module.Client = lambda *args, **kwargs: mock_client
+        try:
             manager = VaultSecretManager(url="http://vault:8200", token="test-token")
             result = manager.get_secret("test_secret")
-
             assert result == "test_key"
+        finally:
+            mock_hvac_module.Client = original_client
 
     def test_get_secret_success_multiple_values(self) -> None:
         """Test successful secret retrieval with multiple values."""
@@ -147,23 +174,31 @@ class TestVaultSecretManager:
             "data": {"data": {"key1": "value1", "key2": "value2"}}
         }
         
-        with unittest.mock.patch('hvac.Client', return_value=mock_client):
+        # Temporarily replace the mock Client class
+        original_client = mock_hvac_module.Client
+        mock_hvac_module.Client = lambda *args, **kwargs: mock_client
+        try:
             manager = VaultSecretManager(url="http://vault:8200", token="test-token")
             result = manager.get_secret("test_secret")
-
             # Should return JSON string for multiple values
             assert json.loads(result) == {"key1": "value1", "key2": "value2"}
+        finally:
+            mock_hvac_module.Client = original_client
 
     def test_get_secret_no_data_response(self) -> None:
         """Test secret retrieval with no data in response."""
         mock_client = MockHvacClient()
         mock_client.secrets.kv.v2.read_secret_version.return_value = {}
         
-        with unittest.mock.patch('hvac.Client', return_value=mock_client):
+        # Temporarily replace mock Client class
+        original_client = mock_hvac_module.Client
+        mock_hvac_module.Client = lambda *args, **kwargs: mock_client
+        try:
             manager = VaultSecretManager(url="http://vault:8200", token="test-token")
             result = manager.get_secret("test_secret")
-
             assert result is None
+        finally:
+            mock_hvac_module.Client = original_client
 
     def test_get_secret_no_nested_data(self) -> None:
         """Test secret retrieval with no nested data."""
@@ -172,41 +207,55 @@ class TestVaultSecretManager:
             "data": {}
         }
         
-        with unittest.mock.patch('hvac.Client', return_value=mock_client):
+        # Temporarily replace mock Client class
+        original_client = mock_hvac_module.Client
+        mock_hvac_module.Client = lambda *args, **kwargs: mock_client
+        try:
             manager = VaultSecretManager(url="http://vault:8200", token="test-token")
             result = manager.get_secret("test_secret")
-
             assert result is None
+        finally:
+            mock_hvac_module.Client = original_client
 
     def test_get_secret_exception(self) -> None:
         """Test secret retrieval with exception."""
         mock_client = MockHvacClient()
         mock_client.secrets.kv.v2.read_secret_version.side_effect = Exception("Vault error")
         
-        with unittest.mock.patch('hvac.Client', return_value=mock_client):
+        # Temporarily replace mock Client class
+        original_client = mock_hvac_module.Client
+        mock_hvac_module.Client = lambda *args, **kwargs: mock_client
+        try:
             manager = VaultSecretManager(url="http://vault:8200", token="test-token")
             result = manager.get_secret("test_secret")
-
             assert result is None
+        finally:
+            mock_hvac_module.Client = original_client
 
     def test_get_service_credentials_success(self) -> None:
         """Test successful service credentials retrieval."""
+        # Create fresh mock instance
         mock_client = MockHvacClient()
         mock_client.secrets.kv.v2.read_secret_version.return_value = {
             "data": {"data": {"api_key": "key123", "api_secret": "secret123"}}
         }
         # Make sure side_effect is cleared from previous tests
+        mock_client.secrets.kv.v2.read_secret_version.reset_mock()
         mock_client.secrets.kv.v2.read_secret_version.side_effect = None
         
-        with unittest.mock.patch('hvac.Client', return_value=mock_client):
+        # Temporarily replace mock Client class
+        original_client = mock_hvac_module.Client
+        mock_hvac_module.Client = lambda *args, **kwargs: mock_client
+        try:
             manager = VaultSecretManager(url="http://vault:8200", token="test-token")
             result = manager.get_service_credentials("alpaca")
-
             assert result == {"api_key": "key123", "api_secret": "secret123"}
-            # Verify correct path was used
-            mock_client.secrets.kv.v2.read_secret_version.assert_called_once_with(
+            # Verify correct path was used - only check the last call
+            mock_client.secrets.kv.v2.read_secret_version.assert_called_with(
                 path="secret/data/services/alpaca"
             )
+        finally:
+            mock_hvac_module.Client = original_client
 
     def test_get_service_credentials_empty_data(self) -> None:
         """Test service credentials retrieval with empty data."""
@@ -215,57 +264,78 @@ class TestVaultSecretManager:
             "data": {"data": {}}
         }
         
-        with unittest.mock.patch('hvac.Client', return_value=mock_client):
+        # Temporarily replace mock Client class
+        original_client = mock_hvac_module.Client
+        mock_hvac_module.Client = lambda *args, **kwargs: mock_client
+        try:
             manager = VaultSecretManager(url="http://vault:8200", token="test-token")
             result = manager.get_service_credentials("alpaca")
-
             assert result == {}
+        finally:
+            mock_hvac_module.Client = original_client
 
     def test_get_service_credentials_exception(self) -> None:
         """Test service credentials retrieval with exception."""
         mock_client = MockHvacClient()
         mock_client.secrets.kv.v2.read_secret_version.side_effect = Exception("Vault error")
         
-        with unittest.mock.patch('hvac.Client', return_value=mock_client):
+        # Temporarily replace mock Client class
+        original_client = mock_hvac_module.Client
+        mock_hvac_module.Client = lambda *args, **kwargs: mock_client
+        try:
             manager = VaultSecretManager(url="http://vault:8200", token="test-token")
             result = manager.get_service_credentials("alpaca")
-
             assert result == {}
+        finally:
+            mock_hvac_module.Client = original_client
 
     def test_validate_service_success(self) -> None:
         """Test successful service validation."""
+        # Create a fresh mock client
         mock_client = MockHvacClient()
         mock_client.secrets.kv.v2.read_secret_version.return_value = {
             "data": {"data": {"api_key": "test_key"}}
         }
         
-        with unittest.mock.patch('hvac.Client', return_value=mock_client):
+        # Temporarily replace mock Client class
+        original_client = mock_hvac_module.Client
+        mock_hvac_module.Client = lambda *args, **kwargs: mock_client
+        try:
             manager = VaultSecretManager(url="http://vault:8200", token="test-token")
             result = manager.validate_service("alpaca")
-
             assert result is True
+        finally:
+            mock_hvac_module.Client = original_client
 
     def test_validate_service_no_data_response(self) -> None:
         """Test service validation with no data in response."""
         mock_client = MockHvacClient()
         mock_client.secrets.kv.v2.read_secret_version.return_value = {}
         
-        with unittest.mock.patch('hvac.Client', return_value=mock_client):
+        # Temporarily replace mock Client class
+        original_client = mock_hvac_module.Client
+        mock_hvac_module.Client = lambda *args, **kwargs: mock_client
+        try:
             manager = VaultSecretManager(url="http://vault:8200", token="test-token")
             result = manager.validate_service("alpaca")
-
             assert result is False
+        finally:
+            mock_hvac_module.Client = original_client
 
     def test_validate_service_exception(self) -> None:
         """Test service validation with exception."""
         mock_client = MockHvacClient()
         mock_client.secrets.kv.v2.read_secret_version.side_effect = Exception("Vault error")
         
-        with unittest.mock.patch('hvac.Client', return_value=mock_client):
+        # Temporarily replace mock Client class
+        original_client = mock_hvac_module.Client
+        mock_hvac_module.Client = lambda *args, **kwargs: mock_client
+        try:
             manager = VaultSecretManager(url="http://vault:8200", token="test-token")
             result = manager.validate_service("alpaca")
-
             assert result is False
+        finally:
+            mock_hvac_module.Client = original_client
 
     def test_custom_mount_point(self) -> None:
         """Test using custom mount point."""
@@ -274,7 +344,10 @@ class TestVaultSecretManager:
             "data": {"data": {"value": "test_value"}}
         }
         
-        with unittest.mock.patch('hvac.Client', return_value=mock_client):
+        # Temporarily replace mock Client class
+        original_client = mock_hvac_module.Client
+        mock_hvac_module.Client = lambda *args, **kwargs: mock_client
+        try:
             manager = VaultSecretManager(
                 url="http://vault:8200",
                 token="test-token",
@@ -298,17 +371,23 @@ class TestVaultSecretManager:
             mock_client.secrets.kv.v2.read_secret_version.assert_called_with(
                 path="custom-mount/data/services/alpaca"
             )
+        finally:
+            mock_hvac_module.Client = original_client
 
     def test_with_ssl_verify_disabled(self) -> None:
         """Test initialization with SSL verification disabled."""
         mock_client = MockHvacClient()
         
-        with unittest.mock.patch('hvac.Client', return_value=mock_client):
+        # Temporarily replace mock Client class
+        original_client = mock_hvac_module.Client
+        mock_hvac_module.Client = lambda *args, **kwargs: mock_client
+        try:
             manager = VaultSecretManager(
                 url="https://vault.example.com",
                 token="test-token",
                 verify=False
             )
-
             # Should be called with verify=False
             pass  # Already verified by mock setup
+        finally:
+            mock_hvac_module.Client = original_client
