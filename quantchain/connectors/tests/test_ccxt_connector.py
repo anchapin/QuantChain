@@ -9,8 +9,6 @@ from unittest.mock import Mock, patch, MagicMock
 # Add the parent directory to the path to import the module
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-
-```python
 """Test cases for CCXT data connector."""
 
 import pytest
@@ -456,4 +454,7 @@ class TestGetAvailableSymbols:
         """Test retrieval with rate limit error."""
         connector.exchange.load_markets.side_effect = Exception("RateLimitExceeded")
         
-        with pytest.raises(Rate
+        with pytest.raises(Exception) as excinfo:
+            connector.get_available_symbols()
+        
+        assert "RateLimitExceeded" in str(excinfo.value)

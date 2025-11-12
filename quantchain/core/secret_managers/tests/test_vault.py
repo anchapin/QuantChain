@@ -1,23 +1,18 @@
 # Auto-generated test file for vault.py
 # Generated using Z.AI GLM-4.6 API
 
+import json
+import os
 import pytest
 import sys
 from pathlib import Path
+from typing import Dict, Any
 from unittest.mock import Mock, patch, MagicMock
 
 # Add the parent directory to the path to import the module
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-
-```python
 """Test cases for VaultSecretManager."""
-
-import json
-import os
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, Any
 
 from vault import VaultSecretManager
 

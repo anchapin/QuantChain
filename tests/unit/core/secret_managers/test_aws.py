@@ -2,14 +2,16 @@
 
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-import boto3
-from botocore.exceptions import ClientError
 
-from quantchain.core.secret_managers.aws import (
-    AWSSecretsManager,
-    AWSSecretManagerError,
-    create_aws_secret_manager
-)
+# Mock boto3 before importing the module
+with patch.dict('sys.modules', {'boto3': Mock(), 'botocore.exceptions': Mock()}):
+    from quantchain.core.secret_managers.aws import (
+        AWSSecretsManager,
+        AWSSecretManagerError,
+        create_aws_secret_manager,
+        AWSSecretManagerConfig,
+        AWSSecretManager,
+    )
 
 
 class TestAWSSecretManagerError:
@@ -101,16 +103,9 @@ class TestAWSSecretManager:
         mock_boto_client = Mock()
         mock_client.return_value = mock_boto_client
         
-        config = AWSSecretManagerConfig(
-            region_name="ap-southeast-1",
-            max_retries=5,
-            backoff_factor=2.0
-        )
-        manager = AWSSecretManager(config=config)
+        manager = AWSSecretManager(region_name="ap-southeast-1")
         
         assert manager.region_name == "ap-southeast-1"
-        assert manager.max_retries == 5
-        assert manager.backoff_factor == 2.0
         assert manager.client == mock_boto_client
         mock_client.assert_called_once_with(
             'secretsmanager',

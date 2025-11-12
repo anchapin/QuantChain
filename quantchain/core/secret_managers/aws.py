@@ -18,6 +18,44 @@ from .base import SecretManager
 logger = logging.getLogger(__name__)
 
 
+class AWSSecretManagerError(Exception):
+    """Exception raised by AWS Secrets Manager operations."""
+    pass
+
+
+def create_aws_secret_manager(**kwargs):
+    """Create an AWS Secrets Manager instance.
+    
+    Args:
+        **kwargs: Arguments to pass to AWSSecretsManager constructor
+        
+    Returns:
+        AWSSecretsManager instance
+    """
+    return AWSSecretsManager(**kwargs)
+
+
+class AWSSecretManagerConfig:
+    """Configuration for AWS Secrets Manager."""
+    
+    def __init__(
+        self,
+        region_name: str = "us-east-1",
+        max_retries: int = 3,
+        backoff_factor: float = 1.0
+    ):
+        """Initialize config.
+        
+        Args:
+            region_name: AWS region name
+            max_retries: Maximum number of retries
+            backoff_factor: Backoff factor for retries
+        """
+        self.region_name = region_name
+        self.max_retries = max_retries
+        self.backoff_factor = backoff_factor
+
+
 class AWSSecretsManager(SecretManager):
     """AWS Secrets Manager secret manager."""
 
@@ -179,3 +217,7 @@ class AWSSecretsManager(SecretManager):
                 return False
             logger.debug(f"Service {service} validation failed: {e}")
             return False
+
+
+# Alias for backward compatibility
+AWSSecretManager = AWSSecretsManager

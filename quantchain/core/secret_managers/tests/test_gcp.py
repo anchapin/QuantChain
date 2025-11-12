@@ -10,7 +10,6 @@ from unittest.mock import Mock, patch, MagicMock
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
-```python
 """Test cases for GCP Secret Manager implementation."""
 
 import json
@@ -503,4 +502,5 @@ class TestGCPSecretManagerIntegration:
     def test_import_error_handling(self):
         """Test ImportError is raised when google-cloud-secret-manager is not available."""
         with patch.dict("sys.modules", {"google.cloud.secretmanager": None}):
-            with pytest.raises(ImportError, match="google-cloud-secret-manager library
+            with pytest.raises(ImportError, match="google-cloud-secret-manager library is required"):
+                pass  # The import error will be raised when trying to import the module

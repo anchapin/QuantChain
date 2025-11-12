@@ -10,7 +10,6 @@ from unittest.mock import Mock, patch, MagicMock
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
-```python
 import pytest
 import pandas as pd
 import numpy as np
@@ -408,4 +407,11 @@ class TestVectorBacktester:
         assert backtester.position_manager.commission_rate == 0.002
 
     def test_run_missing_close_column(self, sample_signals, default_config):
-        """Test run with data missing 'close'
+        """Test run with data missing 'close' column."""
+        backtester = VectorBacktester(default_config)
+        
+        # Create data missing close column
+        data_missing_close = sample_data.drop(columns=['close'])
+        
+        with pytest.raises(ValueError, match="Missing required column 'close'"):
+            backtester.run(sample_signals, data_missing_close)
