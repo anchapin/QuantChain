@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch, MagicMock
 
 # Mock boto3 before importing the module
 with patch.dict('sys.modules', {'boto3': Mock(), 'botocore.exceptions': Mock()}):
+    from botocore.exceptions import ClientError
     from quantchain.core.secret_managers.aws import (
         AWSSecretsManager,
         AWSSecretManagerError,
