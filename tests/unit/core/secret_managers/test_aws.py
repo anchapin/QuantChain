@@ -67,15 +67,15 @@ class TestAWSSecretsManager:
 class TestCreateAWSSecretManager:
     """Test the create_aws_secret_manager convenience function."""
     
-    @patch('quantchain.core.secret_managers.aws.AWSSecretManagerFactory')
-    def test_create_convenience_function(self, mock_factory):
+    @patch('quantchain.core.secret_managers.aws.AWSSecretsManager')
+    def test_create_convenience_function(self, mock_manager_class):
         """Test the convenience function creates manager."""
         mock_manager = Mock()
-        mock_factory.create_manager.return_value = mock_manager
+        mock_manager_class.return_value = mock_manager
         
         manager = create_aws_secret_manager(region_name="eu-central-1")
         
-        mock_factory.create_manager.assert_called_once()
+        mock_manager_class.assert_called_once_with(region_name="eu-central-1")
         assert manager == mock_manager
 
 
