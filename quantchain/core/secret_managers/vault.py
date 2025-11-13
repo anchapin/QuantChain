@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional, Union
 
 try:
     import hvac
+
     HVAC_AVAILABLE = True
 except ImportError:
     HVAC_AVAILABLE = False

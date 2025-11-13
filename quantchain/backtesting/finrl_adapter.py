@@ -5,6 +5,17 @@ This module provides a gym-compatible environment that bridges QuantChain's
 backtesting engine with FinRL's reinforcement learning framework.
 """
 
+# Gymnasium compatibility guard
+GYMNASIUM_AVAILABLE = False
+try:
+    import gymnasium as gym
+    GYMNASIUM_AVAILABLE = True
+except ImportError:
+    gym = None
+    GYMNASIUM_AVAILABLE = False
+
+
+
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union

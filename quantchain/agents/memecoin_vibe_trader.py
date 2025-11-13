@@ -5,7 +5,14 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Protocol
 
-from langgraph.graph import END, StateGraph
+# Python 3.9 compatibility: Add optional dependency guards for LangGraph
+try:
+    from langgraph.graph import END, StateGraph
+    LANGGRAPH_AVAILABLE = True
+except ImportError:
+    END = None
+    StateGraph = None
+    LANGGRAPH_AVAILABLE = False
 
 from ..connectors.dexscreener_connector import DexscreenerDataConnector
 from ..core.exceptions import QuantChainError
@@ -120,7 +127,7 @@ class MemecoinVibeTrader:
         social_scraper: SocialMediaScraper,
         execution_tool: AlpacaExecutionTool,
         llm: Optional[LLMProtocol] = None,
-    ):
+    ) -> None:
         """Initialize the Memecoin Vibe Trader.
 
         Args:
@@ -138,8 +145,12 @@ class MemecoinVibeTrader:
 
         self.logger = logging.getLogger(__name__)
 
-        # Build the LangGraph workflow
-        self.workflow = self._build_workflow()
+        # Build the LangGraph workflow only if available
+        if LANGGRAPH_AVAILABLE and StateGraph is not None and END is not None:
+            self.workflow = self._build_workflow()
+        else:
+            self.logger.warning("LangGraph not available, using fallback execution")
+            self.workflow = None
 
     def _build_workflow(self) -> StateGraph:
         """Build the LangGraph workflow for the trading agent."""
@@ -212,8 +223,12 @@ class MemecoinVibeTrader:
             # Initialize state
             initial_state = AgentState()
 
-            # Run the workflow
-            final_state = self.workflow.invoke(initial_state)
+            # Run the workflow or fallback execution
+            if self.workflow is not None:
+                final_state = self.workflow.invoke(initial_state)
+            else:
+                # Fallback execution when LangGraph is not available
+                final_state = self._run_fallback_cycle(initial_state)
 
             # Normalize final_state to dict for consistent access
             if not isinstance(final_state, dict):
@@ -252,16 +267,42 @@ class MemecoinVibeTrader:
                 "trades": [],
             }
 
+    def _run_fallback_cycle(self, state: AgentState) -> AgentState:
+        """Fallback execution when LangGraph is not available."""
+        try:
+            # Step 1: Scan tokens
+            state = self._scan_tokens(state)
+            if state.error_message:
+                return state
+
+            # Step 2: Gather social data
+            state = self._gather_social_data(state)
+            if state.error_message:
+                return state
+
+            # Step 3: Assess vibes
+            state = self._assess_vibes(state)
+            if state.error_message:
+                return state
+
+            # Step 4: Execute trades
+            state = self._execute_trades(state)
+
+            return state
+        except Exception as e:
+            state.error_message = f"Fallback execution failed: {str(e)}"
+            return state
+
     def _filter_and_convert_tokens(
         self, raw_pairs: List[Dict[str, Any]]
     ) -> List[TokenPair]:
         """Filter and convert raw token pair data to TokenPair objects.
 
         Args:
-                raw_pairs: Raw token pair data from Dexscreener
+            raw_pairs: Raw token pair data from Dexscreener
 
         Returns:
-        List of TokenPair objects that meet liquidity requirements
+            List of TokenPair objects that meet liquidity requirements
         """
         tokens = []
         for pair_data in raw_pairs:

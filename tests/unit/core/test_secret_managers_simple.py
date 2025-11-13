@@ -17,19 +17,19 @@ class TestSecretManagersSimple:
 
     def test_create_env_manager(self):
         """Test creating env secret manager."""
-        with patch.dict('os.environ', {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
             manager = create_secret_manager(backend="env")
             assert isinstance(manager, EnvSecretManager)
 
     def test_get_default_manager(self):
         """Test getting default secret manager."""
-        with patch.dict('os.environ', {"QUANTCHAIN_SECRET_BACKEND": "env"}):
+        with patch.dict("os.environ", {"QUANTCHAIN_SECRET_BACKEND": "env"}):
             manager = get_default_secret_manager()
             assert isinstance(manager, EnvSecretManager)
 
     def test_get_default_manager_no_env(self):
         """Test getting default manager without env var."""
-        with patch.dict('os.environ', {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
             manager = get_default_secret_manager()
             assert isinstance(manager, EnvSecretManager)
 
@@ -40,25 +40,25 @@ class TestSecretManagersSimple:
 
     def test_create_vault_not_available(self):
         """Test error when vault backend not available."""
-        with patch('quantchain.core.secret_managers._vault_available', False):
+        with patch("quantchain.core.secret_managers._vault_available", False):
             with pytest.raises(ValueError):
                 create_secret_manager(backend="vault")
 
     def test_create_aws_not_available(self):
         """Test error when AWS backend not available."""
-        with patch('quantchain.core.secret_managers._aws_available', False):
+        with patch("quantchain.core.secret_managers._aws_available", False):
             with pytest.raises(ValueError):
                 create_secret_manager(backend="aws")
 
     def test_create_gcp_not_available(self):
         """Test error when GCP backend not available."""
-        with patch('quantchain.core.secret_managers._gcp_available', False):
+        with patch("quantchain.core.secret_managers._gcp_available", False):
             with pytest.raises(ValueError):
                 create_secret_manager(backend="gcp")
 
     def test_env_manager_get_secret(self):
         """Test env manager getting secret."""
-        with patch.dict('os.environ', {"TEST_SECRET": "test_value"}):
+        with patch.dict("os.environ", {"TEST_SECRET": "test_value"}):
             manager = EnvSecretManager()
             value = manager.get_secret("TEST_SECRET")
             assert value == "test_value"
@@ -72,7 +72,7 @@ class TestSecretManagersSimple:
     def test_env_manager_set_secret(self):
         """Test env manager setting secret."""
         manager = EnvSecretManager()
-        
+
         # Env manager doesn't support setting (would need env var)
         # This tests that the method exists and handles gracefully
         try:
@@ -84,7 +84,7 @@ class TestSecretManagersSimple:
     def test_env_manager_delete_secret(self):
         """Test env manager deleting secret."""
         manager = EnvSecretManager()
-        
+
         # Env manager doesn't support deleting (would need env var)
         # This tests that the method exists and handles gracefully
         try:
@@ -96,7 +96,7 @@ class TestSecretManagersSimple:
     def test_env_manager_list_secrets(self):
         """Test env manager listing secrets."""
         manager = EnvSecretManager()
-        
+
         # Should return empty list or list of env vars
         secrets = manager.list_secrets()
         assert isinstance(secrets, list)

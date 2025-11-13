@@ -57,6 +57,9 @@ jobs:
         # Install project in development mode
         pip install --no-cache-dir -e .
         
+        # Install additional dependencies for all Python versions
+        pip install --no-cache-dir alpaca alpaca-pandas langgraph gymnasium gymnasium[atari]
+        
         # Install ib_async conditionally (requires Python >=3.10)
         if [ "${{ matrix.python-version }}" = "3.9" ]; then
           echo "Skipping ib_async installation for Python 3.9"
@@ -141,6 +144,9 @@ jobs:
         pip install --no-cache-dir -r requirements.txt
         pip install --no-cache-dir -r requirements-dev.txt
         pip install --no-cache-dir -e .
+        
+        # Install additional dependencies
+        pip install --no-cache-dir alpaca alpaca-pandas langgraph gymnasium gymnasium[atari]
         
         # Install ib_async for Python 3.13
         pip install --no-cache-dir "ib_async>=1.0.0"
@@ -228,6 +234,9 @@ jobs:
         
         # Install web dependencies for integration tests 
         pip install --no-cache-dir streamlit plotly>=5.0.0 narwhals blinker
+        
+        # Install additional dependencies
+        pip install --no-cache-dir alpaca alpaca-pandas langgraph gymnasium gymnasium[atari]
         
         # Install ML dependencies for integration tests (3.13 has enough space)
         pip install --no-cache-dir torch transformers --no-deps

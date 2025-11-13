@@ -1,5 +1,21 @@
 """Alpaca execution connector for equity and crypto trading."""
 
+# Alpaca compatibility guard
+ALPACA_AVAILABLE = False
+try:
+    from alpaca.data import (
+        HistoricalCryptoData,
+        StockDataStream,
+        StockTradeApi,
+    )
+    from alpaca.trading.client import Client as AlpacaTradingClient
+    from alpaca import TradingStream
+    ALPACA_AVAILABLE = True
+except ImportError:
+    pass
+
+
+
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 

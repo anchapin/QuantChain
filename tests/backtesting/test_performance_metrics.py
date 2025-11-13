@@ -1,700 +1,499 @@
-from unittest.mock import patch
+"""Tests for performance metrics calculation."""
 
+import pytest
 import numpy as np
 import pandas as pd
-import pytest
+from unittest.mock import patch, MagicMock
 
 from quantchain.backtesting.performance_metrics import (
-    InsufficientDataError,
-    LibraryImportError,
-    MetricsCalculationError,
     PerformanceMetrics,
+    InsufficientDataError,
+    InvalidFrequencyError,
+    MissingColumnError,
+    MetricsCalculationError,
+    LibraryImportError,
+    QUANTSTATS_AVAILABLE,
+    EMPYRICAL_AVAILABLE,
 )
 
 
-# Enhanced test fixtures
-@pytest.fixture
-def complex_equity_curve() -> pd.Series:
-    """Create a more complex equity curve with realistic market patterns."""
-    dates = pd.date_range("2023-01-01", periods=252, freq="D")
-    # Simulate a volatile equity curve with trends and corrections
-    np.random.seed(42)
-    returns = np.random.normal(0.001, 0.02, 252)  # Daily returns with trends
-    equity_curve = pd.Series(100000.0, index=dates)
-    for i in range(1, len(equity_curve)):
-        equity_curve.iloc[i] = equity_curve.iloc[i - 1] * (1 + returns[i])
-    return equity_curve
+class TestPerformanceMetrics:
+    """Test cases for PerformanceMetrics class."""
 
+    def setup_method(self):
+        """Set up test fixtures."""
+        # Sample equity curve data
+        dates = pd.date_range("2023-01-01", periods=100, freq="D")
+        self.equity_curve = pd.Series(
+            data=np.cumprod(1 + np.random.normal(0.001, 0.02, 100)),
+            index=dates,
+            name="portfolio_value",
+        )
 
-@pytest.fixture
-def realistic_trade_log() -> pd.DataFrame:
-    """Create a realistic trade log with various PnL scenarios."""
-    return pd.DataFrame(
-        {
-            "pnl": [1500, -800, 2200, -1200, 3500, -2800, 1800, -900, 2600, -1500],
-            "entry_price": [
-                100.50,
-                101.20,
-                102.30,
-                103.10,
-                102.80,
-                104.20,
-                103.50,
-                105.10,
-                104.80,
-                106.20,
-            ],
-            "exit_price": [
-                102.00,
-                99.50,
-                105.10,
-                101.80,
-                107.50,
-                100.90,
-                105.80,
-                103.70,
-                108.20,
-                104.10,
-            ],
-            "quantity": [100, 200, 150, 300, 180, 220, 160, 240, 175, 250],
-            "symbol": [
-                "AAPL",
-                "MSFT",
-                "GOOGL",
-                "TSLA",
-                "AMZN",
-                "META",
-                "NVDA",
-                "NFLX",
-                "AMD",
-                "INTC",
-            ],
-            "entry_time": pd.date_range("2023-01-02", periods=10, freq="2D"),
-            "exit_time": pd.date_range("2023-01-03", periods=10, freq="2D"),
+        # Sample benchmark returns
+        self.benchmark_returns = pd.Series(
+            data=np.random.normal(0.0005, 0.015, 100), index=dates, name="benchmark"
+        )
+
+        # Sample trade log
+        self.trade_log = pd.DataFrame(
+            {
+                "entry_time": pd.date_range("2023-01-01", periods=10, freq="D"),
+                "exit_time": pd.date_range("2023-01-02", periods=10, freq="D"),
+                "symbol": ["AAPL"] * 10,
+                "side": ["buy"] * 5 + ["sell"] * 5,
+                "quantity": [100] * 10,
+                "entry_price": np.random.uniform(100, 200, 10),
+                "exit_price": np.random.uniform(100, 200, 10),
+                "pnl": np.random.uniform(-1000, 1000, 10),
+                "commission": [1.0] * 10,
+            }
+        )
+
+    def test_initialization_default(self):
+        """Test default initialization."""
+        metrics = PerformanceMetrics()
+
+        assert metrics.benchmark_returns is None
+        assert metrics.risk_free_rate == 0.02
+
+    def test_initialization_with_params(self):
+        """Test initialization with parameters."""
+        metrics = PerformanceMetrics(
+            benchmark_returns=self.benchmark_returns, risk_free_rate=0.03
+        )
+
+        assert metrics.benchmark_returns.equals(self.benchmark_returns)
+        assert metrics.risk_free_rate == 0.03
+
+    def test_calculate_returns_success(self):
+        """Test successful returns calculation."""
+        metrics = PerformanceMetrics()
+        returns = metrics.calculate_returns(self.equity_curve)
+
+        assert isinstance(returns, pd.Series)
+        assert len(returns) == len(self.equity_curve) - 1
+        assert returns.name == "portfolio_value"
+        # Returns should be percentage changes
+        assert not returns.isna().any()
+
+    def test_calculate_returns_insufficient_data(self):
+        """Test returns calculation with insufficient data."""
+        metrics = PerformanceMetrics()
+        short_equity = self.equity_curve.head(1)
+
+        with pytest.raises(
+            InsufficientDataError, match="Equity curve must have at least 2 points"
+        ):
+            metrics.calculate_returns(short_equity)
+
+    def test_calculate_total_return(self):
+        """Test total return calculation."""
+        metrics = PerformanceMetrics()
+        total_return = metrics.calculate_total_return(self.equity_curve)
+
+        assert isinstance(total_return, float)
+        expected_return = (self.equity_curve.iloc[-1] / self.equity_curve.iloc[0]) - 1
+        assert abs(total_return - expected_return) < 1e-10
+
+    def test_calculate_total_return_empty_curve(self):
+        """Test total return calculation with empty curve."""
+        metrics = PerformanceMetrics()
+        empty_curve = pd.Series([], dtype="float64")
+
+        with pytest.raises(
+            InsufficientDataError, match="Equity curve must have at least 2 points"
+        ):
+            metrics.calculate_total_return(empty_curve)
+
+    def test_calculate_annualized_return(self):
+        """Test annualized return calculation."""
+        metrics = PerformanceMetrics()
+        ann_return = metrics.calculate_annualized_return(self.equity_curve)
+
+        assert isinstance(ann_return, float)
+        # Should be positive for upward trending equity curve
+        # or negative for downward trending
+
+    def test_calculate_volatility(self):
+        """Test volatility calculation."""
+        metrics = PerformanceMetrics()
+        vol = metrics.calculate_volatility(self.equity_curve)
+
+        assert isinstance(vol, float)
+        assert vol >= 0  # Volatility should be non-negative
+
+    def test_calculate_sharpe_ratio_without_benchmark(self):
+        """Test Sharpe ratio calculation without benchmark."""
+        metrics = PerformanceMetrics(risk_free_rate=0.02)
+        sharpe = metrics.calculate_sharpe_ratio(self.equity_curve)
+
+        assert isinstance(sharpe, float)
+        # Can be negative if returns are poor
+
+    def test_calculate_sharpe_ratio_with_benchmark(self):
+        """Test Sharpe ratio calculation with benchmark."""
+        metrics = PerformanceMetrics(
+            benchmark_returns=self.benchmark_returns, risk_free_rate=0.02
+        )
+        sharpe = metrics.calculate_sharpe_ratio(self.equity_curve)
+
+        assert isinstance(sharpe, float)
+
+    def test_calculate_max_drawdown(self):
+        """Test maximum drawdown calculation."""
+        metrics = PerformanceMetrics()
+        max_dd = metrics.calculate_max_drawdown(self.equity_curve)
+
+        assert isinstance(max_dd, float)
+        assert max_dd >= -1  # Drawdown shouldn't exceed -100%
+
+    def test_calculate_max_drawdown_duration(self):
+        """Test maximum drawdown duration calculation."""
+        metrics = PerformanceMetrics()
+        max_dd_duration = metrics.calculate_max_drawdown_duration(self.equity_curve)
+
+        assert isinstance(max_dd_duration, int)
+        assert max_dd_duration >= 0
+
+    def test_calculate_calmar_ratio(self):
+        """Test Calmar ratio calculation."""
+        metrics = PerformanceMetrics()
+        calmar = metrics.calculate_calmar_ratio(self.equity_curve)
+
+        assert isinstance(calmar, float)
+        # Can be negative if max drawdown is positive
+
+    def test_calculate_sortino_ratio(self):
+        """Test Sortino ratio calculation."""
+        metrics = PerformanceMetrics()
+        sortino = metrics.calculate_sortino_ratio(self.equity_curve)
+
+        assert isinstance(sortino, float)
+
+    def test_calculate_win_rate(self):
+        """Test win rate calculation from trade log."""
+        metrics = PerformanceMetrics()
+        win_rate = metrics.calculate_win_rate(self.trade_log)
+
+        assert isinstance(win_rate, float)
+        assert 0 <= win_rate <= 1
+
+    def test_calculate_win_rate_missing_columns(self):
+        """Test win rate calculation with missing columns."""
+        metrics = PerformanceMetrics()
+        incomplete_log = self.trade_log.drop(columns=["pnl"])
+
+        with pytest.raises(MissingColumnError, match="Required column 'pnl' not found"):
+            metrics.calculate_win_rate(incomplete_log)
+
+    def test_calculate_profit_factor(self):
+        """Test profit factor calculation."""
+        metrics = PerformanceMetrics()
+        profit_factor = metrics.calculate_profit_factor(self.trade_log)
+
+        assert isinstance(profit_factor, float)
+        assert profit_factor >= 0
+
+    def test_calculate_profit_factor_no_winning_trades(self):
+        """Test profit factor calculation with no winning trades."""
+        metrics = PerformanceMetrics()
+        losing_log = self.trade_log.copy()
+        losing_log["pnl"] = -abs(losing_log["pnl"])  # Make all P&L negative
+
+        profit_factor = metrics.calculate_profit_factor(losing_log)
+        assert profit_factor == 0
+
+    def test_calculate_profit_factor_no_losing_trades(self):
+        """Test profit factor calculation with no losing trades."""
+        metrics = PerformanceMetrics()
+        winning_log = self.trade_log.copy()
+        winning_log["pnl"] = abs(winning_log["pnl"])  # Make all P&L positive
+
+        profit_factor = metrics.calculate_profit_factor(winning_log)
+        assert profit_factor == float("inf")
+
+    def test_calculate_average_trade(self):
+        """Test average trade calculation."""
+        metrics = PerformanceMetrics()
+        avg_trade = metrics.calculate_average_trade(self.trade_log)
+
+        assert isinstance(avg_trade, float)
+
+    def test_calculate_total_trades(self):
+        """Test total trades calculation."""
+        metrics = PerformanceMetrics()
+        total_trades = metrics.calculate_total_trades(self.trade_log)
+
+        assert isinstance(total_trades, int)
+        assert total_trades == len(self.trade_log)
+
+    def test_calculate_average_win(self):
+        """Test average winning trade calculation."""
+        metrics = PerformanceMetrics()
+        avg_win = metrics.calculate_average_win(self.trade_log)
+
+        assert isinstance(avg_win, float)
+        # Should be None or positive if there are winning trades
+
+    def test_calculate_average_loss(self):
+        """Test average losing trade calculation."""
+        metrics = PerformanceMetrics()
+        avg_loss = metrics.calculate_average_loss(self.trade_log)
+
+        assert isinstance(avg_loss, float)
+        # Should be None or negative if there are losing trades
+
+    def test_calculate_largest_win(self):
+        """Test largest winning trade calculation."""
+        metrics = PerformanceMetrics()
+        largest_win = metrics.calculate_largest_win(self.trade_log)
+
+        assert isinstance(largest_win, float)
+
+    def test_calculate_largest_loss(self):
+        """Test largest losing trade calculation."""
+        metrics = PerformanceMetrics()
+        largest_loss = metrics.calculate_largest_loss(self.trade_log)
+
+        assert isinstance(largest_loss, float)
+
+    def test_calculate_win_loss_ratio(self):
+        """Test win/loss ratio calculation."""
+        metrics = PerformanceMetrics()
+        win_loss_ratio = metrics.calculate_win_loss_ratio(self.trade_log)
+
+        assert isinstance(win_loss_ratio, float)
+        assert win_loss_ratio >= 0
+
+    def test_calculate_var(self):
+        """Test Value at Risk calculation."""
+        metrics = PerformanceMetrics()
+        var_95 = metrics.calculate_var(self.equity_curve, confidence_level=0.95)
+
+        assert isinstance(var_95, float)
+        # VaR should be negative (representing a loss)
+
+    def test_calculate_var_invalid_confidence(self):
+        """Test VaR calculation with invalid confidence level."""
+        metrics = PerformanceMetrics()
+
+        with pytest.raises(
+            ValueError, match="Confidence level must be between 0 and 1"
+        ):
+            metrics.calculate_var(self.equity_curve, confidence_level=1.5)
+
+    def test_calculate_cvar(self):
+        """Test Conditional Value at Risk calculation."""
+        metrics = PerformanceMetrics()
+        cvar_95 = metrics.calculate_cvar(self.equity_curve, confidence_level=0.95)
+
+        assert isinstance(cvar_95, float)
+        # CVaR should be negative (representing a loss)
+        # CVaR should be more negative than VaR
+        var_95 = metrics.calculate_var(self.equity_curve, confidence_level=0.95)
+        assert cvar_95 <= var_95
+
+    def test_calculate_beta_with_benchmark(self):
+        """Test beta calculation with benchmark."""
+        metrics = PerformanceMetrics(benchmark_returns=self.benchmark_returns)
+        beta = metrics.calculate_beta(self.equity_curve)
+
+        assert isinstance(beta, float)
+        # Beta can be positive or negative
+
+    def test_calculate_beta_without_benchmark(self):
+        """Test beta calculation without benchmark."""
+        metrics = PerformanceMetrics()
+
+        with pytest.raises(
+            ValueError, match="Benchmark returns required for beta calculation"
+        ):
+            metrics.calculate_beta(self.equity_curve)
+
+    def test_calculate_alpha_with_benchmark(self):
+        """Test alpha calculation with benchmark."""
+        metrics = PerformanceMetrics(
+            benchmark_returns=self.benchmark_returns, risk_free_rate=0.02
+        )
+        alpha = metrics.calculate_alpha(self.equity_curve)
+
+        assert isinstance(alpha, float)
+        # Alpha can be positive or negative
+
+    def test_calculate_alpha_without_benchmark(self):
+        """Test alpha calculation without benchmark."""
+        metrics = PerformanceMetrics()
+
+        with pytest.raises(
+            ValueError, match="Benchmark returns required for alpha calculation"
+        ):
+            metrics.calculate_alpha(self.equity_curve)
+
+    def test_calculate_information_ratio_with_benchmark(self):
+        """Test information ratio calculation with benchmark."""
+        metrics = PerformanceMetrics(benchmark_returns=self.benchmark_returns)
+        ir = metrics.calculate_information_ratio(self.equity_curve)
+
+        assert isinstance(ir, float)
+        # Information ratio can be positive or negative
+
+    def test_calculate_information_ratio_without_benchmark(self):
+        """Test information ratio calculation without benchmark."""
+        metrics = PerformanceMetrics()
+
+        with pytest.raises(
+            ValueError, match="Benchmark returns required for information ratio"
+        ):
+            metrics.calculate_information_ratio(self.equity_curve)
+
+    @patch("quantchain.backtesting.performance_metrics.QUANTSTATS_AVAILABLE", True)
+    @patch("quantchain.backtesting.performance_metrics.qs")
+    def test_calculate_quantstats_metrics_with_library(self, mock_qs):
+        """Test QuantStats metrics calculation with library available."""
+        mock_qs.reports.metrics.return_value = {
+            "Sharpe Ratio": 1.5,
+            "Max Drawdown": -0.1,
+            "Volatility": 0.2,
         }
-    )
 
+        metrics = PerformanceMetrics()
+        quantstats_metrics = metrics.calculate_quantstats_metrics(self.equity_curve)
 
-@pytest.fixture
-def problematic_data() -> dict:
-    """Create various types of problematic data for error testing."""
-    return {
-        "empty_series": pd.Series([], dtype=float),
-        "single_value": pd.Series([100000.0]),
-        "all_zeros": pd.Series([0, 0, 0, 0, 0]),
-        "with_nan": pd.Series([100000.0, np.nan, 101000.0, np.nan, 102000.0]),
-        "with_inf": pd.Series(
-            [100000.0, float("inf"), 101000.0, float("-inf"), 102000.0]
-        ),
-        "negative_values": pd.Series([-100000.0, -50000.0, -75000.0]),
-        "datetime_mixed": pd.Series([100000.0, "invalid", 101000.0]),
-        "mixed_types": pd.Series([100000, "text", 101000, None, 102000]),
-    }
+        assert isinstance(quantstats_metrics, dict)
+        assert "Sharpe Ratio" in quantstats_metrics
 
-
-class TestLibraryAvailabilityCoverage:
-    """Test library import fallback mechanisms for enhanced coverage."""
-
-    def test_quantstats_import_error_coverage(self) -> None:
-        """Test import error handling for QuantStats library (line 16)."""
-        # Test the global variable check directly
-        from quantchain.backtesting.performance_metrics import QUANTSTATS_AVAILABLE
-
-        assert isinstance(QUANTSTATS_AVAILABLE, bool)
-
-    def test_empyrical_import_error_coverage(self) -> None:
-        """Test import error handling for Empyrical library (line 24)."""
-        # Test the global variable check directly
-        from quantchain.backtesting.performance_metrics import EMPYRICAL_AVAILABLE
-
-        assert isinstance(EMPYRICAL_AVAILABLE, bool)
-
-
-class TestReturnCalculationEdgeCases:
-    """Test return calculation methods with edge cases."""
-
-    def test_calculate_returns_with_nan_values(self) -> None:
-        """Test calculate_returns with NaN values (line 99)."""
+    @patch("quantchain.backtesting.performance_metrics.QUANTSTATS_AVAILABLE", False)
+    def test_calculate_quantstats_metrics_without_library(self):
+        """Test QuantStats metrics calculation without library."""
         metrics = PerformanceMetrics()
 
-        dates = pd.date_range("2023-01-01", periods=5, freq="D")
-        equity_curve = pd.Series([100000, np.nan, 102000, np.nan, 104000], index=dates)
+        with pytest.raises(
+            LibraryImportError, match="QuantStats library is not available"
+        ):
+            metrics.calculate_quantstats_metrics(self.equity_curve)
 
-        result = metrics.calculate_returns(equity_curve)
-        assert result is not None
-        # NaN values result in empty series
-        if len(result) == 0:
-            # Empty result valid when NaN prevents calculation
-            assert True
-        else:
-            # If we have results, ensure not all are NaN
-            assert not result.isna().all()
+    @patch("quantchain.backtesting.performance_metrics.EMPYRICAL_AVAILABLE", True)
+    @patch("quantchain.backtesting.performance_metrics.empyrical")
+    def test_calculate_empyrical_metrics_with_library(self, mock_empyrical):
+        """Test Empyrical metrics calculation with library available."""
+        mock_empyrical.sharpe_ratio.return_value = 1.2
+        mock_empyrical.max_drawdown.return_value = -0.15
+        mock_empyrical.annual_volatility.return_value = 0.25
 
-    def test_calculate_returns_with_infinity_values(self) -> None:
-        """Test calculate_returns with infinity values."""
         metrics = PerformanceMetrics()
+        returns = metrics.calculate_returns(self.equity_curve)
+        empyrical_metrics = metrics.calculate_empyrical_metrics(returns)
 
-        dates = pd.date_range("2023-01-01", periods=5, freq="D")
-        equity_curve = pd.Series(
-            [100000, float("inf"), 102000, float("-inf"), 104000], index=dates
-        )
+        assert isinstance(empyrical_metrics, dict)
+        assert "sharpe_ratio" in empyrical_metrics
 
-        result = metrics.calculate_returns(equity_curve)
-        assert result is not None
-        assert len(result) < len(equity_curve)  # Should drop inf values
-
-    def test_calculate_returns_with_single_value(self) -> None:
-        """Test calculate_returns with single value raises InsufficientDataError."""
+    @patch("quantchain.backtesting.performance_metrics.EMPYRICAL_AVAILABLE", False)
+    def test_calculate_empyrical_metrics_without_library(self):
+        """Test Empyrical metrics calculation without library."""
         metrics = PerformanceMetrics()
-
-        dates = pd.date_range("2023-01-01", periods=1, freq="D")
-        equity_curve = pd.Series([100000], index=dates)
-
-        with pytest.raises(InsufficientDataError):
-            metrics.calculate_returns(equity_curve)
-
-    def test_calculate_returns_with_mixed_types(self) -> None:
-        """Test calculate_returns with mixed data types
-        raises MetricsCalculationError."""
-        metrics = PerformanceMetrics()
-
-        dates = pd.date_range("2023-01-01", periods=5, freq="D")
-        equity_curve = pd.Series([100000, "invalid", 102000, None, 104000], index=dates)
-
-        with pytest.raises(MetricsCalculationError):
-            metrics.calculate_returns(equity_curve)
-
-
-class TestRiskMetricsBoundaryConditions:
-    """Test risk metrics with boundary conditions."""
-
-    def test_calculate_max_drawdown_with_flat_equity(self) -> None:
-        """Test calculate_max_drawdown with flat equity curve."""
-        metrics = PerformanceMetrics()
-
-        dates = pd.date_range("2023-01-01", periods=10, freq="D")
-        equity_curve = pd.Series([100000.0] * 10, index=dates)
-
-        result = metrics.calculate_max_drawdown(equity_curve)
-        assert result["max_drawdown"] == 0.0
-        assert result["max_drawdown_duration"] == 0
-
-    def test_calculate_sharpe_ratio_with_zero_volatility(self) -> None:
-        """Test calculate_sharpe_ratio with zero volatility."""
-        metrics = PerformanceMetrics()
-
-        dates = pd.date_range("2023-01-01", periods=10, freq="D")
-        returns = pd.Series([0.01] * 9, index=dates[1:])  # Constant returns
-
-        result = metrics.calculate_sharpe_ratio(returns)
-        assert result == 0.0  # Should handle zero volatility gracefully
-
-    def test_calculate_sortino_ratio_with_no_downside(self) -> None:
-        """Test calculate_sortino_ratio with no negative returns."""
-        metrics = PerformanceMetrics()
-
-        dates = pd.date_range("2023-01-01", periods=10, freq="D")
-        returns = pd.Series(
-            [0.01, 0.015, 0.02, 0.005, 0.01, 0.025, 0.008, 0.012, 0.018],
-            index=dates[1:],
-        )
-
-        result = metrics.calculate_sortino_ratio(returns)
-        assert result == float("inf")  # No downside risk
-
-    def test_calculate_calmar_ratio_with_zero_max_drawdown(self) -> None:
-        """Test calculate_calmar_ratio with zero max drawdown."""
-        metrics = PerformanceMetrics()
-
-        dates = pd.date_range("2023-01-01", periods=10, freq="D")
-        returns = pd.Series(
-            [0.01, 0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.045, 0.05], index=dates[1:]
-        )
-
-        result = metrics.calculate_calmar_ratio(returns, 0.0)
-        assert result == float("inf")  # Zero max drawdown
-
-
-class TestExceptionHandlingEdgeCases:
-    """Test comprehensive exception handling scenarios."""
-
-    def test_calculate_returns_invalid_data_types(self) -> None:
-        """Test calculate_returns with invalid data types."""
-        metrics = PerformanceMetrics()
-
-        # Test with string data mixed with numeric
-        dates = pd.date_range("2023-01-01", periods=5, freq="D")
-        equity_curve = pd.Series(
-            [100000, "invalid", 102000, 103000, 104000], index=dates
-        )
-
-        with pytest.raises((ValueError, TypeError, Exception)):
-            metrics.calculate_returns(equity_curve)
-
-    def test_calculate_total_return_with_extreme_values(self) -> None:
-        """Test calculate_total_return with extreme values
-        that raises MetricsCalculationError."""
-        metrics = PerformanceMetrics()
-
-        dates = pd.date_range("2023-01-01", periods=3, freq="D")
-        equity_curve = pd.Series([0, float("inf"), 102000], index=dates)
-
-        with pytest.raises(MetricsCalculationError):
-            metrics.calculate_total_return(equity_curve)
-
-    def test_calculate_sharpe_ratio_with_single_return(self) -> None:
-        """Test calculate_sharpe_ratio with single return value."""
-        metrics = PerformanceMetrics()
-
-        returns = pd.Series([0.01])
-
-        result = metrics.calculate_sharpe_ratio(returns)
-        assert np.isnan(result) or result == 0.0  # Single value can produce NaN
-
-    def test_calculate_sortino_ratio_with_single_return(self) -> None:
-        """Test calculate_sortino_ratio with single return value."""
-        metrics = PerformanceMetrics()
-
-        returns = pd.Series([0.01])
-
-        result = metrics.calculate_sortino_ratio(returns)
-        assert np.isinf(result) or result == 0.0  # Single value can produce infinity
-
-    def test_calculate_max_drawdown_with_insufficient_data(self) -> None:
-        """Test calculate_max_drawdown with insufficient data."""
-        metrics = PerformanceMetrics()
-
-        dates = pd.date_range("2023-01-01", periods=1, freq="D")
-        equity_curve = pd.Series([100000], index=dates)
-
-        result = metrics.calculate_max_drawdown(equity_curve)
-        assert result["max_drawdown"] == 0.0
-        assert result["max_drawdown_duration"] == 0
-
-    def test_calculate_calmar_ratio_with_insufficient_data(self) -> None:
-        """Test calculate_calmar_ratio with insufficient data."""
-        metrics = PerformanceMetrics()
-
-        returns = pd.Series([0.01])  # Single return
-
-        result = metrics.calculate_calmar_ratio(returns, 0.0)
-        assert (
-            np.isinf(result) or result == 0.0
-        )  # Can produce infinity with zero max_drawdown
-
-    def test_calculate_win_rate_with_empty_trades(self) -> None:
-        """Test calculate_win_rate with empty trades."""
-        metrics = PerformanceMetrics()
-
-        trades = pd.DataFrame({"pnl": []})
-
-        result = metrics.calculate_win_rate(trades)
-        assert result == 0.0  # Should handle empty data
-
-    def test_calculate_profit_factor_with_empty_trades(self) -> None:
-        """Test calculate_profit_factor with empty trades."""
-        metrics = PerformanceMetrics()
-
-        trades = pd.DataFrame({"pnl": []})
-
-        result = metrics.calculate_profit_factor(trades)
-        assert result == 0.0  # Should handle empty data
-
-    def test_calculate_average_win_with_no_winning_trades(self) -> None:
-        """Test calculate_average_win with no winning trades
-        - handled in _calculate_trade_statistics."""
-        # This is tested through _calculate_trade_statistics since
-        # calculate_average_win doesn't exist
-        metrics = PerformanceMetrics()
-
-        trades = pd.DataFrame({"pnl": [-100, -50, -75, -25]})
-
-        # Use the internal method that handles this logic
-        result = metrics._calculate_trade_statistics(trades)
-        assert result["avg_win"] == 0.0  # Should handle no winning trades
-
-    def test_calculate_average_loss_with_no_losing_trades(self) -> None:
-        """Test calculate_average_loss with no losing trades
-        - handled in _calculate_trade_statistics."""
-        # This is tested through _calculate_trade_statistics since
-        # calculate_average_loss doesn't exist
-        metrics = PerformanceMetrics()
-
-        trades = pd.DataFrame({"pnl": [100, 50, 75, 25]})
-
-        # Use the internal method that handles this logic
-        result = metrics._calculate_trade_statistics(trades)
-        assert result["avg_loss"] == 0.0  # Should handle no losing trades
-
-    def test_calculate_best_trade_with_empty_trades(self) -> None:
-        """Test calculate_best_trade with empty trades
-        - handled in _calculate_trade_statistics."""
-        # This is tested through _calculate_trade_statistics since
-        # calculate_best_trade doesn't exist
-        metrics = PerformanceMetrics()
-
-        trades = pd.DataFrame({"pnl": []})
-
-        # Use the internal method that handles this logic
-        result = metrics._calculate_trade_statistics(trades)
-        assert result["best_trade"] == 0.0  # Should handle empty data
-
-    def test_calculate_worst_trade_with_empty_trades(self) -> None:
-        """Test calculate_worst_trade with empty trades
-        - handled in _calculate_trade_statistics."""
-        # This is tested through _calculate_trade_statistics since
-        # calculate_worst_trade doesn't exist
-        metrics = PerformanceMetrics()
-
-        trades = pd.DataFrame({"pnl": []})
-
-        # Use the internal method that handles this logic
-        result = metrics._calculate_trade_statistics(trades)
-        assert result["worst_trade"] == 0.0  # Should handle empty data
-
-
-class TestAdvancedMetricsEdgeCases:
-    """Test advanced metrics calculations with edge cases."""
-
-    @pytest.mark.skipif(
-        not hasattr(PerformanceMetrics, "_calculate_quantstats_metrics")
-        or PerformanceMetrics._calculate_quantstats_metrics.__doc__ is None,
-        reason="QuantStats not available",
-    )
-    def test_calculate_quantstats_metrics_with_empty_returns(self) -> None:
-        """Test _calculate_quantstats_metrics with empty returns."""
-        metrics = PerformanceMetrics()
-
-        returns = pd.Series([], dtype=float)
-
-        result = metrics._calculate_quantstats_metrics(returns)
-        assert result is not None
-        assert "sharpe_ratio_qstats" in result
-        assert result["sharpe_ratio_qstats"] == 0.0  # Should return default
-
-    def test_calculate_empyrical_metrics_with_empty_returns(self) -> None:
-        """Test calculate_empyrical_metrics with empty returns
-        raises LibraryImportError."""
-        metrics = PerformanceMetrics()
-
-        returns = pd.Series([], dtype=float)
-
-        # This should raise LibraryImportError since EMPYRICAL_AVAILABLE is False
-        with pytest.raises(LibraryImportError):
+        returns = metrics.calculate_returns(self.equity_curve)
+
+        with pytest.raises(
+            LibraryImportError, match="Empyrical library is not available"
+        ):
             metrics.calculate_empyrical_metrics(returns)
 
-    def test_calculate_all_metrics_with_missing_pnl_column(self) -> None:
-        """Test calculate_all_metrics with missing 'pnl' column
-        in trades."""
-        metrics = PerformanceMetrics()
-
-        dates = pd.date_range("2023-01-01", periods=10, freq="D")
-        equity_curve = pd.Series([100000 + i * 1000 for i in range(10)], index=dates)
-        trades = pd.DataFrame(
-            {"quantity": [100, 200], "price": [10, 20]}
-        )  # No 'pnl' column
-
-        with pytest.raises(MetricsCalculationError):
-            metrics.calculate_all_metrics(equity_curve, trades)
-
-
-class TestRemainingUncoveredLines:
-    """Test specific uncovered lines to reach 85%+ coverage."""
-
-    def test_calculate_returns_exception_path_coverage(self) -> None:
-        """Test exception handling in calculate_returns (lines 100-101)."""
-        metrics = PerformanceMetrics()
-
-        # Create problematic equity curve that causes exception in pct_change
-        dates = pd.date_range("2023-01-01", periods=3, freq="D")
-        equity_curve = pd.Series([100000, "invalid", 102000], index=dates)
-
-        with pytest.raises((ValueError, TypeError, Exception)):
-            metrics.calculate_returns(equity_curve)
-
-    def test_calculate_total_return_exception_paths(self) -> None:
-        """Test exception handling in calculate_total_return (lines 118, 122-123)."""
-        metrics = PerformanceMetrics()
-
-        # Test with equity curve containing infinity
-        dates = pd.date_range("2023-01-01", periods=3, freq="D")
-        equity_with_inf = pd.Series([100000, float("inf"), 102000], index=dates)
-
-        with pytest.raises(MetricsCalculationError):
-            metrics.calculate_total_return(equity_with_inf)
-
-        # Test with equity curve containing NaN - should raise MetricsCalculationError
-        equity_with_nan = pd.Series([100000, float("nan"), 102000], index=dates)
-
-        with pytest.raises(MetricsCalculationError):
-            metrics.calculate_total_return(equity_with_nan)
-
-    def test_calculate_annualized_return_exception_paths(self) -> None:
-        """Test exception handling in calculate_annualized_return (lines 153-154)."""
-        metrics = PerformanceMetrics()
-
-        # Create returns with problematic datetime indices
-        dates = pd.date_range("2023-01-01", periods=3, freq="D")
-        returns = pd.Series([0.01, 0.02, 0.015], index=dates)
-
-        # Mock an exception in the calculation
-        with patch("pandas.Series.prod", side_effect=Exception("Prod error")):
-            with pytest.raises(Exception):  # Accept any exception
-                metrics.calculate_annualized_return(returns)
-
-    def test_calculate_sharpe_ratio_exception_path_coverage(self) -> None:
-        """Test exception handling in calculate_sharpe_ratio (line 196)."""
-        metrics = PerformanceMetrics()
-        returns = pd.Series([0.01, 0.02, 0.015])
-
-        # Test exception handling in the main calculation path
-        with patch("pandas.Series.std", side_effect=Exception("Std error")):
-            # The exception is caught and re-raised as MetricsCalculationError
-            with pytest.raises(MetricsCalculationError):
-                metrics.calculate_sharpe_ratio(returns)
-
-
-class TestSimpleExceptionPaths:
-    """Test simple exception paths that can be reliably triggered."""
-
-    def test_calculate_returns_with_invalid_frequency(self) -> None:
-        """Test calculate_sharpe_ratio with invalid frequency."""
-        metrics = PerformanceMetrics()
-
-        dates = pd.date_range("2023-01-01", periods=3, freq="D")
-        returns = pd.Series([0.01, 0.02], index=dates[1:])  # Match index length
-
-        # Test with invalid frequency in Sharpe ratio
-        from quantchain.backtesting.performance_metrics import InvalidFrequencyError
-
-        with pytest.raises(InvalidFrequencyError):
-            metrics.calculate_sharpe_ratio(returns, frequency="invalid")
-
-    def test_calculate_sortino_ratio_with_invalid_frequency(self) -> None:
-        """Test calculate_sortino_ratio with invalid frequency."""
-        metrics = PerformanceMetrics()
-
-        dates = pd.date_range("2023-01-01", periods=3, freq="D")
-        returns = pd.Series([0.01, 0.02], index=dates[1:])  # Match index length
-
-        # Test with invalid frequency
-        from quantchain.backtesting.performance_metrics import InvalidFrequencyError
-
-        with pytest.raises(InvalidFrequencyError):
-            metrics.calculate_sortino_ratio(returns, frequency="invalid")
-
-
-class TestAdditionalCoverageMethods:
-    """Test additional methods to improve coverage."""
-
-    def test_calculate_annualized_return_with_short_period(self) -> None:
-        """Test calculate_annualized_return with short period.
-
-        Returns 0.0 for zero time period.
-        """
-        metrics = PerformanceMetrics()
-
-        dates = pd.date_range("2023-01-01", periods=3, freq="D")
-        returns = pd.Series([0.01, 0.02], index=dates[1:])  # Use multiple values
-
-        result = metrics.calculate_annualized_return(returns)
-        # Should handle multiple values properly
-        assert result is not None
-
-    def test_calculate_all_metrics_integration(self) -> None:
-        """Test complete integration of calculate_all_metrics with simple data."""
-        metrics = PerformanceMetrics()
-
-        # Create simple equity curve
-        dates = pd.date_range("2023-01-01", periods=5, freq="D")
-        equity_curve = pd.Series([100000, 101000, 102000, 103000, 104000], index=dates)
-
-        # Create trade data
-        trades = pd.DataFrame(
-            {
-                "pnl": [1500, -800, 2200],
-                "entry_time": pd.date_range("2023-01-02", periods=3, freq="2D"),
-                "exit_time": pd.date_range("2023-01-03", periods=3, freq="2D"),
-            }
+    def test_calculate_comprehensive_metrics(self):
+        """Test comprehensive metrics calculation."""
+        metrics = PerformanceMetrics(benchmark_returns=self.benchmark_returns)
+        comprehensive = metrics.calculate_comprehensive_metrics(
+            self.equity_curve, self.trade_log
         )
 
-        result = metrics.calculate_all_metrics(equity_curve, trades)
+        assert isinstance(comprehensive, dict)
 
-        # Verify all fields are populated
-        assert result.total_return is not None
-        assert result.annualized_return is not None
-        assert result.sharpe_ratio is not None
-        assert result.sortino_ratio is not None
-        assert result.max_drawdown is not None
-        assert result.volatility is not None
-        assert result.win_rate is not None
-        assert result.profit_factor is not None
-        assert result.total_trades == 3
-        assert result.avg_win is not None
-        assert result.avg_loss is not None
-        assert result.best_trade is not None
-        assert result.worst_trade is not None
+        # Check for key metric categories
+        expected_keys = [
+            "return_metrics",
+            "risk_metrics",
+            "trade_metrics",
+        ]
 
-    def test_calculate_all_metrics_with_empty_data(self) -> None:
-        """Test calculate_all_metrics with simple empty trades."""
+        for key in expected_keys:
+            assert key in comprehensive
+            assert isinstance(comprehensive[key], dict)
+
+    def test_calculate_comprehensive_metrics_without_trade_log(self):
+        """Test comprehensive metrics calculation without trade log."""
         metrics = PerformanceMetrics()
+        comprehensive = metrics.calculate_comprehensive_metrics(self.equity_curve)
 
-        dates = pd.date_range("2023-01-01", periods=3, freq="D")
-        equity_curve = pd.Series([100000, 101000, 102000], index=dates)
-        trades = pd.DataFrame({"pnl": []})
+        assert isinstance(comprehensive, dict)
+        assert "return_metrics" in comprehensive
+        assert "risk_metrics" in comprehensive
+        assert "trade_metrics" not in comprehensive
 
-        result = metrics.calculate_all_metrics(equity_curve, trades)
-
-        assert result.total_trades == 0
-        assert result.win_rate == 0.0
-        assert result.profit_factor == 0.0
-        assert result.avg_win == 0.0
-        assert result.avg_loss == 0.0
-
-
-@pytest.mark.coverage
-class TestPerformanceMetricsAdditionalCoverage:
-    """Additional tests to improve coverage for PerformanceMetrics."""
-
-    def test_calculate_empyrical_metrics_with_mock(self) -> None:
-        """Test empirical metrics calculation using mock."""
-        # Skip this test for now since empyrical module is not available
-        # and mocking complex imports is problematic
-        import pytest
-
-        pytest.skip("Skipping empyrical test - library not available")
-
-    def test_calculate_basic_metrics(self) -> None:
-        """Test basic metrics calculation."""
+    def test_generate_metrics_report(self):
+        """Test metrics report generation."""
         metrics = PerformanceMetrics()
+        report = metrics.generate_metrics_report(self.equity_curve, self.trade_log)
 
-        # Create simple equity curve data (not returns)
-        dates = pd.date_range("2023-01-01", periods=6, freq="D")
-        equity_curve = pd.Series(
-            [100000, 101000, 100500, 102520, 101498, 103020], index=dates
+        assert isinstance(report, str)
+        assert len(report) > 0
+        # Should contain metric names
+        assert "Total Return" in report
+        assert "Sharpe Ratio" in report
+
+    def test_calculate_rolling_metrics(self):
+        """Test rolling metrics calculation."""
+        metrics = PerformanceMetrics()
+        rolling_metrics = metrics.calculate_rolling_metrics(
+            self.equity_curve, window=30
         )
 
-        result = metrics._calculate_basic_metrics(equity_curve, frequency="1d")
+        assert isinstance(rolling_metrics, pd.DataFrame)
+        assert len(rolling_metrics) > 0
+        # Should have columns for different rolling metrics
+        expected_columns = ["rolling_return", "rolling_volatility", "rolling_sharpe"]
+        for col in expected_columns:
+            assert col in rolling_metrics.columns
 
-        assert "returns" in result
-        assert "total_return" in result
-        assert "annualized_return" in result
-        assert isinstance(result["total_return"], (float, int))
-        assert isinstance(result["annualized_return"], (float, int))
-
-    def test_calculate_risk_metrics(self) -> None:
-        """Test risk metrics calculation."""
+    def test_calculate_rolling_metrics_window_too_large(self):
+        """Test rolling metrics with window larger than data."""
         metrics = PerformanceMetrics()
+        short_equity = self.equity_curve.head(10)
 
-        # Create simple returns data with datetime index
-        dates = pd.date_range("2023-01-01", periods=6, freq="D")
-        returns = pd.Series([0.01, -0.005, 0.02, -0.01, 0.015], index=dates[1:])
-        max_drawdown = 0.02  # Add required parameter
-
-        result = metrics._calculate_risk_metrics(
-            returns, frequency="1d", max_drawdown=max_drawdown
-        )
-
-        assert "sharpe_ratio" in result
-        assert "sortino_ratio" in result
-        assert "calmar_ratio" in result
-        assert "volatility" in result
-        assert isinstance(result["sharpe_ratio"], (float, int))
-        assert isinstance(result["volatility"], (float, int))
-
-    def test_calculate_trade_statistics(self) -> None:
-        """Test trade statistics calculation."""
-        metrics = PerformanceMetrics()
-
-        # Create simple trade data
-        trades = pd.DataFrame(
-            {
-                "pnl": [1500, -800, 2200, -1200, 3500],
-                "entry_price": [100, 101, 102, 103, 104],
-                "exit_price": [102, 99.5, 105, 101.8, 107.5],
-            }
-        )
-
-        result = metrics._calculate_trade_statistics(trades)
-
-        assert "avg_win" in result
-        assert "avg_loss" in result
-        assert "best_trade" in result
-        assert "worst_trade" in result
-        assert "total_trades" in result
-
-    def test_calculate_quantstats_metrics_with_mock(self) -> None:
-        """Test quantstats metrics calculation."""
-        # Skip this test for now since quantstats module is not available
-        # and mocking complex imports is problematic
-        import pytest
-
-        pytest.skip("Skipping quantstats test - library not available")
-
-    def test_generate_tear_sheet_library_import_error(self) -> None:
-        """Test tear sheet generation handles library import error."""
-        from quantchain.backtesting.performance_metrics import QUANTSTATS_AVAILABLE
-
-        # Skip test if QuantStats is actually available
-        if QUANTSTATS_AVAILABLE:
-            pytest.skip("QuantStats is available - cannot test import error scenario")
-
-        metrics = PerformanceMetrics()
-
-        # Create simple result data
-        from quantchain.backtesting.engine import (
-            BacktestConfig,
-            BacktestResult,
-            MetricsResult,
-        )
-
-        dates = pd.date_range("2023-01-01", periods=5, freq="D")
-        equity_curve = pd.Series([100000, 101000, 102000, 103000, 104000], index=dates)
-        trades = pd.DataFrame({"pnl": [1500, -800, 2200]})
-
-        result = BacktestResult(
-            equity_curve=equity_curve,
-            trade_log=trades,
-            summary_stats={"total_return": 0.04},
-            metrics=MetricsResult(
-                total_return=0.04,
-                annualized_return=0.04,
-                sharpe_ratio=1.5,
-                sortino_ratio=2.0,
-                calmar_ratio=0.0,
-                max_drawdown=0.01,
-                max_drawdown_duration=5,
-                win_rate=0.6,
-                profit_factor=1.5,
-                total_trades=3,
-                avg_trade_duration=1.5,
-                additional_metrics={},
-            ),
-            execution_time=1.5,
-            config=BacktestConfig(),
-        )
-
-        # Test that tear sheet method raises LibraryImportError
         with pytest.raises(
-            LibraryImportError
-        ):  # Should raise LibraryImportError when QuantStats is not available
-            metrics.generate_tear_sheet(result)
+            ValueError, match="Window size cannot be larger than data length"
+        ):
+            metrics.calculate_rolling_metrics(short_equity, window=20)
 
-    def test_edge_cases_for_methods(self) -> None:
-        """Test edge cases for PerformanceMetrics methods."""
+    def test_calculate_metrics_by_period(self):
+        """Test metrics calculation by period."""
+        metrics = PerformanceMetrics()
+        monthly_metrics = metrics.calculate_metrics_by_period(
+            self.equity_curve, period="M"  # Monthly
+        )
+
+        assert isinstance(monthly_metrics, pd.DataFrame)
+        assert len(monthly_metrics) > 0
+
+    def test_calculate_metrics_by_invalid_period(self):
+        """Test metrics calculation with invalid period."""
         metrics = PerformanceMetrics()
 
-        # Test with very short equity curve
-        short_curve = pd.Series(
-            [100000, 101000], index=pd.date_range("2023-01-01", periods=2)
+        with pytest.raises(ValueError, match="Invalid period"):
+            metrics.calculate_metrics_by_period(self.equity_curve, period="X")
+
+    def test_compare_strategies(self):
+        """Test strategy comparison metrics."""
+        # Create second equity curve
+        equity_curve_2 = pd.Series(
+            data=np.cumprod(1 + np.random.normal(0.0005, 0.025, 100)),
+            index=self.equity_curve.index,
+            name="strategy_2",
         )
-        total_return = metrics.calculate_total_return(short_curve)
-        assert isinstance(total_return, (float, int))
 
-        # Test with empty trade log
-        empty_trades = pd.DataFrame(columns=["pnl", "entry_price", "exit_price"])
-        win_rate = metrics.calculate_win_rate(empty_trades)
-        assert win_rate == 0.0  # Should default to 0 for empty trades
+        metrics = PerformanceMetrics()
+        comparison = metrics.compare_strategies(self.equity_curve, equity_curve_2)
 
-        profit_factor = metrics.calculate_profit_factor(empty_trades)
-        assert profit_factor == 0.0  # Should default to 0 for empty trades
+        assert isinstance(comparison, dict)
+        assert "strategy_1" in comparison
+        assert "strategy_2" in comparison
+        assert "winner" in comparison

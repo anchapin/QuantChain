@@ -1,5 +1,13 @@
 """Backtesting engine for QuantChain trading strategies."""
 
+# Python 3.9 compatibility: Add optional dependency guards
+try:
+    import gymnasium as gym
+    GYMNASIUM_AVAILABLE = True
+except ImportError:
+    GYMNASIUM_AVAILABLE = False
+    gym = None
+
 from .engine import (
     BacktestConfig,
     BacktestEngine,

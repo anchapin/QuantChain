@@ -1,5 +1,18 @@
 """Interactive Brokers execution connector using ib_async library."""
 
+# IB Async compatibility guard
+IB_ASYNC_AVAILABLE = False
+try:
+    from ib_async.client import IB
+    from ib_async.contract import Contract
+    IB_ASYNC_AVAILABLE = True
+except ImportError:
+    IB = None
+    Contract = None
+    IB_ASYNC_AVAILABLE = False
+
+
+
 import asyncio
 import re
 from datetime import datetime, timezone

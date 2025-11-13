@@ -32,28 +32,41 @@ class ValidationError(QuantChainError):
 # Add missing exception classes for compatibility
 class DataError(QuantChainError):
     """Raised when data processing fails."""
+
     pass
+
 
 class ModelError(QuantChainError):
     """Raised when ML model operations fail."""
+
     pass
+
 
 class ConnectorError(QuantChainError):
     """Raised when trading connector operations fail."""
+
     pass
+
 
 class SecurityError(QuantChainError):
     """Raised when security operations fail."""
+
     pass
+
 
 class BacktestError(QuantChainError):
     """Raised when backtesting operations fail."""
+
     pass
+
 
 class APIError(QuantChainError):
     """Raised when API operations fail."""
+
     pass
+
 
 class TradingError(QuantChainError):
     """Raised when trading operations fail."""
+
     pass

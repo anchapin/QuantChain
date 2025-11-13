@@ -1,0 +1,260 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9, "3.10", "3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-v2-${{ matrix.python-version }}-test-${{ hashFiles('**/requirements-test.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-v2-${{ matrix.python-version }}-test-
+          ${{ runner.os }}-pip-v2-${{ matrix.python-version }}-
+
+    - name: Log system resources before
+      run: |
+        echo "=== Disk Usage Before ==="
+        df -h
+        echo "=== Memory Usage Before ==="
+        free -h
+        echo "=== CPU Info ==="
+        nproc
+        echo "=== Python Version ==="
+        python --version
+        echo "=== Pip Cache Size ==="
+        pip cache info
+        du -sh ~/.cache/pip 2>/dev/null || echo "No pip cache yet"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel --no-cache-dir
+        
+        # Install minimal test dependencies for fast unit testing
+        pip install --no-cache-dir -r requirements-test.txt
+        
+        # Install essential core dependencies
+        pip install --no-cache-dir langchain openai pandas numpy
+        
+        # Install project in development mode
+        pip install --no-cache-dir -e .
+        
+        # Install ib_async conditionally (requires Python >=3.10)
+        if [ "${{ matrix.python-version }}" = "3.9" ]; then
+          echo "Skipping ib_async installation for Python 3.9"
+        else
+          pip install --no-cache-dir "ib_async>=1.0.0"
+        fi
+        
+        # Clean up pip cache after installation to reduce memory pressure
+        pip cache purge
+
+    - name: Log system resources after install
+      run: |
+        echo "=== Disk Usage After Install ==="
+        df -h
+        echo "=== Memory Usage After Install ==="
+        free -h
+        echo "=== Pip Cache Size After Install ==="
+        du -sh ~/.cache/pip 2>/dev/null || echo "No pip cache"
+
+    - name: Lint with flake8
+      run: |
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+
+    - name: Check formatting with black
+      run: |
+        black --check .
+
+    - name: Run unit tests (non-ML)
+      run: |
+        # Skip ML-dependent tests for all versions - they run in a separate job
+        pytest tests/unit -v -m "not requires_ml and not slow" --cov=quantchain --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=80
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@9cc74bf7e13a810454a28846494ddbc3795eb693
+      if: matrix.python-version == '3.12'  # Only upload coverage for one version
+      with:
+        files: ./coverage.xml
+        fail_ci_if_error: false
+
+  ml-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.13]  # Only run ML tests on one version to save resources
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-v2-${{ matrix.python-version }}-ml-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-v2-${{ matrix.python-version }}-ml-
+          ${{ runner.os }}-pip-v2-${{ matrix.python-version }}-
+
+    - name: Log system resources before
+      run: |
+        echo "=== Disk Usage Before ==="
+        df -h
+        echo "=== Memory Usage Before ==="
+        free -h
+        echo "=== CPU Info ==="
+        nproc
+        echo "=== Python Version ==="
+        python --version
+        echo "=== Pip Cache Size ==="
+        pip cache info
+        du -sh ~/.cache/pip 2>/dev/null || echo "No pip cache yet"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel --no-cache-dir
+        
+        # Install full requirements for ML testing
+        pip install --no-cache-dir -r requirements.txt
+        pip install --no-cache-dir -r requirements-dev.txt
+        pip install --no-cache-dir -e .
+        
+        # Install ib_async for Python 3.13
+        pip install --no-cache-dir "ib_async>=1.0.0"
+        
+        # Clean up pip cache after installation to reduce memory pressure
+        pip cache purge
+
+    - name: Log system resources after install
+      run: |
+        echo "=== Disk Usage After Install ==="
+        df -h
+        echo "=== Memory Usage After Install ==="
+        free -h
+        echo "=== Pip Cache Size After Install ==="
+        du -sh ~/.cache/pip 2>/dev/null || echo "No pip cache"
+
+    - name: Lint with flake8
+      run: |
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+
+    - name: Check formatting with black
+      run: |
+        black --check .
+
+    - name: Run ML tests
+      run: |
+        # Run only ML-dependent tests and slow tests
+        pytest tests/unit -v -m "requires_ml or slow" --cov=quantchain --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=80
+
+    - name: Upload ML coverage reports
+      uses: codecov/codecov-action@9cc74bf7e13a810454a28846494ddbc3795eb693
+      with:
+        files: ./coverage.xml
+        fail_ci_if_error: false
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.13]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-v2-${{ matrix.python-version }}-integration-${{ hashFiles('**/requirements-dev.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-v2-${{ matrix.python-version }}-integration-
+          ${{ runner.os }}-pip-v2-${{ matrix.python-version }}-
+
+    - name: Log system resources before
+      run: |
+        echo "=== Disk Usage Before ==="
+        df -h
+        echo "=== Memory Usage Before ==="
+        free -h
+        echo "=== CPU Info ==="
+        nproc
+        echo "=== Python Version ==="
+        python --version
+        echo "=== Pip Cache Size ==="
+        pip cache info
+        du -sh ~/.cache/pip 2>/dev/null || echo "No pip cache yet"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel --no-cache-dir
+        
+        # Install core dependencies first
+        pip install --no-cache-dir langchain openai pandas numpy pytest black flake8 PyYAML
+        
+        # Install gymnasium for FinRL adapter (needed for all versions)
+        pip install --no-cache-dir gymnasium>=0.26.0
+        
+        # Install only essential dependencies for integration tests
+        pip install --no-cache-dir -r requirements-dev.txt
+        
+        # Install web dependencies for integration tests 
+        pip install --no-cache-dir streamlit plotly>=5.0.0 narwhals blinker
+        
+        # Install ML dependencies for integration tests (3.13 has enough space)
+        pip install --no-cache-dir torch transformers --no-deps
+        pip install --no-cache-dir peft datasets
+        
+        # Install ib_async for Python 3.13 (supported)
+        pip install --no-cache-dir "ib_async>=1.0.0"
+        pip install --no-cache-dir -e .
+        
+        # Clean up pip cache after installation to reduce memory pressure
+        pip cache purge
+
+    - name: Log system resources after install
+      run: |
+        echo "=== Disk Usage After Install ==="
+        df -h
+        echo "=== Memory Usage After Install ==="
+        free -h
+        echo "=== Pip Cache Size After Install ==="
+        du -sh ~/.cache/pip 2>/dev/null || echo "No pip cache"
+
+    - name: Run integration tests
+      run: |
+        python -m pytest -m "integration and not slow" -v --cov=quantchain --cov-report=xml --cov-report=html --cov-report=term-missing --cov-fail-under=80
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@9cc74bf7e13a810454a28846494ddbc3795eb693
+      with:
+        files: ./coverage.xml
+        fail_ci_if_error: false

@@ -471,9 +471,7 @@ class ChartReaderAgent:
             }
 
         # Analyze sentiments across timeframes
-        buy_signals = sum(
-            1 for a in analyses.values() if a.recommended_action == "BUY"
-        )
+        buy_signals = sum(1 for a in analyses.values() if a.recommended_action == "BUY")
         sell_signals = sum(
             1 for a in analyses.values() if a.recommended_action == "SELL"
         )

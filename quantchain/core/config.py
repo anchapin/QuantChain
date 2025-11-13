@@ -253,16 +253,19 @@ def reload_config(config_file: Optional[str] = None) -> QuantChainConfig:
 # Add Config alias for backward compatibility
 Config = QuantChainConfig
 
+
 # Convenience functions
 def from_file(config_file: str) -> QuantChainConfig:
     """Create config instance from file."""
     return QuantChainConfig(config_file)
+
 
 def from_dict(config_dict: Dict[str, Any]) -> QuantChainConfig:
     """Create config instance from dictionary."""
     config = QuantChainConfig()
     config._deep_merge(config._config, config_dict)
     return config
+
 
 def from_env() -> QuantChainConfig:
     """Create config instance from environment variables."""

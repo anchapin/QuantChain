@@ -16,6 +16,7 @@ try:
         DeterministicLLMWrapper,
         DeterministicRuleError,
         LangGraphBacktestAdapter,
+        PositionError,
         PositionManager,
         ReasoningEntry,
         ReproducibilityError,
@@ -55,7 +56,7 @@ class TestPositionManager:
     def test_update_position_new(self, position_manager):
         """Test updating a new position."""
         position_manager.update_position("AAPL", 100, 150.0)
-        
+
         positions = position_manager.get_positions()
         assert positions["AAPL"] == 100
 
@@ -63,7 +64,7 @@ class TestPositionManager:
         """Test updating an existing position."""
         position_manager.update_position("AAPL", 100, 150.0)
         position_manager.update_position("AAPL", 50, 155.0)
-        
+
         positions = position_manager.get_positions()
         assert positions["AAPL"] == 150
 
@@ -71,7 +72,7 @@ class TestPositionManager:
         """Test updating position with negative quantity (selling)."""
         position_manager.update_position("AAPL", 100, 150.0)
         position_manager.update_position("AAPL", -50, 155.0)
-        
+
         positions = position_manager.get_positions()
         assert positions["AAPL"] == 50
 
@@ -79,12 +80,12 @@ class TestPositionManager:
         """Test equity calculation."""
         position_manager.update_position("AAPL", 100, 150.0)
         position_manager.update_position("MSFT", 200, 250.0)
-        
+
         current_prices = {"AAPL": 155.0, "MSFT": 260.0}
         equity = position_manager.calculate_equity(current_prices)
-        
+
         # 100 * 155 + 200 * 260 + remaining cash
-        expected = 15500 + 52000 + (100000 - 100*150 - 200*250)
+        expected = 15500 + 52000 + (100000 - 100 * 150 - 200 * 250)
         assert abs(equity - expected) < 0.01
 
 
@@ -129,7 +130,7 @@ class TestDeterministicLLMWrapper:
         scenario_file = tmp_path / "scenario.json"
         rules = {"prompt1": "response1", "prompt2": "response2"}
         scenario_file.write_text(json.dumps(rules))
-        
+
         llm_wrapper.load_scenario(str(scenario_file))
         assert llm_wrapper.response_rules == rules
 
@@ -142,9 +143,9 @@ class TestDeterministicLLMWrapper:
         """Test saving scenario to file."""
         llm_wrapper.add_rule("prompt1", "response1")
         scenario_file = tmp_path / "scenario.json"
-        
+
         llm_wrapper.save_scenario(str(scenario_file))
-        
+
         saved_data = json.loads(scenario_file.read_text())
         assert saved_data == {"prompt1": "response1"}
 
@@ -181,7 +182,7 @@ class TestAgentState:
             signal_confidence=0.8,
             quantity=50,
         )
-        
+
         assert state.cash == 50000.0
         assert state.positions["AAPL"] == 100
         assert state.equity == 60000.0
@@ -193,7 +194,7 @@ class TestAgentState:
         """Test observation operations."""
         agent_state.observations.append("Market is bullish")
         agent_state.observations.append("RSI indicates oversold")
-        
+
         assert len(agent_state.observations) == 2
         assert "Market is bullish" in agent_state.observations
 
@@ -201,7 +202,7 @@ class TestAgentState:
         """Test reasoning operations."""
         agent_state.reasoning.append("Technical analysis suggests buy")
         agent_state.reasoning.append("Risk assessment favorable")
-        
+
         assert len(agent_state.reasoning) == 2
         assert "Technical analysis suggests buy" in agent_state.reasoning
 
@@ -209,7 +210,7 @@ class TestAgentState:
         """Test risk assessment operations."""
         agent_state.risk_assessment["var"] = 0.02
         agent_state.risk_assessment["max_drawdown"] = 0.05
-        
+
         assert agent_state.risk_assessment["var"] == 0.02
         assert agent_state.risk_assessment["max_drawdown"] == 0.05
 
@@ -240,7 +241,7 @@ class TestLangGraphBacktestAdapter:
             "risk_tolerance": 0.02,
             "position_size": 0.1,
         }
-        
+
         # Test that method exists and can be called
         try:
             result = adapter.create_strategy(strategy_config)
@@ -253,20 +254,22 @@ class TestLangGraphBacktestAdapter:
     def test_set_deterministic_llm(self, adapter):
         """Test setting deterministic LLM."""
         responses = {"prompt1": "response1", "prompt2": "response2"}
-        
+
         adapter.set_deterministic_llm(responses)
         assert adapter.deterministic_llm is not None
 
     def test_get_reasoning_log(self, adapter):
         """Test getting reasoning log."""
         # Add some entries to the log
-        adapter.reasoning_log.append({
-            "timestamp": datetime.now(),
-            "step": 1,
-            "decision": "BUY",
-            "confidence": 0.8
-        })
-        
+        adapter.reasoning_log.append(
+            {
+                "timestamp": datetime.now(),
+                "step": 1,
+                "decision": "BUY",
+                "confidence": 0.8,
+            }
+        )
+
         log = adapter.get_reasoning_log()
         assert len(log) == 1
         assert log[0]["decision"] == "BUY"
@@ -275,9 +278,9 @@ class TestLangGraphBacktestAdapter:
         """Test state reset."""
         # Add some state
         adapter.reasoning_log.append({"test": "data"})
-        
+
         adapter.reset_state()
-        
+
         assert len(adapter.reasoning_log) == 0
 
     def test_next(self, adapter):
@@ -288,15 +291,15 @@ class TestLangGraphBacktestAdapter:
             "high": 105.0,
             "low": 95.0,
             "close": 102.0,
-            "volume": 1000000
+            "volume": 1000000,
         }
-        
+
         # Mock agent graph to return a state
         mock_state = AgentState(signal="BUY", quantity=100)
         adapter.agent_graph.invoke.return_value = mock_state
-        
+
         signal = adapter.next(bar_data)
-        
+
         # Should process the bar and return signal (or None if not implemented)
         assert adapter.agent_graph.invoke.called
 
@@ -304,7 +307,7 @@ class TestLangGraphBacktestAdapter:
         """Test trade execution for buy signal."""
         adapter.state = AgentState(cash=50000.0, positions={})
         bar_data = {"close": 100.0, "symbol": "AAPL"}
-        
+
         try:
             adapter._execute_trade("BUY", bar_data)
             # Should have added position
@@ -317,7 +320,7 @@ class TestLangGraphBacktestAdapter:
         """Test trade execution for sell signal."""
         adapter.state = AgentState(cash=50000.0, positions={"AAPL": 100})
         bar_data = {"close": 100.0, "symbol": "AAPL"}
-        
+
         try:
             adapter._execute_trade("SELL", bar_data)
             # Should have reduced or closed position
@@ -329,7 +332,7 @@ class TestLangGraphBacktestAdapter:
     def test_get_current_positions(self, adapter):
         """Test getting current positions."""
         adapter.state = AgentState(positions={"AAPL": 100, "MSFT": 200})
-        
+
         try:
             positions = adapter.get_current_positions()
             assert positions == {"AAPL": 100, "MSFT": 200}
@@ -340,7 +343,7 @@ class TestLangGraphBacktestAdapter:
     def test_get_current_cash(self, adapter):
         """Test getting current cash."""
         adapter.state = AgentState(cash=75000.0)
-        
+
         try:
             cash = adapter.get_current_cash()
             assert cash == 75000.0
@@ -365,9 +368,11 @@ class TestAgentStrategy:
     def test_strategy_methods_exist(self, strategy):
         """Test that strategy methods exist."""
         # Test that common strategy methods are present
-        methods = ['generate_signal', 'calculate_position_size', 'update_state']
+        methods = ["generate_signal", "calculate_position_size", "update_state"]
         for method in methods:
             assert hasattr(strategy, method) or True  # Some methods may not exist
+
+    def test_next_step_processing(self, adapter):
         """Test next step processing."""
         bar_data = {
             "timestamp": datetime.now(),
@@ -375,15 +380,15 @@ class TestAgentStrategy:
             "high": 105.0,
             "low": 95.0,
             "close": 102.0,
-            "volume": 1000000
+            "volume": 1000000,
         }
-        
+
         # Mock the agent graph to return a state
         mock_state = AgentState(signal="BUY", quantity=100)
         adapter.agent_graph.invoke.return_value = mock_state
-        
+
         signal = adapter.next(bar_data)
-        
+
         # Should process the bar and return signal
         assert adapter.agent_graph.invoke.called
 
@@ -391,9 +396,9 @@ class TestAgentStrategy:
         """Test trade execution for buy signal."""
         adapter.state = AgentState(cash=50000.0, positions={})
         bar_data = {"close": 100.0, "symbol": "AAPL"}
-        
+
         adapter._execute_trade("BUY", bar_data)
-        
+
         # Should have added position
         assert "AAPL" in adapter.state.positions
 
@@ -401,23 +406,23 @@ class TestAgentStrategy:
         """Test trade execution for sell signal."""
         adapter.state = AgentState(cash=50000.0, positions={"AAPL": 100})
         bar_data = {"close": 100.0, "symbol": "AAPL"}
-        
+
         adapter._execute_trade("SELL", bar_data)
-        
+
         # Should have reduced or closed position
         assert adapter.state.positions.get("AAPL", 0) < 100
 
     def test_get_current_positions(self, adapter):
         """Test getting current positions."""
         adapter.state = AgentState(positions={"AAPL": 100, "MSFT": 200})
-        
+
         positions = adapter.get_current_positions()
         assert positions == {"AAPL": 100, "MSFT": 200}
 
     def test_get_current_cash(self, adapter):
         """Test getting current cash."""
         adapter.state = AgentState(cash=75000.0)
-        
+
         cash = adapter.get_current_cash()
         assert cash == 75000.0
 
@@ -435,11 +440,11 @@ class TestUtilityFunctions:
             "low": 95.0,
             "close": 102.0,
             "volume": 1000000,
-            "symbol": "AAPL"
+            "symbol": "AAPL",
         }
-        
+
         state = bar_to_agent_state(bar)
-        
+
         assert isinstance(state, AgentState)
         assert state.current_bar["close"] == 102.0
         assert state.step_count == 0  # Default value
@@ -447,21 +452,21 @@ class TestUtilityFunctions:
     def test_agent_state_to_signal_buy(self):
         """Test agent state to signal conversion for buy."""
         state = AgentState(signal="BUY", signal_confidence=0.8, quantity=100)
-        
+
         signal = agent_state_to_signal(state)
         assert signal == "BUY"
 
     def test_agent_state_to_signal_sell(self):
         """Test agent state to signal conversion for sell."""
         state = AgentState(signal="SELL", signal_confidence=0.7, quantity=50)
-        
+
         signal = agent_state_to_signal(state)
         assert signal == "SELL"
 
     def test_agent_state_to_signal_hold(self):
         """Test agent state to signal conversion for hold."""
         state = AgentState(signal=None, signal_confidence=0.0, quantity=0)
-        
+
         signal = agent_state_to_signal(state)
         assert signal is None
 
@@ -474,14 +479,14 @@ class TestUtilityFunctions:
             signal="BUY",
             signal_confidence=0.8,
             quantity=100,
-            step_count=5
+            step_count=5,
         )
-        
+
         bar_data = {"close": 100.0, "symbol": "AAPL"}
         execution_time = 50.0
-        
+
         reasoning_entry = capture_reasoning(state, execution_time)
-        
+
         assert isinstance(reasoning_entry, ReasoningEntry)
         assert reasoning_entry.decision == "Buy signal"
         assert reasoning_entry.signal == "BUY"
@@ -559,7 +564,7 @@ class TestReasoningEntry:
         quantity = 100
         execution_details = {"price": 100.0}
         execution_time_ms = 50.0
-        
+
         entry = ReasoningEntry(
             timestamp=timestamp,
             step=5,
@@ -571,9 +576,9 @@ class TestReasoningEntry:
             confidence=confidence,
             quantity=quantity,
             execution_details=execution_details,
-            execution_time_ms=execution_time_ms
+            execution_time_ms=execution_time_ms,
         )
-        
+
         assert entry.timestamp == timestamp
         assert entry.step == 5
         assert entry.bar_data == bar_data
@@ -615,11 +620,8 @@ class TestEdgeCases:
         """Test equity calculation with negative values."""
         manager = PositionManager(initial_cash=0)
         manager.update_position("AAPL", -100, 100.0)  # Short position
-        
+
         current_prices = {"AAPL": 90.0}  # Loss on short
         equity = manager.calculate_equity(current_prices)
         # Should be positive due to short position profit
         assert equity > 0
-
-
-

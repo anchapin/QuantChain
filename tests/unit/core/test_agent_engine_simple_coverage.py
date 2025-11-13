@@ -21,7 +21,7 @@ class TestAgentEngineSimpleCoverage:
         """Test config creation for agent engine."""
         config = QuantChainConfig()
         assert config is not None
-        
+
         # Test setting various config attributes
         config.llm_provider = "test_provider"
         config.model_name = "test_model"
@@ -33,7 +33,7 @@ class TestAgentEngineSimpleCoverage:
     def test_agent_initialization_errors(self):
         """Test agent initialization error paths for coverage."""
         config = QuantChainConfig()
-        
+
         # Test various initialization scenarios that might raise exceptions
         try:
             agent = QuantChainAgent(config)
@@ -52,12 +52,12 @@ class TestAgentEngineSimpleCoverage:
             {"model_name": None},
             {"model_name": ""},
         ]
-        
+
         for config_dict in invalid_configs:
             config = QuantChainConfig()
             for key, value in config_dict.items():
                 setattr(config, key, value)
-            
+
             try:
                 agent = QuantChainAgent(config)
                 assert agent is not None
@@ -69,24 +69,30 @@ class TestAgentEngineSimpleCoverage:
     def test_agent_method_coverage(self):
         """Test coverage of agent methods if they exist."""
         config = QuantChainConfig()
-        
+
         try:
             agent = QuantChainAgent(config)
-            
+
             # Test various method calls if they exist
             methods_to_test = [
-                'add_tool', 'remove_tool', 'has_tool', 'get_tools',
-                'clear_tools', 'run', 'initialize', 'reset'
+                "add_tool",
+                "remove_tool",
+                "has_tool",
+                "get_tools",
+                "clear_tools",
+                "run",
+                "initialize",
+                "reset",
             ]
-            
+
             for method_name in methods_to_test:
                 if hasattr(agent, method_name):
                     method = getattr(agent, method_name)
                     try:
                         # Call method with safe defaults
-                        if method_name == 'add_tool':
+                        if method_name == "add_tool":
                             method(MagicMock())
-                        elif method_name in ['has_tool', 'remove_tool']:
+                        elif method_name in ["has_tool", "remove_tool"]:
                             method("test_tool")
                         else:
                             method()
@@ -99,16 +105,20 @@ class TestAgentEngineSimpleCoverage:
     def test_agent_property_access(self):
         """Test agent property access for coverage."""
         config = QuantChainConfig()
-        
+
         try:
             agent = QuantChainAgent(config)
-            
+
             # Test property access if they exist
             properties = [
-                'tools', 'config', 'llm_provider', 'model',
-                'is_initialized', 'state'
+                "tools",
+                "config",
+                "llm_provider",
+                "model",
+                "is_initialized",
+                "state",
             ]
-            
+
             for prop in properties:
                 if hasattr(agent, prop):
                     try:
@@ -126,12 +136,14 @@ class TestAgentEngineSimpleCoverage:
         # Test various import scenarios
         try:
             from quantchain.core.agent_engine import create_agent
+
             assert create_agent is not None
         except ImportError:
             pass
-        
+
         try:
             from quantchain.core.agent_engine import AgentConfig
+
             assert AgentConfig is not None
         except ImportError:
             pass
@@ -140,20 +152,26 @@ class TestAgentEngineSimpleCoverage:
     def test_agent_edge_case_inputs(self):
         """Test agent with edge case inputs."""
         config = QuantChainConfig()
-        
+
         try:
             agent = QuantChainAgent(config)
-            
+
             # Test various edge case inputs
             edge_inputs = [
-                None, "", [], {}, 0, False, True,
+                None,
+                "",
+                [],
+                {},
+                0,
+                False,
+                True,
                 "very" * 1000,  # Very long string
                 {"nested": {"deep": {"structure": {}}}},
                 lambda x: x,  # Function
             ]
-            
+
             for input_val in edge_inputs:
-                if hasattr(agent, 'run'):
+                if hasattr(agent, "run"):
                     try:
                         result = agent.run(input_val)
                         assert result is not None
@@ -166,14 +184,14 @@ class TestAgentEngineSimpleCoverage:
     def test_agent_string_representation(self):
         """Test agent string representation methods."""
         config = QuantChainConfig()
-        
+
         try:
             agent = QuantChainAgent(config)
-            
+
             # Test string methods
             str_repr = str(agent)
             assert isinstance(str_repr, str)
-            
+
             repr_str = repr(agent)
             assert isinstance(repr_str, str)
         except Exception:
@@ -183,21 +201,21 @@ class TestAgentEngineSimpleCoverage:
     def test_agent_comparison_and_hash(self):
         """Test agent comparison and hash methods."""
         config = QuantChainConfig()
-        
+
         try:
             agent1 = QuantChainAgent(config)
             agent2 = QuantChainAgent(config)
-            
+
             # Test equality
-            if hasattr(agent1, '__eq__'):
+            if hasattr(agent1, "__eq__"):
                 try:
                     result = agent1 == agent2
                     assert isinstance(result, bool)
                 except Exception:
                     pass
-            
+
             # Test hash
-            if hasattr(agent1, '__hash__'):
+            if hasattr(agent1, "__hash__"):
                 try:
                     hash_val = hash(agent1)
                     assert isinstance(hash_val, int)

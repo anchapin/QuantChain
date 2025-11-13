@@ -2,6 +2,18 @@
 LangGraph adapter for agent backtesting integration.
 """
 
+# LangGraph compatibility guard
+LANGGRAPH_AVAILABLE = False
+try:
+    from langgraph.graph import StateGraph, END
+    LANGGRAPH_AVAILABLE = True
+except ImportError:
+    StateGraph = None
+    END = None
+    LANGGRAPH_AVAILABLE = False
+
+
+
 import json
 import time
 from dataclasses import dataclass, field

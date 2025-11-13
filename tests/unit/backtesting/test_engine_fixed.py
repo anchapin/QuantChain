@@ -9,8 +9,8 @@ import pandas as pd
 import pytest
 
 from quantchain.backtesting.engine import (
-    BacktestConfig, 
-    BacktestEngine, 
+    BacktestConfig,
+    BacktestEngine,
     BacktestResult,
     MetricsResult,
     validate_ohlcv_data,
@@ -35,11 +35,9 @@ class MockBacktestEngine(BacktestEngine):
         """Mock run method that returns test results."""
         # Create mock results based on data
         self._equity_curve = pd.Series(
-            [config.initial_cash] * len(data),
-            index=data.index,
-            name="equity"
+            [config.initial_cash] * len(data), index=data.index, name="equity"
         )
-        
+
         # Create metrics result
         metrics = MetricsResult(
             total_return=0.10,
@@ -58,7 +56,7 @@ class MockBacktestEngine(BacktestEngine):
             best_trade=500.0,
             worst_trade=-250.0,
         )
-        
+
         self._results = BacktestResult(
             equity_curve=self._equity_curve,
             trade_log=pd.DataFrame(),
@@ -67,7 +65,7 @@ class MockBacktestEngine(BacktestEngine):
             execution_time=1.0,
             config=config,
         )
-        
+
         return self._results
 
     def get_results(self) -> Optional[BacktestResult]:
@@ -86,7 +84,7 @@ class TestBacktestConfig:
     def test_default_initialization(self) -> None:
         """Test BacktestConfig with default values."""
         config = BacktestConfig()
-        
+
         assert config.initial_cash == 100000.0
         assert config.commission_rate == 0.001
         assert config.slippage_model == "fixed"
@@ -103,7 +101,7 @@ class TestBacktestConfig:
         start = datetime(2024, 1, 1, tzinfo=timezone.utc)
         end = datetime(2024, 12, 31, tzinfo=timezone.utc)
         params = {"risk_free_rate": 0.02}
-        
+
         config = BacktestConfig(
             initial_cash=50000.0,
             commission_rate=0.002,
@@ -114,9 +112,9 @@ class TestBacktestConfig:
             start_date=start,
             end_date=end,
             data_frequency="1h",
-            additional_params=params
+            additional_params=params,
         )
-        
+
         assert config.initial_cash == 50000.0
         assert config.commission_rate == 0.002
         assert config.slippage_model == "volume_impact"
@@ -159,7 +157,7 @@ class TestMetricsResult:
             best_trade=500.0,
             worst_trade=-250.0,
         )
-        
+
         assert metrics.total_return == 0.10
         assert metrics.annualized_return == 0.20
         assert metrics.max_drawdown == 0.05
@@ -180,7 +178,7 @@ class TestMetricsResult:
     def test_metrics_result_with_minimum_values(self) -> None:
         """Test creating a MetricsResult with minimum values."""
         metrics = MetricsResult()
-        
+
         assert metrics.total_return == 0.0
         assert metrics.annualized_return == 0.0
         assert metrics.max_drawdown == 0.0
@@ -210,7 +208,7 @@ class TestBacktestResult:
         equity_curve = pd.Series([100000, 105000, 110000], name="equity")
         trades = pd.DataFrame({"symbol": ["AAPL"], "pnl": [5000]})
         metrics = MetricsResult(total_return=0.10)
-        
+
         result = BacktestResult(
             equity_curve=equity_curve,
             trade_log=trades,
@@ -219,7 +217,7 @@ class TestBacktestResult:
             execution_time=5.0,
             config=config,
         )
-        
+
         assert result.equity_curve.equals(equity_curve)
         assert result.trade_log.equals(trades)
         assert result.summary_stats == {"test": "value"}
@@ -233,7 +231,7 @@ class TestBacktestResult:
         equity_curve = pd.Series([100000], name="equity")
         trades = pd.DataFrame()
         metrics = MetricsResult()
-        
+
         # Valid result should not raise
         result = BacktestResult(
             equity_curve=equity_curve,
@@ -244,7 +242,7 @@ class TestBacktestResult:
             config=config,
         )
         assert result is not None
-        
+
         # Invalid equity_curve should raise
         with pytest.raises(ValueError, match="equity_curve must be a pandas Series"):
             BacktestResult(
@@ -255,7 +253,7 @@ class TestBacktestResult:
                 execution_time=1.0,
                 config=config,
             )
-        
+
         # Invalid trade_log should raise
         with pytest.raises(ValueError, match="trade_log must be a pandas DataFrame"):
             BacktestResult(
@@ -280,36 +278,38 @@ class TestBacktestEngine:
     def test_mock_implementation(self) -> None:
         """Test that mock implementation works correctly."""
         engine = MockBacktestEngine()
-        
+
         # Test initial state
         assert engine.get_results() is None
         assert engine.get_equity_curve() is None
-        
+
         # Create test data
-        data = pd.DataFrame({
-            "open": [100, 105, 110],
-            "high": [105, 110, 115],
-            "low": [95, 100, 105],
-            "close": [105, 110, 115],
-            "volume": [1000, 1500, 2000],
-        })
+        data = pd.DataFrame(
+            {
+                "open": [100, 105, 110],
+                "high": [105, 110, 115],
+                "low": [95, 100, 105],
+                "close": [105, 110, 115],
+                "volume": [1000, 1500, 2000],
+            }
+        )
         data.index = pd.date_range("2024-01-01", periods=3, freq="D")
-        
+
         # Create test config
         config = BacktestConfig(
             start_date=datetime(2024, 1, 1, tzinfo=timezone.utc),
             end_date=datetime(2024, 1, 3, tzinfo=timezone.utc),
         )
-        
+
         # Run backtest
         mock_strategy = MagicMock()
         results = engine.run(mock_strategy, data, config)
-        
+
         # Check results
         assert results is not None
         assert results.metrics.total_return == 0.10
         assert len(results.equity_curve) == 3
-        
+
         # Check stored results
         assert engine.get_results() is not None
         assert engine.get_equity_curve() is not None
@@ -323,14 +323,16 @@ class TestValidationFunctions:
 
     def test_validate_ohlcv_data_valid(self) -> None:
         """Test OHLCV validation with valid data."""
-        data = pd.DataFrame({
-            "open": [100.0, 105.0, 110.0],
-            "high": [105.0, 110.0, 115.0],
-            "low": [95.0, 100.0, 105.0],
-            "close": [105.0, 110.0, 115.0],
-            "volume": [1000, 1500, 2000],
-        })
-        
+        data = pd.DataFrame(
+            {
+                "open": [100.0, 105.0, 110.0],
+                "high": [105.0, 110.0, 115.0],
+                "low": [95.0, 100.0, 105.0],
+                "close": [105.0, 110.0, 115.0],
+                "volume": [1000, 1500, 2000],
+            }
+        )
+
         # Should not raise
         validate_ohlcv_data(data)
 
@@ -341,87 +343,100 @@ class TestValidationFunctions:
 
     def test_validate_ohlcv_data_missing_columns(self) -> None:
         """Test OHLCV validation with missing columns."""
-        data = pd.DataFrame({
-            "open": [100.0, 105.0],
-            "high": [105.0, 110.0],
-            # Missing low, close, volume
-        })
-        
+        data = pd.DataFrame(
+            {
+                "open": [100.0, 105.0],
+                "high": [105.0, 110.0],
+                # Missing low, close, volume
+            }
+        )
+
         with pytest.raises(DataValidationError, match="Missing required columns"):
             validate_ohlcv_data(data)
 
     def test_validate_ohlcv_data_invalid_types(self) -> None:
         """Test OHLCV validation with invalid data types."""
         # String columns instead of numeric
-        data = pd.DataFrame({
-            "open": ["100", "105"],
-            "high": ["105", "110"],
-            "low": ["95", "100"],
-            "close": ["105", "110"],
-            "volume": [1000, 1500],  # Numeric
-        })
-        
+        data = pd.DataFrame(
+            {
+                "open": ["100", "105"],
+                "high": ["105", "110"],
+                "low": ["95", "100"],
+                "close": ["105", "110"],
+                "volume": [1000, 1500],  # Numeric
+            }
+        )
+
         with pytest.raises(DataValidationError, match="OHLC columns must be numeric"):
             validate_ohlcv_data(data)
 
     def test_validate_ohlcv_data_logical_errors(self) -> None:
         """Test OHLCV validation with logical errors."""
         # High lower than low
-        data = pd.DataFrame({
-            "open": [100.0, 105.0],
-            "high": [105.0, 110.0],
-            "low": [110.0, 115.0],  # Higher than high
-            "close": [105.0, 110.0],
-            "volume": [1000, 1500],
-        })
-        
-        with pytest.raises(DataValidationError, match="High prices cannot be lower than low prices"):
+        data = pd.DataFrame(
+            {
+                "open": [100.0, 105.0],
+                "high": [105.0, 110.0],
+                "low": [110.0, 115.0],  # Higher than high
+                "close": [105.0, 110.0],
+                "volume": [1000, 1500],
+            }
+        )
+
+        with pytest.raises(
+            DataValidationError, match="High prices cannot be lower than low prices"
+        ):
             validate_ohlcv_data(data)
-        
+
         # Negative volume
-        data = pd.DataFrame({
-            "open": [100.0, 105.0],
-            "high": [105.0, 110.0],
-            "low": [95.0, 100.0],
-            "close": [105.0, 110.0],
-            "volume": [-1000, 1500],  # Negative
-        })
-        
+        data = pd.DataFrame(
+            {
+                "open": [100.0, 105.0],
+                "high": [105.0, 110.0],
+                "low": [95.0, 100.0],
+                "close": [105.0, 110.0],
+                "volume": [-1000, 1500],  # Negative
+            }
+        )
+
         with pytest.raises(DataValidationError, match="Volume cannot be negative"):
             validate_ohlcv_data(data)
 
     def test_filter_data_by_date_range(self) -> None:
         """Test filtering data by date range."""
         dates = pd.date_range("2024-01-01", periods=10, freq="D")
-        data = pd.DataFrame({
-            "close": np.arange(10),
-        }, index=dates)
-        
+        data = pd.DataFrame(
+            {
+                "close": np.arange(10),
+            },
+            index=dates,
+        )
+
         # Filter with both start and end
         start = datetime(2024, 1, 3, tzinfo=timezone.utc)
         end = datetime(2024, 1, 7, tzinfo=timezone.utc)
-        
+
         filtered = filter_data_by_date_range(data, start, end)
-        
+
         assert len(filtered) == 5  # Days 3-7 inclusive
         assert filtered.index[0] == start
         assert filtered.index[-1] == end
-        
+
         # Filter with only start
         filtered = filter_data_by_date_range(data, start, None)
-        
+
         assert len(filtered) == 8  # Days 3-10
         assert filtered.index[0] == start
-        
+
         # Filter with only end
         filtered = filter_data_by_date_range(data, None, end)
-        
+
         assert len(filtered) == 7  # Days 1-7
         assert filtered.index[-1] == end
-        
+
         # No filter
         filtered = filter_data_by_date_range(data, None, None)
-        
+
         assert len(filtered) == 10
         assert filtered.equals(data)
 
@@ -429,9 +444,9 @@ class TestValidationFunctions:
         """Test basic statistics calculation."""
         equity_curve = pd.Series([100000, 105000, 110000], name="equity")
         initial_cash = 100000.0
-        
+
         stats = calculate_basic_statistics(equity_curve, initial_cash)
-        
+
         assert stats["total_return"] == 0.10
         assert stats["final_equity"] == 110000.0
         assert stats["initial_equity"] == initial_cash
@@ -446,7 +461,7 @@ class TestExceptionClasses:
         """Test ConfigurationError."""
         with pytest.raises(ConfigurationError) as exc_info:
             raise ConfigurationError("Invalid config")
-        
+
         assert "Invalid config" in str(exc_info.value)
         assert isinstance(exc_info.value, Exception)
 
@@ -454,7 +469,7 @@ class TestExceptionClasses:
         """Test DataValidationError."""
         with pytest.raises(DataValidationError) as exc_info:
             raise DataValidationError("Invalid data")
-        
+
         assert "Invalid data" in str(exc_info.value)
         assert isinstance(exc_info.value, Exception)
 
@@ -462,6 +477,6 @@ class TestExceptionClasses:
         """Test BacktestExecutionError."""
         with pytest.raises(BacktestExecutionError) as exc_info:
             raise BacktestExecutionError("Execution failed")
-        
+
         assert "Execution failed" in str(exc_info.value)
         assert isinstance(exc_info.value, Exception)

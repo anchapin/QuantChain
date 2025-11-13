@@ -452,7 +452,9 @@ class TestVectorBacktester:
         assert backtester.position_manager.initial_cash == 50000.0
         assert backtester.position_manager.commission_rate == 0.002
 
-    def test_run_missing_close_column(self, sample_signals, sample_data, default_config):
+    def test_run_missing_close_column(
+        self, sample_signals, sample_data, default_config
+    ):
         """Test run with data missing 'close' column."""
         backtester = VectorBacktester(default_config)
 
@@ -460,6 +462,8 @@ class TestVectorBacktester:
         data_missing_close = sample_data.drop(columns=["close"])
 
         from quantchain.backtesting.engine import DataValidationError
-        
-        with pytest.raises(DataValidationError, match="Data must contain 'close' column"):
+
+        with pytest.raises(
+            DataValidationError, match="Data must contain 'close' column"
+        ):
             backtester.run(sample_signals, data_missing_close)

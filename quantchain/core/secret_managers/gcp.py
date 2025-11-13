@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional, Union
 try:
     from google.api_core import exceptions as gcp_exceptions
     from google.cloud import secretmanager
+
     GCP_AVAILABLE = True
 except ImportError:
     GCP_AVAILABLE = False
@@ -40,7 +41,7 @@ class GCPSecretManager(SecretManager):
                 "google-cloud-secret-manager library is required for GCP Secret Manager support. "
                 "Install with: pip install google-cloud-secret-manager"
             )
-        
+
         self.project_id = project_id or os.getenv("GCP_PROJECT")
 
         if not self.project_id:

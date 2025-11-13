@@ -1,0 +1,38 @@
+[
+  {
+    "id": "check-act-installation",
+    "content": "Check if act CLI is already installed",
+    "status": "completed",
+    "priority": "high"
+  },
+  {
+    "id": "install-act-if-needed",
+    "content": "Install act CLI if not already present",
+    "status": "completed",
+    "priority": "high"
+  },
+  {
+    "id": "list-workflows",
+    "content": "List available GitHub workflows in the project",
+    "status": "completed",
+    "priority": "medium"
+  },
+  {
+    "id": "run-act-workflows",
+    "content": "Run act CLI to execute workflows locally",
+    "status": "completed",
+    "priority": "high"
+  },
+  {
+    "id": "fix-critical-issues",
+    "content": "Fix critical undefined name errors found during workflow execution",
+    "status": "completed",
+    "priority": "high"
+  },
+  {
+    "id": "fix-formatting-issues",
+    "content": "Fix black formatting issues to make workflow pass",
+    "status": "in_progress",
+    "priority": "high"
+  }
+]

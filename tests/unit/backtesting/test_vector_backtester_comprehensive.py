@@ -22,20 +22,20 @@ class TestVectorizedPositionManager:
     def manager(self):
         """Create position manager instance."""
         return VectorizedPositionManager(
-            initial_cash=100000.0,
-            commission_rate=0.001,
-            slippage_rate=0.0005
+            initial_cash=100000.0, commission_rate=0.001, slippage_rate=0.0005
         )
 
     @pytest.fixture
     def sample_signals_df(self):
         """Create sample signals DataFrame."""
         dates = pd.date_range("2023-01-01", periods=10, freq="D")
-        return pd.DataFrame({
-            "timestamp": dates,
-            "price": [100, 101, 102, 103, 104, 103, 102, 101, 100, 99],
-            "signal": [1, 0, 0, -1, 0, 0, 1, 0, 0, -1]
-        })
+        return pd.DataFrame(
+            {
+                "timestamp": dates,
+                "price": [100, 101, 102, 103, 104, 103, 102, 101, 100, 99],
+                "signal": [1, 0, 0, -1, 0, 0, 1, 0, 0, -1],
+            }
+        )
 
     def test_initialization_default(self):
         """Test default initialization."""
@@ -47,9 +47,7 @@ class TestVectorizedPositionManager:
     def test_initialization_custom(self):
         """Test custom initialization."""
         manager = VectorizedPositionManager(
-            initial_cash=50000.0,
-            commission_rate=0.002,
-            slippage_rate=0.001
+            initial_cash=50000.0, commission_rate=0.002, slippage_rate=0.001
         )
         assert manager.initial_cash == 50000.0
         assert manager.commission_rate == 0.002
@@ -143,7 +141,7 @@ class TestVectorizedPositionManager:
         # Create simple signals and prices
         prices = pd.Series([100, 101, 102, 103, 104])
         signals = pd.Series([1, 0, -1, 0, 1])
-        
+
         results = manager.process_signals(prices, signals)
 
         # Process signals returns tuple of (positions, trades, cash)
@@ -216,13 +214,16 @@ class TestVectorBacktester:
     def sample_data(self):
         """Create sample market data."""
         dates = pd.date_range("2023-01-01", periods=100, freq="D")
-        return pd.DataFrame({
-            "open": 100 + pd.Series(range(100)) * 0.1,
-            "high": 101 + pd.Series(range(100)) * 0.1,
-            "low": 99 + pd.Series(range(100)) * 0.1,
-            "close": 100 + pd.Series(range(100)) * 0.1,
-            "volume": 1000000 + pd.Series(range(100)) * 1000,
-        }, index=dates)
+        return pd.DataFrame(
+            {
+                "open": 100 + pd.Series(range(100)) * 0.1,
+                "high": 101 + pd.Series(range(100)) * 0.1,
+                "low": 99 + pd.Series(range(100)) * 0.1,
+                "close": 100 + pd.Series(range(100)) * 0.1,
+                "volume": 1000000 + pd.Series(range(100)) * 1000,
+            },
+            index=dates,
+        )
 
     @pytest.fixture
     def sample_signals(self):
@@ -230,7 +231,7 @@ class TestVectorBacktester:
         dates = pd.date_range("2023-01-01", periods=100, freq="D")
         return pd.Series(
             [1 if i % 10 == 0 else (-1 if i % 15 == 0 else 0) for i in range(100)],
-            index=dates
+            index=dates,
         )
 
     def test_initialization_default(self):
@@ -330,10 +331,13 @@ class TestVectorBacktester:
     def test_edge_case_no_trades(self, backtester):
         """Test backtest with no trading signals."""
         dates = pd.date_range("2023-01-01", periods=10, freq="D")
-        data = pd.DataFrame({
-            "close": [100] * 10,
-            "volume": [1000000] * 10,
-        }, index=dates)
+        data = pd.DataFrame(
+            {
+                "close": [100] * 10,
+                "volume": [1000000] * 10,
+            },
+            index=dates,
+        )
         signals = pd.Series([0] * 10, index=dates)
 
         results = backtester.run(data, signals)
@@ -345,10 +349,13 @@ class TestVectorBacktester:
     def test_edge_case_single_trade(self, backtester):
         """Test backtest with single trade."""
         dates = pd.date_range("2023-01-01", periods=10, freq="D")
-        data = pd.DataFrame({
-            "close": [100] * 10,
-            "volume": [1000000] * 10,
-        }, index=dates)
+        data = pd.DataFrame(
+            {
+                "close": [100] * 10,
+                "volume": [1000000] * 10,
+            },
+            index=dates,
+        )
         signals = pd.Series([1] + [0] * 9, index=dates)
 
         results = backtester.run(data, signals)
@@ -370,10 +377,7 @@ class TestVectorBacktestResult:
         returns = pd.Series([0, 0.01, 0.0099, 0.0098, -0.0097], index=dates)
 
         result = VectorBacktestResult(
-            equity_curve=equity,
-            trade_log=trades,
-            positions=positions,
-            returns=returns
+            equity_curve=equity, trade_log=trades, positions=positions, returns=returns
         )
 
         assert result.equity_curve.equals(equity)
@@ -396,7 +400,7 @@ class TestVectorBacktestResult:
             trade_log=trades,
             positions=positions,
             returns=returns,
-            metrics=metrics
+            metrics=metrics,
         )
 
         assert result.metrics == metrics
@@ -410,10 +414,7 @@ class TestVectorBacktestResult:
         returns = equity.pct_change().fillna(0)
 
         result = VectorBacktestResult(
-            equity_curve=equity,
-            trade_log=trades,
-            positions=positions,
-            returns=returns
+            equity_curve=equity, trade_log=trades, positions=positions, returns=returns
         )
 
         # Check that indices are consistent
@@ -446,11 +447,13 @@ class TestEdgeCases:
         """Test handling of NaN prices."""
         manager = VectorizedPositionManager()
         dates = pd.date_range("2023-01-01", periods=5, freq="D")
-        signals = pd.DataFrame({
-            "timestamp": dates,
-            "price": [100, np.nan, 102, 103, 104],
-            "signal": [1, 0, 0, -1, 0]
-        })
+        signals = pd.DataFrame(
+            {
+                "timestamp": dates,
+                "price": [100, np.nan, 102, 103, 104],
+                "signal": [1, 0, 0, -1, 0],
+            }
+        )
 
         # Should handle NaN values gracefully or raise error
         try:
@@ -465,11 +468,13 @@ class TestEdgeCases:
         """Test handling of infinite prices."""
         manager = VectorizedPositionManager()
         dates = pd.date_range("2023-01-01", periods=5, freq="D")
-        signals = pd.DataFrame({
-            "timestamp": dates,
-            "price": [100, float('inf'), 102, 103, 104],
-            "signal": [1, 0, 0, -1, 0]
-        })
+        signals = pd.DataFrame(
+            {
+                "timestamp": dates,
+                "price": [100, float("inf"), 102, 103, 104],
+                "signal": [1, 0, 0, -1, 0],
+            }
+        )
 
         # Should handle infinite values gracefully
         try:
@@ -484,11 +489,13 @@ class TestEdgeCases:
         """Test handling of negative prices."""
         manager = VectorizedPositionManager()
         dates = pd.date_range("2023-01-01", periods=5, freq="D")
-        signals = pd.DataFrame({
-            "timestamp": dates,
-            "price": [100, -50, 102, 103, 104],
-            "signal": [1, 0, 0, -1, 0]
-        })
+        signals = pd.DataFrame(
+            {
+                "timestamp": dates,
+                "price": [100, -50, 102, 103, 104],
+                "signal": [1, 0, 0, -1, 0],
+            }
+        )
 
         # Should handle negative prices gracefully
         try:
@@ -503,11 +510,13 @@ class TestEdgeCases:
         """Test handling of very large signal values."""
         manager = VectorizedPositionManager()
         dates = pd.date_range("2023-01-01", periods=5, freq="D")
-        signals = pd.DataFrame({
-            "timestamp": dates,
-            "price": [100, 101, 102, 103, 104],
-            "signal": [1000000, 0, 0, -1000000, 0]  # Very large values
-        })
+        signals = pd.DataFrame(
+            {
+                "timestamp": dates,
+                "price": [100, 101, 102, 103, 104],
+                "signal": [1000000, 0, 0, -1000000, 0],  # Very large values
+            }
+        )
 
         # Should handle large signal values
         try:
@@ -521,9 +530,7 @@ class TestEdgeCases:
     def test_zero_commission_and_slippage(self):
         """Test with zero commission and slippage."""
         manager = VectorizedPositionManager(
-            initial_cash=100000,
-            commission_rate=0.0,
-            slippage_rate=0.0
+            initial_cash=100000, commission_rate=0.0, slippage_rate=0.0
         )
 
         timestamp = pd.Timestamp("2023-01-01")

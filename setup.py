@@ -11,9 +11,11 @@ from pathlib import Path
 # Try to use setuptools, fallback to distutils
 try:
     from setuptools import setup, find_packages
+
     HAS_SETUPTOOLS = True
 except ImportError:
     from distutils.core import setup
+
     HAS_SETUPTOOLS = False
 
 # Version information
@@ -22,7 +24,7 @@ VERSION = "0.1.0"
 # Core dependencies (always installed)
 CORE_REQUIREMENTS = [
     "langchain>=0.2.0,<2.0.0",
-    "openai>=1.0.0,<3.0.0", 
+    "openai>=1.0.0,<3.0.0",
     "pandas>=1.5.0,<3.0.0",
     "numpy>=1.24.0,<3.0.0",
     "PyYAML>=6.0,<7.0.0",
@@ -75,75 +77,79 @@ if PYTHON_VERSION >= (3, 10):
 
 # Optional dependencies for different use cases
 OPTIONAL_DEPENDENCIES = {
-    'dev': DEV_REQUIREMENTS,
-    'ml': ML_REQUIREMENTS,
-    'visualization': VISUALIZATION_REQUIREMENTS,
-    'all': DEV_REQUIREMENTS + ML_REQUIREMENTS + VISUALIZATION_REQUIREMENTS,
-    'ci': ['pytest>=7.0.0', 'pytest-cov>=4.0.0', 'plotly>=5.15.0', 'streamlit>=1.25.0'],
+    "dev": DEV_REQUIREMENTS,
+    "ml": ML_REQUIREMENTS,
+    "visualization": VISUALIZATION_REQUIREMENTS,
+    "all": DEV_REQUIREMENTS + ML_REQUIREMENTS + VISUALIZATION_REQUIREMENTS,
+    "ci": ["pytest>=7.0.0", "pytest-cov>=4.0.0", "plotly>=5.15.0", "streamlit>=1.25.0"],
 }
 
 # Long description
 try:
-    with open('README.md', 'r', encoding='utf-8') as f:
+    with open("README.md", "r", encoding="utf-8") as f:
         LONG_DESCRIPTION = f.read()
 except FileNotFoundError:
-    LONG_DESCRIPTION = "Comprehensive quantitative trading framework with AI-powered strategies"
+    LONG_DESCRIPTION = (
+        "Comprehensive quantitative trading framework with AI-powered strategies"
+    )
 
 # Setup configuration
 setup_config = {
-    'name': 'quantchain',
-    'version': VERSION,
-    'author': 'QuantChain Team',
-    'author_email': 'contact@quantchain.ai',
-    'description': 'Comprehensive quantitative trading framework',
-    'long_description': LONG_DESCRIPTION,
-    'long_description_content_type': 'text/markdown',
-    'url': 'https://github.com/anchapin/QuantChain',
-    'project_urls': {
-        'Bug Tracker': 'https://github.com/anchapin/QuantChain/issues',
-        'Documentation': 'https://github.com/anchapin/QuantChain/docs',
-        'Source Code': 'https://github.com/anchapin/QuantChain',
+    "name": "quantchain",
+    "version": VERSION,
+    "author": "QuantChain Team",
+    "author_email": "contact@quantchain.ai",
+    "description": "Comprehensive quantitative trading framework",
+    "long_description": LONG_DESCRIPTION,
+    "long_description_content_type": "text/markdown",
+    "url": "https://github.com/anchapin/QuantChain",
+    "project_urls": {
+        "Bug Tracker": "https://github.com/anchapin/QuantChain/issues",
+        "Documentation": "https://github.com/anchapin/QuantChain/docs",
+        "Source Code": "https://github.com/anchapin/QuantChain",
     },
-    'packages': find_packages(exclude=['tests*', 'docs*', 'examples*']),
-    'include_package_data': True,
-    'python_requires': '>=3.9',
-    'install_requires': CORE_REQUIREMENTS,
-    'extras_require': OPTIONAL_DEPENDENCIES,
-    'entry_points': {
-        'console_scripts': [
-            'quantchain=quantchain.cli.main:main',
+    "packages": find_packages(exclude=["tests*", "docs*", "examples*"]),
+    "include_package_data": True,
+    "python_requires": ">=3.9",
+    "install_requires": CORE_REQUIREMENTS,
+    "extras_require": OPTIONAL_DEPENDENCIES,
+    "entry_points": {
+        "console_scripts": [
+            "quantchain=quantchain.cli.main:main",
         ],
     },
-    'classifiers': [
-        'Development Status :: 4 - Beta',
-        'Intended Audience :: Developers',
-        'Intended Audience :: Financial and Insurance Industry',
-        'License :: OSI Approved :: MIT License',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.9',
-        'Programming Language :: Python :: 3.10',
-        'Programming Language :: Python :: 3.11',
-        'Programming Language :: Python :: 3.12',
-        'Programming Language :: Python :: 3.13',
-        'Topic :: Office/Business :: Financial',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-        'Topic :: Scientific/Engineering :: Artificial Intelligence',
+    "classifiers": [
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Financial and Insurance Industry",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Topic :: Office/Business :: Financial",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
-    'keywords': 'quantitative trading, finance, machine learning, ai, blockchain',
-    'license': 'MIT',
-    'zip_safe': False,
+    "keywords": "quantitative trading, finance, machine learning, ai, blockchain",
+    "license": "MIT",
+    "zip_safe": False,
 }
 
 # Add setuptools-specific options
 if HAS_SETUPTOOLS:
-    setup_config.update({
-        'test_suite': 'tests',
-        'tests_require': DEV_REQUIREMENTS,
-    })
+    setup_config.update(
+        {
+            "test_suite": "tests",
+            "tests_require": DEV_REQUIREMENTS,
+        }
+    )
 
 # Run setup
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         setup(**setup_config)
         print("QuantChain setup completed successfully")
@@ -151,4 +157,3 @@ if __name__ == '__main__':
         print(f"Error during setup: {e}")
         print(f"Setup config: {setup_config}")
         sys.exit(1)
-
