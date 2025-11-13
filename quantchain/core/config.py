@@ -1,4 +1,4 @@
-"""Configuration system for QuantChain."""
+﻿"""Configuration system for QuantChain."""
 
 import copy
 import json
@@ -248,3 +248,22 @@ def reload_config(config_file: Optional[str] = None) -> QuantChainConfig:
     global _config_instance
     _config_instance = QuantChainConfig(config_file)
     return _config_instance
+
+
+# Add Config alias for backward compatibility
+Config = QuantChainConfig
+
+# Convenience functions
+def from_file(config_file: str) -> QuantChainConfig:
+    """Create config instance from file."""
+    return QuantChainConfig(config_file)
+
+def from_dict(config_dict: Dict[str, Any]) -> QuantChainConfig:
+    """Create config instance from dictionary."""
+    config = QuantChainConfig()
+    config._deep_merge(config._config, config_dict)
+    return config
+
+def from_env() -> QuantChainConfig:
+    """Create config instance from environment variables."""
+    return QuantChainConfig()
