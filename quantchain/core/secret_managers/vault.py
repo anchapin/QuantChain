@@ -7,10 +7,9 @@ from typing import Any, Dict, Optional, Union
 
 try:
     import hvac
-except ImportError as e:
-    raise ImportError(
-        "hvac library is required for Vault support. Install with: pip install hvac"
-    ) from e
+    HVAC_AVAILABLE = True
+except ImportError:
+    HVAC_AVAILABLE = False
 
 from .base import SecretManager
 
@@ -39,6 +38,10 @@ class VaultSecretManager(SecretManager):
             mount_point: Vault mount point for secrets (default: 'secret')
             **kwargs: Additional hvac.Client parameters
         """
+        if not HVAC_AVAILABLE:
+            raise ImportError(
+                "hvac library is required for Vault support. Install with: pip install hvac"
+            )
         self.url = url or os.getenv("VAULT_ADDR")
         self.token = token or os.getenv("VAULT_TOKEN")
         self.namespace = namespace

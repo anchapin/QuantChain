@@ -8,11 +8,9 @@ from typing import Any, Dict, Optional, Union
 try:
     from google.api_core import exceptions as gcp_exceptions
     from google.cloud import secretmanager
-except ImportError as e:
-    raise ImportError(
-        "google-cloud-secret-manager library is required for GCP Secret Manager support. "
-        "Install with: pip install google-cloud-secret-manager"
-    ) from e
+    GCP_AVAILABLE = True
+except ImportError:
+    GCP_AVAILABLE = False
 
 from .base import SecretManager
 
@@ -37,6 +35,12 @@ class GCPSecretManager(SecretManager):
             service_account_key: Service account key as dict (overrides credentials_path)
             **kwargs: Additional SecretManagerServiceClient parameters
         """
+        if not GCP_AVAILABLE:
+            raise ImportError(
+                "google-cloud-secret-manager library is required for GCP Secret Manager support. "
+                "Install with: pip install google-cloud-secret-manager"
+            )
+        
         self.project_id = project_id or os.getenv("GCP_PROJECT")
 
         if not self.project_id:

@@ -8,8 +8,16 @@ import unittest.mock
 
 import pytest
 
+# Mock hvac module before import
+mock_hvac = unittest.mock.MagicMock()
+sys.modules['hvac'] = mock_hvac
+
 # Now import the vault module
 from quantchain.core.secret_managers.vault import VaultSecretManager
+
+# Mock HVAC_AVAILABLE variable
+import quantchain.core.secret_managers.vault as vault_module
+vault_module.HVAC_AVAILABLE = True
 
 
 # Create complete mock hierarchy
@@ -77,9 +85,11 @@ def with_mock_client(
 class TestVaultSecretManager:
     """Test Vault Secret Manager implementation."""
 
-    def test_init_with_explicit_values(self) -> None:
+    @unittest.mock.patch('quantchain.core.secret_managers.vault.hvac.Client')
+    def test_init_with_explicit_values(self, mock_client_class) -> None:
         """Test initialization with explicit values."""
         mock_client = MockHvacClient(is_authenticated=True)
+        mock_client_class.return_value = mock_client
 
         manager = VaultSecretManager(
             url="https://vault.example.com",

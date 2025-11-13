@@ -21,18 +21,6 @@ from quantchain.backtesting.engine import BacktestConfig, BacktestResult, Metric
 
 
 class TestBacktestingPyConfig:
-
-from quantchain.backtesting.backtestingpy_engine import (
-    BacktestingPyConfig,
-    BacktestingPyEngine,
-    BacktestingPyError,
-    ConversionError,
-    StrategyAdapter,
-)
-from quantchain.backtesting.engine import BacktestConfig, BacktestResult, MetricsResult
-
-
-class TestBacktestingPyConfig:
     """Test BacktestingPyConfig dataclass."""
 
     def test_default_config(self):

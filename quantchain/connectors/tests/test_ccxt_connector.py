@@ -17,8 +17,8 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
-from ccxt_connector import CCXTDataConnector
-from core.exceptions import (
+from ..ccxt_connector import CCXTDataConnector
+from ..core.exceptions import (
     AuthenticationError,
     DataSourceError,
     RateLimitError,
