@@ -85,7 +85,7 @@ def with_mock_client(
 class TestVaultSecretManager:
     """Test Vault Secret Manager implementation."""
 
-    @unittest.mock.patch('quantchain.core.secret_managers.vault.hvac.Client')
+    @unittest.mock.patch('hvac.Client')
     def test_init_with_explicit_values(self, mock_client_class) -> None:
         """Test initialization with explicit values."""
         mock_client = MockHvacClient(is_authenticated=True)
