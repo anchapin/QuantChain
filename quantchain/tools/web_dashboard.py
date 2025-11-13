@@ -985,23 +985,27 @@ def main() -> None:
     # Create dashboard (variable unused but kept for future use)
     create_dashboard(config)
 
-    # For direct execution, we run Streamlit
-    if __name__ == "__main__":
-        import os
-        import subprocess
+    # Run Streamlit
+    _run_streamlit(config)
 
-        script_path = os.path.abspath(__file__)
-        subprocess.run(
-            [
-                "streamlit",
-                "run",
-                script_path,
-                "--server.port",
-                str(config.port),
-                "--server.address",
-                config.host,
-            ]
-        )
+
+def _run_streamlit(config) -> None:
+    """Run Streamlit with the given configuration."""
+    import os
+    import subprocess
+
+    script_path = os.path.abspath(__file__)
+    subprocess.run(
+        [
+            "streamlit",
+            "run",
+            script_path,
+            "--server.port",
+            str(config.port),
+            "--server.address",
+            config.host,
+        ]
+    )
 
 
 if __name__ == "__main__":

@@ -8,6 +8,9 @@ import unittest.mock
 
 import pytest
 
+# Now import the vault module
+from quantchain.core.secret_managers.vault import VaultSecretManager
+
 
 # Create complete mock hierarchy
 class MockKVv2:
@@ -41,9 +44,6 @@ mock_hvac_module.Client = MockHvacClient
 
 # Add mock to sys.modules before importing vault module
 sys.modules["hvac"] = mock_hvac_module
-
-# Now import the vault module
-from quantchain.core.secret_managers.vault import VaultSecretManager
 
 _VAULT_AVAILABLE = True
 

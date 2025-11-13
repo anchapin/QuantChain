@@ -257,7 +257,9 @@ class PatternRecognizer:
                 entry_price=ohlcv.closes[-1] if ohlcv.closes else None,
                 stop_loss=None,
                 take_profit=[],
-                reasoning=f"Analysis completed without visual data due to error: {str(e)}",
+                reasoning=(
+                    f"Analysis completed without visual data due to error: {str(e)}"
+                ),
                 confidence=40.0,
             )
 
@@ -469,7 +471,9 @@ class ChartReaderAgent:
             }
 
         # Analyze sentiments across timeframes
-        buy_signals = sum(1 for a in analyses.values() if a.recommended_action == "BUY")
+        buy_signals = sum(
+            1 for a in analyses.values() if a.recommended_action == "BUY"
+        )
         sell_signals = sum(
             1 for a in analyses.values() if a.recommended_action == "SELL"
         )
@@ -492,14 +496,20 @@ class ChartReaderAgent:
         reasoning_parts = []
         for tf, analysis in analyses.items():
             reasoning_parts.append(
-                f"{tf}: {analysis.overall_sentiment} ({analysis.confidence:.1f}% confidence)"
+                (
+                    f"{tf}: {analysis.overall_sentiment} "
+                    f"({analysis.confidence:.1f}% confidence)"
+                )
             )
 
         return {
             "symbol": symbol,
             "action": action,
             "confidence": avg_confidence,
-            "reasoning": f"Analysis across {len(analyses)} timeframes. {'; '.join(reasoning_parts)}",
+            "reasoning": (
+                f"Analysis across {len(analyses)} timeframes. "
+                f"{'; '.join(reasoning_parts)}"
+            ),
             "timeframe_analyses": analyses,
         }
 
