@@ -35,6 +35,21 @@ from quantchain.connectors import (
 logger = logging.getLogger(__name__)
 
 
+class FinRLAdapterError(Exception):
+    """Base exception for FinRL adapter errors."""
+    pass
+
+
+class FinRLConnectionError(FinRLAdapterError):
+    """Exception for connection-related errors in FinRL adapter."""
+    pass
+
+
+class FinRLDataError(FinRLAdapterError):
+    """Exception for data-related errors in FinRL adapter."""
+    pass
+
+
 def get_connector(
     connector_name: str, **kwargs: Any
 ) -> Union[AlpacaDataConnector, PolygonDataConnector, CCXTDataConnector]:

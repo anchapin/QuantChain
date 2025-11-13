@@ -35,25 +35,26 @@ class TestFinRLAdapterComprehensive:
         """Mock data connector with realistic data."""
         connector = Mock()
 
-        # Create realistic market data
+        # Create realistic market data with deterministic values
         dates = pd.date_range("2023-01-01", periods=100, freq="1D")
-        base_price = 100
-        price_changes = np.random.randn(100) * 2  # Daily price changes
-
-        prices = base_price + np.cumsum(price_changes)
-        volumes = np.random.randint(1000000, 5000000, 100)
+        
+        # Use deterministic price series
+        prices = [100 + i * 0.1 for i in range(100)]  # Simple increasing price
+        volumes = [1000000 + i * 10000 for i in range(100)]  # Increasing volume
 
         # Generate OHLC data from close prices
         data = pd.DataFrame(
             {
                 "timestamp": dates,
                 "open": prices,
-                "high": prices * 1.02,
-                "low": prices * 0.98,
+                "high": [p * 1.02 for p in prices],
+                "low": [p * 0.98 for p in prices],
                 "close": prices,
                 "volume": volumes,
             }
         )
+        # Set timestamp as index for proper pandas operations
+        data = data.set_index('timestamp')
 
         connector.get_historical_data.return_value = data
         return connector

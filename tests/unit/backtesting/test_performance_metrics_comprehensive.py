@@ -22,7 +22,7 @@ class TestPerformanceMetricsComprehensive:
         """Test initialization when QuantStats is available."""
         calculator = PerformanceMetrics()
         assert calculator is not None
-        assert hasattr(calculator, "calculate_performance_metrics")
+        assert hasattr(calculator, "calculate_all_metrics")
 
     def test_init_without_quantstats(self):
         """Test initialization when QuantStats is not available."""
@@ -35,7 +35,7 @@ class TestPerformanceMetricsComprehensive:
         try:
             calculator = PerformanceMetrics()
             assert calculator is not None
-            assert hasattr(calculator, "calculate_performance_metrics")
+            assert hasattr(calculator, "calculate_all_metrics")
         finally:
             # Restore original value
             pm.QUANTSTATS_AVAILABLE = original_quantstats
@@ -47,24 +47,28 @@ class TestPerformanceMetricsComprehensive:
         # Create minimal but valid data
         dates = pd.date_range("2024-01-01", periods=10, freq="D")
         equity = np.array([100, 105, 102, 108, 110, 107, 112, 115, 113, 118])
+        equity_series = pd.Series(equity, index=dates)
 
-        metrics = calculator.calculate_performance_metrics(dates, equity)
-
-        assert metrics is not None
-        assert isinstance(metrics, dict)
-        # Check for basic expected keys
-        assert "total_return" in metrics
-        assert "annualized_return" in metrics
-        assert "volatility" in metrics
-        assert "sharpe_ratio" in metrics
-        assert metrics["total_return"] > 0
+        # Test individual methods
+        total_return = calculator.calculate_total_return(equity_series)
+        returns = calculator.calculate_returns(equity_series)
+        annual_return = calculator.calculate_annualized_return(returns)
+        volatility = calculator.calculate_volatility(returns)
+        sharpe = calculator.calculate_sharpe_ratio(returns)
+        
+        # Test basic calculations work
+        assert total_return > 0
+        assert isinstance(returns, pd.Series)
+        assert isinstance(annual_return, float)
+        assert isinstance(volatility, float)
+        assert isinstance(sharpe, float)
 
     def test_calculate_performance_metrics_empty_data(self):
         """Test metrics calculation with empty data."""
         calculator = PerformanceMetrics()
 
         with pytest.raises(InsufficientDataError):
-            calculator.calculate_performance_metrics([], [])
+            calculator.calculate_returns(pd.Series([]))
 
     def test_calculate_performance_metrics_insufficient_data(self):
         """Test metrics calculation with insufficient data (less than 2 points)."""

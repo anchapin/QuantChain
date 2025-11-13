@@ -78,15 +78,15 @@ class BacktestConfig:
 
 @dataclass
 class MetricsResult:
-    """Performance metrics from backtest."""
-
-    total_return: float
-    annualized_return: float
-    sharpe_ratio: float
-    sortino_ratio: float
-    calmar_ratio: float
-    max_drawdown: float
-    max_drawdown_duration: int
+    """Metrics calculated from backtest results."""
+    
+    total_return: float = 0.0
+    annualized_return: float = 0.0
+    sharpe_ratio: float = 0.0
+    sortino_ratio: float = 0.0
+    calmar_ratio: float = 0.0
+    max_drawdown: float = 0.0
+    max_drawdown_duration: int = 0
     max_drawdown_start: Optional[datetime] = None
     max_drawdown_end: Optional[datetime] = None
     volatility: float = 0.0
@@ -99,6 +99,7 @@ class MetricsResult:
     avg_loss: float = 0.0
     best_trade: float = 0.0
     worst_trade: float = 0.0
+    avg_trade: float = 0.0
     avg_trade_duration: float = 0.0
     avg_trade_duration_days: float = 0.0
     sharpe_ratio_qstats: float = 0.0
@@ -142,6 +143,34 @@ class BacktestResult:
             raise ValueError("metrics must be a MetricsResult instance")
         if not isinstance(self.config, BacktestConfig):
             raise ValueError("config must be a BacktestConfig instance")
+
+    @property
+    def initial_cash(self) -> float:
+        """Get initial cash from config."""
+        return self.config.initial_cash
+
+    @property
+    def total_trades(self) -> int:
+        """Get total number of trades."""
+        return len(self.trade_log) if self.trade_log is not None else 0
+
+    @property
+    def winning_trades(self) -> int:
+        """Get number of winning trades."""
+        if self.trade_log is None or len(self.trade_log) == 0:
+            return 0
+        if 'pnl' in self.trade_log.columns:
+            return (self.trade_log['pnl'] > 0).sum()
+        return 0
+
+    @property
+    def losing_trades(self) -> int:
+        """Get number of losing trades."""
+        if self.trade_log is None or len(self.trade_log) == 0:
+            return 0
+        if 'pnl' in self.trade_log.columns:
+            return (self.trade_log['pnl'] < 0).sum()
+        return self.total_trades - self.winning_trades
 
 
 class ConfigurationError(Exception):
@@ -197,7 +226,9 @@ def validate_ohlcv_data(data: pd.DataFrame) -> None:
     if (data["volume"] < 0).any():
         raise DataValidationError("Volume cannot be negative")
 
-    if (data[["open", "high", "low", "close"]] <= 0).any().any():
+    # Check for non-positive prices
+    price_cols = ["open", "high", "low", "close"]
+    if (data[price_cols] <= 0).any().any():
         raise DataValidationError("Prices must be positive")
 
 
@@ -217,11 +248,26 @@ def filter_data_by_date_range(
     """
     filtered_data = data.copy()
 
+    # Handle datetime compatibility with pandas 2.1+
     if start_date:
-        filtered_data = filtered_data[filtered_data.index >= start_date]
+        # Convert to pandas Timestamp for proper comparison
+        if not isinstance(start_date, pd.Timestamp):
+            start_date = pd.Timestamp(start_date)
+        # Normalize timezone: if data has no timezone, strip from start_date
+        if filtered_data.index.tz is None and start_date.tz is not None:
+            start_date = start_date.tz_localize(None)
+        # Use .loc for safer indexing
+        filtered_data = filtered_data.loc[filtered_data.index >= start_date]
 
     if end_date:
-        filtered_data = filtered_data[filtered_data.index <= end_date]
+        # Convert to pandas Timestamp for proper comparison
+        if not isinstance(end_date, pd.Timestamp):
+            end_date = pd.Timestamp(end_date)
+        # Normalize timezone: if data has no timezone, strip from end_date
+        if filtered_data.index.tz is None and end_date.tz is not None:
+            end_date = end_date.tz_localize(None)
+        # Use .loc for safer indexing
+        filtered_data = filtered_data.loc[filtered_data.index <= end_date]
 
     return filtered_data
 
@@ -247,7 +293,14 @@ def calculate_basic_statistics(
 
     # Calculate annualized return
     if len(equity_curve) > 1:
-        time_span_days = (equity_curve.index[-1] - equity_curve.index[0]).days
+        time_span = equity_curve.index[-1] - equity_curve.index[0]
+        # Handle different pandas versions - time_span may be Timedelta or datetime
+        if hasattr(time_span, 'days'):
+            time_span_days = time_span.days
+        else:
+            # For pandas 2.1+, convert to Timedelta if needed
+            time_span_days = pd.Timedelta(time_span).days
+        
         if time_span_days > 0:
             years = time_span_days / 365.25
             annualized_return = (final_equity / initial_cash) ** (1 / years) - 1

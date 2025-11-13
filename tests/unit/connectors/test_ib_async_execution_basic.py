@@ -1,0 +1,48 @@
+"""Basic tests for IB async execution connector."""
+
+import pytest
+
+try:
+    from quantchain.connectors.ib_async_execution import (
+        IBExecutionConnector,
+        IB_ASYNC_AVAILABLE,
+    )
+    IB_EXECUTION_AVAILABLE = True
+except ImportError as e:
+    IB_EXECUTION_AVAILABLE = False
+    print(f"Import error: {e}")
+
+pytestmark = pytest.mark.skipif(
+    not IB_EXECUTION_AVAILABLE, reason="IB execution connector not available"
+)
+
+
+@pytest.mark.unit
+class TestIBExecutionBasic:
+    """Basic tests for IB execution connector."""
+
+    def test_ib_async_availability_constant(self):
+        """Test IB_ASYNC_AVAILABLE constant is defined."""
+        assert isinstance(IB_ASYNC_AVAILABLE, bool)
+
+    def test_class_import(self):
+        """Test IBExecutionConnector class can be imported."""
+        assert IBExecutionConnector is not None
+
+    def test_class_instantiation_with_mock(self):
+        """Test class can be instantiated with mocked IB."""
+        from unittest.mock import Mock, patch
+        
+        with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib:
+            mock_ib.return_value = Mock()
+            connector = IBExecutionConnector(
+                host="127.0.0.1",
+                port=7497,
+                client_id=1,
+                timeout=10,
+            )
+            
+            assert connector.host == "127.0.0.1"
+            assert connector.port == 7497
+            assert connector.client_id == 1
+            assert connector.timeout == 10

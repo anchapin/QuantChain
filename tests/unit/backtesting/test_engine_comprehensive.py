@@ -217,7 +217,7 @@ class TestBacktestResult:
     def test_backtest_result_with_minimum_values(self) -> None:
         """Test creating a BacktestResult with minimum values."""
         from quantchain.backtesting.engine import BacktestConfig, MetricsResult
-        
+
         start = datetime(2024, 1, 1, tzinfo=timezone.utc)
         end = datetime(2024, 1, 31, tzinfo=timezone.utc)
         equity_curve = pd.Series([100000], name="equity")
@@ -233,7 +233,7 @@ class TestBacktestResult:
             max_drawdown=0.0,
             max_drawdown_duration=0.0
         )
-        
+
         result = BacktestResult(
             equity_curve=equity_curve,
             trade_log=pd.DataFrame(),
@@ -338,7 +338,7 @@ class TestBacktestEngine:
         minute_data.index = pd.date_range("2024-01-01", periods=60, freq="1min")
 
         minute_config = BacktestConfig(
-            data_frequency="1min",
+            data_frequency="1m",
             initial_cash=200000.0,
             commission_rate=0.001,
             slippage_model="volume_impact",

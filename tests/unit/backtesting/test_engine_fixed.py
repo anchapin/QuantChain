@@ -413,14 +413,15 @@ class TestValidationFunctions:
         )
 
         # Filter with both start and end
-        start = datetime(2024, 1, 3, tzinfo=timezone.utc)
-        end = datetime(2024, 1, 7, tzinfo=timezone.utc)
+        start = datetime(2024, 1, 3)  # No timezone to match DataFrame index
+        end = datetime(2024, 1, 7)  # No timezone to match DataFrame index
 
         filtered = filter_data_by_date_range(data, start, end)
 
         assert len(filtered) == 5  # Days 3-7 inclusive
-        assert filtered.index[0] == start
-        assert filtered.index[-1] == end
+        # Compare with pandas Timestamp for proper comparison
+        assert filtered.index[0] == pd.Timestamp(start)
+        assert filtered.index[-1] == pd.Timestamp(end)
 
         # Filter with only start
         filtered = filter_data_by_date_range(data, start, None)
