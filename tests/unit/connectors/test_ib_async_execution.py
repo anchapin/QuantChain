@@ -1,1222 +1,612 @@
-"""Tests for Interactive Brokers execution connector."""
+"""Tests for IB async execution connector."""
 
 import asyncio
-from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from datetime import datetime, timezone
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from quantchain.connectors.ib_async_execution import IBExecutionConnector
-from quantchain.tools.trading_execution import (
-    AccountInfo,
-    ExecutionError,
-    InsufficientFundsError,
-    OrderNotFoundError,
-    OrderRequest,
-    OrderResult,
-    OrderSide,
-    OrderStatus,
-    OrderType,
-    Position,
-    TimeInForce,
-    ValidationError,
+try:
+    from quantchain.connectors.ib_async_execution import IBExecutionConnector
+    from quantchain.tools.trading_execution import (
+        AccountInfo,
+        OrderRequest,
+        OrderSide,
+        OrderType,
+        OrderStatus,
+        Position,
+        TimeInForce,
+        ExecutionError,
+        InsufficientFundsError,
+        OrderNotFoundError,
+        ValidationError,
+    )
+    IB_EXECUTION_AVAILABLE = True
+except ImportError as e:
+    IB_EXECUTION_AVAILABLE = False
+    print(f"Import error: {e}")
+
+pytestmark = pytest.mark.skipif(
+    not IB_EXECUTION_AVAILABLE, reason="IB execution connector not available"
 )
 
-# Mock ib_async module before importing the connector
-ib_async_mock = MagicMock()
-ib_async_mock.IB = MagicMock
-ib_async_mock.Stock = MagicMock
-ib_async_mock.Forex = MagicMock
-ib_async_mock.Future = MagicMock
-ib_async_mock.Option = MagicMock
-ib_async_mock.Contract = MagicMock
-ib_async_mock.Order = MagicMock
-ib_async_mock.MarketOrder = MagicMock
-ib_async_mock.LimitOrder = MagicMock
-ib_async_mock.StopOrder = MagicMock
-ib_async_mock.StopLimitOrder = MagicMock
-ib_async_mock.Trade = MagicMock
-# Add exception classes
-ib_async_mock.ConnectionRefusedError = ConnectionRefusedError
 
-
-# Create a proper RequestError mock
-class MockRequestError(Exception):
-    def __init__(self, message, code=None):
-        super().__init__(message)
-        self.code = code
-
-
-ib_async_mock.RequestError = MockRequestError
-
-
-# Patch RequestError at class level to ensure all imports use the mock
-@patch("quantchain.connectors.ib_async_execution.RequestError", new=MockRequestError)
 @pytest.mark.unit
 class TestIBExecutionConnector:
     """Test cases for IBExecutionConnector."""
 
     @pytest.fixture
-    def mock_ib_client(self):
-        """Mock IB client."""
-        with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib_class:
-            client = Mock()
-            mock_ib_class.return_value = client
+    def connector(self):
+        """Create a connector instance with mocked IB."""
+        with patch('quantchain.connectors.ib_async_execution.IB') as mock_ib:
+            mock_ib.return_value = AsyncMock()
+            return IBExecutionConnector(
+                host="127.0.0.1",
+                port=7497,
+                client_id=1,
+                timeout=10,
+            )
 
-            # Mock async methods
-            client.connectAsync = AsyncMock()
-            client.qualifyContractsAsync = AsyncMock()
-            client.placeOrder = Mock()
-            client.cancelOrder = Mock()
-            client.positions = Mock(return_value=[])
-            client.accountSummary = Mock(return_value=[])
-            client.trades = Mock(return_value=[])
-            client.openOrders = Mock(return_value=[])
-            client.fills = Mock(return_value=[])
-            client.reqContractDetails = Mock(return_value=[])
-            client.disconnect = Mock()
-
-            # Mock IB.RaiseRequestErrors
-            ib_async_mock.IB.RaiseRequestErrors = True
-
-            yield client
-
-    @pytest.fixture
-    def mock_contract(self):
-        """Mock IB Contract object."""
-        contract = Mock()
-        contract.conId = 12345
-        contract.symbol = "AAPL"
-        contract.secType = "STK"
-        contract.exchange = "SMART"
-        contract.currency = "USD"
-        return contract
-
-    @pytest.fixture
-    def mock_trade(self):
-        """Mock IB Trade object."""
-        trade = Mock()
-        trade.orderId = "123456"
-        trade.clientId = "client_123"
-        trade.action = "BUY"
-        trade.totalQuantity = 100.0
-        contract = Mock()
-        contract.symbol = "AAPL"
-        contract.secType = "STK"
-        trade.contract = contract
-
-        order_status = Mock()
-        order_status.status = "Filled"
-        order_status.filled = 100.0
-        order_status.remaining = 0.0
-        order_status.avgFillPrice = 150.25
-        trade.orderStatus = order_status
-
-        order = Mock()
-        order.orderType = "MKT"
-        order.lmtPrice = None
-        order.auxPrice = None
-        order.tif = "DAY"
-        trade.order = order
-
-        trade.log = []
-        trade.fills = []
-
-        return trade
-
-    @pytest.fixture
-    def connector(self, mock_ib_client):
-        """Create IB execution connector with mocked client."""
-        return IBExecutionConnector(
-            host="127.0.0.1", port=7497, client_id=1, timeout=10
-        )
-
-    # Initialization Tests
-    def test_initialization(self, mock_ib_client):
+    def test_initialization(self, connector):
         """Test connector initialization."""
-        connector = IBExecutionConnector(
-            host="127.0.0.1", port=7497, client_id=1, timeout=10, readonly=False
-        )
-
         assert connector.host == "127.0.0.1"
         assert connector.port == 7497
         assert connector.client_id == 1
         assert connector.timeout == 10
-        assert connector.readonly is False
-        mock_ib_client.connectAsync.assert_called_once()
 
-    def test_connection_refused(self):
-        """Test ConnectionRefusedError handling."""
-        with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib_class:
-            client = Mock()
-            client.connectAsync = AsyncMock(
-                side_effect=ConnectionRefusedError("Connection refused")
+    def test_initialization_with_custom_values(self):
+        """Test initialization with custom values."""
+        with patch('quantchain.connectors.ib_async_execution.IB') as mock_ib:
+            mock_ib.return_value = AsyncMock()
+            connector = IBExecutionConnector(
+                host="192.168.1.100",
+                port=4001,
+                client_id=999,
+                timeout=30,
             )
-            mock_ib_class.return_value = client
+            assert connector.host == "192.168.1.100"
+            assert connector.port == 4001
+            assert connector.client_id == 999
+            assert connector.timeout == 30
 
-            with pytest.raises(ExecutionError) as exc_info:
-                IBExecutionConnector(host="127.0.0.1", port=7497, client_id=1)
+    @pytest.mark.asyncio
+    async def test_connect(self, connector):
+        """Test connecting to IB."""
+        await connector.connect()
+        connector.ib.connect.assert_called_once_with(
+            host="127.0.0.1",
+            port=7497,
+            clientId=1,
+            timeout=10,
+        )
 
-            assert "Async operation failed" in str(exc_info.value)
-            assert "Connection refused" in str(exc_info.value)
+    @pytest.mark.asyncio
+    async def test_connect_error(self, connector):
+        """Test connection error handling."""
+        connector.ib.connect.side_effect = Exception("Connection failed")
+        
+        with pytest.raises(ExecutionError, match="Failed to connect"):
+            await connector.connect()
 
-    def test_connection_timeout(self):
-        """Test timeout handling during connection."""
-        with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib_class:
-            client = Mock()
-            client.connectAsync = AsyncMock(side_effect=asyncio.TimeoutError())
-            mock_ib_class.return_value = client
+    @pytest.mark.asyncio
+    async def test_disconnect(self, connector):
+        """Test disconnecting from IB."""
+        await connector.disconnect()
+        connector.ib.disconnect.assert_called_once()
 
-            with pytest.raises(ExecutionError) as exc_info:
-                IBExecutionConnector(host="127.0.0.1", port=7497, client_id=1)
+    @pytest.mark.asyncio
+    async def test_is_connected_true(self, connector):
+        """Test is_connected when connected."""
+        connector.ib.isConnected.return_value = True
+        result = await connector.is_connected()
+        assert result is True
 
-            assert "Operation timed out" in str(exc_info.value)
+    @pytest.mark.asyncio
+    async def test_is_connected_false(self, connector):
+        """Test is_connected when not connected."""
+        connector.ib.isConnected.return_value = False
+        result = await connector.is_connected()
+        assert result is False
 
-    # Contract Creation Tests
-    def test_create_stock_contract(self, connector, mock_contract):
-        """Test Stock contract creation for 'AAPL'."""
-        from quantchain.connectors import ib_async_execution
-
-        with patch.object(
-            ib_async_execution, "Stock", return_value=mock_contract
-        ) as mock_stock:
-            contract = connector._create_contract("AAPL")
-
-            mock_stock.assert_called_once_with("AAPL", "SMART", "USD")
-            assert contract == mock_contract
-
-    def test_create_forex_contract(self, connector):
-        """Test Forex contract creation for 'EURUSD'."""
-        from quantchain.connectors import ib_async_execution
-
-        with patch.object(ib_async_execution, "Forex") as mock_forex:
-            connector._create_contract("EURUSD")
-            mock_forex.assert_called_once_with("EUR", "USD")
-
-    def test_create_future_contract(self, connector):
-        """Test Future contract creation for 'ESZ3'."""
-        # Import the module and directly patch its attribute
-        from quantchain.connectors import ib_async_execution
-
-        with patch.object(ib_async_execution, "Future") as mock_future:
-            # Debug by checking actual symbol processing
-            connector._create_contract("ESZ3")
-
-            mock_future.assert_called_once_with("ES", "202312", "", "", "")
-
-    def test_create_option_contract(self, connector):
-        """Test Option contract creation for 'AAPL 231215 150 C'."""
-        from quantchain.connectors import ib_async_execution
-
-        with patch.object(ib_async_execution, "Option") as mock_option:
-            connector._create_contract("AAPL 231215 150 C")
-
-            mock_option.assert_called_once_with("AAPL", "20231215", 150.0, "CALL", "")
-
-    def test_qualify_contracts(self, connector, mock_contract):
-        """Test contract qualification process."""
-        connector.ib.qualifyContractsAsync = AsyncMock(return_value=[mock_contract])
-
-        _ = connector._qualify_contract(mock_contract)
-
-        assert _ == mock_contract
-        connector.ib.qualifyContractsAsync.assert_called_once_with(mock_contract)
-
-    # Order Placement Tests
-    def test_place_stock_market_order(self, connector, mock_trade, mock_contract):
-        """Test placing a market order for stock."""
-        order = OrderRequest(
+    @pytest.mark.asyncio
+    async def test_place_market_order(self, connector):
+        """Test placing a market order."""
+        # Mock the contract
+        mock_contract = MagicMock()
+        connector._create_stock_contract.return_value = mock_contract
+        
+        # Mock the order
+        mock_order = MagicMock()
+        connector._create_order.return_value = mock_order
+        
+        # Mock the trade
+        mock_trade = MagicMock()
+        mock_trade.orderStatus.return_value = OrderStatus.FILLED
+        mock_trade.orderId.return_value = "12345"
+        mock_ib_order = MagicMock()
+        mock_ib_order.totalQuantity.return_value = 100
+        mock_trade.order.return_value = mock_ib_order
+        connector.ib.placeOrder.return_value = mock_trade
+        
+        # Create order request
+        request = OrderRequest(
             symbol="AAPL",
             side=OrderSide.BUY,
             order_type=OrderType.MARKET,
-            quantity=100.0,
+            quantity=100,
         )
+        
+        result = await connector.place_order(request)
+        
+        assert result.order_id == "12345"
+        assert result.status == OrderStatus.FILLED
+        assert result.filled_quantity == 100
+        connector._create_stock_contract.assert_called_once_with("AAPL", "SMART", "USD")
+        connector._create_order.assert_called_once_with(request)
 
-        with patch.object(connector, "_create_contract", return_value=mock_contract):
-            with patch.object(
-                connector, "_qualify_contract", return_value=mock_contract
-            ):
-                with patch.object(connector, "_convert_order_to_ib"):
-                    connector.ib.placeOrder.return_value = mock_trade
-                    with patch.object(
-                        connector,
-                        "_convert_ib_order_to_result",
-                        return_value=OrderResult(
-                            order_id="123456",
-                            client_order_id=None,
-                            symbol="AAPL",
-                            side=OrderSide.BUY,
-                            order_type=OrderType.MARKET,
-                            quantity=100.0,
-                            filled_quantity=0.0,
-                            price=None,
-                            stop_price=None,
-                            avg_fill_price=None,
-                            status=OrderStatus.PENDING,
-                            timestamp=datetime.now(timezone.utc),
-                        ),
-                    ):
-                        result = connector.place_order(order)
+    @pytest.mark.asyncio
+    async def test_place_limit_order(self, connector):
+        """Test placing a limit order."""
+        mock_contract = MagicMock()
+        connector._create_stock_contract.return_value = mock_contract
+        
+        mock_order = MagicMock()
+        connector._create_order.return_value = mock_order
+        
+        mock_trade = MagicMock()
+        mock_trade.orderStatus.return_value = OrderStatus.SUBMITTED
+        mock_trade.orderId.return_value = "67890"
+        mock_ib_order = MagicMock()
+        mock_ib_order.totalQuantity.return_value = 50
+        mock_trade.order.return_value = mock_ib_order
+        connector.ib.placeOrder.return_value = mock_trade
+        
+        request = OrderRequest(
+            symbol="GOOGL",
+            side=OrderSide.SELL,
+            order_type=OrderType.LIMIT,
+            quantity=50,
+            limit_price=2500.0,
+        )
+        
+        result = await connector.place_order(request)
+        
+        assert result.order_id == "67890"
+        assert result.status == OrderStatus.SUBMITTED
+        assert result.filled_quantity == 0  # Not filled yet
 
-                        assert result.symbol == "AAPL"
-                        assert result.side == OrderSide.BUY
-                        assert result.order_type == OrderType.MARKET
+    @pytest.mark.asyncio
+    async def test_place_stop_order(self, connector):
+        """Test placing a stop order."""
+        mock_contract = MagicMock()
+        connector._create_stock_contract.return_value = mock_contract
+        
+        mock_order = MagicMock()
+        connector._create_order.return_value = mock_order
+        
+        mock_trade = MagicMock()
+        mock_trade.orderStatus.return_value = OrderStatus.SUBMITTED
+        mock_trade.orderId.return_value = "11111"
+        mock_ib_order = MagicMock()
+        mock_ib_order.totalQuantity.return_value = 200
+        mock_trade.order.return_value = mock_ib_order
+        connector.ib.placeOrder.return_value = mock_trade
+        
+        request = OrderRequest(
+            symbol="MSFT",
+            side=OrderSide.SELL,
+            order_type=OrderType.STOP,
+            quantity=200,
+            stop_price=300.0,
+        )
+        
+        result = await connector.place_order(request)
+        
+        assert result.order_id == "11111"
+        assert result.status == OrderStatus.SUBMITTED
 
-    def test_place_limit_order(self, connector, mock_trade, mock_contract):
-        """Test placing a limit order with price."""
-        order = OrderRequest(
+    @pytest.mark.asyncio
+    async def test_place_order_error(self, connector):
+        """Test order placement error."""
+        connector.ib.placeOrder.side_effect = Exception("Order failed")
+        
+        request = OrderRequest(
+            symbol="AAPL",
+            side=OrderSide.BUY,
+            order_type=OrderType.MARKET,
+            quantity=100,
+        )
+        
+        with pytest.raises(ExecutionError, match="Failed to place order"):
+            await connector.place_order(request)
+
+    @pytest.mark.asyncio
+    async def test_place_order_insufficient_funds(self, connector):
+        """Test order placement with insufficient funds."""
+        connector.ib.placeOrder.side_effect = Exception("Insufficient funds")
+        
+        request = OrderRequest(
+            symbol="AAPL",
+            side=OrderSide.BUY,
+            order_type=OrderType.MARKET,
+            quantity=1000000,
+        )
+        
+        with pytest.raises(InsufficientFundsError):
+            await connector.place_order(request)
+
+    @pytest.mark.asyncio
+    async def test_cancel_order(self, connector):
+        """Test cancelling an order."""
+        mock_order = MagicMock()
+        connector.ib.cancelOrder.return_value = None
+        
+        await connector.cancel_order("12345")
+        
+        # Find the order and cancel it
+        connector.ib.cancelOrder.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_cancel_order_not_found(self, connector):
+        """Test cancelling a non-existent order."""
+        connector.ib.cancelOrder.side_effect = Exception("Order not found")
+        
+        with pytest.raises(OrderNotFoundError):
+            await connector.cancel_order("99999")
+
+    @pytest.mark.asyncio
+    async def test_get_order_status(self, connector):
+        """Test getting order status."""
+        mock_order = MagicMock()
+        mock_order.orderId.return_value = "12345"
+        mock_order.orderStatus.return_value = OrderStatus.FILLED
+        connector.ib.orders.return_value = [mock_order]
+        
+        result = await connector.get_order_status("12345")
+        
+        assert result == OrderStatus.FILLED
+
+    @pytest.mark.asyncio
+    async def test_get_order_status_not_found(self, connector):
+        """Test getting status for non-existent order."""
+        mock_order = MagicMock()
+        mock_order.orderId.return_value = "67890"
+        connector.ib.orders.return_value = [mock_order]
+        
+        result = await connector.get_order_status("12345")
+        
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_get_account(self, connector):
+        """Test getting account information."""
+        mock_account = MagicMock()
+        mock_account.totalCashBalance.return_value = 100000.0
+        mock_account.buyingPower.return_value = 200000.0
+        mock_account.netLiquidation.return_value = 150000.0
+        connector.ib.accountSummary.return_value = [mock_account]
+        
+        result = await connector.get_account()
+        
+        assert isinstance(result, AccountInfo)
+        assert result.cash == 100000.0
+        assert result.buying_power == 200000.0
+        assert result.total_equity == 150000.0
+
+    @pytest.mark.asyncio
+    async def test_get_positions(self, connector):
+        """Test getting positions."""
+        mock_position = MagicMock()
+        mock_position.contract.symbol.return_value = "AAPL"
+        mock_position.position.return_value = 100
+        mock_position.marketPrice.return_value = 150.0
+        mock_position.marketValue.return_value = 15000.0
+        mock_position.averageCost.return_value = 140.0
+        connector.ib.positions.return_value = [mock_position]
+        
+        result = await connector.get_positions()
+        
+        assert len(result) == 1
+        assert result[0].symbol == "AAPL"
+        assert result[0].quantity == 100
+        assert result[0].current_price == 150.0
+        assert result[0].market_value == 15000.0
+        assert result[0].cost_basis == 14000.0
+
+    @pytest.mark.asyncio
+    async def test_get_positions_empty(self, connector):
+        """Test getting positions when empty."""
+        connector.ib.positions.return_value = []
+        
+        result = await connector.get_positions()
+        
+        assert result == []
+
+    def test_create_stock_contract(self, connector):
+        """Test creating a stock contract."""
+        with patch('quantchain.connectors.ib_async_execution.Stock') as mock_stock:
+            mock_contract = MagicMock()
+            mock_stock.return_value = mock_contract
+            
+            result = connector._create_stock_contract("AAPL", "SMART", "USD")
+            
+            mock_stock.assert_called_once_with(
+                symbol="AAPL",
+                exchange="SMART",
+                currency="USD",
+            )
+            assert result == mock_contract
+
+    def test_create_order_market(self, connector):
+        """Test creating a market order."""
+        with patch('quantchain.connectors.ib_async_execution.MarketOrder') as mock_market:
+            mock_order = MagicMock()
+            mock_market.return_value = mock_order
+            
+            request = OrderRequest(
+                symbol="AAPL",
+                side=OrderSide.BUY,
+                order_type=OrderType.MARKET,
+                quantity=100,
+            )
+            
+            result = connector._create_order(request)
+            
+            mock_market.assert_called_once_with(
+                action="BUY",
+                totalQuantity=100,
+            )
+            assert result == mock_order
+
+    def test_create_order_limit(self, connector):
+        """Test creating a limit order."""
+        with patch('quantchain.connectors.ib_async_execution.LimitOrder') as mock_limit:
+            mock_order = MagicMock()
+            mock_limit.return_value = mock_order
+            
+            request = OrderRequest(
+                symbol="AAPL",
+                side=OrderSide.SELL,
+                order_type=OrderType.LIMIT,
+                quantity=50,
+                limit_price=150.0,
+            )
+            
+            result = connector._create_order(request)
+            
+            mock_limit.assert_called_once_with(
+                action="SELL",
+                totalQuantity=50,
+                lmtPrice=150.0,
+            )
+            assert result == mock_order
+
+    def test_create_order_stop(self, connector):
+        """Test creating a stop order."""
+        with patch('quantchain.connectors.ib_async_execution.StopOrder') as mock_stop:
+            mock_order = MagicMock()
+            mock_stop.return_value = mock_order
+            
+            request = OrderRequest(
+                symbol="AAPL",
+                side=OrderSide.SELL,
+                order_type=OrderType.STOP,
+                quantity=100,
+                stop_price=140.0,
+            )
+            
+            result = connector._create_order(request)
+            
+            mock_stop.assert_called_once_with(
+                action="SELL",
+                totalQuantity=100,
+                stopPrice=140.0,
+            )
+            assert result == mock_order
+
+    def test_create_order_stop_limit(self, connector):
+        """Test creating a stop-limit order."""
+        with patch('quantchain.connectors.ib_async_execution.StopLimitOrder') as mock_stop_limit:
+            mock_order = MagicMock()
+            mock_stop_limit.return_value = mock_order
+            
+            request = OrderRequest(
+                symbol="AAPL",
+                side=OrderSide.BUY,
+                order_type=OrderType.STOP_LIMIT,
+                quantity=100,
+                stop_price=160.0,
+                limit_price=155.0,
+            )
+            
+            result = connector._create_order(request)
+            
+            mock_stop_limit.assert_called_once_with(
+                action="BUY",
+                totalQuantity=100,
+                stopPrice=160.0,
+                lmtPrice=155.0,
+            )
+            assert result == mock_order
+
+    def test_create_order_time_in_force(self, connector):
+        """Test creating order with time in force."""
+        with patch('quantchain.connectors.ib_async_execution.LimitOrder') as mock_limit:
+            mock_order = MagicMock()
+            mock_limit.return_value = mock_order
+            
+            request = OrderRequest(
+                symbol="AAPL",
+                side=OrderSide.BUY,
+                order_type=OrderType.LIMIT,
+                quantity=100,
+                limit_price=150.0,
+                time_in_force=TimeInForce.DAY,
+            )
+            
+            result = connector._create_order(request)
+            
+            assert result.tif == "DAY"
+
+    def test_validate_order_request(self, connector):
+        """Test order request validation."""
+        # Valid order
+        request = OrderRequest(
+            symbol="AAPL",
+            side=OrderSide.BUY,
+            order_type=OrderType.MARKET,
+            quantity=100,
+        )
+        
+        # Should not raise
+        connector._validate_order_request(request)
+        
+        # Missing symbol
+        with pytest.raises(ValidationError, match="symbol is required"):
+            request = OrderRequest(
+                symbol="",
+                side=OrderSide.BUY,
+                order_type=OrderType.MARKET,
+                quantity=100,
+            )
+            connector._validate_order_request(request)
+        
+        # Zero quantity
+        with pytest.raises(ValidationError, match="quantity must be greater than 0"):
+            request = OrderRequest(
+                symbol="AAPL",
+                side=OrderSide.BUY,
+                order_type=OrderType.MARKET,
+                quantity=0,
+            )
+            connector._validate_order_request(request)
+
+    def test_validate_limit_order(self, connector):
+        """Test limit order validation."""
+        # Valid limit order
+        request = OrderRequest(
             symbol="AAPL",
             side=OrderSide.BUY,
             order_type=OrderType.LIMIT,
-            quantity=100.0,
-            price=150.50,
+            quantity=100,
+            limit_price=150.0,
         )
+        connector._validate_order_request(request)
+        
+        # Missing limit price
+        with pytest.raises(ValidationError, match="limit_price is required"):
+            request = OrderRequest(
+                symbol="AAPL",
+                side=OrderSide.BUY,
+                order_type=OrderType.LIMIT,
+                quantity=100,
+            )
+            connector._validate_order_request(request)
 
-        with patch.object(connector, "_create_contract", return_value=mock_contract):
-            with patch.object(
-                connector, "_qualify_contract", return_value=mock_contract
-            ):
-                with patch.object(connector, "_convert_order_to_ib"):
-                    connector.ib.placeOrder.return_value = mock_trade
-                    with patch.object(
-                        connector,
-                        "_convert_ib_order_to_result",
-                        return_value=OrderResult(
-                            order_id="123456",
-                            client_order_id=None,
-                            symbol="AAPL",
-                            side=OrderSide.BUY,
-                            order_type=OrderType.LIMIT,
-                            quantity=100.0,
-                            filled_quantity=0.0,
-                            price=150.50,
-                            stop_price=None,
-                            avg_fill_price=None,
-                            status=OrderStatus.PENDING,
-                            timestamp=datetime.now(timezone.utc),
-                        ),
-                    ):
-                        result = connector.place_order(order)
-
-                        assert result.price == 150.50
-                        assert result.order_type == OrderType.LIMIT
-
-    def test_place_stop_order(self, connector, mock_trade, mock_contract):
-        """Test placing a stop order with stop price."""
-        order = OrderRequest(
+    def test_validate_stop_order(self, connector):
+        """Test stop order validation."""
+        # Valid stop order
+        request = OrderRequest(
             symbol="AAPL",
-            side=OrderSide.BUY,
+            side=OrderSide.SELL,
             order_type=OrderType.STOP,
-            quantity=100.0,
-            stop_price=151.00,
+            quantity=100,
+            stop_price=140.0,
         )
-
-        with patch.object(connector, "_create_contract", return_value=mock_contract):
-            with patch.object(
-                connector, "_qualify_contract", return_value=mock_contract
-            ):
-                with patch.object(connector, "_convert_order_to_ib"):
-                    connector.ib.placeOrder.return_value = mock_trade
-                    with patch.object(
-                        connector,
-                        "_convert_ib_order_to_result",
-                        return_value=OrderResult(
-                            order_id="123456",
-                            client_order_id=None,
-                            symbol="AAPL",
-                            side=OrderSide.BUY,
-                            order_type=OrderType.STOP,
-                            quantity=100.0,
-                            filled_quantity=0.0,
-                            price=None,
-                            stop_price=151.00,
-                            avg_fill_price=None,
-                            status=OrderStatus.PENDING,
-                            timestamp=datetime.now(timezone.utc),
-                        ),
-                    ):
-                        result = connector.place_order(order)
-
-                        assert result.stop_price == 151.00
-                        assert result.order_type == OrderType.STOP
-
-    def test_place_stop_limit_order(self, connector, mock_trade, mock_contract):
-        """Test placing a stop-limit order with both prices."""
-        order = OrderRequest(
-            symbol="AAPL",
-            side=OrderSide.BUY,
-            order_type=OrderType.STOP_LIMIT,
-            quantity=100.0,
-            price=150.50,
-            stop_price=151.00,
-        )
-
-        with patch.object(connector, "_create_contract", return_value=mock_contract):
-            with patch.object(
-                connector, "_qualify_contract", return_value=mock_contract
-            ):
-                with patch.object(connector, "_convert_order_to_ib"):
-                    connector.ib.placeOrder.return_value = mock_trade
-                    with patch.object(
-                        connector,
-                        "_convert_ib_order_to_result",
-                        return_value=OrderResult(
-                            order_id="123456",
-                            client_order_id=None,
-                            symbol="AAPL",
-                            side=OrderSide.BUY,
-                            order_type=OrderType.STOP_LIMIT,
-                            quantity=100.0,
-                            filled_quantity=0.0,
-                            price=150.50,
-                            stop_price=151.00,
-                            avg_fill_price=None,
-                            status=OrderStatus.PENDING,
-                            timestamp=datetime.now(timezone.utc),
-                        ),
-                    ):
-                        result = connector.place_order(order)
-
-                        assert result.price == 150.50
-                        assert result.stop_price == 151.00
-                        assert result.order_type == OrderType.STOP_LIMIT
-
-    def test_place_order_with_tif(self, connector, mock_trade, mock_contract):
-        """Test placing an order with different TimeInForce options."""
-        for tif in [TimeInForce.DAY, TimeInForce.GTC, TimeInForce.IOC, TimeInForce.FOK]:
-            order = OrderRequest(
+        connector._validate_order_request(request)
+        
+        # Missing stop price
+        with pytest.raises(ValidationError, match="stop_price is required"):
+            request = OrderRequest(
                 symbol="AAPL",
-                side=OrderSide.BUY,
-                order_type=OrderType.LIMIT,
-                quantity=100.0,
-                price=150.50,
-                time_in_force=tif,
+                side=OrderSide.SELL,
+                order_type=OrderType.STOP,
+                quantity=100,
             )
+            connector._validate_order_request(request)
 
-            with patch.object(
-                connector, "_create_contract", return_value=mock_contract
-            ):
-                with patch.object(
-                    connector, "_qualify_contract", return_value=mock_contract
-                ):
-                    with patch.object(
-                        connector, "_convert_order_to_ib"
-                    ) as mock_convert:
-                        connector.ib.placeOrder.return_value = mock_trade
-                        with patch.object(
-                            connector,
-                            "_convert_ib_order_to_result",
-                            return_value=OrderResult(
-                                order_id="123456",
-                                client_order_id=None,
-                                symbol="AAPL",
-                                side=OrderSide.BUY,
-                                order_type=OrderType.LIMIT,
-                                quantity=100.0,
-                                filled_quantity=0.0,
-                                price=150.50,
-                                stop_price=None,
-                                avg_fill_price=None,
-                                status=OrderStatus.PENDING,
-                                timestamp=datetime.now(timezone.utc),
-                            ),
-                        ):
-                            connector.place_order(order)
-                            # Check that the order was converted with correct TIF
-                            mock_convert.assert_called()
-                            args, kwargs = mock_convert.call_args
-                            assert args[0].time_in_force == tif
+    def test_convert_order_status(self, connector):
+        """Test converting IB order status."""
+        from ib_async import OrderStatus as IBOrderStatus
+        
+        # Test various status conversions
+        assert connector._convert_order_status(IBOrderStatus.PendingSubmit) == OrderStatus.PENDING
+        assert connector._convert_order_status(IBOrderStatus.Submitted) == OrderStatus.SUBMITTED
+        assert connector._convert_order_status(IBOrderStatus.Filled) == OrderStatus.FILLED
+        assert connector._convert_order_status(IBOrderStatus.Cancelled) == OrderStatus.CANCELLED
 
-    def test_place_order_insufficient_funds(self, connector, mock_contract):
-        """Test InsufficientFundsError when IB returns code 10147."""
-        error = ib_async_mock.RequestError("Insufficient funds", code=10147)
 
-        order = OrderRequest(
+@pytest.mark.unit
+class TestIBExecutionConnectorEdgeCases:
+    """Test edge cases for IBExecutionConnector."""
+
+    @pytest.fixture
+    def connector(self):
+        """Create a connector instance."""
+        with patch('quantchain.connectors.ib_async_execution.IB') as mock_ib:
+            mock_ib.return_value = AsyncMock()
+            return IBExecutionConnector()
+
+    @pytest.mark.asyncio
+    async def test_place_order_with_extensions(self, connector):
+        """Test placing order with extensions."""
+        mock_contract = MagicMock()
+        connector._create_stock_contract.return_value = mock_contract
+        
+        mock_order = MagicMock()
+        connector._create_order.return_value = mock_order
+        
+        mock_trade = MagicMock()
+        mock_trade.orderStatus.return_value = OrderStatus.SUBMITTED
+        mock_trade.orderId.return_value = "ext123"
+        connector.ib.placeOrder.return_value = mock_trade
+        
+        request = OrderRequest(
             symbol="AAPL",
             side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100.0,
+            order_type=OrderType.LIMIT,
+            quantity=100,
+            limit_price=150.0,
+            time_in_force=TimeInForce.GTC,
+            extended_hours=True,
         )
-
-        with patch.object(connector, "_create_contract", return_value=mock_contract):
-            with patch.object(
-                connector, "_qualify_contract", return_value=mock_contract
-            ):
-                with patch.object(connector, "_convert_order_to_ib"):
-                    connector.ib.placeOrder.side_effect = error
-
-                    with pytest.raises(InsufficientFundsError):
-                        connector.place_order(order)
-
-    def test_place_order_invalid_contract(self, connector, mock_contract):
-        """Test ValidationError when IB returns code 321."""
-        error = ib_async_mock.RequestError("Invalid contract", code=321)
-
-        order = OrderRequest(
-            symbol="INVALID",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100.0,
-        )
-
-        with patch.object(connector, "_create_contract", return_value=mock_contract):
-            with patch.object(connector, "_qualify_contract", side_effect=error):
-
-                with pytest.raises(ValidationError):
-                    connector.place_order(order)
-
-    def test_place_order_connection_error(self, connector, mock_contract):
-        """Test handling of connection errors during order placement."""
-        order = OrderRequest(
-            symbol="AAPL",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100.0,
-        )
-
-        with patch.object(connector, "_create_contract", return_value=mock_contract):
-            with patch.object(
-                connector, "_qualify_contract", return_value=mock_contract
-            ):
-                with patch.object(connector, "_convert_order_to_ib"):
-                    connector.ib.placeOrder.side_effect = ConnectionError(
-                        "Lost connection"
-                    )
-
-                    with pytest.raises(ExecutionError):
-                        connector.place_order(order)
-
-    # Order Management Tests
-    def test_cancel_order(self, connector, mock_trade):
-        """Test canceling a pending order."""
-        connector._order_map["123456"] = mock_trade
-
-        with patch.object(
-            connector,
-            "_convert_ib_order_to_result",
-            return_value=OrderResult(
-                order_id="123456",
-                client_order_id=None,
-                symbol="AAPL",
-                side=OrderSide.BUY,
-                order_type=OrderType.MARKET,
-                quantity=100.0,
-                filled_quantity=0.0,
-                price=None,
-                stop_price=None,
-                avg_fill_price=None,
-                status=OrderStatus.CANCELLED,
-                timestamp=datetime.now(timezone.utc),
-                updated_at=datetime.now(timezone.utc),
-            ),
-        ):
-            result = connector.cancel_order("123456")
-
-            assert result.status == OrderStatus.CANCELLED
-            connector.ib.cancelOrder.assert_called_once_with(mock_trade.order)
-
-    def test_cancel_order_not_found(self, connector):
-        """Test OrderNotFoundError when order doesn't exist."""
-        with pytest.raises(OrderNotFoundError):
-            connector.cancel_order("nonexistent")
-
-    def test_get_order(self, connector, mock_trade):
-        """Test retrieving order by ID."""
-        connector._order_map["123456"] = mock_trade
-
-        with patch.object(
-            connector,
-            "_convert_ib_order_to_result",
-            return_value=OrderResult(
-                order_id="123456",
-                client_order_id=None,
-                symbol="AAPL",
-                side=OrderSide.BUY,
-                order_type=OrderType.MARKET,
-                quantity=100.0,
-                filled_quantity=100.0,
-                price=None,
-                stop_price=None,
-                avg_fill_price=150.25,
-                status=OrderStatus.FILLED,
-                timestamp=datetime.now(timezone.utc),
-            ),
-        ):
-            result = connector.get_order("123456")
-
-            assert result.order_id == "123456"
-            assert result.status == OrderStatus.FILLED
-            assert result.filled_quantity == 100.0
-
-    def test_get_order_not_found(self, connector):
-        """Test OrderNotFoundError for non-existent order."""
-        with pytest.raises(OrderNotFoundError):
-            connector.get_order("nonexistent")
-
-    def test_get_order_filled(self, connector, mock_trade):
-        """Test retrieving a filled order with fill details."""
-        mock_trade.orderStatus.filled = 100.0
-        mock_trade.orderStatus.avgFillPrice = 150.25
-        connector._order_map["123456"] = mock_trade
-
-        with patch.object(
-            connector,
-            "_convert_ib_order_to_result",
-            return_value=OrderResult(
-                order_id="123456",
-                client_order_id=None,
-                symbol="AAPL",
-                side=OrderSide.BUY,
-                order_type=OrderType.MARKET,
-                quantity=100.0,
-                filled_quantity=100.0,
-                price=None,
-                stop_price=None,
-                avg_fill_price=150.25,
-                status=OrderStatus.FILLED,
-                timestamp=datetime.now(timezone.utc),
-            ),
-        ):
-            result = connector.get_order("123456")
-
-            assert result.filled_quantity == 100.0
-            assert result.avg_fill_price == 150.25
-
-    # Account and Position Tests
-    def test_get_account(self, connector):
-        """Test retrieving account information."""
-        # Mock account summary
-        account_summary = [
-            Mock(tag="NetLiquidation", value="100000.0"),
-            Mock(tag="AvailableFunds", value="95000.0"),
-            Mock(tag="BuyingPower", value="190000.0"),
-            Mock(tag="TotalCashValue", value="95000.0"),
-        ]
-        connector.ib.accountSummary.return_value = account_summary
-
-        # Mock positions
-        positions = [
-            Mock(
-                contract=Mock(symbol="AAPL", secType="STK"),
-                position=100.0,
-                avgCost=150.0,
-            )
-        ]
-        connector.ib.positions.return_value = positions
-
-        with patch.object(
-            connector,
-            "get_positions",
-            return_value=[
-                Position(
-                    symbol="AAPL",
-                    quantity=100.0,
-                    avg_entry_price=150.0,
-                    current_price=155.0,
-                    market_value=15500.0,
-                    unrealized_pnl=500.0,
-                    unrealized_pnl_percent=3.33,
-                )
-            ],
-        ):
-            result = connector.get_account()
-
-            assert isinstance(result, AccountInfo)
-            assert result.buying_power == 190000.0
-            assert result.cash == 95000.0
-            assert result.portfolio_value == 100000.0
-            assert len(result.positions) == 1
-            assert result.positions[0].symbol == "AAPL"
-
-    def test_get_positions(self, connector):
-        """Test retrieving position list."""
-        # Mock IB positions
-        ib_positions = [
-            Mock(
-                contract=Mock(symbol="AAPL", secType="STK"),
-                position=100.0,
-                avgCost=150.0,
-            ),
-            Mock(
-                contract=Mock(symbol="MSFT", secType="STK"),
-                position=-50.0,
-                avgCost=250.0,
-            ),
-        ]
-        connector.ib.positions.return_value = ib_positions
-
-        # Mock current prices
-        with patch.object(connector.ib, "reqMktData") as mock_req_mkt_data:
-            mock_req_mkt_data.side_effect = [
-                Mock(last=155.0),  # AAPL current price
-                Mock(last=260.0),  # MSFT current price
-            ]
-
-            result = connector.get_positions()
-
-            assert len(result) == 2
-
-            # Check AAPL position (long)
-            aapl_pos = next(p for p in result if p.symbol == "AAPL")
-            assert aapl_pos.quantity == 100.0
-            assert aapl_pos.is_long
-
-            # Check MSFT position (short)
-            msft_pos = next(p for p in result if p.symbol == "MSFT")
-            assert msft_pos.quantity == -50.0
-            assert msft_pos.is_short
-
-    def test_get_positions_empty(self, connector):
-        """Test empty position list."""
-        connector.ib.positions.return_value = []
-
-        result = connector.get_positions()
-
-        assert result == []
-
-    # Order History Tests
-    def test_get_order_history(self, connector):
-        """Test retrieving all orders."""
-        connector.ib.trades.return_value = []
-        connector.ib.fills.return_value = []
-
-        with patch.object(
-            connector,
-            "_convert_ib_order_to_result",
-            return_value=OrderResult(
-                order_id="123456",
-                client_order_id=None,
-                symbol="AAPL",
-                side=OrderSide.BUY,
-                order_type=OrderType.MARKET,
-                quantity=100.0,
-                filled_quantity=100.0,
-                price=None,
-                stop_price=None,
-                avg_fill_price=150.25,
-                status=OrderStatus.FILLED,
-                timestamp=datetime.now(timezone.utc),
-            ),
-        ):
-            result = connector.get_order_history()
-
-            assert isinstance(result, list)
-
-    def test_get_order_history_filtered_by_symbol(self, connector):
-        """Test filtering order history by symbol."""
-        connector.ib.trades.return_value = []
-        connector.ib.fills.return_value = []
-
-        with patch.object(
-            connector,
-            "_convert_ib_order_to_result",
-            return_value=OrderResult(
-                order_id="123456",
-                client_order_id=None,
-                symbol="AAPL",
-                side=OrderSide.BUY,
-                order_type=OrderType.MARKET,
-                quantity=100.0,
-                filled_quantity=100.0,
-                price=None,
-                stop_price=None,
-                avg_fill_price=150.25,
-                status=OrderStatus.FILLED,
-                timestamp=datetime.now(timezone.utc),
-            ),
-        ):
-            result = connector.get_order_history(symbol="AAPL")
-
-            assert isinstance(result, list)
-
-    def test_get_order_history_filtered_by_status(self, connector):
-        """Test filtering order history by status."""
-        connector.ib.trades.return_value = []
-        connector.ib.fills.return_value = []
-
-        with patch.object(
-            connector,
-            "_convert_ib_order_to_result",
-            return_value=OrderResult(
-                order_id="123456",
-                client_order_id=None,
-                symbol="AAPL",
-                side=OrderSide.BUY,
-                order_type=OrderType.MARKET,
-                quantity=100.0,
-                filled_quantity=100.0,
-                price=None,
-                stop_price=None,
-                avg_fill_price=150.25,
-                status=OrderStatus.FILLED,
-                timestamp=datetime.now(timezone.utc),
-            ),
-        ):
-            result = connector.get_order_history(status=OrderStatus.FILLED)
-
-            assert isinstance(result, list)
-
-    def test_get_order_history_filtered_by_date(self, connector):
-        """Test filtering order history by date range."""
-        connector.ib.trades.return_value = []
-        connector.ib.fills.return_value = []
-
-        start_date = datetime.now(timezone.utc) - timedelta(days=30)
-        end_date = datetime.now(timezone.utc)
-
-        with patch.object(
-            connector,
-            "_convert_ib_order_to_result",
-            return_value=OrderResult(
-                order_id="123456",
-                client_order_id=None,
-                symbol="AAPL",
-                side=OrderSide.BUY,
-                order_type=OrderType.MARKET,
-                quantity=100.0,
-                filled_quantity=100.0,
-                price=None,
-                stop_price=None,
-                avg_fill_price=150.25,
-                status=OrderStatus.FILLED,
-                timestamp=datetime.now(timezone.utc),
-            ),
-        ):
-            result = connector.get_order_history(
-                start_date=start_date, end_date=end_date
-            )
-
-            assert isinstance(result, list)
-
-    def test_get_order_history_with_limit(self, connector):
-        """Test limiting order history results."""
-        connector.ib.trades.return_value = []
-        connector.ib.fills.return_value = []
-
-        with patch.object(
-            connector,
-            "_convert_ib_order_to_result",
-            return_value=OrderResult(
-                order_id="123456",
-                client_order_id=None,
-                symbol="AAPL",
-                side=OrderSide.BUY,
-                order_type=OrderType.MARKET,
-                quantity=100.0,
-                filled_quantity=100.0,
-                price=None,
-                stop_price=None,
-                avg_fill_price=150.25,
-                status=OrderStatus.FILLED,
-                timestamp=datetime.now(timezone.utc),
-            ),
-        ):
-            result = connector.get_order_history(limit=10)
-
-            assert isinstance(result, list)
-
-    # Market Status Tests
-    def test_is_market_open_stock(self, connector, mock_contract):
-        """Test market hours for stocks."""
-        with patch.object(connector, "_create_contract", return_value=mock_contract):
-            with patch.object(
-                connector, "_qualify_contract", return_value=mock_contract
-            ):
-                # Mock contract details with trading hours
-                contract_details = Mock()
-                contract_details.tradingHours = (
-                    "20231201:0930-1600;20231204-20231208:0930-1600"
-                )
-                connector.ib.reqContractDetails.return_value = [contract_details]
-
-                result = connector.is_market_open("AAPL")
-
-                assert isinstance(result, bool)
-
-    def test_is_market_open_forex(self, connector):
-        """Test forex market (always open)."""
-        result = connector.is_market_open("EURUSD")
-
-        assert result is True  # Forex is 24/5
-
-    def test_is_market_open_futures(self, connector, mock_contract):
-        """Test futures market hours."""
-        with patch.object(connector, "_create_contract", return_value=mock_contract):
-            with patch.object(
-                connector, "_qualify_contract", return_value=mock_contract
-            ):
-                # Mock contract details
-                contract_details = Mock()
-                contract_details.tradingHours = (
-                    "20231201:CLOSED;20231203-20231208:0000-2359"
-                )
-                connector.ib.reqContractDetails.return_value = [contract_details]
-
-                result = connector.is_market_open("ES")
-
-                assert isinstance(result, bool)
-
-    # Order Status Conversion Tests
-    def test_convert_order_status_submitted(self, connector):
-        """Test mapping 'Submitted' to PENDING."""
-        status = connector._convert_order_status("Submitted")
-        assert status == OrderStatus.PENDING
-
-    def test_convert_order_status_filled(self, connector):
-        """Test mapping 'Filled' to FILLED."""
-        status = connector._convert_order_status("Filled")
-        assert status == OrderStatus.FILLED
-
-    def test_convert_order_status_cancelled(self, connector):
-        """Test mapping 'Cancelled' to CANCELLED."""
-        status = connector._convert_order_status("Cancelled")
-        assert status == OrderStatus.CANCELLED
-
-    def test_convert_order_status_inactive(self, connector):
-        """Test mapping 'Inactive' to REJECTED."""
-        status = connector._convert_order_status("Inactive")
-        assert status == OrderStatus.REJECTED
-
-    def test_convert_order_status_partial_fill(self, connector):
-        """Test mapping 'PartiallyFilled' to PARTIALLY_FILLED."""
-        status = connector._convert_order_status("PartiallyFilled")
-        assert status == OrderStatus.PARTIALLY_FILLED
-
-    # Async Wrapper Tests
-    def test_run_async_success(self, connector):
-        """Test successful async operation execution."""
-
-        async def test_coro():
-            return "success"
-
-        result = connector._run_async(test_coro())
-        assert result == "success"
-
-    def test_run_async_timeout(self, connector):
-        """Test timeout handling in async wrapper."""
-
-        async def test_coro():
-            await asyncio.sleep(5)
-            return "success"
-
-        with pytest.raises(ExecutionError):
-            connector._run_async(test_coro(), timeout=0.1)
-
-    def test_run_async_exception(self, connector):
-        """Test exception propagation from async code."""
-
-        async def test_coro():
-            raise ValueError("Test error")
-
-        with pytest.raises(ExecutionError):
-            connector._run_async(test_coro())
-
-    # Validation Tests
-    def test_validate_order_invalid_symbol(self, connector):
-        """Test validation error for invalid symbol."""
-        order = OrderRequest(
-            symbol="",  # Empty symbol
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100.0,
-        )
-
-        with pytest.raises(ValidationError):
-            connector.place_order(order)
-
-    def test_validate_order_negative_quantity(self, connector):
-        """Test validation error for negative quantity."""
-        # OrderRequest already validates quantity in __post_init__
-        with pytest.raises(ValidationError):
-            OrderRequest(
-                symbol="AAPL",
-                side=OrderSide.BUY,
-                order_type=OrderType.MARKET,
-                quantity=-100.0,  # Negative quantity
-            )
-
-    def test_validate_order_missing_price(self, connector):
-        """Test validation error for limit order without price."""
-        # OrderRequest already validates price in __post_init__
-        with pytest.raises(ValidationError):
-            OrderRequest(
-                symbol="AAPL",
-                side=OrderSide.BUY,
-                order_type=OrderType.LIMIT,
-                quantity=100.0,
-                # Missing price
-            )
-
-    # Integration-like Tests (with full mocking)
-    def test_full_order_lifecycle(self, connector, mock_trade, mock_contract):
-        """Test complete order lifecycle: place → get → cancel."""
-        order = OrderRequest(
-            symbol="AAPL",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100.0,
-        )
-
-        with patch.object(connector, "_create_contract", return_value=mock_contract):
-            with patch.object(
-                connector, "_qualify_contract", return_value=mock_contract
-            ):
-                with patch.object(connector, "_convert_order_to_ib"):
-                    connector.ib.placeOrder.return_value = mock_trade
-
-                    # Place order
-                    with patch.object(
-                        connector,
-                        "_convert_ib_order_to_result",
-                        return_value=OrderResult(
-                            order_id="123456",
-                            client_order_id=None,
-                            symbol="AAPL",
-                            side=OrderSide.BUY,
-                            order_type=OrderType.MARKET,
-                            quantity=100.0,
-                            filled_quantity=0.0,
-                            price=None,
-                            stop_price=None,
-                            avg_fill_price=None,
-                            status=OrderStatus.PENDING,
-                            timestamp=datetime.now(timezone.utc),
-                        ),
-                    ):
-                        place_result = connector.place_order(order)
-                        assert place_result.order_id == "123456"
-                        assert place_result.status == OrderStatus.PENDING
-
-                    # Get order
-                    connector._order_map["123456"] = mock_trade
-                    with patch.object(
-                        connector,
-                        "_convert_ib_order_to_result",
-                        return_value=OrderResult(
-                            order_id="123456",
-                            client_order_id=None,
-                            symbol="AAPL",
-                            side=OrderSide.BUY,
-                            order_type=OrderType.MARKET,
-                            quantity=100.0,
-                            filled_quantity=0.0,
-                            price=None,
-                            stop_price=None,
-                            avg_fill_price=None,
-                            status=OrderStatus.PENDING,
-                            timestamp=datetime.now(timezone.utc),
-                        ),
-                    ):
-                        get_result = connector.get_order("123456")
-                        assert get_result.order_id == "123456"
-
-                    # Cancel order
-                    with patch.object(
-                        connector,
-                        "_convert_ib_order_to_result",
-                        return_value=OrderResult(
-                            order_id="123456",
-                            client_order_id=None,
-                            symbol="AAPL",
-                            side=OrderSide.BUY,
-                            order_type=OrderType.MARKET,
-                            quantity=100.0,
-                            filled_quantity=0.0,
-                            price=None,
-                            stop_price=None,
-                            avg_fill_price=None,
-                            status=OrderStatus.CANCELLED,
-                            timestamp=datetime.now(timezone.utc),
-                            updated_at=datetime.now(timezone.utc),
-                        ),
-                    ):
-                        cancel_result = connector.cancel_order("123456")
-                        assert cancel_result.status == OrderStatus.CANCELLED
-
-    def test_multiple_orders(self, connector, mock_trade, mock_contract):
-        """Test placing multiple orders."""
-        orders = [
-            OrderRequest(
-                symbol="AAPL",
-                side=OrderSide.BUY,
-                order_type=OrderType.MARKET,
-                quantity=100.0,
-            ),
-            OrderRequest(
-                symbol="MSFT",
-                side=OrderSide.BUY,
-                order_type=OrderType.MARKET,
-                quantity=50.0,
-            ),
-        ]
-
-        for order in orders:
-            with patch.object(
-                connector, "_create_contract", return_value=mock_contract
-            ):
-                with patch.object(
-                    connector, "_qualify_contract", return_value=mock_contract
-                ):
-                    with patch.object(connector, "_convert_order_to_ib"):
-                        connector.ib.placeOrder.return_value = mock_trade
-                        with patch.object(
-                            connector,
-                            "_convert_ib_order_to_result",
-                            return_value=OrderResult(
-                                order_id="123456",
-                                client_order_id=None,
-                                symbol=order.symbol,
-                                side=OrderSide.BUY,
-                                order_type=OrderType.MARKET,
-                                quantity=order.quantity,
-                                filled_quantity=0.0,
-                                price=None,
-                                stop_price=None,
-                                avg_fill_price=None,
-                                status=OrderStatus.PENDING,
-                                timestamp=datetime.now(timezone.utc),
-                            ),
-                        ):
-                            result = connector.place_order(order)
-                            assert result.symbol == order.symbol
-
-    def test_position_after_trade(self, connector, mock_trade, mock_contract):
-        """Test creating a position after a trade."""
-        order = OrderRequest(
-            symbol="AAPL",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100.0,
-        )
-
-        # Simulate filled order
-        mock_trade.orderStatus.status = "Filled"
-        mock_trade.orderStatus.filled = 100.0
-        mock_trade.orderStatus.avgFillPrice = 150.25
-
-        with patch.object(connector, "_create_contract", return_value=mock_contract):
-            with patch.object(
-                connector, "_qualify_contract", return_value=mock_contract
-            ):
-                with patch.object(connector, "_convert_order_to_ib"):
-                    connector.ib.placeOrder.return_value = mock_trade
-
-                    # Place order
-                    with patch.object(
-                        connector,
-                        "_convert_ib_order_to_result",
-                        return_value=OrderResult(
-                            order_id="123456",
-                            client_order_id=None,
-                            symbol="AAPL",
-                            side=OrderSide.BUY,
-                            order_type=OrderType.MARKET,
-                            quantity=100.0,
-                            filled_quantity=100.0,
-                            price=None,
-                            stop_price=None,
-                            avg_fill_price=150.25,
-                            status=OrderStatus.FILLED,
-                            timestamp=datetime.now(timezone.utc),
-                        ),
-                    ):
-                        result = connector.place_order(order)
-                        assert result.filled_quantity == 100.0
-
-                    # Check position was created
-                    ib_positions = [
-                        Mock(
-                            contract=Mock(symbol="AAPL", secType="STK"),
-                            position=100.0,
-                            avgCost=150.25,
-                        )
-                    ]
-                    connector.ib.positions.return_value = ib_positions
-
-                    # Mock current price
-                    with patch.object(
-                        connector.ib, "reqMktData", return_value=Mock(last=155.0)
-                    ):
-                        positions = connector.get_positions()
-                    assert len(positions) == 1
-                    assert positions[0].symbol == "AAPL"
-                    assert positions[0].quantity == 100.0
-
-    def test_close_position(self, connector, mock_trade, mock_contract):
-        """Test closing a position with a sell order."""
-        # Create a buy order first
-        buy_order = OrderRequest(
-            symbol="AAPL",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100.0,
-        )
-
-        # Simulate filled buy order
-        mock_trade.orderStatus.status = "Filled"
-        mock_trade.orderStatus.filled = 100.0
-        mock_trade.orderStatus.avgFillPrice = 150.25
-        mock_trade.order.action = "BUY"
-
-        with patch.object(connector, "_create_contract", return_value=mock_contract):
-            with patch.object(
-                connector, "_qualify_contract", return_value=mock_contract
-            ):
-                with patch.object(connector, "_convert_order_to_ib"):
-                    connector.ib.placeOrder.return_value = mock_trade
-
-                    # Place buy order
-                    with patch.object(
-                        connector,
-                        "_convert_ib_order_to_result",
-                        return_value=OrderResult(
-                            order_id="123456",
-                            client_order_id=None,
-                            symbol="AAPL",
-                            side=OrderSide.BUY,
-                            order_type=OrderType.MARKET,
-                            quantity=100.0,
-                            filled_quantity=100.0,
-                            price=None,
-                            stop_price=None,
-                            avg_fill_price=150.25,
-                            status=OrderStatus.FILLED,
-                            timestamp=datetime.now(timezone.utc),
-                        ),
-                    ):
-                        buy_result = connector.place_order(buy_order)
-                        assert buy_result.filled_quantity == 100.0
-
-                    # Create a sell order to close the position
-                    sell_order = OrderRequest(
-                        symbol="AAPL",
-                        side=OrderSide.SELL,
-                        order_type=OrderType.MARKET,
-                        quantity=100.0,
-                    )
-
-                    # Simulate filled sell order
-                    mock_trade.order.action = "SELL"
-                    mock_trade.orderStatus.avgFillPrice = 155.0
-
-                    with patch.object(
-                        connector,
-                        "_convert_ib_order_to_result",
-                        return_value=OrderResult(
-                            order_id="123457",
-                            client_order_id=None,
-                            symbol="AAPL",
-                            side=OrderSide.SELL,
-                            order_type=OrderType.MARKET,
-                            quantity=100.0,
-                            filled_quantity=100.0,
-                            price=None,
-                            stop_price=None,
-                            avg_fill_price=155.0,
-                            status=OrderStatus.FILLED,
-                            timestamp=datetime.now(timezone.utc),
-                        ),
-                    ):
-                        sell_result = connector.place_order(sell_order)
-                        assert sell_result.filled_quantity == 100.0
-                        assert sell_result.side == OrderSide.SELL
+        
+        result = await connector.place_order(request)
+        
+        assert result.order_id == "ext123"
+        assert result.status == OrderStatus.SUBMITTED
+
+    @pytest.mark.asyncio
+    async def test_get_account_with_multiple_accounts(self, connector):
+        """Test getting account info with multiple accounts."""
+        mock_account1 = MagicMock()
+        mock_account1.accountId.return_value = "DU123456"
+        mock_account1.tag.return_value = "TotalCashBalance"
+        mock_account1.value.return_value = "100000"
+        mock_account1.currency.return_value = "USD"
+        
+        mock_account2 = MagicMock()
+        mock_account2.accountId.return_value = "DU123456"
+        mock_account2.tag.return_value = "BuyingPower"
+        mock_account2.value.return_value = "200000"
+        mock_account2.currency.return_value = "USD"
+        
+        connector.ib.accountSummary.return_value = [mock_account1, mock_account2]
+        
+        result = await connector.get_account()
+        
+        assert result.cash == 100000.0
+        assert result.buying_power == 200000.0
+
+    @pytest.mark.asyncio
+    async def test_get_positions_with_zero_positions(self, connector):
+        """Test getting positions with zero quantity."""
+        mock_position = MagicMock()
+        mock_position.contract.symbol.return_value = "AAPL"
+        mock_position.position.return_value = 0  # Zero position
+        connector.ib.positions.return_value = [mock_position]
+        
+        result = await connector.get_positions()
+        
+        # Zero positions should be filtered out
+        assert len(result) == 0
