@@ -9,12 +9,12 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from quantchain.core.secret_managers.vault import VaultSecretManager
+
 # Add the parent directory to the path to import the module
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 """Test cases for VaultSecretManager."""
-
-from quantchain.core.secret_managers.vault import VaultSecretManager
 
 
 class TestVaultSecretManagerInit:

@@ -106,7 +106,9 @@ class PerformanceMetrics:
         result = self.calculate_max_drawdown(equity_curve)
         return result.get("max_drawdown_duration", 0)
 
-    def calculate_calmar_ratio(self, equity_curve: pd.Series, max_drawdown: Optional[float] = None) -> float:
+    def calculate_calmar_ratio(
+        self, equity_curve: pd.Series, max_drawdown: Optional[float] = None
+    ) -> float:
         """
         Calculate Calmar ratio (annual return / max drawdown).
 
@@ -130,7 +132,9 @@ class PerformanceMetrics:
             annual_return = self.calculate_annualized_return(equity_curve)
             return annual_return / max_drawdown
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate Calmar ratio: {e}") from e
+            raise MetricsCalculationError(
+                f"Failed to calculate Calmar ratio: {e}"
+            ) from e
 
     def calculate_total_return(self, equity_curve: pd.Series) -> float:
         """
@@ -152,7 +156,9 @@ class PerformanceMetrics:
             total_return = (equity_curve.iloc[-1] / equity_curve.iloc[0]) - 1
             return total_return
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate total return: {e}") from e
+            raise MetricsCalculationError(
+                f"Failed to calculate total return: {e}"
+            ) from e
             raise MetricsCalculationError(
                 f"Failed to calculate total return: {e}"
             ) from e
@@ -353,7 +359,6 @@ class PerformanceMetrics:
                 f"Failed to calculate max drawdown: {e}"
             ) from e
 
-
             raise MetricsCalculationError(
                 f"Failed to calculate Calmar ratio: {e}"
             ) from e
@@ -425,7 +430,9 @@ class PerformanceMetrics:
         try:
             return trades["pnl"].mean()
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate average trade: {e}") from e
+            raise MetricsCalculationError(
+                f"Failed to calculate average trade: {e}"
+            ) from e
 
     def calculate_total_trades(self, trades: pd.DataFrame) -> int:
         """
@@ -459,7 +466,9 @@ class PerformanceMetrics:
             winning_trades = trades[trades["pnl"] > 0]["pnl"]
             return winning_trades.max() if len(winning_trades) > 0 else 0.0
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate largest win: {e}") from e
+            raise MetricsCalculationError(
+                f"Failed to calculate largest win: {e}"
+            ) from e
 
     def calculate_largest_loss(self, trades: pd.DataFrame) -> float:
         """
@@ -481,7 +490,9 @@ class PerformanceMetrics:
             losing_trades = trades[trades["pnl"] < 0]["pnl"]
             return abs(losing_trades.min()) if len(losing_trades) > 0 else 0.0
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate largest loss: {e}") from e
+            raise MetricsCalculationError(
+                f"Failed to calculate largest loss: {e}"
+            ) from e
 
     def calculate_average_win(self, trades: pd.DataFrame) -> float:
         """
@@ -503,7 +514,9 @@ class PerformanceMetrics:
             winning_trades = trades[trades["pnl"] > 0]["pnl"]
             return winning_trades.mean() if len(winning_trades) > 0 else 0.0
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate average win: {e}") from e
+            raise MetricsCalculationError(
+                f"Failed to calculate average win: {e}"
+            ) from e
 
     def calculate_average_loss(self, trades: pd.DataFrame) -> float:
         """
@@ -525,7 +538,9 @@ class PerformanceMetrics:
             losing_trades = trades[trades["pnl"] < 0]["pnl"]
             return abs(losing_trades.mean()) if len(losing_trades) > 0 else 0.0
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate average loss: {e}") from e
+            raise MetricsCalculationError(
+                f"Failed to calculate average loss: {e}"
+            ) from e
 
     def calculate_win_loss_ratio(self, trades: pd.DataFrame) -> float:
         """
@@ -555,9 +570,13 @@ class PerformanceMetrics:
 
             return avg_win / avg_loss if avg_loss > 0 else float("inf")
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate win/loss ratio: {e}") from e
+            raise MetricsCalculationError(
+                f"Failed to calculate win/loss ratio: {e}"
+            ) from e
 
-    def calculate_var(self, returns: pd.Series, confidence_level: float = 0.95) -> float:
+    def calculate_var(
+        self, returns: pd.Series, confidence_level: float = 0.95
+    ) -> float:
         """
         Calculate Value at Risk (VaR).
 
@@ -577,7 +596,11 @@ class PerformanceMetrics:
         try:
             # Calculate returns from equity curve if not already returns
             if "returns" not in locals():
-                returns = self.calculate_returns(returns) if len(returns) > 1 else pd.Series([0.0])
+                returns = (
+                    self.calculate_returns(returns)
+                    if len(returns) > 1
+                    else pd.Series([0.0])
+                )
 
             # Calculate VaR at the specified confidence level
             var = np.percentile(returns, (1 - confidence_level) * 100)
@@ -585,7 +608,9 @@ class PerformanceMetrics:
         except Exception as e:
             raise MetricsCalculationError(f"Failed to calculate VaR: {e}") from e
 
-    def calculate_cvar(self, returns: pd.Series, confidence_level: float = 0.95) -> float:
+    def calculate_cvar(
+        self, returns: pd.Series, confidence_level: float = 0.95
+    ) -> float:
         """
         Calculate Conditional Value at Risk (CVaR).
 
@@ -605,7 +630,11 @@ class PerformanceMetrics:
         try:
             # Calculate returns from equity curve if not already returns
             if "returns" not in locals():
-                returns = self.calculate_returns(returns) if len(returns) > 1 else pd.Series([0.0])
+                returns = (
+                    self.calculate_returns(returns)
+                    if len(returns) > 1
+                    else pd.Series([0.0])
+                )
 
             # Calculate VaR at the specified confidence level
             var = self.calculate_var(returns, confidence_level)
@@ -680,7 +709,10 @@ class PerformanceMetrics:
             beta = self.calculate_beta(equity_curve)
 
             # Calculate alpha using CAPM: alpha = portfolio_return - (risk_free_rate + beta * (benchmark_return - risk_free_rate))
-            alpha = portfolio_annual_return - (self.risk_free_rate + beta * (benchmark_annual_return - self.risk_free_rate))
+            alpha = portfolio_annual_return - (
+                self.risk_free_rate
+                + beta * (benchmark_annual_return - self.risk_free_rate)
+            )
 
             return alpha
         except Exception as e:
@@ -700,7 +732,9 @@ class PerformanceMetrics:
             return 0.0
 
         if self.benchmark_returns is None or len(self.benchmark_returns) < 2:
-            raise ValueError("Benchmark returns required for information ratio calculation")
+            raise ValueError(
+                "Benchmark returns required for information ratio calculation"
+            )
 
         try:
             # Calculate returns for both equity curve and benchmark
@@ -723,7 +757,9 @@ class PerformanceMetrics:
             # Information ratio is active return / tracking error
             return mean_active_return / tracking_error if tracking_error > 0 else 0.0
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate information ratio: {e}") from e
+            raise MetricsCalculationError(
+                f"Failed to calculate information ratio: {e}"
+            ) from e
 
     def calculate_volatility(self, equity_curve: pd.Series) -> float:
         """
@@ -736,7 +772,9 @@ class PerformanceMetrics:
             float: Volatility (standard deviation of returns)
         """
         if len(equity_curve) < 2:
-            raise InsufficientDataError("Equity curve must have at least 2 points for volatility calculation")
+            raise InsufficientDataError(
+                "Equity curve must have at least 2 points for volatility calculation"
+            )
 
         try:
             returns = self.calculate_returns(equity_curve)
@@ -768,11 +806,15 @@ class PerformanceMetrics:
                 # Fallback to basic implementation
                 return {
                     "sharpe_ratio": self.calculate_sharpe_ratio(equity_curve),
-                    "max_drawdown": self.calculate_max_drawdown(equity_curve)["max_drawdown"],
+                    "max_drawdown": self.calculate_max_drawdown(equity_curve)[
+                        "max_drawdown"
+                    ],
                     "volatility": self.calculate_volatility(equity_curve),
                 }
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate QuantStats metrics: {e}") from e
+            raise MetricsCalculationError(
+                f"Failed to calculate QuantStats metrics: {e}"
+            ) from e
 
     def calculate_comprehensive_metrics(
         self, equity_curve: pd.Series, trades: Optional[pd.DataFrame] = None
@@ -797,8 +839,12 @@ class PerformanceMetrics:
                     "calmar_ratio": self.calculate_calmar_ratio(equity_curve),
                 },
                 "risk_metrics": {
-                    "max_drawdown": self.calculate_max_drawdown(equity_curve)["max_drawdown"],
-                    "max_drawdown_duration": self.calculate_max_drawdown_duration(equity_curve),
+                    "max_drawdown": self.calculate_max_drawdown(equity_curve)[
+                        "max_drawdown"
+                    ],
+                    "max_drawdown_duration": self.calculate_max_drawdown_duration(
+                        equity_curve
+                    ),
                     "var_95": self.calculate_var(equity_curve, confidence_level=0.95),
                     "cvar_95": self.calculate_cvar(equity_curve, confidence_level=0.95),
                 },
@@ -826,7 +872,9 @@ class PerformanceMetrics:
 
             return comprehensive_metrics
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate comprehensive metrics: {e}") from e
+            raise MetricsCalculationError(
+                f"Failed to calculate comprehensive metrics: {e}"
+            ) from e
 
     def generate_metrics_report(
         self, equity_curve: pd.Series, trades: Optional[pd.DataFrame] = None
@@ -888,7 +936,9 @@ class PerformanceMetrics:
         except Exception as e:
             raise MetricsCalculationError(f"Failed to generate tear sheet: {e}") from e
 
-    def calculate_rolling_metrics(self, equity_curve: pd.Series, window: int) -> pd.DataFrame:
+    def calculate_rolling_metrics(
+        self, equity_curve: pd.Series, window: int
+    ) -> pd.DataFrame:
         """
         Calculate rolling metrics over a sliding window.
 
@@ -910,24 +960,32 @@ class PerformanceMetrics:
             rolling_volatility = returns.rolling(window=window).std()
 
             # Calculate rolling Sharpe ratio
-            rolling_sharpe = rolling_return / rolling_volatility * np.sqrt(252)  # Assuming daily returns
+            rolling_sharpe = (
+                rolling_return / rolling_volatility * np.sqrt(252)
+            )  # Assuming daily returns
             rolling_sharpe = rolling_sharpe.fillna(0)
 
             # Create result DataFrame
-            result = pd.DataFrame({
-                "rolling_return": rolling_return,
-                "rolling_volatility": rolling_volatility,
-                "rolling_sharpe": rolling_sharpe
-            })
+            result = pd.DataFrame(
+                {
+                    "rolling_return": rolling_return,
+                    "rolling_volatility": rolling_volatility,
+                    "rolling_sharpe": rolling_sharpe,
+                }
+            )
 
             # Drop NaN values from the start
             result = result.dropna()
 
             return result
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate rolling metrics: {e}") from e
+            raise MetricsCalculationError(
+                f"Failed to calculate rolling metrics: {e}"
+            ) from e
 
-    def calculate_metrics_by_period(self, equity_curve: pd.Series, period: str) -> pd.DataFrame:
+    def calculate_metrics_by_period(
+        self, equity_curve: pd.Series, period: str
+    ) -> pd.DataFrame:
         """
         Calculate metrics by time period (e.g., monthly, quarterly).
 
@@ -938,8 +996,10 @@ class PerformanceMetrics:
         Returns:
             DataFrame with period-based metrics
         """
-        if period not in ['M', 'Q', 'A', 'D']:
-            raise ValueError(f"Invalid period: {period}. Must be one of 'M', 'Q', 'A', 'D'")
+        if period not in ["M", "Q", "A", "D"]:
+            raise ValueError(
+                f"Invalid period: {period}. Must be one of 'M', 'Q', 'A', 'D'"
+            )
 
         try:
             # Resample equity curve by period
@@ -949,14 +1009,16 @@ class PerformanceMetrics:
             period_returns = period_equity.pct_change().dropna()
 
             # Calculate metrics for each period
-            period_metrics = pd.DataFrame({
-                'return': period_returns,
-                'cumulative_return': (1 + period_returns).cumprod() - 1
-            })
+            period_metrics = pd.DataFrame(
+                {
+                    "return": period_returns,
+                    "cumulative_return": (1 + period_returns).cumprod() - 1,
+                }
+            )
 
             # Add period-specific metrics
-            period_metrics['high'] = equity_curve.resample(period).max()
-            period_metrics['low'] = equity_curve.resample(period).min()
+            period_metrics["high"] = equity_curve.resample(period).max()
+            period_metrics["low"] = equity_curve.resample(period).min()
 
             # Calculate drawdown within each period
             period_high = equity_curve.resample(period).max()
@@ -964,16 +1026,20 @@ class PerformanceMetrics:
             period_drawdown = (period_low - period_high) / period_high
 
             # Add to results
-            period_metrics['drawdown'] = period_drawdown
+            period_metrics["drawdown"] = period_drawdown
 
             # Drop periods with no data
             period_metrics = period_metrics.dropna()
 
             return period_metrics
         except Exception as e:
-            raise MetricsCalculationError(f"Failed to calculate metrics by period: {e}") from e
+            raise MetricsCalculationError(
+                f"Failed to calculate metrics by period: {e}"
+            ) from e
 
-    def compare_strategies(self, equity_curve1: pd.Series, equity_curve2: pd.Series) -> Dict[str, Any]:
+    def compare_strategies(
+        self, equity_curve1: pd.Series, equity_curve2: pd.Series
+    ) -> Dict[str, Any]:
         """
         Compare two strategies based on their equity curves.
 
@@ -996,8 +1062,8 @@ class PerformanceMetrics:
             sharpe1 = self.calculate_sharpe_ratio(equity_curve1)
             sharpe2 = self.calculate_sharpe_ratio(equity_curve2)
 
-            max_dd1 = self.calculate_max_drawdown(equity_curve1)['max_drawdown']
-            max_dd2 = self.calculate_max_drawdown(equity_curve2)['max_drawdown']
+            max_dd1 = self.calculate_max_drawdown(equity_curve1)["max_drawdown"]
+            max_dd2 = self.calculate_max_drawdown(equity_curve2)["max_drawdown"]
 
             # Calculate correlation between strategies
             # Align the returns series
@@ -1008,21 +1074,21 @@ class PerformanceMetrics:
             correlation = aligned_returns1.corr(aligned_returns2)
 
             # Determine winner based on Sharpe ratio
-            winner = 'strategy_1' if sharpe1 > sharpe2 else 'strategy_2'
+            winner = "strategy_1" if sharpe1 > sharpe2 else "strategy_2"
 
             return {
-                'strategy_1': {
-                    'total_return': total_return1,
-                    'sharpe_ratio': sharpe1,
-                    'max_drawdown': max_dd1
+                "strategy_1": {
+                    "total_return": total_return1,
+                    "sharpe_ratio": sharpe1,
+                    "max_drawdown": max_dd1,
                 },
-                'strategy_2': {
-                    'total_return': total_return2,
-                    'sharpe_ratio': sharpe2,
-                    'max_drawdown': max_dd2
+                "strategy_2": {
+                    "total_return": total_return2,
+                    "sharpe_ratio": sharpe2,
+                    "max_drawdown": max_dd2,
                 },
-                'correlation': correlation,
-                'winner': winner
+                "correlation": correlation,
+                "winner": winner,
             }
         except Exception as e:
             raise MetricsCalculationError(f"Failed to compare strategies: {e}") from e
@@ -1104,9 +1170,7 @@ class PerformanceMetrics:
             if hasattr(empyrical, "value_at_risk"):
                 metrics["var_95"] = empyrical.value_at_risk(returns, 0.05)
             if hasattr(empyrical, "conditional_value_at_risk"):
-                metrics["cvar_95"] = empyrical.conditional_value_at_risk(
-                    returns, 0.05
-                )
+                metrics["cvar_95"] = empyrical.conditional_value_at_risk(returns, 0.05)
             if hasattr(empyrical, "omega_ratio"):
                 metrics["omega_ratio"] = empyrical.omega_ratio(returns)
 

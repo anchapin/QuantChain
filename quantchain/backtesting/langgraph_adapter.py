@@ -2,18 +2,6 @@
 LangGraph adapter for agent backtesting integration.
 """
 
-# LangGraph compatibility guard
-LANGGRAPH_AVAILABLE = False
-try:
-    from langgraph.graph import StateGraph, END
-    LANGGRAPH_AVAILABLE = True
-except ImportError:
-    StateGraph = None
-    END = None
-    LANGGRAPH_AVAILABLE = False
-
-
-
 import json
 import time
 from dataclasses import dataclass, field
@@ -22,6 +10,17 @@ from typing import Any, Dict, List, Optional, Union
 from unittest.mock import Mock
 
 import pandas as pd
+
+# LangGraph compatibility guard
+LANGGRAPH_AVAILABLE = False
+try:
+    from langgraph.graph import StateGraph, END
+
+    LANGGRAPH_AVAILABLE = True
+except ImportError:
+    StateGraph = None
+    END = None
+    LANGGRAPH_AVAILABLE = False
 
 
 # Custom Exceptions
@@ -179,7 +178,7 @@ class PositionManager:
         )
         return self.cash + position_value
 
-    def get_positions(self) -> Dict[str, int]:
+    def get_positions(self) -> Dict[str, float]:
         """Get current positions."""
         return self.positions.copy()
 
@@ -361,7 +360,7 @@ class LangGraphBacktestAdapter:
         strategy = self.create_strategy(self.current_state)
 
         # Initialize strategy with default cash if not already done
-        if not hasattr(strategy, '_initialized'):
+        if not hasattr(strategy, "_initialized"):
             strategy.init(100000.0)
             strategy._initialized = True
 
@@ -383,7 +382,7 @@ class LangGraphBacktestAdapter:
         strategy = self.create_strategy(self.current_state)
 
         # Initialize strategy with default cash if not already done
-        if not hasattr(strategy, '_initialized'):
+        if not hasattr(strategy, "_initialized"):
             strategy.init(100000.0)
             strategy._initialized = True
 
@@ -404,7 +403,7 @@ class LangGraphBacktestAdapter:
         strategy = self.create_strategy(self.current_state)
 
         # Initialize strategy with default cash if not already done
-        if not hasattr(strategy, '_initialized'):
+        if not hasattr(strategy, "_initialized"):
             strategy.init(100000.0)
             strategy._initialized = True
 
@@ -425,7 +424,7 @@ class LangGraphBacktestAdapter:
         strategy = self.create_strategy(self.current_state)
 
         # Initialize strategy with default cash if not already done
-        if not hasattr(strategy, '_initialized'):
+        if not hasattr(strategy, "_initialized"):
             strategy.init(100000.0)
             strategy._initialized = True
 
@@ -454,6 +453,8 @@ class AgentStrategy:
         # Rate limiting support
         self.last_call_time = 0.0
         self.call_count = 0
+        # Initialize flag
+        self._initialized = True
         # Error retry support
         self.consecutive_failures = 0
         # Track if we've simulated error for testing
@@ -712,7 +713,7 @@ class AgentStrategy:
         symbol = bar.get("symbol")
         price = bar.get("close", 0)
         # Use quantity from current state if available, otherwise from bar_data
-        quantity = getattr(self.current_state, 'quantity', bar.get('quantity', 0))
+        quantity = getattr(self.current_state, "quantity", bar.get("quantity", 0))
 
         if not symbol or price <= 0 or quantity <= 0:
             return
@@ -740,7 +741,7 @@ class AgentStrategy:
             # Ignore insufficient cash errors for now
             pass
 
-    def get_current_positions(self) -> Dict[str, int]:
+    def get_current_positions(self) -> Dict[str, float]:
         """Get current positions."""
         return self.position_manager.get_positions()
 

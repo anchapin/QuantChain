@@ -3,10 +3,8 @@ Dependency Manager for QuantChain
 Handles optional imports and provides graceful fallbacks.
 """
 
-import sys
 import logging
-import warnings
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -14,15 +12,15 @@ logger = logging.getLogger(__name__)
 class DependencyManager:
     """Manages optional dependencies with graceful fallbacks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize dependency manager."""
         self._available: Dict[str, bool] = {}
         self._modules: Dict[str, Any] = {}
         self._check_dependencies()
 
-    def _check_dependencies(self):
+    def _check_dependencies(self) -> None:
         """Check availability of optional dependencies."""
-        dependencies = {
+        dependencies: Dict[str, Any] = {
             "plotly": ["plotly", "plotly.graph_objects", "plotly.express"],
             "streamlit": ["streamlit", "streamlit.components.v1"],
             "torch": ["torch", "torch.nn", "torch.optim"],
@@ -44,9 +42,9 @@ class DependencyManager:
                     self._available[category] = False
                     break
 
-    def is_available(self, dependency: str) -> bool:
+    def is_available(self, dependency_name: str) -> bool:
         """Check if a dependency is available."""
-        return self._available.get(dependency, False)
+        return self._available.get(dependency_name, False)
 
     def get_module(self, module_name: str, fallback: Optional[Any] = None) -> Any:
         """Get a module with optional fallback."""
@@ -76,7 +74,7 @@ class DependencyManager:
         """Get status of all dependencies."""
         return self._available.copy()
 
-    def log_status(self):
+    def log_status(self) -> None:
         """Log the status of all dependencies."""
         logger.info("Optional Dependencies Status:")
         for dep, available in self._available.items():
@@ -115,7 +113,7 @@ def require_optional(dependency: str, fallback: Optional[Any] = None):
     return decorator
 
 
-def get_safe_import(module_name: str, fallback: Optional[Any] = None):
+def get_safe_import(module_name: str, fallback: Optional[Any] = None) -> Any:
     """Safely import a module with fallback."""
     manager = get_dependency_manager()
     return manager.get_module(module_name, fallback)
@@ -158,7 +156,7 @@ def has_trading_connectors() -> bool:
 
 
 # Auto-initialize and log status
-def init_dependencies():
+def init_dependencies() -> DependencyManager:
     """Initialize dependency manager and log status."""
     manager = get_dependency_manager()
     manager.log_status()

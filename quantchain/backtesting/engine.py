@@ -79,7 +79,7 @@ class BacktestConfig:
 @dataclass
 class MetricsResult:
     """Metrics calculated from backtest results."""
-    
+
     total_return: float = 0.0
     annualized_return: float = 0.0
     sharpe_ratio: float = 0.0
@@ -159,8 +159,8 @@ class BacktestResult:
         """Get number of winning trades."""
         if self.trade_log is None or len(self.trade_log) == 0:
             return 0
-        if 'pnl' in self.trade_log.columns:
-            return (self.trade_log['pnl'] > 0).sum()
+        if "pnl" in self.trade_log.columns:
+            return int((self.trade_log["pnl"] > 0).sum())
         return 0
 
     @property
@@ -168,8 +168,8 @@ class BacktestResult:
         """Get number of losing trades."""
         if self.trade_log is None or len(self.trade_log) == 0:
             return 0
-        if 'pnl' in self.trade_log.columns:
-            return (self.trade_log['pnl'] < 0).sum()
+        if "pnl" in self.trade_log.columns:
+            return int((self.trade_log["pnl"] < 0).sum())
         return self.total_trades - self.winning_trades
 
 
@@ -254,7 +254,12 @@ def filter_data_by_date_range(
         if not isinstance(start_date, pd.Timestamp):
             start_date = pd.Timestamp(start_date)
         # Normalize timezone: if data has no timezone, strip from start_date
-        if filtered_data.index.tz is None and start_date.tz is not None:
+        if (
+            start_date is not None
+            and hasattr(start_date, "tz")
+            and start_date.tz is not None
+            and hasattr(start_date, "tz_localize")
+        ):
             start_date = start_date.tz_localize(None)
         # Use .loc for safer indexing
         filtered_data = filtered_data.loc[filtered_data.index >= start_date]
@@ -264,7 +269,12 @@ def filter_data_by_date_range(
         if not isinstance(end_date, pd.Timestamp):
             end_date = pd.Timestamp(end_date)
         # Normalize timezone: if data has no timezone, strip from end_date
-        if filtered_data.index.tz is None and end_date.tz is not None:
+        if (
+            end_date is not None
+            and hasattr(end_date, "tz")
+            and end_date.tz is not None
+            and hasattr(end_date, "tz_localize")
+        ):
             end_date = end_date.tz_localize(None)
         # Use .loc for safer indexing
         filtered_data = filtered_data.loc[filtered_data.index <= end_date]
@@ -295,12 +305,12 @@ def calculate_basic_statistics(
     if len(equity_curve) > 1:
         time_span = equity_curve.index[-1] - equity_curve.index[0]
         # Handle different pandas versions - time_span may be Timedelta or datetime
-        if hasattr(time_span, 'days'):
+        if hasattr(time_span, "days"):
             time_span_days = time_span.days
         else:
             # For pandas 2.1+, convert to Timedelta if needed
             time_span_days = pd.Timedelta(time_span).days
-        
+
         if time_span_days > 0:
             years = time_span_days / 365.25
             annualized_return = (final_equity / initial_cash) ** (1 / years) - 1

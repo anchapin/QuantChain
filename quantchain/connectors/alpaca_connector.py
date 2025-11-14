@@ -1,42 +1,10 @@
 """Alpaca data connector for equity and crypto data."""
 
-# Alpaca compatibility guard
-ALPACA_AVAILABLE = False
-try:
-    from alpaca.data import (
-        HistoricalCryptoData,
-        StockDataStream,
-        StockTradeApi,
-    )
-    from alpaca.trading.client import Client as AlpacaTradingClient
-    from alpaca import TradingStream
-    ALPACA_AVAILABLE = True
-except ImportError:
-    pass
-
-
-
 import time
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
-from alpaca.data import (
-    CryptoHistoricalDataClient,
-    StockHistoricalDataClient,
-    TimeFrame,
-    TimeFrameUnit,
-)
-from alpaca.data.enums import DataFeed
-from alpaca.data.requests import (
-    CryptoBarsRequest,
-    CryptoLatestQuoteRequest,
-    StockBarsRequest,
-    StockLatestQuoteRequest,
-)
-from alpaca.trading import TradingClient
-from alpaca.trading.enums import AssetClass
-from alpaca.trading.requests import GetAssetsRequest
 
 from ..core.exceptions import (
     AuthenticationError,
@@ -45,6 +13,30 @@ from ..core.exceptions import (
     SymbolNotFoundError,
 )
 from .base_interface import DataFeedInterface
+
+# Alpaca compatibility guard
+ALPACA_AVAILABLE = False
+try:
+    from alpaca.data import (
+        CryptoHistoricalDataClient,
+        StockHistoricalDataClient,
+        TimeFrame,
+        TimeFrameUnit,
+    )
+    from alpaca.data.enums import DataFeed
+    from alpaca.data.requests import (
+        CryptoBarsRequest,
+        CryptoLatestQuoteRequest,
+        StockBarsRequest,
+        StockLatestQuoteRequest,
+    )
+    from alpaca.trading import TradingClient
+    from alpaca.trading.enums import AssetClass
+    from alpaca.trading.requests import GetAssetsRequest
+
+    ALPACA_AVAILABLE = True
+except ImportError:
+    pass
 
 
 class AlpacaDataConnector(DataFeedInterface):

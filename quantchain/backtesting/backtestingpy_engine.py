@@ -206,10 +206,12 @@ class BacktestingPyEngine(BacktestEngine):
                 total_trades=int(stats_dict.get("# Trades", 0)),
             )
 
-
-
             return BacktestResult(
-                equity_curve=self.get_equity_curve() if self.get_equity_curve() is not None else pd.Series(),
+                equity_curve=(
+                    self.get_equity_curve()
+                    if self.get_equity_curve() is not None
+                    else pd.Series()
+                ),
                 trade_log=pd.DataFrame(),  # Empty trade log for now
                 summary_stats=stats_dict,
                 metrics=metrics,

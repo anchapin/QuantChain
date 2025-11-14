@@ -111,14 +111,18 @@ class CCXTDataConnector(DataFeedInterface):
 
         except Exception as e:
             # Handle authentication error specifically if available
-            if (hasattr(ccxt, 'AuthenticationError') and
-                hasattr(ccxt.AuthenticationError, '__bases__') and
-                isinstance(e, ccxt.AuthenticationError)):
+            if (
+                hasattr(ccxt, "AuthenticationError")
+                and hasattr(ccxt.AuthenticationError, "__bases__")
+                and isinstance(e, ccxt.AuthenticationError)
+            ):
                 raise AuthenticationError(
                     f"Failed to authenticate with {exchange}: {str(e)}"
                 ) from e
             else:
-                raise DataSourceError(f"Failed to initialize {exchange}: {str(e)}") from e
+                raise DataSourceError(
+                    f"Failed to initialize {exchange}: {str(e)}"
+                ) from e
 
     def _convert_timeframe(self, timeframe: str) -> str:
         """Convert QuantChain timeframe to ccxt format.

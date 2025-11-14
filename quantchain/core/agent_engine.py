@@ -1,36 +1,29 @@
 """Core agent engine using LangGraph for QuantChain."""
 
-# LangGraph compatibility guard
-LANGGRAPH_AVAILABLE = False
-try:
-    from langgraph.graph import StateGraph, END
-    LANGGRAPH_AVAILABLE = True
-except ImportError:
-    StateGraph = None
-    END = None
-    LANGGRAPH_AVAILABLE = False
-
-
-
 from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypedDict
+
+from .config import QuantChainConfig
+from .llm_providers import LLMProvider, create_llm_provider
+from .reflection import AgentAction, ReflectionEngine, ReflectionReport
 
 if TYPE_CHECKING:
     from langchain_core.tools import BaseTool
     from langgraph.graph import END, StateGraph
 
+# LangGraph compatibility guard
+LANGGRAPH_AVAILABLE = False
 try:
     from langchain_core.tools import BaseTool  # noqa: F811
     from langgraph.graph import END, StateGraph  # noqa: F811
+
+    LANGGRAPH_AVAILABLE = True
 except ImportError:
     StateGraph = None  # type: ignore[assignment,misc]
     END = None  # type: ignore[assignment,misc]
     BaseTool = None  # type: ignore[assignment,misc]
-
-from .config import QuantChainConfig
-from .llm_providers import LLMProvider, create_llm_provider
-from .reflection import AgentAction, ReflectionEngine, ReflectionReport
+    LANGGRAPH_AVAILABLE = False
 
 
 @dataclass

@@ -3,11 +3,8 @@ Web Dashboard for QuantChain
 Interactive web-based dashboard for monitoring trading strategies and portfolios.
 """
 
-import os
-import sys
-import json
 import logging
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 import warnings
 
@@ -40,7 +37,8 @@ except ImportError:
 import pandas as pd
 import numpy as np
 from quantchain.core.config import Config
-from quantchain.core.exceptions import QuantChainError
+
+# from quantchain.core.exceptions import QuantChainError  # Import when actually used
 
 logger = logging.getLogger(__name__)
 

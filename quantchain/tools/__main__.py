@@ -5,7 +5,7 @@ import sys
 from quantchain.tools.ci_fixer import CIFixer
 
 
-def main():
+def main() -> None:
     """Main CLI entry point."""
     if len(sys.argv) < 2:
         print("Usage: python -m quantchain.tools <command>")

@@ -3,20 +3,14 @@
 
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
-
-# Add the parent directory to the path to import the module
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-"""Test cases for CCXT data connector."""
-
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
+
+"""Test cases for CCXT data connector."""
+
 from quantchain.connectors.ccxt_connector import CCXTDataConnector
 from quantchain.core.exceptions import (
     AuthenticationError,
@@ -24,6 +18,9 @@ from quantchain.core.exceptions import (
     RateLimitError,
     SymbolNotFoundError,
 )
+
+# Add the parent directory to the path to import the module
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 @pytest.fixture
@@ -71,6 +68,7 @@ def mock_exchange():
 @pytest.fixture
 def connector(mock_ccxt, mock_exchange):
     """Create a CCXTDataConnector instance with mocked dependencies."""
+
     # Create proper exception classes that inherit from BaseException
     class AuthenticationError(Exception):
         pass
@@ -144,18 +142,20 @@ class TestCCXTDataConnectorInit:
     def test_init_with_invalid_exchange(self, mock_ccxt):
         """Test initialization with invalid exchange name."""
         # Ensure invalid_exchange is not in ccxt module
-        if hasattr(mock_ccxt, 'invalid_exchange'):
-            delattr(mock_ccxt, 'invalid_exchange')
+        if hasattr(mock_ccxt, "invalid_exchange"):
+            delattr(mock_ccxt, "invalid_exchange")
 
         with patch("quantchain.connectors.ccxt_connector.ccxt", mock_ccxt):
             with patch("quantchain.connectors.ccxt_connector.CCXT_AVAILABLE", True):
                 with pytest.raises(
-                    DataSourceError, match="Failed to initialize invalid_exchange: Exchange 'invalid_exchange' not found in ccxt"
+                    DataSourceError,
+                    match="Failed to initialize invalid_exchange: Exchange 'invalid_exchange' not found in ccxt",
                 ):
                     CCXTDataConnector(exchange="invalid_exchange")
 
     def test_init_with_authentication_error(self, mock_ccxt):
         """Test initialization with authentication error."""
+
         # Create a proper exception class that inherits from BaseException
         class AuthenticationError(Exception):
             pass
@@ -168,6 +168,7 @@ class TestCCXTDataConnectorInit:
             with patch("quantchain.connectors.ccxt_connector.CCXT_AVAILABLE", True):
                 # Import AuthenticationError from quantchain.core.exceptions
                 from quantchain.core.exceptions import AuthenticationError
+
                 with pytest.raises(AuthenticationError, match="Failed to authenticate"):
                     CCXTDataConnector(api_key="invalid", api_secret="invalid")
 
@@ -178,8 +179,8 @@ class TestCCXTDataConnectorInit:
         # Set up attributes but explicitly remove set_sandbox_mode
         exchange_without_sandbox.id = "binance"
         exchange_without_sandbox.name = "Binance"
-        if hasattr(exchange_without_sandbox, 'set_sandbox_mode'):
-            delattr(exchange_without_sandbox, 'set_sandbox_mode')
+        if hasattr(exchange_without_sandbox, "set_sandbox_mode"):
+            delattr(exchange_without_sandbox, "set_sandbox_mode")
 
         mock_ccxt.binance = exchange_without_sandbox
 
@@ -267,7 +268,9 @@ class TestRefreshMarketCache:
     def test_refresh_cache_rate_limit_error(self, connector, mock_ccxt):
         """Test refreshing cache with rate limit error."""
         # Use the RateLimitExceeded exception from the fixture
-        connector.exchange.load_markets.side_effect = mock_ccxt.RateLimitExceeded("Rate limit exceeded")
+        connector.exchange.load_markets.side_effect = mock_ccxt.RateLimitExceeded(
+            "Rate limit exceeded"
+        )
 
         with pytest.raises(RateLimitError, match="Rate limit exceeded"):
             connector._refresh_market_cache()
@@ -275,7 +278,9 @@ class TestRefreshMarketCache:
     def test_refresh_cache_network_error(self, connector, mock_ccxt):
         """Test refreshing cache with network error."""
         # Use NetworkError exception from fixture
-        connector.exchange.load_markets.side_effect = mock_ccxt.NetworkError("Network error")
+        connector.exchange.load_markets.side_effect = mock_ccxt.NetworkError(
+            "Network error"
+        )
 
         with pytest.raises(DataSourceError, match="Failed to load markets"):
             connector._refresh_market_cache()

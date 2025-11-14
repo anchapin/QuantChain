@@ -40,6 +40,7 @@ try:
         StopOrder,
         Trade,
     )
+
     IB_ASYNC_AVAILABLE = True
 except ImportError:
     # Set all ib_async imports to None for mock testing
@@ -189,19 +190,17 @@ class IBExecutionConnector(TradingExecutionInterface):
                 else:
                     # Create a task in the running loop and wait for it
                     return asyncio.run_coroutine_threadsafe(
-                        wrapped_coro,
-                        self._loop
-                    ).result(timeout=timeout + 1)  # Add buffer to the timeout
+                        wrapped_coro, self._loop
+                    ).result(
+                        timeout=timeout + 1
+                    )  # Add buffer to the timeout
             else:
                 # Handle execution based on whether we own the loop
                 if self._own_loop:
                     return self._loop.run_until_complete(coro)
                 else:
                     # Create a task in the running loop and wait for it
-                    return asyncio.run_coroutine_threadsafe(
-                        coro,
-                        self._loop
-                    ).result()
+                    return asyncio.run_coroutine_threadsafe(coro, self._loop).result()
         except asyncio.TimeoutError as e:
             raise ExecutionError(f"Operation timed out: {str(e)}") from e
         except Exception as e:
@@ -404,7 +403,7 @@ class IBExecutionConnector(TradingExecutionInterface):
         try:
             # Get the order from IB
             # Try multiple approaches based on IB API version
-            if hasattr(self.ib, 'orders'):
+            if hasattr(self.ib, "orders"):
                 # For newer ib_async versions
                 for order in self.ib.orders:
                     if str(order.orderId) == str(order_id):
@@ -424,7 +423,7 @@ class IBExecutionConnector(TradingExecutionInterface):
     def _convert_ib_order_type(self, order_type) -> OrderType:
         """Map IB order type to OrderType enum."""
         # Handle class objects
-        if hasattr(order_type, '__name__'):
+        if hasattr(order_type, "__name__"):
             class_name = order_type.__name__
         else:
             # Handle string input
@@ -554,7 +553,9 @@ class IBExecutionConnector(TradingExecutionInterface):
             net_liquidation = 0.0
             available_funds = 0.0
             buying_power = 0.0
-            total_cash = 0.0  # Default value in case TotalCashValue/TotalCash not returned
+            total_cash = (
+                0.0  # Default value in case TotalCashValue/TotalCash not returned
+            )
 
             for item in summary:
                 if item.tag == "NetLiquidation":
@@ -600,7 +601,11 @@ class IBExecutionConnector(TradingExecutionInterface):
                     try:
                         # Try to get current price from market data
                         ticker = self.ib.reqMktData(pos.contract, "", False, False)
-                        current_price = ticker.last if hasattr(ticker, 'last') and ticker.last else avg_cost
+                        current_price = (
+                            ticker.last
+                            if hasattr(ticker, "last") and ticker.last
+                            else avg_cost
+                        )
                     except Exception:
                         current_price = avg_cost
 

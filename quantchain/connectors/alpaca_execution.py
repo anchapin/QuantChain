@@ -1,31 +1,7 @@
 """Alpaca execution connector for equity and crypto trading."""
 
-# Alpaca compatibility guard
-ALPACA_AVAILABLE = False
-try:
-    from alpaca.data import (
-        HistoricalCryptoData,
-        StockDataStream,
-        StockTradeApi,
-    )
-    from alpaca.trading.client import Client as AlpacaTradingClient
-    from alpaca import TradingStream
-    ALPACA_AVAILABLE = True
-except ImportError:
-    pass
-
-
-
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-
-from alpaca.trading import GetAssetsRequest
-from alpaca.trading import OrderRequest as AlpacaOrderRequest
-from alpaca.trading import OrderSide as AlpacaOrderSide
-from alpaca.trading import OrderType as AlpacaOrderType
-from alpaca.trading import StopLossRequest, TakeProfitRequest
-from alpaca.trading import TimeInForce as AlpacaTimeInForce
-from alpaca.trading import TradingClient
 
 from ..core.exceptions import AuthenticationError
 from ..tools.trading_execution import (
@@ -43,6 +19,21 @@ from ..tools.trading_execution import (
     TradingExecutionInterface,
     ValidationError,
 )
+
+# Alpaca compatibility guard
+ALPACA_AVAILABLE = False
+try:
+    from alpaca.trading import OrderRequest as AlpacaOrderRequest
+    from alpaca.trading import OrderSide as AlpacaOrderSide
+    from alpaca.trading import OrderType as AlpacaOrderType
+    from alpaca.trading import StopLossRequest, TakeProfitRequest
+    from alpaca.trading import TimeInForce as AlpacaTimeInForce
+    from alpaca.trading import TradingClient
+    from alpaca.trading.requests import GetAssetsRequest
+
+    ALPACA_AVAILABLE = True
+except ImportError:
+    pass
 
 
 class AlpacaExecutionConnector(TradingExecutionInterface):

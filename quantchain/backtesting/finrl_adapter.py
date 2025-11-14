@@ -5,24 +5,9 @@ This module provides a gym-compatible environment that bridges QuantChain's
 backtesting engine with FinRL's reinforcement learning framework.
 """
 
-# Gymnasium compatibility guard
-GYMNASIUM_AVAILABLE = False
-try:
-    import gymnasium as gym
-    GYMNASIUM_AVAILABLE = True
-except ImportError:
-    gym = None
-    GYMNASIUM_AVAILABLE = False
-
-
-
 import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
-
-import gymnasium as gym
 import numpy as np
-from gymnasium import spaces
+from typing import List, Optional
 
 from quantchain.backtesting.market_friction import MarketFrictionSimulator
 from quantchain.backtesting.performance_metrics import PerformanceMetrics
@@ -32,525 +17,468 @@ from quantchain.connectors import (
     PolygonDataConnector,
 )
 
+# Gymnasium compatibility guard
+GYMNASIUM_AVAILABLE = False
+try:
+    import gymnasium as gym
+    from gymnasium import spaces
+
+    GYMNASIUM_AVAILABLE = True
+except ImportError:
+    gym = None
+    spaces = None
+    GYMNASIUM_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
 class FinRLAdapterError(Exception):
     """Base exception for FinRL adapter errors."""
+
     pass
 
 
 class FinRLConnectionError(FinRLAdapterError):
-    """Exception for connection-related errors in FinRL adapter."""
+    """Exception for connection errors in the FinRL adapter."""
+
     pass
 
 
 class FinRLDataError(FinRLAdapterError):
-    """Exception for data-related errors in FinRL adapter."""
+    """Exception for data errors in the FinRL adapter."""
+
     pass
 
 
-def get_connector(
-    connector_name: str, **kwargs: Any
-) -> Union[AlpacaDataConnector, PolygonDataConnector, CCXTDataConnector]:
-    """
-    Get a data connector instance.
+def get_connector(connector_type: str, **kwargs):
+    """Factory function to get the appropriate data connector.
 
     Args:
-        connector_name: Name of the connector to create
-        **kwargs: Additional arguments for connector initialization
+        connector_type: Type of connector to use (alpaca, ccxt, polygon)
+        **kwargs: Additional arguments for the connector
 
     Returns:
         Data connector instance
-
-    Raises:
-        ValueError: If connector name is not recognized
-        AttributeError: If connector_name is None
     """
-    if connector_name is None:
-        raise FinRLConnectionError("connector_name cannot be None")
-
-    if connector_name == "":
-        raise FinRLConnectionError("connector_name cannot be empty")
-
-    connector_map = {
-        "alpaca": AlpacaDataConnector,
-        "polygon": PolygonDataConnector,
-        "ccxt": CCXTDataConnector,
-    }
-
-    connector_class = connector_map.get(connector_name.lower())
-    if not connector_class:
-        raise ValueError(f"Unknown connector: {connector_name}")
-
-    # Explicitly cast to the correct union type
-    return connector_class(**kwargs)  # type: ignore
+    if connector_type.lower() == "alpaca":
+        return AlpacaDataConnector(**kwargs)
+    elif connector_type.lower() == "ccxt":
+        return CCXTDataConnector(**kwargs)
+    elif connector_type.lower() == "polygon":
+        return PolygonDataConnector(**kwargs)
+    else:
+        raise ValueError(f"Unknown connector type: {connector_type}")
 
 
-class FinRLAdapter(gym.Env):
+class FinRLAdapter:
+    """Gymnasium environment adapter for QuantChain backtesting engine.
+
+    This class provides a gym-compatible environment that can be used with
+    FinRL's reinforcement learning framework for training trading agents.
     """
-    Gym-compatible environment for integrating FinRL agents with QuantChain backtesting.
-
-    This adapter provides:
-    - Market data from QuantChain connectors
-    - Realistic market friction modeling
-    - Performance metrics integration
-    - Gym-compatible observation and action spaces
-    """
-
-    metadata = {"render.modes": ["human"]}
 
     def __init__(
         self,
         symbol: str,
+        timeframe: str,
         start_date: str,
         end_date: str,
-        initial_balance: float = 100000,
-        data_connector: str = "alpaca",
-        market_friction_config: Optional[Dict] = None,
-        observation_features: Optional[List[str]] = None,
-        reward_strategy: str = "risk_adjusted_return",
-        **kwargs: Any,
+        connector_type: str = "alpaca",
+        initial_balance: float = 100000.0,
+        commission: float = 0.001,
+        slippage: float = 0.0005,
+        market_hours_only: bool = True,
+        lookback_window: int = 30,
+        tech_indicators: Optional[List[str]] = None,
+        **connector_kwargs,
     ):
-        """
-        Initialize the FinRL adapter environment.
+        """Initialize the FinRL adapter.
 
         Args:
-            symbol: Trading symbol (e.g., "AAPL", "BTC/USD")
-            start_date: Backtest start date (YYYY-MM-DD)
-            end_date: Backtest end date (YYYY-MM-DD)
-            initial_balance: Starting portfolio balance
-            data_connector: Name of QuantChain data connector to use
-            market_friction_config: Configuration for market friction model
-            observation_features: List of features to include in observation space
-            reward_strategy: Strategy for calculating rewards
-            **kwargs: Additional arguments passed to connectors
+            symbol: Trading symbol
+            timeframe: Data timeframe (e.g., '1D', '1H', '5T')
+            start_date: Start date in format 'YYYY-MM-DD'
+            end_date: End date in format 'YYYY-MM-DD'
+            connector_type: Type of data connector to use
+            initial_balance: Initial portfolio balance
+            commission: Trading commission rate
+            slippage: Trading slippage rate
+            market_hours_only: Whether to only consider market hours
+            lookback_window: Window size for historical observations
+            tech_indicators: List of technical indicators to add
+            **connector_kwargs: Additional arguments for the data connector
         """
-        super(FinRLAdapter, self).__init__()
-
-        # Store parameters
-        self.symbol = symbol
-        self.start_date = datetime.strptime(start_date, "%Y-%m-%d")
-        self.end_date = datetime.strptime(end_date, "%Y-%m-%d")
-        self.initial_balance = initial_balance
-        self.reward_strategy = reward_strategy
-        self.kwargs = kwargs
-
-        # Initialize components
-        self._setup_data_connector(data_connector)
-        self._setup_market_friction(market_friction_config)
-        self._setup_performance_metrics()
-
-        # Setup observation and action spaces
-        self._setup_spaces(observation_features)
-
-        # State tracking
-        self.current_step: int = 0
-        self.max_steps: int = int(len(self.market_data) - 1)
-        self.done: bool = False
-
-        # Portfolio state
-        self.balance: float = float(initial_balance)
-        self.position: float = 0.0
-        self.position_value: float = 0.0
-        self.total_value: float = float(initial_balance)
-
-        # Tracking for rewards
-        self.last_total_value: float = float(initial_balance)
-        self.transaction_costs: float = 0.0
-        self.portfolio_values: List[float] = [float(initial_balance)]
-
-    def _setup_data_connector(self, connector_name: str) -> None:
-        """Initialize the data connector and fetch market data."""
-        try:
-            connector = get_connector(connector_name, **self.kwargs)
-            self.market_data = connector.get_historical_data(
-                symbol=self.symbol,
-                timeframe="1D",
-                start_date=self.start_date,
-                end_date=self.end_date,
+        if not GYMNASIUM_AVAILABLE:
+            raise FinRLConnectionError(
+                "Gymnasium is not available. Install with: pip install gymnasium"
             )
 
-            # Add technical indicators
-            self._add_technical_indicators()
+        self.symbol = symbol
+        self.timeframe = timeframe
+        self.start_date = start_date
+        self.end_date = end_date
+        self.initial_balance = initial_balance
+        self.commission = commission
+        self.slippage = slippage
+        self.market_hours_only = market_hours_only
+        self.lookback_window = lookback_window
+        self.tech_indicators = tech_indicators or []
 
-        except Exception as e:
-            logger.error(f"Failed to setup data connector: {e}")
-            raise
-
-    def _setup_market_friction(self, config: Optional[Dict]) -> None:
-        """Initialize market friction model."""
-        from quantchain.backtesting.market_friction import (
-            FixedLatency,
-            MarketFrictionConfig,
-            PercentageCommission,
-            VolumeImpactSlippage,
+        # Setup components
+        self.data_connector = get_connector(connector_type, **connector_kwargs)
+        self._setup_data_connector()
+        self.market_friction = MarketFrictionSimulator(
+            commission=commission, slippage=slippage
         )
-
-        # Use empty dict if config is None
-        if config is None:
-            config = {}
-
-        # Default models
-        commission = PercentageCommission(rate=config.get("commission", 0.001))
-        slippage = VolumeImpactSlippage(
-            base_rate=config.get("slippage", 0.0005), volume_impact_factor=0.0001
-        )
-        latency = FixedLatency(latency_ms=config.get("latency_ms", 50))
-
-        # Create configuration
-        friction_config = MarketFrictionConfig(
-            commission_model=commission, slippage_model=slippage, latency_model=latency
-        )
-
-        self.market_friction = MarketFrictionSimulator(config=friction_config)
-
-    def _setup_performance_metrics(self) -> None:
-        """Initialize performance metrics tracker."""
         self.performance_metrics = PerformanceMetrics()
 
-    def _setup_spaces(self, features: Optional[List[str]]) -> None:
-        """Setup observation and action spaces."""
-        # Default observation features
-        if features is None:
-            features = [
-                "open",
-                "high",
-                "low",
-                "close",
-                "volume",
-                "rsi",
-                "macd",
-                "macd_signal",
-                "macd_histogram",
-                "bb_upper",
-                "bb_middle",
-                "bb_lower",
-                "balance",
-                "position",
-                "position_value",
-                "total_value",
-                "pnl_ratio",
-                "action_history",
-            ]
-
-        self.observation_features = features
-
-        # Calculate observation space size
-        obs_size = len(features)
-        self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(obs_size,), dtype=np.float32
-        )
-
-        # Action space: [hold, buy, sell] with position sizing
-        # Extended action: [action_type(0-2), amount(0-1)]
-        self.action_space = spaces.Box(
-            low=np.array([0, 0]), high=np.array([2, 1]), dtype=np.float32
-        )
-
-    def _add_technical_indicators(self) -> None:
-        """Add technical indicators to market data."""
-        # RSI
-        delta = self.market_data["close"].diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-        rs = gain / loss
-        self.market_data["rsi"] = 100 - (100 / (1 + rs))
-
-        # MACD
-        exp1 = self.market_data["close"].ewm(span=12).mean()
-        exp2 = self.market_data["close"].ewm(span=26).mean()
-        self.market_data["macd"] = exp1 - exp2
-        self.market_data["macd_signal"] = self.market_data["macd"].ewm(span=9).mean()
-        self.market_data["macd_histogram"] = (
-            self.market_data["macd"] - self.market_data["macd_signal"]
-        )
-
-        # Bollinger Bands
-        rolling_mean = self.market_data["close"].rolling(window=20).mean()
-        rolling_std = self.market_data["close"].rolling(window=20).std()
-        self.market_data["bb_middle"] = rolling_mean
-        self.market_data["bb_upper"] = rolling_mean + (rolling_std * 2)
-        self.market_data["bb_lower"] = rolling_mean - (rolling_std * 2)
-
-    def reset(self) -> np.ndarray:
-        """
-        Reset the environment to initial state.
-
-        Returns:
-            Initial observation
-        """
+        # Initialize state
         self.current_step = 0
-        self.done = False
-
-        # Reset portfolio state
-        self.balance = float(self.initial_balance)
+        self.balance = initial_balance
         self.position = 0.0
         self.position_value = 0.0
-        self.total_value = float(self.initial_balance)
+        self.portfolio_value = initial_balance
+        self.trade_history = []
+        self.observations = []
 
-        # Reset tracking
-        self.last_total_value = float(self.initial_balance)
-        self.transaction_costs = 0.0
-        self.portfolio_values = [float(self.initial_balance)]
+        # Setup spaces
+        self._setup_spaces()
 
-        # Reset performance metrics (create new instance as reset method not available)
-        self._setup_performance_metrics()
+    def _setup_data_connector(self):
+        """Setup the data connector and fetch initial data."""
+        try:
+            self.data = self.data_connector.get_historical_data(
+                symbol=self.symbol,
+                timeframe=self.timeframe,
+                start_date=self.start_date,
+                end_date=self.end_date,
+                market_hours_only=self.market_hours_only,
+            )
+            self.data_len = len(self.data)
+            self._add_technical_indicators()
+        except Exception as e:
+            raise FinRLDataError(f"Error fetching data: {str(e)}")
 
-        return self._get_observation()
+    def _setup_market_friction(self):
+        """Setup market friction simulator."""
+        self.market_friction = MarketFrictionSimulator(
+            commission=self.commission, slippage=self.slippage
+        )
 
-    def step(
-        self, action: Union[np.ndarray, List]
-    ) -> Tuple[np.ndarray, float, bool, Dict]:
-        """
-        Execute one step in the environment.
+    def _setup_performance_metrics(self):
+        """Setup performance metrics calculator."""
+        self.performance_metrics = PerformanceMetrics()
+
+    def _setup_spaces(self):
+        """Setup action and observation spaces."""
+        # Action space: [hold, buy, sell]
+        self.action_space = spaces.Discrete(3)
+
+        # Observation space includes price data and technical indicators
+        # Base features: open, high, low, close, volume, position, portfolio_value, cash
+        base_features = 8
+        # Add technical indicators
+        indicator_features = len(self.tech_indicators) if self.tech_indicators else 0
+        # Total features = base features + indicators
+        total_features = base_features + indicator_features
+
+        # Multiply by lookback window for temporal dimension
+        observation_dim = total_features * self.lookback_window
+
+        self.observation_space = spaces.Box(
+            low=-np.inf, high=np.inf, shape=(observation_dim,), dtype=np.float32
+        )
+
+    def _add_technical_indicators(self):
+        """Add technical indicators to the data."""
+        if not self.tech_indicators:
+            return
+
+        try:
+            # Import here to avoid circular imports
+            from quantchain.analysis.technical_indicators import add_indicators
+
+            self.data = add_indicators(self.data, self.tech_indicators)
+        except ImportError:
+            logger.warning(
+                "Technical indicators module not found. No indicators will be added."
+            )
+        except Exception as e:
+            logger.warning(f"Error adding technical indicators: {str(e)}")
+
+    def reset(self, seed=None, options=None):
+        """Reset the environment to initial state.
 
         Args:
-            action: Action to take [action_type, amount]
+            seed: Random seed for reproducibility
+            options: Additional options for reset
 
         Returns:
-            Tuple of (observation, reward, done, info)
+            Initial observation and info dictionary
         """
-        if self.done:
-            return self._get_observation(), 0, self.done, {}
+        # Set random seed if provided
+        if seed is not None:
+            np.random.seed(seed)
 
-        # Parse action
-        action_type = int(action[0])  # 0=hold, 1=buy, 2=sell
-        amount = float(action[1]) if len(action) > 1 else 0.5  # Position size (0-1)
+        # Reset state
+        self.current_step = self.lookback_window  # Start after initial window
+        self.balance = self.initial_balance
+        self.position = 0.0
+        self.position_value = 0.0
+        self.portfolio_value = self.initial_balance
+        self.trade_history = []
+        self.observations = []
 
-        # Execute action
-        self._execute_action(action_type, amount)
+        # Get initial observation
+        observation = self._get_observation()
 
-        # Calculate reward
-        reward = self._calculate_reward()
-
-        # Update step
-        self.current_step += 1
-        if self.current_step >= self.max_steps:
-            self.done = True
-
-        # Get new observation (only if not done)
-        observation = self._get_observation() if not self.done else self._get_last_observation()
-
-        # Prepare info dict
+        # Info dictionary
         info = {
             "balance": self.balance,
             "position": self.position,
             "position_value": self.position_value,
-            "total_value": self.total_value,
-            "transaction_costs": self.transaction_costs,
-            "step": self.current_step,
+            "portfolio_value": self.portfolio_value,
         }
 
-        return observation, reward, self.done, info
+        return observation, info
 
-    def _execute_action(self, action_type: int, amount: float) -> None:
-        """Execute trading action with market frictions."""
-        current_price = self.market_data.iloc[self.current_step]["close"]
+    def step(self, action):
+        """Execute one step in the environment.
 
-        if action_type == 1:  # Buy
-            # Calculate order amount
-            available_balance = self.balance * 0.95  # Keep 5% reserve
-            max_shares = available_balance / current_price
-            shares_to_buy = max_shares * amount
+        Args:
+            action: Action to take (0: hold, 1: buy, 2: sell)
 
-            # Only execute if shares_to_buy is at least 1
-            if shares_to_buy >= 1:
-                # Apply market frictions
-                cost_info = self.market_friction.get_total_cost(
-                    price=current_price,
-                    quantity=int(shares_to_buy),
-                    side="buy",
-                    symbol=self.symbol,
-                )
-                execution_price = float(cost_info["executed_price"])
-                cost = float(cost_info["total"])
+        Returns:
+            Tuple of (observation, reward, terminated, truncated, info)
+        """
+        # Get current price
+        current_price = self.data["close"].iloc[self.current_step]
 
-                # Execute trade if sufficient balance
-                if shares_to_buy * execution_price + cost <= self.balance:
-                    self.position += shares_to_buy
-                    self.balance -= shares_to_buy * execution_price + cost
-                    self.transaction_costs += cost
+        # Store previous portfolio value for reward calculation
+        prev_portfolio_value = self.portfolio_value
 
-        elif action_type == 2:  # Sell
-            # Calculate sell amount
-            shares_to_sell = self.position * amount
+        # Execute action
+        self._execute_action(action, current_price)
 
-            # Only execute if shares_to_sell is at least 1
-            if shares_to_sell >= 1:
-                # Apply market frictions
-                cost_info = self.market_friction.get_total_cost(
-                    price=current_price,
-                    quantity=int(shares_to_sell),
-                    side="sell",
-                    symbol=self.symbol,
-                )
-                execution_price = float(cost_info["executed_price"])
-                cost = float(cost_info["total"])
+        # Move to next step
+        self.current_step += 1
 
-                # Execute trade
-                self.position -= shares_to_sell
-                self.balance += shares_to_sell * execution_price - cost
-                self.transaction_costs += cost
+        # Check if episode is done
+        terminated = self.current_step >= self.data_len - 1
+        truncated = False
 
-    def _get_observation(self) -> np.ndarray:
-        """Get current observation as numpy array."""
-        current_data = self.market_data.iloc[self.current_step]
-        obs = []
+        # Get new observation
+        observation = self._get_observation()
 
-        # Market data features
-        for feature in self.observation_features:
-            if feature in current_data:
-                value = float(current_data[feature])
-                # Handle NaN values
-                if np.isnan(value):
-                    value = 0.0
-                obs.append(value)
-            elif feature == "balance":
-                obs.append(float(self.balance))
-            elif feature == "position":
-                obs.append(float(self.position))
-            elif feature == "position_value":
-                obs.append(float(self.position_value))
-            elif feature == "total_value":
-                obs.append(float(self.total_value))
-            elif feature == "pnl_ratio":
-                pnl = self.total_value - self.initial_balance
-                pnl_ratio = pnl / self.initial_balance
-                obs.append(pnl_ratio)
-            elif feature == "action_history":
-                # Simple action history feature (last 5 actions)
-                obs.append(0)  # Placeholder
-            else:
-                obs.append(0.0)  # Default value
+        # Calculate reward
+        reward = self._calculate_reward(prev_portfolio_value)
 
-        return np.array(obs, dtype=np.float32)  # type: ignore
+        # Info dictionary
+        info = {
+            "balance": self.balance,
+            "position": self.position,
+            "position_value": self.position_value,
+            "portfolio_value": self.portfolio_value,
+            "current_price": current_price,
+        }
 
-    def _get_last_observation(self) -> np.ndarray:
-        """Get observation for the last valid data point when done."""
-        current_data = self.market_data.iloc[self.max_steps]
-        obs = []
+        return observation, reward, terminated, truncated, info
 
-        # Market data features
-        for feature in self.observation_features:
-            if feature in current_data:
-                value = float(current_data[feature])
-                # Handle NaN values
-                if np.isnan(value):
-                    value = 0.0
-                obs.append(value)
-            elif feature == "balance":
-                obs.append(float(self.balance))
-            elif feature == "position":
-                obs.append(float(self.position))
-            elif feature == "position_value":
-                obs.append(float(self.position_value))
-            elif feature == "total_value":
-                obs.append(float(self.total_value))
-            elif feature == "pnl_ratio":
-                pnl = self.total_value - self.initial_balance
-                pnl_ratio = pnl / self.initial_balance
-                obs.append(pnl_ratio)
-            elif feature == "action_history":
-                # Simple action history feature (last 5 actions)
-                obs.append(0)  # Placeholder
-            else:
-                obs.append(0.0)  # Default value
+    def _execute_action(self, action, current_price):
+        """Execute the specified action.
 
-        return np.array(obs, dtype=np.float32)  # type: ignore
+        Args:
+            action: Action to take (0: hold, 1: buy, 2: sell)
+            current_price: Current price of the asset
+        """
+        # Hold action
+        if action == 0:
+            return
 
-    def _calculate_reward(self) -> float:
-        """Calculate reward based on strategy."""
-        # Update portfolio value
-        if self.current_step < len(self.market_data):
-            current_price = self.market_data.iloc[self.current_step]["close"]
-            self.position_value = self.position * current_price
-        self.total_value = self.balance + self.position_value
+        # Buy action - use 95% of available balance
+        elif action == 1 and self.balance > 0:
+            trade_value = self.balance * 0.95
+            trade_size = trade_value / current_price
 
-        # Track portfolio values
-        self.portfolio_values.append(self.total_value)
-
-        # Calculate returns
-        if self.reward_strategy == "simple_return":
-            reward = (self.total_value - self.last_total_value) / self.last_total_value
-        elif self.reward_strategy == "risk_adjusted_return":
-            # Simple Sharpe-like reward
-            returns = np.diff(self.portfolio_values) / np.array(
-                self.portfolio_values[:-1]
+            # Apply market friction
+            executed_size, executed_price, cost = self.market_friction.execute_trade(
+                "buy", trade_size, current_price
             )
-            if len(returns) > 1:
-                reward = float(np.mean(returns) / (np.std(returns) + 1e-6))
-            else:
-                reward = 0
-        elif self.reward_strategy == "log_return":
-            reward = (
-                np.log(self.total_value / self.last_total_value)
-                if self.last_total_value > 0
-                else 0
+
+            # Update position and balance
+            self.position += executed_size
+            self.balance -= executed_size * executed_price
+            self.balance -= cost
+
+            # Record trade
+            self.trade_history.append(
+                {
+                    "step": self.current_step,
+                    "action": "buy",
+                    "size": executed_size,
+                    "price": executed_price,
+                    "cost": cost,
+                }
             )
-        else:
-            reward = self.total_value - self.last_total_value
 
-        self.last_total_value = self.total_value
+        # Sell action - sell all position
+        elif action == 2 and self.position > 0:
+            trade_size = self.position
 
-        # Penalty for transaction costs
-        reward -= self.transaction_costs * 0.1
+            # Apply market friction
+            executed_size, executed_price, cost = self.market_friction.execute_trade(
+                "sell", trade_size, current_price
+            )
 
-        return float(reward)
+            # Update position and balance
+            proceeds = executed_size * executed_price
+            self.position = 0
+            self.balance += proceeds
+            self.balance -= cost
 
-    def render(self, mode: str = "human") -> None:
-        """Render environment state."""
+            # Record trade
+            self.trade_history.append(
+                {
+                    "step": self.current_step,
+                    "action": "sell",
+                    "size": executed_size,
+                    "price": executed_price,
+                    "cost": cost,
+                }
+            )
+
+        # Update position value and portfolio value
+        self.position_value = self.position * current_price
+        self.portfolio_value = self.balance + self.position_value
+
+    def _get_observation(self):
+        """Get the current observation.
+
+        Returns:
+            Numpy array containing the observation
+        """
+        # Get recent data
+        start_idx = max(0, self.current_step - self.lookback_window)
+        end_idx = self.current_step + 1
+        recent_data = self.data.iloc[start_idx:end_idx]
+
+        # Prepare observation features
+        observations = []
+
+        for _, row in recent_data.iterrows():
+            # Base features: open, high, low, close, volume
+            ohlcv = [row["open"], row["high"], row["low"], row["close"], row["volume"]]
+
+            # Portfolio features
+            portfolio_features = [
+                self.position,
+                self.position_value,
+                self.portfolio_value,
+            ]
+
+            # Technical indicator features
+            indicator_features = []
+            for indicator in self.tech_indicators:
+                if indicator in row:
+                    indicator_features.append(row[indicator])
+
+            # Combine all features
+            obs_features = ohlcv + portfolio_features + indicator_features
+            observations.extend(obs_features)
+
+        # Convert to numpy array and ensure correct size
+        observations_array = np.array(observations, dtype=np.float32)
+
+        # Pad or truncate to match observation space
+        obs_dim = self.observation_space.shape[0]
+        if len(observations_array) < obs_dim:
+            # Pad with zeros
+            padding = np.zeros(obs_dim - len(observations_array))
+            observations_array = np.concatenate([observations_array, padding])
+        elif len(observations_array) > obs_dim:
+            # Truncate
+            observations_array = observations_array[:obs_dim]
+
+        return observations_array
+
+    def _get_last_observation(self):
+        """Get the last observation without updating the current step.
+
+        Returns:
+            Numpy array containing the last observation
+        """
+        # Save current step
+        current_step_backup = self.current_step
+
+        # Get observation
+        observation = self._get_observation()
+
+        # Restore current step
+        self.current_step = current_step_backup
+
+        return observation
+
+    def _calculate_reward(self, prev_portfolio_value):
+        """Calculate reward based on portfolio value change.
+
+        Args:
+            prev_portfolio_value: Previous portfolio value
+
+        Returns:
+            Calculated reward
+        """
+        # Simple reward: portfolio value change percentage
+        reward = (self.portfolio_value - prev_portfolio_value) / prev_portfolio_value
+
+        # Scale reward to be in reasonable range
+        reward *= 100
+
+        return reward
+
+    def render(self, mode="human"):
+        """Render the environment state.
+
+        Args:
+            mode: Rendering mode ('human' for print, 'rgb_array' for array)
+        """
         if mode == "human":
-            print(f"Step: {self.current_step}/{self.max_steps}")
-            print(f"Balance: ${self.balance:,.2f}")
-            print(f"Position: {self.position:.6f} shares")
-            print(f"Position Value: ${self.position_value:,.2f}")
-            print(f"Total Value: ${self.total_value:,.2f}")
-            print(f"Transaction Costs: ${self.transaction_costs:,.2f}")
-            print("-" * 50)
+            print(f"Step: {self.current_step}")
+            print(f"Balance: ${self.balance:.2f}")
+            print(f"Position: {self.position:.6f}")
+            print(f"Position Value: ${self.position_value:.2f}")
+            print(f"Portfolio Value: ${self.portfolio_value:.2f}")
+        elif mode == "rgb_array":
+            # Not implemented yet
+            pass
 
-    def get_performance_metrics(self) -> Dict:
-        """Get comprehensive performance metrics."""
-        # Import pandas for metrics calculation
-        import pandas as pd
+    def get_performance_metrics(self):
+        """Get detailed performance metrics.
 
-        # Convert portfolio values to pandas Series for metrics calculation
-        # Create date range matching the portfolio values
-        dates = pd.date_range(
-            start=self.start_date, periods=len(self.portfolio_values), freq="D"
-        )
-        equity_curve = pd.Series(self.portfolio_values, index=dates)
+        Returns:
+            Dictionary with performance metrics
+        """
+        # Calculate returns from trade history
+        returns = []
+        for i in range(1, len(self.trade_history)):
+            if self.trade_history[i]["action"] == "sell" and i > 0:
+                # Find corresponding buy
+                for j in range(i - 1, -1, -1):
+                    if self.trade_history[j]["action"] == "buy":
+                        buy_price = self.trade_history[j]["price"]
+                        sell_price = self.trade_history[i]["price"]
+                        returns.append((sell_price - buy_price) / buy_price)
+                        break
 
-        # Create simple trades DataFrame (placeholder for now)
-        dates = pd.date_range(
-            start=self.start_date, periods=len(self.portfolio_values), freq="D"
-        )
-        trades_data = {
-            "entry_time": [dates[0]],  # placeholder
-            "exit_time": [dates[-1]],  # placeholder
-            "entry_price": [self.initial_balance],  # placeholder
-            "exit_price": [self.total_value],  # placeholder
-            "quantity": [1],  # placeholder
-            "side": ["long"],  # placeholder
-            "pnl": [self.total_value - self.initial_balance],  # placeholder
+        # Calculate metrics
+        metrics = {
+            "total_return": (
+                (self.portfolio_value - self.initial_balance) / self.initial_balance
+            ),
+            "trades_count": len(self.trade_history),
+            "average_return": sum(returns) / len(returns) if returns else 0,
+            "win_rate": (
+                sum(1 for r in returns if r > 0) / len(returns) if returns else 0
+            ),
         }
-        trades_df = pd.DataFrame(trades_data)
-
-        metrics_result = self.performance_metrics.calculate_all_metrics(
-            equity_curve=equity_curve, trades=trades_df, frequency="1d"
-        )
-
-        # Convert MetricsResult to dict and add custom metrics
-        metrics = dict(metrics_result.__dict__.copy())
-        metrics.update(
-            {
-                "total_return": (self.total_value - self.initial_balance)
-                / self.initial_balance,
-                "transaction_costs": self.transaction_costs,
-                "final_balance": self.balance,
-                "final_position": self.position,
-                "total_trades": len(self.portfolio_values) - 1,  # Simple trade count,
-            }
-        )
 
         return metrics

@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional, Protocol
 # Python 3.9 compatibility: Add optional dependency guards for LangGraph
 try:
     from langgraph.graph import END, StateGraph
+
     LANGGRAPH_AVAILABLE = True
 except ImportError:
     END = None

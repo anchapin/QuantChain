@@ -4,12 +4,9 @@
 import sys
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
-# Add the parent directory to the path to import the module
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-import pandas as pd
 from quantchain.backtesting.engine import BacktestConfig
 from quantchain.backtesting.vector_backtester import (
     SignalProcessingError,
@@ -17,6 +14,9 @@ from quantchain.backtesting.vector_backtester import (
     VectorBacktestResult,
     VectorizedPositionManager,
 )
+
+# Add the parent directory to the path to import the module
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 @pytest.fixture

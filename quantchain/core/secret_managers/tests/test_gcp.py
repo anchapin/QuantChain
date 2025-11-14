@@ -1,31 +1,29 @@
 # Auto-generated test file for gcp.py
 # Generated using Z.AI GLM-4.6 API
 
+import json
+import os
 import sys
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
 
+from quantchain.core.secret_managers.gcp import GCPSecretManager
+from google.api_core import exceptions as gcp_exceptions
+
 # Add the parent directory to the path to import the module
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-
 """Test cases for GCP Secret Manager implementation."""
-
-import json
-import os
-from unittest.mock import Mock, patch
-
-import pytest
-from quantchain.core.secret_managers.gcp import GCPSecretManager
-from google.api_core import exceptions as gcp_exceptions
 
 
 class TestGCPSecretManagerInit:
     """Test GCPSecretManager initialization."""
 
-    @patch("quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient")
+    @patch(
+        "quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient"
+    )
     @patch.dict(os.environ, {"GCP_PROJECT": "test-project"})
     def test_init_with_env_project_id(self, mock_client):
         """Test initialization with project ID from environment."""
@@ -39,7 +37,9 @@ class TestGCPSecretManagerInit:
         mock_client.assert_called_once()
         mock_client_instance.list_secrets.assert_called_once()
 
-    @patch("quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient")
+    @patch(
+        "quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient"
+    )
     def test_init_with_explicit_project_id(self, mock_client):
         """Test initialization with explicit project ID."""
         mock_client_instance = Mock()
@@ -51,14 +51,18 @@ class TestGCPSecretManagerInit:
         assert manager.project_id == "explicit-project"
         mock_client.assert_called_once()
 
-    @patch("quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient")
+    @patch(
+        "quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient"
+    )
     @patch.dict(os.environ, {}, clear=True)
     def test_init_without_project_id_raises_error(self, mock_client):
         """Test initialization fails without project ID."""
         with pytest.raises(ValueError, match="GCP project ID must be provided"):
             GCPSecretManager()
 
-    @patch("quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient")
+    @patch(
+        "quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient"
+    )
     @patch("google.oauth2.service_account")
     def test_init_with_service_account_key(self, mock_service_account, mock_client):
         """Test initialization with service account key dict."""
@@ -78,7 +82,9 @@ class TestGCPSecretManagerInit:
         )
         mock_client.assert_called_once_with(credentials=mock_credentials)
 
-    @patch("quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient")
+    @patch(
+        "quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient"
+    )
     @patch("google.oauth2.service_account")
     def test_init_with_credentials_path(self, mock_service_account, mock_client):
         """Test initialization with credentials file path."""
@@ -99,7 +105,9 @@ class TestGCPSecretManagerInit:
         )
         mock_client.assert_called_once_with(credentials=mock_credentials)
 
-    @patch("quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient")
+    @patch(
+        "quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient"
+    )
     @patch.dict(os.environ, {"GOOGLE_APPLICATION_CREDENTIALS": "/default/path.json"})
     def test_init_with_default_adc(self, mock_client):
         """Test initialization with default ADC from environment."""
@@ -111,7 +119,9 @@ class TestGCPSecretManagerInit:
 
         mock_client.assert_called_once_with()
 
-    @patch("quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient")
+    @patch(
+        "quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient"
+    )
     def test_init_connection_failure_raises_error(self, mock_client):
         """Test initialization raises error on connection failure."""
         mock_client.side_effect = Exception("Connection failed")
@@ -121,7 +131,9 @@ class TestGCPSecretManagerInit:
         ):
             GCPSecretManager(project_id="test")
 
-    @patch("quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient")
+    @patch(
+        "quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient"
+    )
     def test_init_with_additional_kwargs(self, mock_client):
         """Test initialization with additional client parameters."""
         mock_client_instance = Mock()
@@ -472,7 +484,9 @@ class TestGCPSecretManagerValidateService:
 class TestGCPSecretManagerIntegration:
     """Integration tests for GCPSecretManager."""
 
-    @patch("quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient")
+    @patch(
+        "quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient"
+    )
     def test_full_workflow(self, mock_client):
         """Test complete workflow from initialization to secret retrieval."""
         # Setup mock client
