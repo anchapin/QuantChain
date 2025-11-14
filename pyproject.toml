@@ -11,7 +11,7 @@ authors = [
 ]
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Financial and Insurance Industry",
@@ -34,10 +34,10 @@ core = [
     "anthropic>=0.20.0",
     "chromadb>=0.4.0",
     "sentence-transformers>=2.0.0",
-    "numpy>=1.21.0",
+    "numpy>=1.24.0",
     "PyYAML>=6.0.0",
-    "pandas>=1.21.0",
-    "requests>=2.25.0",
+    "pandas>=1.5.0",
+    "requests>=2.28.0",
 ]
 
 test = [
@@ -65,10 +65,10 @@ all-dev = [
 "anthropic>=0.20.0",
 "chromadb>=0.4.0",
 "sentence-transformers>=2.0.0",
-"numpy>=1.21.0",
+"numpy>=1.24.0",
 "PyYAML>=6.0.0",
-"pandas>=1.21.0",
-"requests>=2.25.0",
+"pandas>=1.5.0",
+"requests>=2.28.0",
 "pytest>=7.0.0",
 "pytest-cov>=4.0.0",
 "pytest-mock>=3.10.0",
@@ -80,8 +80,7 @@ all-dev = [
 "types-PyYAML>=6.0.0",
 "types-requests>=2.25.0",
 "alpaca-py>=0.43.0",
-"alpaca>=2.0",
-"alpaca-pandas>=0.15",
+"alpaca>=1.0",
 "ccxt>=4.0.0",
 "backtesting>=0.6.0",
 "polygon-api-client>=0.7.0",
@@ -102,8 +101,7 @@ llm = [
 # Data connector dependencies
 data = [
     "alpaca-py>=0.43.0",
-    "alpaca>=2.0",
-    "alpaca-pandas>=0.15",
+    "alpaca>=1.0",
     "ccxt>=4.0.0",
     "backtesting>=0.6.0",
 ]
@@ -121,14 +119,14 @@ gymnasium = [
 # Combined backtesting with gymnasium
 backtesting-full = [
     "backtesting>=0.6.0",
-    "gymnasium>=0.28",
+    "gymnasium>=0.26.0",
     "gymnasium[atari]",
 ]
 
 # Web dashboard dependencies
 web = [
-    "streamlit>=1.20.0",
-    "plotly>=5.0.0",
+    "streamlit>=1.25.0",
+    "plotly>=5.15.0",
 ]
 
 full = [
@@ -138,8 +136,8 @@ full = [
     "chromadb>=0.4.0",
     "sentence-transformers>=2.0.0",
     "PyYAML>=6.0.0",
-    "pandas>=1.21.0",
-    "requests>=2.25.0",
+    "pandas>=1.5.0",
+    "requests>=2.28.0",
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "pytest-mock>=3.10.0",
@@ -150,16 +148,13 @@ full = [
     "types-PyYAML>=6.0.0",
     "types-requests>=2.25.0",
     "alpaca-py>=0.43.0",
-    "alpaca>=2.0",
-    "alpaca-pandas>=0.15",
+    "alpaca>=1.0",
     "ccxt>=4.0.0",
     "backtesting>=0.6.0",
-    "gymnasium>=0.28",
+    "gymnasium>=0.26.0",
     "gymnasium[atari]",
-    "vllm>=0.3.0",
-    "ollama>=0.1.0",
-    "streamlit>=1.20.0",
-    "plotly>=5.0.0",
+    "streamlit>=1.25.0",
+    "plotly>=5.15.0",
 ]
 
 [project.scripts]
