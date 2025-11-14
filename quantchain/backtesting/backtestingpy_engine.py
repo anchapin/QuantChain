@@ -184,7 +184,12 @@ class BacktestingPyEngine(BacktestEngine):
         """Convert Backtesting.py results to quantchain BacktestResult format."""
         try:
             # Extract stats from backtest results
-            stats_dict = backtest_stats if isinstance(backtest_stats, dict) else {}
+            if isinstance(backtest_stats, dict):
+                stats_dict = backtest_stats
+            elif isinstance(backtest_stats, pd.Series):
+                stats_dict = backtest_stats.to_dict()
+            else:
+                stats_dict = {}
 
             # Create MetricsResult from backtesting.py stats
             metrics = MetricsResult(
@@ -201,8 +206,10 @@ class BacktestingPyEngine(BacktestEngine):
                 total_trades=int(stats_dict.get("# Trades", 0)),
             )
 
+
+
             return BacktestResult(
-                equity_curve=self.get_equity_curve() or pd.Series(),
+                equity_curve=self.get_equity_curve() if self.get_equity_curve() is not None else pd.Series(),
                 trade_log=pd.DataFrame(),  # Empty trade log for now
                 summary_stats=stats_dict,
                 metrics=metrics,

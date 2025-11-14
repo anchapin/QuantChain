@@ -116,11 +116,11 @@ class PositionManager:
         """Initialize with starting cash."""
         self.initial_cash = initial_cash
         self.cash = initial_cash
-        self.positions: Dict[str, int] = {}
+        self.positions: Dict[str, float] = {}
         self.trades: List[Dict[str, Any]] = []
 
     def update_position(
-        self, symbol: str, quantity: int, price: float, commission: float = 0
+        self, symbol: str, quantity: float, price: float, commission: float = 0
     ) -> None:
         """
         Update position after trade execution.
@@ -309,7 +309,7 @@ class LangGraphBacktestAdapter:
             initial_dict = initial_state.__dict__.copy()
         else:
             initial_dict = initial_state or {}
-            
+
         return AgentStrategy(self, initial_dict)
 
     def set_deterministic_llm(self, deterministic_responses: Dict[str, Any]) -> None:
@@ -347,88 +347,88 @@ class LangGraphBacktestAdapter:
     def next(self, bar_data: Dict[str, Any]) -> Optional[str]:
         """
         Process next bar and return signal (for compatibility with tests).
-        
+
         This method creates a temporary strategy and calls its next method.
         This is a compatibility method for tests that expect the adapter to have a next method.
-        
+
         Args:
             bar_data: Market bar data
-            
+
         Returns:
             Trading signal or None
         """
         # Create a temporary strategy with current state
         strategy = self.create_strategy(self.current_state)
-        
+
         # Initialize strategy with default cash if not already done
         if not hasattr(strategy, '_initialized'):
             strategy.init(100000.0)
             strategy._initialized = True
-            
+
         # Process the bar
         return strategy.next(bar_data)
 
     def _execute_trade(self, signal: str, bar_data: Dict[str, Any]) -> None:
         """
         Execute trade based on signal (for compatibility with tests).
-        
+
         This method creates a temporary strategy and calls its _execute_trade method.
         This is a compatibility method for tests that expect the adapter to have a _execute_trade method.
-        
+
         Args:
             signal: Trading signal ('buy' or 'sell')
             bar_data: Market bar data
         """
         # Create a temporary strategy with current state
         strategy = self.create_strategy(self.current_state)
-        
+
         # Initialize strategy with default cash if not already done
         if not hasattr(strategy, '_initialized'):
             strategy.init(100000.0)
             strategy._initialized = True
-            
+
         # Execute the trade
         strategy._execute_trade(signal, bar_data)
-        
+
     def get_current_positions(self) -> Dict[str, int]:
         """
         Get current positions (for compatibility with tests).
-        
+
         This method creates a temporary strategy and calls its get_current_positions method.
         This is a compatibility method for tests that expect the adapter to have a get_current_positions method.
-        
+
         Returns:
             Dictionary of current positions
         """
         # Create a temporary strategy with current state
         strategy = self.create_strategy(self.current_state)
-        
+
         # Initialize strategy with default cash if not already done
         if not hasattr(strategy, '_initialized'):
             strategy.init(100000.0)
             strategy._initialized = True
-            
+
         # Get positions
         return strategy.get_current_positions()
-        
+
     def get_current_cash(self) -> float:
         """
         Get current cash balance (for compatibility with tests).
-        
+
         This method creates a temporary strategy and calls its get_current_cash method.
         This is a compatibility method for tests that expect the adapter to have a get_current_cash method.
-        
+
         Returns:
             Current cash balance
         """
         # Create a temporary strategy with current state
         strategy = self.create_strategy(self.current_state)
-        
+
         # Initialize strategy with default cash if not already done
         if not hasattr(strategy, '_initialized'):
             strategy.init(100000.0)
             strategy._initialized = True
-            
+
         # Get cash
         return strategy.get_current_cash()
 

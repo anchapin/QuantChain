@@ -65,7 +65,14 @@ def get_connector(
 
     Raises:
         ValueError: If connector name is not recognized
+        AttributeError: If connector_name is None
     """
+    if connector_name is None:
+        raise FinRLConnectionError("connector_name cannot be None")
+
+    if connector_name == "":
+        raise FinRLConnectionError("connector_name cannot be empty")
+
     connector_map = {
         "alpaca": AlpacaDataConnector,
         "polygon": PolygonDataConnector,
@@ -322,8 +329,8 @@ class FinRLAdapter(gym.Env):
         if self.current_step >= self.max_steps:
             self.done = True
 
-        # Get new observation
-        observation = self._get_observation()
+        # Get new observation (only if not done)
+        observation = self._get_observation() if not self.done else self._get_last_observation()
 
         # Prepare info dict
         info = {
@@ -347,8 +354,8 @@ class FinRLAdapter(gym.Env):
             max_shares = available_balance / current_price
             shares_to_buy = max_shares * amount
 
-            # Only execute if shares_to_buy is positive
-            if shares_to_buy > 0:
+            # Only execute if shares_to_buy is at least 1
+            if shares_to_buy >= 1:
                 # Apply market frictions
                 cost_info = self.market_friction.get_total_cost(
                     price=current_price,
@@ -369,7 +376,8 @@ class FinRLAdapter(gym.Env):
             # Calculate sell amount
             shares_to_sell = self.position * amount
 
-            if shares_to_sell > 0:
+            # Only execute if shares_to_sell is at least 1
+            if shares_to_sell >= 1:
                 # Apply market frictions
                 cost_info = self.market_friction.get_total_cost(
                     price=current_price,
@@ -388,6 +396,39 @@ class FinRLAdapter(gym.Env):
     def _get_observation(self) -> np.ndarray:
         """Get current observation as numpy array."""
         current_data = self.market_data.iloc[self.current_step]
+        obs = []
+
+        # Market data features
+        for feature in self.observation_features:
+            if feature in current_data:
+                value = float(current_data[feature])
+                # Handle NaN values
+                if np.isnan(value):
+                    value = 0.0
+                obs.append(value)
+            elif feature == "balance":
+                obs.append(float(self.balance))
+            elif feature == "position":
+                obs.append(float(self.position))
+            elif feature == "position_value":
+                obs.append(float(self.position_value))
+            elif feature == "total_value":
+                obs.append(float(self.total_value))
+            elif feature == "pnl_ratio":
+                pnl = self.total_value - self.initial_balance
+                pnl_ratio = pnl / self.initial_balance
+                obs.append(pnl_ratio)
+            elif feature == "action_history":
+                # Simple action history feature (last 5 actions)
+                obs.append(0)  # Placeholder
+            else:
+                obs.append(0.0)  # Default value
+
+        return np.array(obs, dtype=np.float32)  # type: ignore
+
+    def _get_last_observation(self) -> np.ndarray:
+        """Get observation for the last valid data point when done."""
+        current_data = self.market_data.iloc[self.max_steps]
         obs = []
 
         # Market data features

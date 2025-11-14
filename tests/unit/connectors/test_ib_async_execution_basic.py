@@ -32,16 +32,26 @@ class TestIBExecutionBasic:
     def test_class_instantiation_with_mock(self):
         """Test class can be instantiated with mocked IB."""
         from unittest.mock import Mock, patch
-        
+
         with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib:
-            mock_ib.return_value = Mock()
+            # Create a mock IB instance
+            mock_ib_instance = Mock()
+            mock_ib.return_value = mock_ib_instance
+
+            # Mock connectAsync to return a coroutine
+            async def mock_connect(*args, **kwargs):
+                return None
+
+            mock_ib_instance.connectAsync = Mock(return_value=mock_connect())
+
+            # Initialize the connector
             connector = IBExecutionConnector(
                 host="127.0.0.1",
                 port=7497,
                 client_id=1,
                 timeout=10,
             )
-            
+
             assert connector.host == "127.0.0.1"
             assert connector.port == 7497
             assert connector.client_id == 1

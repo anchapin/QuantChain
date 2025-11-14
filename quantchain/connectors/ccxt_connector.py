@@ -14,13 +14,13 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-from ..core.exceptions import (
+from quantchain.core.exceptions import (
     AuthenticationError,
     DataSourceError,
     RateLimitError,
     SymbolNotFoundError,
 )
-from .base_interface import DataFeedInterface
+from quantchain.connectors.base_interface import DataFeedInterface
 
 
 class CCXTDataConnector(DataFeedInterface):
@@ -109,12 +109,16 @@ class CCXTDataConnector(DataFeedInterface):
                         f"Exchange {exchange} does not support sandbox mode"
                     )
 
-        except ccxt.AuthenticationError as e:
-            raise AuthenticationError(
-                f"Failed to authenticate with {exchange}: {str(e)}"
-            ) from e
         except Exception as e:
-            raise DataSourceError(f"Failed to initialize {exchange}: {str(e)}") from e
+            # Handle authentication error specifically if available
+            if (hasattr(ccxt, 'AuthenticationError') and
+                hasattr(ccxt.AuthenticationError, '__bases__') and
+                isinstance(e, ccxt.AuthenticationError)):
+                raise AuthenticationError(
+                    f"Failed to authenticate with {exchange}: {str(e)}"
+                ) from e
+            else:
+                raise DataSourceError(f"Failed to initialize {exchange}: {str(e)}") from e
 
     def _convert_timeframe(self, timeframe: str) -> str:
         """Convert QuantChain timeframe to ccxt format.

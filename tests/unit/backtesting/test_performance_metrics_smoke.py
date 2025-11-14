@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from unittest.mock import patch
 
 from quantchain.backtesting.performance_metrics import (
     InsufficientDataError,
@@ -143,9 +144,16 @@ class TestPerformanceMetricsSmoke:
         # Create a results object
         results = type('Results', (), {'equity_curve': equity})()
 
-        # Should not raise an exception
-        result = calculator.generate_tear_sheet(results)
-        assert isinstance(result, dict)
+        # Mock QUANTSTATS_AVAILABLE to avoid requiring the library
+        with patch('quantchain.backtesting.performance_metrics.QUANTSTATS_AVAILABLE', True):
+            # Mock the quantstats module
+            with patch('quantchain.backtesting.performance_metrics.qs') as mock_qs:
+                # Setup mock return values
+                mock_qs.reports.metrics.return_value = {"sharpe": 1.5}
+
+                # Should not raise an exception
+                result = calculator.generate_tear_sheet(results)
+                assert isinstance(result, dict)
 
     def test_calculate_empyrical_metrics_without_library(self):
         """Test empyrical metrics without library."""

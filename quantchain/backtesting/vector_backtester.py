@@ -199,6 +199,8 @@ class VectorizedPositionManager:
         for i, (timestamp, price, signal) in enumerate(
             zip(prices.index, prices, signals)
         ):
+            # Use integer index for position updates
+            idx = i
             if signal != 0:
                 # Process buy signal
                 if signal > 0 and current_position == 0:
@@ -228,7 +230,7 @@ class VectorizedPositionManager:
                     if trade:
                         trades.append(trade)
 
-            positions.iloc[i] = current_position
+            positions.iloc[idx] = current_position
 
         self.positions = positions
         self.trade_log = pd.DataFrame(trades) if trades else pd.DataFrame()
@@ -269,7 +271,10 @@ class VectorizedPositionManager:
             cash_series[:] = 0.0
 
         # Calculate position value and total equity using vectorized operations
+        # Ensure positions and prices have the same index to avoid issues with date indices
         position_values = positions * prices
+
+        # Merge back to original index
         equity_curve = cash_series + position_values
 
         self.equity_curve = equity_curve

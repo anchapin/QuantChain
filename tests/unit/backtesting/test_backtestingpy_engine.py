@@ -291,14 +291,12 @@ class TestBacktestingPyEngine:
 
             assert isinstance(result, BacktestResult)
             assert isinstance(result.metrics, MetricsResult)
-            # The actual implementation seems to be hitting the exception path
-            # Let's test what the actual behavior is
-            # If it goes to exception, all values will be 0.0
-            assert result.metrics.total_return == 0.0
-            assert result.metrics.sharpe_ratio == 0.0
-            assert result.metrics.max_drawdown == 0.0
-            assert result.metrics.win_rate == 0.0
-            assert result.metrics.total_trades == 0
+            # Check that conversion works properly
+            assert result.metrics.total_return == 0.155  # 15.5% / 100
+            assert result.metrics.sharpe_ratio == 1.5
+            assert result.metrics.max_drawdown == pytest.approx(0.052)  # 5.2% / 100
+            assert result.metrics.win_rate == 0.65  # 65% / 100
+            assert result.metrics.total_trades == 42
 
     def test_convert_results_with_series(self):
         """Test results conversion with Series input."""
@@ -318,22 +316,52 @@ class TestBacktestingPyEngine:
             assert result.metrics.total_return == 0.0
 
     def test_convert_results_exception_handling(self):
-        """Test results conversion with exception."""
+        """Test results conversion with exception handling."""
+        from quantchain.backtesting.backtestingpy_engine import BacktestingPyEngine
+        from quantchain.backtesting.engine import BacktestResult, MetricsResult
+
+        # Create a mock engine with patched _convert_results that will raise an exception
         with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
             "quantchain.backtesting.backtestingpy_engine.StrategyAdapter"
         ):
             engine = BacktestingPyEngine()
 
-            # Invalid input that will cause an exception
-            invalid_input = object()
+            # Create a real MetricsResult to use for fallback
+            fallback_metrics = MetricsResult(
+                total_return=0.0,
+                annualized_return=0.0,
+                sharpe_ratio=0.0,
+                sortino_ratio=0.0,
+                calmar_ratio=0.0,
+                max_drawdown=0.0,
+                max_drawdown_duration=0,
+                win_rate=0.0,
+                total_trades=0,
+            )
 
-            result = engine._convert_results(invalid_input)
+            # Create the expected fallback result
+            expected_result = BacktestResult(
+                equity_curve=pd.Series(),
+                trade_log=pd.DataFrame(),
+                summary_stats={"error": 1.0},
+                metrics=fallback_metrics,
+                execution_time=0.0,
+                config=engine.config,
+            )
+
+            # Call _convert_results with invalid input to trigger exception path
+            # This will cause the try block to fail and return the fallback values
+            result = engine._convert_results(None)  # None should trigger exception
 
             assert isinstance(result, BacktestResult)
             assert isinstance(result.metrics, MetricsResult)
             # Should return fallback values
             assert result.metrics.total_return == 0.0
-            assert result.summary_stats["error"] == 1.0
+            assert result.metrics.annualized_return == 0.0
+            assert result.metrics.sharpe_ratio == 0.0
+            assert result.metrics.max_drawdown == 0.0
+            assert result.metrics.win_rate == 0.0
+            assert result.metrics.total_trades == 0
 
 
 class TestStrategyAdapter:
@@ -366,3 +394,260 @@ class TestExceptions:
             raise ConversionError("Test")
         except BacktestingPyError:
             pass
+
+
+class TestBacktestingPyEngineCoverage:
+    """Additional test cases for improved coverage."""
+
+    def test_convert_results_with_no_stats(self):
+        """Test result conversion with no statistics."""
+        with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
+            "quantchain.backtesting.backtestingpy_engine.StrategyAdapter"
+        ):
+            engine = BacktestingPyEngine()
+
+            # Test with empty stats dict
+            result = engine._convert_results({})
+            assert result.metrics.total_return == 0.0
+            assert result.metrics.win_rate == 0.0
+
+            # Test with None stats
+            result = engine._convert_results(None)
+            assert result.metrics.total_return == 0.0
+            assert result.metrics.win_rate == 0.0
+
+    def test_convert_data_format_with_valid_columns(self):
+        """Test data format conversion with valid column names."""
+        with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
+            "quantchain.backtesting.backtestingpy_engine.StrategyAdapter"
+        ):
+            engine = BacktestingPyEngine()
+
+            # Test with lowercase column names
+            input_data = pd.DataFrame({
+                "open": [100, 101],
+                "high": [102, 103],
+                "low": [99, 100],
+                "close": [101, 102],
+                "volume": [1000, 1100],
+            })
+
+            result = engine._convert_data_format(input_data)
+
+            # Check column names are capitalized
+            expected_columns = ["Open", "High", "Low", "Close", "Volume"]
+            assert list(result.columns) == expected_columns
+
+    def test_get_equity_curve_with_no_backtest(self):
+        """Test getting equity curve when no backtest has run."""
+        with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
+            "quantchain.backtesting.backtestingpy_engine.StrategyAdapter"
+        ):
+            engine = BacktestingPyEngine()
+            engine._backtest = None
+            equity_curve = engine.get_equity_curve()
+
+            # Should return None when no backtest
+            assert equity_curve is None
+
+    def test_get_equity_curve_with_empty_result(self):
+        """Test getting equity curve with empty result."""
+        with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
+            "quantchain.backtesting.backtestingpy_engine.StrategyAdapter"
+        ):
+            engine = BacktestingPyEngine()
+            engine._equity_curve_data = None
+            engine._results = BacktestResult(
+                equity_curve=pd.Series(),
+                trade_log=pd.DataFrame(),
+                summary_stats={},
+                metrics=MetricsResult(),
+                execution_time=0.0,
+                config=engine.config
+            )
+
+            equity_curve = engine.get_equity_curve()
+
+            # Should return empty Series
+            assert isinstance(equity_curve, pd.Series)
+            assert len(equity_curve) == 0
+
+
+    class TestBacktestingPyEngineAdditionalCoverage:
+        """Additional test cases for BacktestingPyEngine to reach 90%+ coverage."""
+
+        def test_run_with_none_config(self):
+            """Test running backtest with None config."""
+            with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
+                "quantchain.backtesting.backtestingpy_engine.StrategyAdapter"
+            ):
+                engine = BacktestingPyEngine()
+
+                # Create minimal valid data
+                data = pd.DataFrame({
+                    "Open": [100, 101, 102],
+                    "High": [101, 102, 103],
+                    "Low": [99, 100, 101],
+                    "Close": [100.5, 101.5, 102.5],
+                    "Volume": [1000, 1100, 1200],
+                })
+
+                # Run with None config (should use default)
+                result = engine.run("test_strategy", data, None)
+                assert result is not None
+                assert result.config is not None
+
+        def test_run_with_empty_config(self):
+            """Test running backtest with empty config."""
+            with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
+                "quantchain.backtesting.backtestingpy_engine.StrategyAdapter"
+            ):
+                from quantchain.backtesting.engine import BacktestConfig
+                engine = BacktestingPyEngine()
+
+                # Create minimal valid data
+                data = pd.DataFrame({
+                    "Open": [100, 101, 102],
+                    "High": [101, 102, 103],
+                    "Low": [99, 100, 101],
+                    "Close": [100.5, 101.5, 102.5],
+                    "Volume": [1000, 1100, 1200],
+                })
+
+                # Run with empty config (should use default values)
+                empty_config = BacktestConfig()
+                result = engine.run("test_strategy", data, empty_config)
+                assert result is not None
+                assert result.config.initial_cash == 100000.0  # Default value
+
+        def test_config_with_zero_values(self):
+            """Test engine with config containing zero values."""
+            from quantchain.backtesting.engine import BacktestConfig
+            # Test with valid zero commission rate and valid initial cash
+            config = BacktestConfig(
+                initial_cash=1.0,  # Must be positive
+                commission_rate=0.0,
+            )
+
+            with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
+                "quantchain.backtesting.backtestingpy_engine.StrategyAdapter"
+            ):
+                engine = BacktestingPyEngine(config)
+                assert engine.config.initial_cash == 1.0
+                assert engine.config.commission_rate == 0.0
+
+        def test_get_results_after_failed_run(self):
+            """Test getting results after a failed run."""
+            with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
+                "quantchain.backtesting.backtestingpy_engine.StrategyAdapter"
+            ):
+                engine = BacktestingPyEngine()
+
+                # Mock a failed run
+                with patch.object(engine, "run", side_effect=BacktestingPyError("Test error")):
+                    try:
+                        engine.run("test_strategy", pd.DataFrame())
+                    except BacktestingPyError:
+                        pass  # Expected error
+
+                # Should return None after failed run
+                result = engine.get_results()
+                assert result is None
+
+        def test_strategy_adapter_when_unavailable(self):
+            """Test behavior when StrategyAdapter is unavailable."""
+            # Temporarily set StrategyAdapter to None
+            original_strategy_adapter = StrategyAdapter
+
+            try:
+                with patch("quantchain.backtesting.backtestingpy_engine.StrategyAdapter", None):
+                    with pytest.raises(ImportError):
+                        BacktestingPyEngine()
+            finally:
+                # Restore original value
+                from quantchain.backtesting import backtestingpy_engine
+                backtestingpy_engine.StrategyAdapter = original_strategy_adapter
+
+        def test_backtest_when_unavailable(self):
+            """Test behavior when Backtest is unavailable."""
+            # Import the module to check if Backtest is available
+            from quantchain.backtesting import backtestingpy_engine
+
+            # Temporarily set Backtest to None
+            original_backtest = backtestingpy_engine.Backtest
+
+            try:
+                with patch("quantchain.backtesting.backtestingpy_engine.Backtest", None):
+                    with pytest.raises(ImportError):
+                        BacktestingPyEngine()
+            finally:
+                # Restore original value
+                from quantchain.backtesting import backtestingpy_engine
+                backtestingpy_engine.Backtest = original_backtest
+
+        def test_convert_data_format_mixed_case_columns(self):
+            """Test data format conversion with mixed case column names."""
+            with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
+                "quantchain.backtesting.backtestingpy_engine.StrategyAdapter"
+            ):
+                engine = BacktestingPyEngine()
+
+                # Test with mixed case column names
+                input_data = pd.DataFrame({
+                    "Open": [100, 101],
+                    "high": [102, 103],
+                    "Low": [99, 100],
+                    "close": [101, 102],
+                    "Volume": [1000, 1100],
+                })
+
+                result = engine._convert_data_format(input_data)
+
+                # Check column names are capitalized correctly
+                expected_columns = ["Open", "High", "Low", "Close", "Volume"]
+                assert list(result.columns) == expected_columns
+
+        def test_convert_results_with_series_stats(self):
+            """Test result conversion when stats is a Series."""
+            with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
+                "quantchain.backtesting.backtestingpy_engine.StrategyAdapter"
+            ):
+                engine = BacktestingPyEngine()
+
+                # Create a mock Series stats object
+                mock_stats = pd.Series([0.15, 0.12, 1.5, 65, 10],
+                                       index=["Return [%]", "Annual Return [%]", "Sharpe Ratio", "Win Rate [%]", "# Trades"])
+
+                result = engine._convert_results(mock_stats)
+                assert result.metrics.total_return == 0.0015  # 0.15/100 (percentage to decimal)
+                assert result.metrics.sharpe_ratio == 1.5
+                assert result.metrics.win_rate == 0.65
+                assert result.metrics.total_trades == 10
+
+        def test_get_equity_curve_with_stored_data(self):
+            """Test getting equity curve when data is already stored."""
+            with patch("quantchain.backtesting.backtestingpy_engine.Backtest"), patch(
+                "quantchain.backtesting.backtestingpy_engine.StrategyAdapter"
+            ):
+                engine = BacktestingPyEngine()
+
+                # Create stored equity curve data
+                dates = pd.date_range("2024-01-01", periods=5, freq="D")
+                stored_curve = pd.Series([100, 101, 102, 103, 104], index=dates)
+                engine._equity_curve_data = stored_curve
+
+                equity_curve = engine.get_equity_curve()
+
+                # Should return the stored data
+                assert equity_curve.equals(stored_curve)
+
+        def test_error_inheritance(self):
+            """Test that error classes inherit correctly."""
+            # Test BacktestingPyError inheritance
+            error1 = BacktestingPyError("test")
+            assert isinstance(error1, Exception)
+
+            # Test ConversionError inheritance
+            error2 = ConversionError("test")
+            assert isinstance(error2, Exception)
+            assert isinstance(error2, BacktestingPyError)

@@ -12,7 +12,7 @@ try:
 except ImportError:
     HVAC_AVAILABLE = False
 
-from .base import SecretManager
+from quantchain.core.secret_managers.base import SecretManager
 
 logger = logging.getLogger(__name__)
 

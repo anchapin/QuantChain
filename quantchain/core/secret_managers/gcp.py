@@ -12,8 +12,10 @@ try:
     GCP_AVAILABLE = True
 except ImportError:
     GCP_AVAILABLE = False
+    # Create a dummy module for testing
+    secretmanager = None
 
-from .base import SecretManager
+from quantchain.core.secret_managers.base import SecretManager
 
 logger = logging.getLogger(__name__)
 

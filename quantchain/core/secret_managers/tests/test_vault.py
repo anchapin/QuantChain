@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 """Test cases for VaultSecretManager."""
 
-from vault import VaultSecretManager
+from quantchain.core.secret_managers.vault import VaultSecretManager
 
 
 class TestVaultSecretManagerInit:
@@ -125,44 +125,59 @@ class TestVaultSecretManagerInit:
 class TestVaultSecretManagerBuildSecretPath:
     """Test cases for _build_secret_path method."""
 
-    def test_build_secret_path_simple(self):
+    @patch("quantchain.core.secret_managers.vault.hvac")
+    def test_build_secret_path_simple(self, mock_hvac):
         """Test building path with simple key."""
+        mock_client = Mock(is_authenticated=lambda: True)
+        mock_hvac.Client.return_value = mock_client
+
         manager = VaultSecretManager(url="https://vault.com", token="token")
-        manager.client = Mock(is_authenticated=lambda: True)
 
         path = manager._build_secret_path("mysecret")
         assert path == "secret/data/mysecret"
 
-    def test_build_secret_path_with_leading_slash(self):
+    @patch("quantchain.core.secret_managers.vault.hvac")
+    def test_build_secret_path_with_leading_slash(self, mock_hvac):
         """Test building path with key that has leading slash."""
+        mock_client = Mock(is_authenticated=lambda: True)
+        mock_hvac.Client.return_value = mock_client
+
         manager = VaultSecretManager(url="https://vault.com", token="token")
-        manager.client = Mock(is_authenticated=lambda: True)
 
         path = manager._build_secret_path("/mysecret")
         assert path == "secret/data/mysecret"
 
-    def test_build_secret_path_with_nested_key(self):
+    @patch("quantchain.core.secret_managers.vault.hvac")
+    def test_build_secret_path_with_nested_key(self, mock_hvac):
         """Test building path with nested key."""
+        mock_client = Mock(is_authenticated=lambda: True)
+        mock_hvac.Client.return_value = mock_client
+
         manager = VaultSecretManager(url="https://vault.com", token="token")
-        manager.client = Mock(is_authenticated=lambda: True)
 
         path = manager._build_secret_path("path/to/secret")
         assert path == "secret/data/path/to/secret"
 
-    def test_build_secret_path_custom_mount(self):
+    @patch("quantchain.core.secret_managers.vault.hvac")
+    def test_build_secret_path_custom_mount(self, mock_hvac):
         """Test building path with custom mount point."""
+        mock_client = Mock(is_authenticated=lambda: True)
+        mock_hvac.Client.return_value = mock_client
+
         manager = VaultSecretManager(
             url="https://vault.com", token="token", mount_point="custom-mount"
         )
-        manager.client = Mock(is_authenticated=lambda: True)
 
         path = manager._build_secret_path("mysecret")
         assert path == "custom-mount/data/mysecret"
 
-    def test_build_secret_path_multiple_leading_slashes(self):
+    @patch("quantchain.core.secret_managers.vault.hvac")
+    def test_build_secret_path_multiple_leading_slashes(self, mock_hvac):
         """Test building path with multiple leading slashes."""
+        mock_client = Mock(is_authenticated=lambda: True)
+        mock_hvac.Client.return_value = mock_client
+
         manager = VaultSecretManager(url="https://vault.com", token="token")
-        manager.client = Mock(is_authenticated=lambda: True)
 
         path = manager._build_secret_path("///mysecret")
         assert path == "secret/data/mysecret"

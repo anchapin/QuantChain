@@ -1,18 +1,5 @@
 """Interactive Brokers execution connector using ib_async library."""
 
-# IB Async compatibility guard
-IB_ASYNC_AVAILABLE = False
-try:
-    from ib_async.client import IB
-    from ib_async.contract import Contract
-    IB_ASYNC_AVAILABLE = True
-except ImportError:
-    IB = None
-    Contract = None
-    IB_ASYNC_AVAILABLE = False
-
-
-
 import asyncio
 import re
 from datetime import datetime, timezone
@@ -35,7 +22,8 @@ from ..tools.trading_execution import (
     ValidationError,
 )
 
-# Import ib_async components
+# IB Async compatibility guard
+IB_ASYNC_AVAILABLE = False
 try:
     from ib_async import (
         IB,
@@ -52,10 +40,23 @@ try:
         StopOrder,
         Trade,
     )
-except ImportError as e:
-    raise ImportError(
-        "ib_async library is required. Install with: pip install ib_async>=1.0.0"
-    ) from e
+    IB_ASYNC_AVAILABLE = True
+except ImportError:
+    # Set all ib_async imports to None for mock testing
+    IB = None
+    Contract = None
+    Forex = None
+    Future = None
+    LimitOrder = None
+    MarketOrder = None
+    Option = None
+    Order = None
+    RequestError = None
+    Stock = None
+    StopLimitOrder = None
+    StopOrder = None
+    Trade = None
+    IB_ASYNC_AVAILABLE = False
 
 
 class IBExecutionConnector(TradingExecutionInterface):
@@ -114,7 +115,15 @@ class IBExecutionConnector(TradingExecutionInterface):
             readonly: Read-only mode, no order placement
             account: Specific account for multi-account setups
             **kwargs: Additional configuration parameters
+
+        Raises:
+            ImportError: If ib_async library is not installed
         """
+        if not IB_ASYNC_AVAILABLE:
+            raise ImportError(
+                "ib_async library is required. Install with: pip install ib_async>=1.0.0"
+            )
+
         self.host = host
         self.port = port
         self.client_id = client_id
@@ -124,7 +133,16 @@ class IBExecutionConnector(TradingExecutionInterface):
 
         # Initialize IB client
         self.ib = IB()
-        self._loop = asyncio.new_event_loop()
+
+        # Handle event loop creation - don't create a new loop if one is already running
+        try:
+            self._loop = asyncio.get_running_loop()
+            self._own_loop = False
+        except RuntimeError:
+            # No running loop, create our own
+            self._loop = asyncio.new_event_loop()
+            self._own_loop = True
+
         self._order_map: Dict[str, Trade] = {}
 
         # Connect to IB Gateway/TWS
@@ -162,10 +180,28 @@ class IBExecutionConnector(TradingExecutionInterface):
         """Run async coroutine synchronously."""
         try:
             if timeout:
-                # Wrap the coroutine with wait_for and run through the loop
+                # Wrap the coroutine with wait_for
                 wrapped_coro = asyncio.wait_for(coro, timeout=timeout)
-                return self._loop.run_until_complete(wrapped_coro)
-            return self._loop.run_until_complete(coro)
+
+                # Handle execution based on whether we own the loop
+                if self._own_loop:
+                    return self._loop.run_until_complete(wrapped_coro)
+                else:
+                    # Create a task in the running loop and wait for it
+                    return asyncio.run_coroutine_threadsafe(
+                        wrapped_coro,
+                        self._loop
+                    ).result(timeout=timeout + 1)  # Add buffer to the timeout
+            else:
+                # Handle execution based on whether we own the loop
+                if self._own_loop:
+                    return self._loop.run_until_complete(coro)
+                else:
+                    # Create a task in the running loop and wait for it
+                    return asyncio.run_coroutine_threadsafe(
+                        coro,
+                        self._loop
+                    ).result()
         except asyncio.TimeoutError as e:
             raise ExecutionError(f"Operation timed out: {str(e)}") from e
         except Exception as e:
@@ -179,7 +215,11 @@ class IBExecutionConnector(TradingExecutionInterface):
         if re.match(r"^[A-Z]{3}[A-Z]{3}$", symbol) and len(symbol) == 6:
             base = symbol[:3]
             quote = symbol[3:]
-            return Forex(base, quote)
+            contract = Forex()
+            contract.symbol = base
+            contract.currency = quote
+            contract.secType = "CASH"
+            return contract
 
         # Check for option format (e.g., AAPL 20231215 150 C)
         # Parse manually to avoid regex issues
@@ -248,10 +288,19 @@ class IBExecutionConnector(TradingExecutionInterface):
                 year += 10  # Add decade if year is in past
             expiry = f"{year}{month}"
 
-            return Future(root, expiry, "", "", "")
+            contract = Future()
+            contract.symbol = root
+            contract.lastTradeDateOrContractMonth = expiry
+            contract.secType = "FUT"
+            return contract
 
         # Default to stock
-        return Stock(symbol, "SMART", "USD")
+        contract = Stock()
+        contract.symbol = symbol
+        contract.secType = "STK"
+        contract.exchange = "SMART"
+        contract.currency = "USD"
+        return contract
 
     def _qualify_contract(self, contract: Contract) -> Contract:
         """Qualify contract with IB to get complete details."""
@@ -276,29 +325,25 @@ class IBExecutionConnector(TradingExecutionInterface):
         action = self.SIDE_MAPPING[order.side]
 
         if order.order_type == OrderType.MARKET:
-            ib_order = order_class(
-                action=action,
-                totalQuantity=order.quantity,
-            )
+            ib_order = order_class()
+            ib_order.action = action
+            ib_order.totalQuantity = order.quantity
         elif order.order_type == OrderType.LIMIT:
-            ib_order = order_class(
-                action=action,
-                totalQuantity=order.quantity,
-                lmtPrice=order.price,
-            )
+            ib_order = order_class()
+            ib_order.action = action
+            ib_order.totalQuantity = order.quantity
+            ib_order.lmtPrice = order.price
         elif order.order_type == OrderType.STOP:
-            ib_order = order_class(
-                action=action,
-                totalQuantity=order.quantity,
-                auxPrice=order.stop_price,
-            )
+            ib_order = order_class()
+            ib_order.action = action
+            ib_order.totalQuantity = order.quantity
+            ib_order.auxPrice = order.stop_price
         elif order.order_type == OrderType.STOP_LIMIT:
-            ib_order = order_class(
-                action=action,
-                totalQuantity=order.quantity,
-                lmtPrice=order.price,
-                auxPrice=order.stop_price,
-            )
+            ib_order = order_class()
+            ib_order.action = action
+            ib_order.totalQuantity = order.quantity
+            ib_order.lmtPrice = order.price
+            ib_order.auxPrice = order.stop_price
         else:
             raise ValidationError(f"Unsupported order type: {order.order_type}")
 
@@ -340,18 +385,69 @@ class IBExecutionConnector(TradingExecutionInterface):
         """Map IB order status to OrderStatus enum."""
         return self.STATUS_MAPPING.get(status, OrderStatus.PENDING)
 
-    def _convert_ib_order_type(self, order_type: str) -> OrderType:
+    def get_order_status(self, order_id: str) -> OrderResult:
+        """Get the status of a specific order.
+
+        Args:
+            order_id: The IB order ID
+
+        Returns:
+            OrderResult: The order status and details
+
+        Raises:
+            OrderNotFoundError: If the order is not found
+            ExecutionError: If there's an error fetching the order
+        """
+        if not self.is_connected():
+            raise ExecutionError("Not connected to IB")
+
+        try:
+            # Get the order from IB
+            # Try multiple approaches based on IB API version
+            if hasattr(self.ib, 'orders'):
+                # For newer ib_async versions
+                for order in self.ib.orders:
+                    if str(order.orderId) == str(order_id):
+                        return self._convert_ib_order_to_result(order)
+                raise OrderNotFoundError(f"Order {order_id} not found")
+            else:
+                # For older versions or as fallback
+                trade = self._run_async(self.ib.reqOpenOrderAsync(order_id))
+                if not trade:
+                    raise OrderNotFoundError(f"Order {order_id} not found")
+                return self._convert_ib_order_to_result(trade)
+
+            return self._convert_ib_order_to_result(trade)
+        except Exception as e:
+            raise ExecutionError(f"Failed to get order status: {str(e)}") from e
+
+    def _convert_ib_order_type(self, order_type) -> OrderType:
         """Map IB order type to OrderType enum."""
+        # Handle class objects
+        if hasattr(order_type, '__name__'):
+            class_name = order_type.__name__
+        else:
+            # Handle string input
+            class_name = str(order_type)
+
         type_mapping = {
+            "MarketOrder": OrderType.MARKET,
+            "LimitOrder": OrderType.LIMIT,
+            "StopOrder": OrderType.STOP,
+            "StopLimitOrder": OrderType.STOP_LIMIT,
             "MKT": OrderType.MARKET,
             "LMT": OrderType.LIMIT,
             "STP": OrderType.STOP,
             "STP LMT": OrderType.STOP_LIMIT,
         }
-        return type_mapping.get(order_type, OrderType.MARKET)
+        return type_mapping.get(class_name, OrderType.MARKET)
 
     def place_order(self, order: OrderRequest) -> OrderResult:
         """Place a trading order and return the result."""
+        # Check if in readonly mode
+        if self.readonly:
+            raise ExecutionError("Cannot place orders in read-only mode")
+
         # Validate order
         self.validate_order(order)
 
@@ -364,7 +460,7 @@ class IBExecutionConnector(TradingExecutionInterface):
             ib_order = self._convert_order_to_ib(order)
 
             # Place order
-            trade = self.ib.placeOrder(qualified_contract, ib_order)
+            trade = self._run_async(self.ib.placeOrder(qualified_contract, ib_order))
 
             # Store trade for tracking
             self._order_map[str(trade.orderId)] = trade
@@ -387,10 +483,12 @@ class IBExecutionConnector(TradingExecutionInterface):
     def cancel_order(self, order_id: str) -> OrderResult:
         """Cancel an existing order."""
         # Find the trade
+        # Find trade
         trade = self._order_map.get(order_id)
         if not trade:
             # Search in active trades
-            for t in self.ib.trades():
+            trades = self.ib.trades()
+            for t in trades:
                 if str(t.orderId) == order_id:
                     trade = t
                     break
@@ -449,14 +547,14 @@ class IBExecutionConnector(TradingExecutionInterface):
     def get_account(self) -> AccountInfo:
         """Retrieve account information."""
         try:
-            # Get account summary
-            summary = self.ib.accountSummary(account=self.account)
+            # Get account summary using async API
+            summary = self._run_async(self.ib.accountSummaryAsync(account=self.account))
 
             # Extract key values
             net_liquidation = 0.0
             available_funds = 0.0
             buying_power = 0.0
-            total_cash = 0.0
+            total_cash = 0.0  # Default value in case TotalCashValue/TotalCash not returned
 
             for item in summary:
                 if item.tag == "NetLiquidation":
@@ -466,6 +564,9 @@ class IBExecutionConnector(TradingExecutionInterface):
                 elif item.tag == "BuyingPower":
                     buying_power = float(item.value)
                 elif item.tag == "TotalCashValue":
+                    total_cash = float(item.value)
+                # Also handle "TotalCash" tag which may be returned by IB
+                elif item.tag == "TotalCash":
                     total_cash = float(item.value)
 
             # Get positions
@@ -485,7 +586,8 @@ class IBExecutionConnector(TradingExecutionInterface):
     def get_positions(self) -> List[Position]:
         """Retrieve current open positions."""
         try:
-            ib_positions = self.ib.positions(account=self.account)
+            # Use async method to get positions
+            ib_positions = self._run_async(self.ib.positionsAsync())
 
             positions = []
             for pos in ib_positions:
@@ -498,7 +600,7 @@ class IBExecutionConnector(TradingExecutionInterface):
                     try:
                         # Try to get current price from market data
                         ticker = self.ib.reqMktData(pos.contract, "", False, False)
-                        current_price = ticker.last if ticker.last else avg_cost
+                        current_price = ticker.last if hasattr(ticker, 'last') and ticker.last else avg_cost
                     except Exception:
                         current_price = avg_cost
 
@@ -696,6 +798,13 @@ class IBExecutionConnector(TradingExecutionInterface):
             self._order_map.clear()
         except Exception:
             pass  # Ignore errors during disconnection
+
+    def is_connected(self) -> bool:
+        """Check if connected to IB Gateway/TWS."""
+        try:
+            return self.ib.isConnected()
+        except Exception:
+            return False
 
     def __del__(self) -> None:
         """Cleanup on deletion."""
