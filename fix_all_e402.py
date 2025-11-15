@@ -52,7 +52,7 @@ def fix_e402_violations(file_path):
                             break
                     imports.extend(import_lines)
                     # Skip these lines in the main loop
-                    lines = [l for l in lines if l not in import_lines[1:]]
+                    lines = [line for line in lines if line not in import_lines[1:]]
                 else:
                     imports.append(line)
                 continue

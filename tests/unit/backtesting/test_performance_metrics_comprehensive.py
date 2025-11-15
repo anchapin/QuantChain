@@ -1,10 +1,16 @@
 """Comprehensive tests for performance metrics to boost coverage."""
 
+
+
 import numpy as np
 import pandas as pd
 import pytest
-
 from quantchain.backtesting.performance_metrics import (
+import quantchain.backtesting.performance_metrics as pm
+from quantchain.backtesting.engine import MetricsResult
+import quantchain.backtesting.performance_metrics as pm
+from quantchain.backtesting.engine import MetricsResult
+
     InsufficientDataError,
     InvalidFrequencyError,
     LibraryImportError,
@@ -15,19 +21,24 @@ from quantchain.backtesting.performance_metrics import (
 
 
 @pytest.mark.unit
+
+
 class TestPerformanceMetricsComprehensive:
     """Comprehensive tests for PerformanceMetrics."""
 
-    def test_init_with_quantstats_available(self):
+
+
+def test_init_with_quantstats_available(self):
         """Test initialization when QuantStats is available."""
         calculator = PerformanceMetrics()
         assert calculator is not None
         assert hasattr(calculator, "calculate_all_metrics")
 
-    def test_init_without_quantstats(self):
+
+
+def test_init_without_quantstats(self):
         """Test initialization when QuantStats is not available."""
         # Mock the import failure
-        import quantchain.backtesting.performance_metrics as pm
 
         original_quantstats = pm.QUANTSTATS_AVAILABLE
         pm.QUANTSTATS_AVAILABLE = False
@@ -40,13 +51,17 @@ class TestPerformanceMetricsComprehensive:
             # Restore original value
             pm.QUANTSTATS_AVAILABLE = original_quantstats
 
-    def test_calculate_basic_metrics_with_minimal_data(self):
+
+
+def test_calculate_basic_metrics_with_minimal_data(self):
         """Test basic metrics calculation with minimal data."""
         calculator = PerformanceMetrics()
 
         # Create minimal but valid data
         dates = pd.date_range("2024-01-01", periods=10, freq="D")
-        equity = np.array([100, 105, 102, 108, 110, 107, 112, 115, 113, 118], dtype=float)
+        equity = np.array(
+            [100, 105, 102, 108, 110, 107, 112, 115, 113, 118], dtype=float
+        )
         equity_series = pd.Series(equity, index=dates)
 
         # Calculate returns
@@ -57,12 +72,16 @@ class TestPerformanceMetricsComprehensive:
         with pytest.raises(InsufficientDataError):
             calculator.calculate_returns(pd.Series([100]))
 
-    def test_calculate_total_return(self):
+
+
+def test_calculate_total_return(self):
         """Test total return calculation."""
         calculator = PerformanceMetrics()
 
         dates = pd.date_range("2024-01-01", periods=10, freq="D")
-        equity = np.array([100, 105, 102, 108, 110, 107, 112, 115, 113, 118], dtype=float)
+        equity = np.array(
+            [100, 105, 102, 108, 110, 107, 112, 115, 113, 118], dtype=float
+        )
         equity_series = pd.Series(equity, index=dates)
 
         total_return = calculator.calculate_total_return(equity_series)
@@ -79,7 +98,9 @@ class TestPerformanceMetricsComprehensive:
         with pytest.raises(InsufficientDataError):
             calculator.calculate_total_return(pd.Series([]))
 
-    def test_calculate_annualized_return(self):
+
+
+def test_calculate_annualized_return(self):
         """Test annualized return calculation."""
         calculator = PerformanceMetrics()
 
@@ -94,7 +115,9 @@ class TestPerformanceMetricsComprehensive:
         empty_returns = pd.Series([], dtype=float)
         assert calculator.calculate_annualized_return(empty_returns) == 0.0
 
-    def test_calculate_sharpe_ratio(self):
+
+
+def test_calculate_sharpe_ratio(self):
         """Test Sharpe ratio calculation."""
         calculator = PerformanceMetrics()
 
@@ -109,7 +132,9 @@ class TestPerformanceMetricsComprehensive:
         empty_returns = pd.Series([], dtype=float)
         assert calculator.calculate_sharpe_ratio(empty_returns) == 0.0
 
-    def test_calculate_sortino_ratio(self):
+
+
+def test_calculate_sortino_ratio(self):
         """Test Sortino ratio calculation."""
         calculator = PerformanceMetrics()
 
@@ -124,38 +149,50 @@ class TestPerformanceMetricsComprehensive:
         empty_returns = pd.Series([], dtype=float)
         assert calculator.calculate_sortino_ratio(empty_returns) == 0.0
 
-    def test_calculate_max_drawdown(self):
+
+
+def test_calculate_max_drawdown(self):
         """Test maximum drawdown calculation."""
         calculator = PerformanceMetrics()
 
         # Create a simple increasing equity curve
         dates = pd.date_range("2024-01-01", periods=10, freq="D")
-        equity = np.array([100, 105, 110, 115, 120, 125, 130, 135, 140, 145], dtype=float)
+        equity = np.array(
+            [100, 105, 110, 115, 120, 125, 130, 135, 140, 145], dtype=float
+        )
         equity_series = pd.Series(equity, index=dates)
 
         result = calculator.calculate_max_drawdown(equity_series)
         assert isinstance(result, dict)
 
-    def test_calculate_calmar_ratio(self):
+
+
+def test_calculate_calmar_ratio(self):
         """Test Calmar ratio calculation."""
         calculator = PerformanceMetrics()
 
         # Create a simple increasing equity curve
         dates = pd.date_range("2024-01-01", periods=10, freq="D")
-        equity = np.array([100, 105, 110, 115, 120, 125, 130, 135, 140, 145], dtype=float)
+        equity = np.array(
+            [100, 105, 110, 115, 120, 125, 130, 135, 140, 145], dtype=float
+        )
         equity_series = pd.Series(equity, index=dates)
 
         calmar = calculator.calculate_calmar_ratio(equity_series)
         assert isinstance(calmar, float)
 
-    def test_calculate_win_rate(self):
+
+
+def test_calculate_win_rate(self):
         """Test win rate calculation."""
         calculator = PerformanceMetrics()
 
         # Create trade data with pnl column as required by implementation
-        trades = pd.DataFrame({
-            "pnl": [50, -50, 100, -20, 20],
-        })
+        trades = pd.DataFrame(
+            {
+                "pnl": [50, -50, 100, -20, 20],
+            }
+        )
 
         win_rate = calculator.calculate_win_rate(trades)
         assert isinstance(win_rate, float)
@@ -166,14 +203,18 @@ class TestPerformanceMetricsComprehensive:
         empty_win_rate = calculator.calculate_win_rate(empty_trades)
         assert empty_win_rate == 0.0
 
-    def test_calculate_profit_factor(self):
+
+
+def test_calculate_profit_factor(self):
         """Test profit factor calculation."""
         calculator = PerformanceMetrics()
 
         # Create trade data with pnl column as required by implementation
-        trades = pd.DataFrame({
-            "pnl": [50, -50, 100, -20, 20],
-        })
+        trades = pd.DataFrame(
+            {
+                "pnl": [50, -50, 100, -20, 20],
+            }
+        )
 
         profit_factor = calculator.calculate_profit_factor(trades)
         assert isinstance(profit_factor, float)
@@ -184,14 +225,18 @@ class TestPerformanceMetricsComprehensive:
         empty_profit_factor = calculator.calculate_profit_factor(empty_trades)
         assert empty_profit_factor == 0.0
 
-    def test_calculate_average_trade(self):
+
+
+def test_calculate_average_trade(self):
         """Test average trade calculation."""
         calculator = PerformanceMetrics()
 
         # Create trade data with pnl column as required by implementation
-        trades = pd.DataFrame({
-            "pnl": [50, -50, 100, -20, 20],
-        })
+        trades = pd.DataFrame(
+            {
+                "pnl": [50, -50, 100, -20, 20],
+            }
+        )
 
         avg_trade = calculator.calculate_average_trade(trades)
         assert isinstance(avg_trade, float)
@@ -201,27 +246,35 @@ class TestPerformanceMetricsComprehensive:
         empty_avg_trade = calculator.calculate_average_trade(empty_trades)
         assert empty_avg_trade == 0.0
 
-    def test_calculate_total_trades(self):
+
+
+def test_calculate_total_trades(self):
         """Test total trades calculation."""
         calculator = PerformanceMetrics()
 
         # Create trade data
-        trades = pd.DataFrame({
-            "pnl": [50, -50, 100, -20, 20],
-        })
+        trades = pd.DataFrame(
+            {
+                "pnl": [50, -50, 100, -20, 20],
+            }
+        )
 
         total_trades = calculator.calculate_total_trades(trades)
         assert isinstance(total_trades, int)
         assert total_trades == 5
 
-    def test_calculate_largest_win(self):
+
+
+def test_calculate_largest_win(self):
         """Test largest win calculation."""
         calculator = PerformanceMetrics()
 
         # Create trade data with pnl column as required by implementation
-        trades = pd.DataFrame({
-            "pnl": [50, -50, 100, -20, 20],
-        })
+        trades = pd.DataFrame(
+            {
+                "pnl": [50, -50, 100, -20, 20],
+            }
+        )
 
         largest_win = calculator.calculate_largest_win(trades)
         assert isinstance(largest_win, (float, np.floating, np.integer))
@@ -231,14 +284,18 @@ class TestPerformanceMetricsComprehensive:
         empty_largest_win = calculator.calculate_largest_win(empty_trades)
         assert empty_largest_win == 0.0
 
-    def test_calculate_largest_loss(self):
+
+
+def test_calculate_largest_loss(self):
         """Test largest loss calculation."""
         calculator = PerformanceMetrics()
 
         # Create trade data with pnl column as required by implementation
-        trades = pd.DataFrame({
-            "pnl": [50, -50, 100, -20, 20],
-        })
+        trades = pd.DataFrame(
+            {
+                "pnl": [50, -50, 100, -20, 20],
+            }
+        )
 
         largest_loss = calculator.calculate_largest_loss(trades)
         assert isinstance(largest_loss, (float, np.floating, np.integer))
@@ -249,34 +306,41 @@ class TestPerformanceMetricsComprehensive:
         empty_largest_loss = calculator.calculate_largest_loss(empty_trades)
         assert empty_largest_loss == 0.0
 
-    def test_calculate_all_metrics(self):
+
+
+def test_calculate_all_metrics(self):
         """Test comprehensive metrics calculation."""
         calculator = PerformanceMetrics()
 
         # Create simple equity data
         dates = pd.date_range("2024-01-01", periods=10, freq="D")
-        equity = np.array([100, 105, 110, 115, 120, 125, 130, 135, 140, 145], dtype=float)
+        equity = np.array(
+            [100, 105, 110, 115, 120, 125, 130, 135, 140, 145], dtype=float
+        )
         equity_series = pd.Series(equity, index=dates)
 
         # Create trade data with pnl column as required by implementation
-        trades = pd.DataFrame({
-            "pnl": [50, -50, 100, -20, 20],
-        })
+        trades = pd.DataFrame(
+            {
+                "pnl": [50, -50, 100, -20, 20],
+            }
+        )
 
         all_metrics = calculator.calculate_all_metrics(equity_series, trades)
 
-        from quantchain.backtesting.engine import MetricsResult
+
         assert isinstance(all_metrics, MetricsResult)
-        assert hasattr(all_metrics, 'total_return')
+        assert hasattr(all_metrics, "total_return")
 
         # Check for common metrics
-        assert hasattr(all_metrics, 'total_return')
-        assert hasattr(all_metrics, 'sharpe_ratio')
-        assert hasattr(all_metrics, 'win_rate')
+        assert hasattr(all_metrics, "total_return")
+        assert hasattr(all_metrics, "sharpe_ratio")
+        assert hasattr(all_metrics, "win_rate")
 
-    def test_calculate_all_metrics_without_quantstats(self):
+
+
+def test_calculate_all_metrics_without_quantstats(self):
         """Test metrics calculation without QuantStats."""
-        import quantchain.backtesting.performance_metrics as pm
 
         original_quantstats = pm.QUANTSTATS_AVAILABLE
         pm.QUANTSTATS_AVAILABLE = False
@@ -286,30 +350,38 @@ class TestPerformanceMetricsComprehensive:
 
             # Create simple equity data
             dates = pd.date_range("2024-01-01", periods=10, freq="D")
-            equity = np.array([100, 105, 110, 115, 120, 125, 130, 135, 140, 145], dtype=float)
+            equity = np.array(
+                [100, 105, 110, 115, 120, 125, 130, 135, 140, 145], dtype=float
+            )
             equity_series = pd.Series(equity, index=dates)
 
             # Create trade data with pnl column as required by implementation
-            trades = pd.DataFrame({
-                "pnl": [50, -50, 100, -20, 20],
-            })
+            trades = pd.DataFrame(
+                {
+                    "pnl": [50, -50, 100, -20, 20],
+                }
+            )
 
             all_metrics = calculator.calculate_all_metrics(equity_series, trades)
 
-            from quantchain.backtesting.engine import MetricsResult
+
             assert isinstance(all_metrics, MetricsResult)
-            assert hasattr(all_metrics, 'total_return')
+            assert hasattr(all_metrics, "total_return")
         finally:
             # Restore original value
             pm.QUANTSTATS_AVAILABLE = original_quantstats
 
-    def test_error_handling_invalid_data(self):
+
+
+def test_error_handling_invalid_data(self):
         """Test error handling for invalid data."""
         calculator = PerformanceMetrics()
 
         # Test with NaN values
         dates = pd.date_range("2024-01-01", periods=10, freq="D")
-        equity_with_nan = np.array([100, 105, np.nan, 108, 110, np.nan, 112, 115, 113, 118], dtype=float)
+        equity_with_nan = np.array(
+            [100, 105, np.nan, 108, 110, np.nan, 112, 115, 113, 118], dtype=float
+        )
         equity_series = pd.Series(equity_with_nan, index=dates)
 
         # Should handle NaN values gracefully
@@ -319,7 +391,9 @@ class TestPerformanceMetricsComprehensive:
             # This is acceptable behavior
             pass
 
-    def test_validate_frequency(self):
+
+
+def test_validate_frequency(self):
         """Test frequency validation."""
         calculator = PerformanceMetrics()
 
@@ -332,7 +406,9 @@ class TestPerformanceMetricsComprehensive:
         returns = calculator.calculate_returns(equity_series)
         assert len(returns) == 23
 
-    def test_performance_metrics_with_benchmark(self):
+
+
+def test_performance_metrics_with_benchmark(self):
         """Test metrics with benchmark returns."""
         # Create benchmark returns
         benchmark_dates = pd.date_range("2024-01-01", periods=365, freq="D")
@@ -344,7 +420,9 @@ class TestPerformanceMetricsComprehensive:
 
         # Create simple equity data
         dates = pd.date_range("2024-01-01", periods=10, freq="D")
-        equity = np.array([100, 105, 110, 115, 120, 125, 130, 135, 140, 145], dtype=float)
+        equity = np.array(
+            [100, 105, 110, 115, 120, 125, 130, 135, 140, 145], dtype=float
+        )
         equity_series = pd.Series(equity, index=dates)
 
         # Test that calculator was initialized with benchmark
@@ -359,7 +437,9 @@ class TestPerformanceMetricsComprehensive:
         sharpe = calculator.calculate_sharpe_ratio(returns)
         assert isinstance(sharpe, float)
 
-    def test_edge_cases(self):
+
+
+def test_edge_cases(self):
         """Test edge cases for performance metrics."""
         calculator = PerformanceMetrics()
 
@@ -379,7 +459,9 @@ class TestPerformanceMetricsComprehensive:
             # If it raises an error, that's also acceptable
             pass
 
-    def test_calculate_var(self):
+
+
+def test_calculate_var(self):
         """Test Value at Risk (VaR) calculation."""
         calculator = PerformanceMetrics()
 
@@ -397,9 +479,13 @@ class TestPerformanceMetricsComprehensive:
 
         # Test with invalid confidence level
         with pytest.raises(ValueError):
-            calculator.calculate_var(pd.Series([0.01, 0.02]), 1.5)  # Invalid confidence level
+            calculator.calculate_var(
+                pd.Series([0.01, 0.02]), 1.5
+            )  # Invalid confidence level
 
-    def test_calculate_cvar(self):
+
+
+def test_calculate_cvar(self):
         """Test Conditional Value at Risk (CVaR) calculation."""
         calculator = PerformanceMetrics()
 
@@ -417,25 +503,33 @@ class TestPerformanceMetricsComprehensive:
 
         # Test with invalid confidence level
         with pytest.raises(ValueError):
-            calculator.calculate_cvar(pd.Series([0.01, 0.02]), 1.5)  # Invalid confidence level
+            calculator.calculate_cvar(
+                pd.Series([0.01, 0.02]), 1.5
+            )  # Invalid confidence level
 
-    def test_calculate_average_win(self):
+
+
+def test_calculate_average_win(self):
         """Test average winning trade calculation."""
         calculator = PerformanceMetrics()
 
         # Create trade data with pnl column
-        trades = pd.DataFrame({
-            "pnl": [50, -30, 100, -20, 80],
-        })
+        trades = pd.DataFrame(
+            {
+                "pnl": [50, -30, 100, -20, 80],
+            }
+        )
 
         avg_win = calculator.calculate_average_win(trades)
         assert isinstance(avg_win, float)
         assert avg_win > 0  # Average win should be positive
 
         # Test with no winning trades
-        no_wins = pd.DataFrame({
-            "pnl": [-50, -30, -20],
-        })
+        no_wins = pd.DataFrame(
+            {
+                "pnl": [-50, -30, -20],
+            }
+        )
         assert calculator.calculate_average_win(no_wins) == 0.0
 
         # Test with empty trades - should return 0.0, not raise error
@@ -443,23 +537,29 @@ class TestPerformanceMetricsComprehensive:
         empty_avg_win = calculator.calculate_average_win(empty_trades)
         assert empty_avg_win == 0.0
 
-    def test_calculate_average_loss(self):
+
+
+def test_calculate_average_loss(self):
         """Test average losing trade calculation."""
         calculator = PerformanceMetrics()
 
         # Create trade data with pnl column
-        trades = pd.DataFrame({
-            "pnl": [50, -30, 100, -20, 80],
-        })
+        trades = pd.DataFrame(
+            {
+                "pnl": [50, -30, 100, -20, 80],
+            }
+        )
 
         avg_loss = calculator.calculate_average_loss(trades)
         assert isinstance(avg_loss, float)
         assert avg_loss > 0  # Average loss should be positive (absolute value)
 
         # Test with no losing trades
-        no_losses = pd.DataFrame({
-            "pnl": [50, 30, 20],
-        })
+        no_losses = pd.DataFrame(
+            {
+                "pnl": [50, 30, 20],
+            }
+        )
         assert calculator.calculate_average_loss(no_losses) == 0.0
 
         # Test with empty trades - should return 0.0, not raise error
@@ -467,14 +567,18 @@ class TestPerformanceMetricsComprehensive:
         empty_avg_loss = calculator.calculate_average_loss(empty_trades)
         assert empty_avg_loss == 0.0
 
-    def test_calculate_win_loss_ratio(self):
+
+
+def test_calculate_win_loss_ratio(self):
         """Test win/loss ratio calculation."""
         calculator = PerformanceMetrics()
 
         # Create trade data with pnl column
-        trades = pd.DataFrame({
-            "pnl": [50, -30, 100, -20, 80],
-        })
+        trades = pd.DataFrame(
+            {
+                "pnl": [50, -30, 100, -20, 80],
+            }
+        )
 
         win_loss_ratio = calculator.calculate_win_loss_ratio(trades)
         assert isinstance(win_loss_ratio, float)
@@ -485,7 +589,11 @@ class TestPerformanceMetricsComprehensive:
         assert calculator.calculate_win_loss_ratio(no_trades) == 0.0
 
         # Test with only wins
-        only_wins = pd.DataFrame({
-            "pnl": [50, 30, 20],
-        })
-        assert calculator.calculate_win_loss_ratio(only_wins) == 0.0  # Implementation returns 0.0 when no losses
+        only_wins = pd.DataFrame(
+            {
+                "pnl": [50, 30, 20],
+            }
+        )
+        assert (
+            calculator.calculate_win_loss_ratio(only_wins) == 0.0
+        )  # Implementation returns 0.0 when no losses

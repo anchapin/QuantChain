@@ -1,16 +1,8 @@
 """
 Comprehensive tests for security.py to improve coverage from 38.9% to 90%+
 """
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-import re
-import os
-import tempfile
-import json
-from pathlib import Path
 
 # Import the actual classes from the security module
-from quantchain.core.security import (
     APISecurityManager,
     API_KEY_PATTERNS,
     CredentialNotFoundError,
@@ -21,8 +13,20 @@ from quantchain.core.security import (
 class TestAPISecurityManager:
     """Test APISecurityManager class"""
 
+
+import pytest
+from unittest.mock import Mock, patch, MagicMock
+import re
+import os
+import tempfile
+import json
+from pathlib import Path
+from quantchain.core.security import (
+
     @patch('quantchain.core.security.create_secret_manager')
     @patch('quantchain.core.security.get_default_secret_manager')
+
+
     def test_initialization_with_default_manager(self, mock_get_default, mock_create):
         """Test initialization with default secret manager"""
         # Setup mocks
@@ -39,6 +43,8 @@ class TestAPISecurityManager:
         assert manager.api_key_patterns == API_KEY_PATTERNS
 
     @patch('quantchain.core.security.create_secret_manager')
+
+
     def test_initialization_with_backend(self, mock_create):
         """Test initialization with specific backend"""
         # Setup mocks
@@ -54,6 +60,8 @@ class TestAPISecurityManager:
         assert manager.api_key_patterns == API_KEY_PATTERNS
 
     @patch('quantchain.core.security.create_secret_manager')
+
+
     def test_initialization_with_config(self, mock_create):
         """Test initialization with configuration"""
         # Setup mocks
@@ -69,6 +77,8 @@ class TestAPISecurityManager:
         assert manager._secret_manager == mock_manager
 
     @patch('quantchain.core.security.create_secret_manager')
+
+
     def test_initialization_with_env_file_compatibility(self, mock_create):
         """Test initialization with .env file (backward compatibility)"""
         # Setup mocks
@@ -83,6 +93,8 @@ class TestAPISecurityManager:
         assert manager._secret_manager == mock_manager
 
     @patch('quantchain.core.security.create_secret_manager')
+
+
     def test_initialization_with_kwargs(self, mock_create):
         """Test initialization with additional kwargs"""
         # Setup mocks
@@ -95,6 +107,8 @@ class TestAPISecurityManager:
         # Verify create was called with kwargs
         mock_create.assert_called_once_with(None, None, test_kwarg="test_value")
         assert manager._secret_manager == mock_manager
+
+
 
     def test_get_api_key_success(self):
         """Test successful API key retrieval"""
@@ -112,6 +126,8 @@ class TestAPISecurityManager:
         mock_manager.get_api_key.assert_called_once_with("test_service")
         assert result == "test_api_key"
 
+
+
     def test_get_api_key_not_found(self):
         """Test API key not found"""
         # Setup mocks
@@ -124,6 +140,8 @@ class TestAPISecurityManager:
         # Should raise exception
         with pytest.raises(CredentialNotFoundError, match="No API key found"):
             manager.get_api_key("test_service")
+
+
 
     def test_get_api_secret_success(self):
         """Test successful API secret retrieval"""
@@ -140,6 +158,8 @@ class TestAPISecurityManager:
         # Verify manager was called and secret returned
         mock_manager.get_api_secret.assert_called_once_with("test_service")
         assert result == "test_secret"
+
+
 
     def test_get_api_secret_none(self):
         """Test API secret that doesn't exist (returns None)"""
@@ -158,6 +178,8 @@ class TestAPISecurityManager:
         assert result is None
 
     @patch('quantchain.core.security.APISecurityManager')
+
+
     def test_set_api_key_with_env_manager(self, mock_api_manager_class):
         """Test set_api_key with EnvSecretManager"""
         # Setup mocks
@@ -175,6 +197,8 @@ class TestAPISecurityManager:
         manager._secret_manager.set_api_key.assert_called_once_with("test_service", "test_key", None)
 
     @patch('quantchain.core.security.logger')
+
+
     def test_set_api_key_warning(self, mock_logger):
         """Test set_api_key logs warning"""
         # Setup mocks
@@ -190,6 +214,8 @@ class TestAPISecurityManager:
         mock_logger.warning.assert_called_once()
 
     @patch('quantchain.core.security.APISecurityManager')
+
+
     def test_set_api_key_with_production_manager(self, mock_api_manager_class):
         """Test set_api_key with production secret manager"""
         # Setup mocks
@@ -203,6 +229,8 @@ class TestAPISecurityManager:
         # Should raise exception
         with pytest.raises(SecurityConfigurationError, match="Cannot set credentials"):
             manager.set_api_key("test_service", "test_key")
+
+
 
     def test_validate_credentials_valid_pattern(self):
         """Test credential validation with valid pattern"""
@@ -219,6 +247,8 @@ class TestAPISecurityManager:
         # Should return True
         assert result is True
 
+
+
     def test_validate_credentials_invalid_pattern(self):
         """Test credential validation with invalid pattern"""
         # Setup mocks
@@ -234,6 +264,8 @@ class TestAPISecurityManager:
         # Should return False
         assert result is False
 
+
+
     def test_validate_credentials_with_provided_key(self):
         """Test credential validation with provided key"""
         manager = APISecurityManager()
@@ -245,6 +277,8 @@ class TestAPISecurityManager:
         # Test with invalid key
         result = manager.validate_credentials("alpaca", key="invalid_key")
         assert result is False
+
+
 
     def test_validate_credentials_with_provided_secret(self):
         """Test credential validation with provided secret"""
@@ -258,6 +292,8 @@ class TestAPISecurityManager:
         result = manager.validate_credentials("alpaca", secret="invalid")
         assert result is False
 
+
+
     def test_validate_credentials_unknown_service(self):
         """Test credential validation for unknown service"""
         manager = APISecurityManager()
@@ -265,6 +301,8 @@ class TestAPISecurityManager:
         # Should return False for unknown service
         result = manager.validate_credentials("unknown_service", key="some_key")
         assert result is False
+
+
 
     def test_alpaca_pattern_validation(self):
         """Test Alpaca API key pattern validation"""
@@ -290,6 +328,8 @@ class TestAPISecurityManager:
 
         for key in invalid_keys:
             assert manager.validate_credentials("alpaca", key=key) is False
+
+
 
     def test_polygon_pattern_validation(self):
         """Test Polygon API key pattern validation"""
@@ -319,6 +359,8 @@ class TestAPISecurityManager:
         for key in invalid_keys:
             assert manager.validate_credentials("polygon", key=key) is False
 
+
+
     def test_alpha_vantage_pattern_validation(self):
         """Test Alpha Vantage API key pattern validation"""
         manager = APISecurityManager()
@@ -342,6 +384,8 @@ class TestAPISecurityManager:
         for key in invalid_keys:
             assert manager.validate_credentials("alpha_vantage", key=key) is False
 
+
+
     def test_anthropic_pattern_validation(self):
         """Test Anthropic API key pattern validation"""
         manager = APISecurityManager()
@@ -364,6 +408,8 @@ class TestAPISecurityManager:
 
         for key in invalid_keys:
             assert manager.validate_credentials("anthropic", key=key) is False
+
+
 
     def test_openai_pattern_validation(self):
         """Test OpenAI API key pattern validation"""
@@ -392,12 +438,16 @@ class TestAPISecurityManager:
 class TestCredentialNotFoundError:
     """Test CredentialNotFoundError exception"""
 
+
+
     def test_exception_initialization(self):
         """Test exception initialization"""
         error = CredentialNotFoundError("Test message")
 
         assert str(error) == "Test message"
         assert isinstance(error, Exception)
+
+
 
     def test_exception_inheritance(self):
         """Test exception inheritance"""
@@ -408,12 +458,16 @@ class TestCredentialNotFoundError:
 class TestSecurityConfigurationError:
     """Test SecurityConfigurationError exception"""
 
+
+
     def test_exception_initialization(self):
         """Test exception initialization"""
         error = SecurityConfigurationError("Test message")
 
         assert str(error) == "Test message"
         assert isinstance(error, Exception)
+
+
 
     def test_exception_inheritance(self):
         """Test exception inheritance"""
@@ -423,6 +477,8 @@ class TestSecurityConfigurationError:
 
 class TestAPIKeyPatterns:
     """Test API_KEY_PATTERNS constant"""
+
+
 
     def test_patterns_structure(self):
         """Test that patterns have the expected structure"""
@@ -438,6 +494,8 @@ class TestAPIKeyPatterns:
             assert "key_pattern" in patterns
             assert "secret_pattern" in patterns
 
+
+
     def test_alpaca_pattern_regex(self):
         """Test Alpaca pattern regex"""
         pattern = re.compile(API_KEY_PATTERNS["alpaca"]["key_pattern"])
@@ -449,6 +507,8 @@ class TestAPIKeyPatterns:
         # Invalid matches
         assert pattern.match("KABCDEFGHIJKLMNOPQRS") is None  # Doesn't start with A
         assert pattern.match("AK12345") is None  # Too short
+
+
 
     def test_polygon_pattern_regex(self):
         """Test Polygon pattern regex"""
@@ -462,6 +522,8 @@ class TestAPIKeyPatterns:
         assert pattern.match("abcdefghijklmnopqrst") is None  # Too short
         assert pattern.match("abcdefghijklmnopqrst@uv") is None  # Invalid character
 
+
+
     def test_alpha_vantage_pattern_regex(self):
         """Test Alpha Vantage pattern regex"""
         pattern = re.compile(API_KEY_PATTERNS["alpha_vantage"]["key_pattern"])
@@ -474,6 +536,8 @@ class TestAPIKeyPatterns:
         assert pattern.match("ABCDEFGHIJKLMNO") is None  # Too short
         assert pattern.match("ABCDEFGHIJKLMNOPQ") is None  # Too long
 
+
+
     def test_anthropic_pattern_regex(self):
         """Test Anthropic pattern regex"""
         pattern = re.compile(API_KEY_PATTERNS["anthropic"]["key_pattern"])
@@ -485,6 +549,8 @@ class TestAPIKeyPatterns:
         # Invalid matches
         assert pattern.match("sk-ant-apiaBCdefghijKLMnopqrstu") is None  # Missing '03'
         assert pattern.match("sk-ant-api03BCdefghijKLMnopqr") is None  # Too short
+
+
 
     def test_openai_pattern_regex(self):
         """Test OpenAI pattern regex"""
@@ -504,6 +570,8 @@ class TestSecurityIntegration:
 
     @patch('quantchain.core.security.create_secret_manager')
     @patch('quantchain.core.security.get_default_secret_manager')
+
+
     def test_env_file_integration(self, mock_get_default, mock_create):
         """Test integration with .env file"""
         # Setup mocks
@@ -534,6 +602,8 @@ class TestSecurityIntegration:
             os.unlink(f.name)
 
     @patch('quantchain.core.security.create_secret_manager')
+
+
     def test_custom_configuration(self, mock_create):
         """Test with custom configuration"""
         # Setup mocks
@@ -551,6 +621,8 @@ class TestSecurityIntegration:
         # Test getting key
         result = manager.get_api_key("test_service")
         assert result == "test_key"
+
+
 
     def test_multiple_service_credentials(self):
         """Test working with multiple service credentials"""

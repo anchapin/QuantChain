@@ -14,25 +14,35 @@ from quantchain.core.reflection import AgentAction
 class MockLLMProvider(LLMProvider):
     """Mock LLM provider for testing."""
 
-    def __init__(self, responses=None) -> None:
+
+
+def __init__(self, responses=None) -> None:
         self.responses = responses or ["Final answer: test response"]
         self.call_count = 0
 
-    def generate(self, prompt, **kwargs) -> None:
+
+
+def generate(self, prompt, **kwargs) -> None:
         response = self.responses[min(self.call_count, len(self.responses) - 1)]
         self.call_count += 1
         return LLMResponse(text=response, usage={"tokens": 10})
 
-    def get_model_name(self) -> None:
+
+
+def get_model_name(self) -> None:
         return "mock-model"
 
 
 @pytest.fixture
+
+
 def mock_config() -> None:
     """Mock configuration for testing."""
     config = MagicMock(spec=QuantChainConfig)
 
-    def config_get(key, default=None) -> None:
+
+
+def config_get(key, default=None) -> None:
         """Return appropriate mock values based on key."""
         mock_values = {
             "max_iterations": 5,
@@ -47,15 +57,21 @@ def mock_config() -> None:
 
 
 @pytest.fixture
+
+
 def mock_llm_provider() -> None:
     """Mock LLM provider."""
     return MockLLMProvider()
 
 
 @pytest.mark.unit
+
+
 class TestQuantChainAgentEngine:
 
-    def test_agent_initialization_with_mock(
+
+
+def test_agent_initialization_with_mock(
         self, mock_config, mock_llm_provider
     ) -> None:
         """Test agent initialization."""
@@ -75,6 +91,8 @@ class TestQuantChainAgentEngine:
 
 
 @patch("quantchain.core.agent_engine.StateGraph")
+
+
 def test_agent_run(mock_state_graph, mock_config, mock_llm_provider) -> None:
     """Test agent execution."""
     # Setup mock graph
@@ -114,6 +132,8 @@ def test_agent_run(mock_state_graph, mock_config, mock_llm_provider) -> None:
 
 
 @patch("quantchain.core.agent_engine.StateGraph")
+
+
 def test_agent_reflection(mock_state_graph, mock_config, mock_llm_provider) -> None:
     """Test agent reflection capability."""
     final_state = {
@@ -152,6 +172,8 @@ def test_agent_reflection(mock_state_graph, mock_config, mock_llm_provider) -> N
 
 
 @patch("quantchain.core.agent_engine.StateGraph")
+
+
 def test_extract_final_answer(mock_state_graph, mock_config) -> None:
     """Test final answer extraction."""
     final_state = {

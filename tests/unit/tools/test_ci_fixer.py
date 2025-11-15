@@ -1,29 +1,56 @@
 """Tests for CI fixer tool."""
 
+
+
+
+
+
 import json
 import os
 import subprocess
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
-
 import pytest
-
 from quantchain.tools.ci_fixer import CIFixer
-
+from pathlib import Path
+from pathlib import Path
+from pathlib import Path
+import sys
+from quantchain.tools.__main__ import main
+import sys
+from quantchain.tools.__main__ import main
+import sys
+from quantchain.tools.__main__ import main
+import sys
+from quantchain.tools.__main__ import main
+import sys
+from quantchain.tools.__main__ import main
+import sys
+from quantchain.tools.__main__ import main
+import sys
+from quantchain.tools.__main__ import main
+import sys
+from quantchain.tools import __main__
 
 @pytest.mark.unit
+
+
 class TestCIFixer:
     """Test CI fixer functionality."""
 
-    def test_init_with_default_path(self) -> None:
+
+
+def test_init_with_default_path(self) -> None:
         """Test initialization with default path."""
         fixer = CIFixer()
         assert fixer.repo_path == Path.cwd()
         assert fixer.logs_dir == Path.cwd() / "logs"
         assert fixer.logs_dir.exists()
 
-    def test_init_with_custom_path(self) -> None:
+
+
+def test_init_with_custom_path(self) -> None:
         """Test initialization with custom path."""
         with tempfile.TemporaryDirectory() as tmpdir:
             fixer = CIFixer(tmpdir)
@@ -32,7 +59,9 @@ class TestCIFixer:
             assert fixer.logs_dir.exists()
 
     @patch("subprocess.run")
-    def test_detect_current_pr_success(self, mock_run: Mock) -> None:
+
+
+def test_detect_current_pr_success(self, mock_run: Mock) -> None:
         """Test successful PR detection."""
         # Mock git command to return branch name
         mock_run.side_effect = [
@@ -67,7 +96,9 @@ class TestCIFixer:
         assert pr["state"] == "open"
 
     @patch("subprocess.run")
-    def test_detect_current_pr_no_pr_found(self, mock_run: Mock) -> None:
+
+
+def test_detect_current_pr_no_pr_found(self, mock_run: Mock) -> None:
         """Test PR detection when no PR is found."""
         # Mock git command to return branch name
         mock_run.side_effect = [
@@ -91,7 +122,9 @@ class TestCIFixer:
             mock_logger.warning.assert_called()
 
     @patch("subprocess.run")
-    def test_detect_current_pr_git_error(self, mock_run: Mock) -> None:
+
+
+def test_detect_current_pr_git_error(self, mock_run: Mock) -> None:
         """Test PR detection when git command fails."""
         # Mock git command failure
         mock_run.side_effect = subprocess.CalledProcessError(
@@ -106,7 +139,9 @@ class TestCIFixer:
             mock_logger.error.assert_called()
 
     @patch("subprocess.run")
-    def test_get_pr_checks_success(self, mock_run: Mock) -> None:
+
+
+def test_get_pr_checks_success(self, mock_run: Mock) -> None:
         """Test successful PR checks retrieval."""
         checks_data = [
             {
@@ -140,7 +175,9 @@ class TestCIFixer:
         assert checks[1]["conclusion"] == "failure"
 
     @patch("subprocess.run")
-    def test_get_pr_checks_error(self, mock_run: Mock) -> None:
+
+
+def test_get_pr_checks_error(self, mock_run: Mock) -> None:
         """Test PR checks retrieval when command fails."""
         mock_run.side_effect = subprocess.CalledProcessError(
             1, ["gh", "pr", "checks"], "API rate limit exceeded"
@@ -154,7 +191,9 @@ class TestCIFixer:
             mock_logger.error.assert_called()
 
     @patch("subprocess.run")
-    def test_download_job_logs(self, mock_run: Mock) -> None:
+
+
+def test_download_job_logs(self, mock_run: Mock) -> None:
         """Test downloading logs from failing jobs."""
         checks = [
             {
@@ -197,7 +236,9 @@ class TestCIFixer:
                 assert "Test log content" in f.read()
 
     @patch("subprocess.run")
-    def test_download_job_logs_with_error(self, mock_run: Mock) -> None:
+
+
+def test_download_job_logs_with_error(self, mock_run: Mock) -> None:
         """Test downloading logs when command fails."""
         checks = [
             {
@@ -220,7 +261,9 @@ class TestCIFixer:
             # Should handle errors gracefully
             assert len(logs) == 0
 
-    def test_analyze_failure_patterns_formatting(self) -> None:
+
+
+def test_analyze_failure_patterns_formatting(self) -> None:
         """Test analyzing common formatting failure patterns."""
         with tempfile.TemporaryDirectory() as tmpdir:
             fixer = CIFixer(tmpdir)
@@ -242,7 +285,9 @@ test.py:3:1: W291 trailing whitespace"""
             assert "linting_errors" in analysis
             assert len(analysis["linting_errors"]) > 0
 
-    def test_analyze_failure_patterns_imports(self) -> None:
+
+
+def test_analyze_failure_patterns_imports(self) -> None:
         """Test analyzing import-related failure patterns."""
         with tempfile.TemporaryDirectory() as tmpdir:
             fixer = CIFixer(tmpdir)
@@ -265,7 +310,9 @@ test.py:3:1: W291 trailing whitespace"""
             if analysis["build_errors"]:
                 assert any("missing_module" in str(e) for e in analysis["build_errors"])
 
-    def test_analyze_failure_patterns_tests(self) -> None:
+
+
+def test_analyze_failure_patterns_tests(self) -> None:
         """Test analyzing test-related failure patterns."""
         with tempfile.TemporaryDirectory() as tmpdir:
             fixer = CIFixer(tmpdir)
@@ -291,7 +338,9 @@ test.py:3:1: W291 trailing whitespace"""
             assert test_failure["type"] in ["pytest", "assertion"]
 
     @patch("subprocess.run")
-    def test_implement_fixes_formatting(self, mock_run: Mock) -> None:
+
+
+def test_implement_fixes_formatting(self, mock_run: Mock) -> None:
         """Test implementing automated formatting fixes."""
         # Mock successful formatting commands
         mock_run.return_value = Mock(returncode=0)
@@ -310,7 +359,6 @@ test.py:3:1: W291 trailing whitespace"""
 
             assert success is True
             # The call uses a Path object for cwd, so we need to check for that
-            from pathlib import Path
 
             mock_run.assert_any_call(
                 ["black", "quantchain", "tests/"],
@@ -319,7 +367,9 @@ test.py:3:1: W291 trailing whitespace"""
             )
 
     @patch("subprocess.run")
-    def test_create_fix_plan(self, mock_run: Mock) -> None:
+
+
+def test_create_fix_plan(self, mock_run: Mock) -> None:
         """Test creating fix plan from analysis."""
         analysis = {
             "linting_errors": [
@@ -341,7 +391,9 @@ test.py:3:1: W291 trailing whitespace"""
             assert any(f["type"] == "test_fixes" for f in fix_plan)
 
     @patch("subprocess.run")
-    def test_verify_fixes(self, mock_run: Mock) -> None:
+
+
+def test_verify_fixes(self, mock_run: Mock) -> None:
         """Test verifying fixes."""
         # Mock successful test run
         mock_run.return_value = Mock(returncode=0)
@@ -352,7 +404,6 @@ test.py:3:1: W291 trailing whitespace"""
 
             assert success is True
             # Should run pytest to verify
-            from pathlib import Path
 
             mock_run.assert_any_call(
                 ["pytest", "--cov=quantchain", "tests/"],
@@ -363,7 +414,9 @@ test.py:3:1: W291 trailing whitespace"""
             )
 
     @patch("subprocess.run")
-    def test_get_repo_owner_https_url(self, mock_run: Mock) -> None:
+
+
+def test_get_repo_owner_https_url(self, mock_run: Mock) -> None:
         """Test extracting repo owner from HTTPS URL."""
         mock_run.return_value = Mock(
             stdout="https://github.com/owner/repo.git\n",
@@ -377,7 +430,9 @@ test.py:3:1: W291 trailing whitespace"""
         assert owner == "/"
 
     @patch("subprocess.run")
-    def test_get_repo_owner_ssh_url(self, mock_run: Mock) -> None:
+
+
+def test_get_repo_owner_ssh_url(self, mock_run: Mock) -> None:
         """Test extracting repo owner from SSH URL."""
         mock_run.return_value = Mock(
             stdout="git@github.com:owner/repo.git\n",
@@ -389,7 +444,9 @@ test.py:3:1: W291 trailing whitespace"""
         assert owner == "owner"
 
     @patch("subprocess.run")
-    def test_get_repo_owner_error(self, mock_run: Mock) -> None:
+
+
+def test_get_repo_owner_error(self, mock_run: Mock) -> None:
         """Test getting repo owner when command fails."""
         mock_run.side_effect = subprocess.CalledProcessError(
             1, ["git"], "No remote configured"
@@ -400,7 +457,9 @@ test.py:3:1: W291 trailing whitespace"""
         assert owner == ""
 
     @patch("subprocess.run")
-    def test_get_repo_name_https_url(self, mock_run: Mock) -> None:
+
+
+def test_get_repo_name_https_url(self, mock_run: Mock) -> None:
         """Test extracting repo name from HTTPS URL."""
         mock_run.return_value = Mock(
             stdout="https://github.com/owner/repo.git\n",
@@ -412,7 +471,9 @@ test.py:3:1: W291 trailing whitespace"""
         assert name == "repo"
 
     @patch("subprocess.run")
-    def test_get_repo_name_ssh_url(self, mock_run: Mock) -> None:
+
+
+def test_get_repo_name_ssh_url(self, mock_run: Mock) -> None:
         """Test extracting repo name from SSH URL."""
         mock_run.return_value = Mock(
             stdout="git@github.com:owner/repo.git\n",
@@ -424,7 +485,9 @@ test.py:3:1: W291 trailing whitespace"""
         assert name == "repo"
 
     @patch("subprocess.run")
-    def test_get_repo_name_error(self, mock_run: Mock) -> None:
+
+
+def test_get_repo_name_error(self, mock_run: Mock) -> None:
         """Test getting repo name when command fails."""
         mock_run.side_effect = subprocess.CalledProcessError(
             1, ["git"], "No remote configured"
@@ -435,7 +498,9 @@ test.py:3:1: W291 trailing whitespace"""
         assert name == ""
 
     @patch("subprocess.run")
-    def test_run_fix_process_success(self, mock_run: Mock) -> None:
+
+
+def test_run_fix_process_success(self, mock_run: Mock) -> None:
         """Test successful CI fix process."""
         # Mock detect_current_pr
         with patch.object(CIFixer, "detect_current_pr") as mock_pr:
@@ -482,7 +547,9 @@ test.py:3:1: W291 trailing whitespace"""
                                     assert success is True
 
     @patch("subprocess.run")
-    def test_run_fix_process_no_pr(self, mock_run: Mock) -> None:
+
+
+def test_run_fix_process_no_pr(self, mock_run: Mock) -> None:
         """Test CI fix process when no PR is detected."""
         with patch.object(CIFixer, "detect_current_pr") as mock_pr:
             mock_pr.return_value = None
@@ -496,7 +563,9 @@ test.py:3:1: W291 trailing whitespace"""
                     mock_logger.error.assert_called()
 
     @patch("subprocess.run")
-    def test_run_fix_process_with_failing_jobs(self, mock_run: Mock) -> None:
+
+
+def test_run_fix_process_with_failing_jobs(self, mock_run: Mock) -> None:
         """Test CI fix process with failing jobs that get fixed."""
         # Mock detect_current_pr
         with patch.object(CIFixer, "detect_current_pr") as mock_pr:
@@ -557,7 +626,9 @@ test.py:3:1: W291 trailing whitespace"""
                                         assert success is True
 
     @patch("subprocess.run")
-    def test_verify_fixes_timeout(self, mock_run: Mock) -> None:
+
+
+def test_verify_fixes_timeout(self, mock_run: Mock) -> None:
         """Test verify fixes when tests time out."""
         mock_run.side_effect = subprocess.TimeoutExpired(["pytest"], 300)
 
@@ -570,7 +641,9 @@ test.py:3:1: W291 trailing whitespace"""
                 mock_logger.error.assert_called()
 
     @patch("subprocess.run")
-    def test_verify_fixes_test_failure(self, mock_run: Mock) -> None:
+
+
+def test_verify_fixes_test_failure(self, mock_run: Mock) -> None:
         """Test verify fixes when tests fail."""
         mock_run.return_value = Mock(
             returncode=1, stdout="FAILED tests/test_example.py", stderr="Test failed"
@@ -585,7 +658,9 @@ test.py:3:1: W291 trailing whitespace"""
                 mock_logger.error.assert_called()
 
     @patch("subprocess.run")
-    def test_apply_type_fixes(self, mock_run: Mock) -> None:
+
+
+def test_apply_type_fixes(self, mock_run: Mock) -> None:
         """Test applying type fixes."""
         with patch("quantchain.tools.ci_fixer.logger") as mock_logger:
             fixer = CIFixer()
@@ -597,7 +672,9 @@ test.py:3:1: W291 trailing whitespace"""
             )
 
     @patch("subprocess.run")
-    def test_apply_build_fixes(self, mock_run: Mock) -> None:
+
+
+def test_apply_build_fixes(self, mock_run: Mock) -> None:
         """Test applying build fixes."""
         with patch("quantchain.tools.ci_fixer.logger") as mock_logger:
             fixer = CIFixer()
@@ -609,7 +686,9 @@ test.py:3:1: W291 trailing whitespace"""
             )
 
     @patch("subprocess.run")
-    def test_apply_dependency_fixes(self, mock_run: Mock) -> None:
+
+
+def test_apply_dependency_fixes(self, mock_run: Mock) -> None:
         """Test applying dependency fixes."""
         with patch("quantchain.tools.ci_fixer.logger") as mock_logger:
             fixer = CIFixer()
@@ -621,7 +700,9 @@ test.py:3:1: W291 trailing whitespace"""
             )
 
     @patch("subprocess.run")
-    def test_apply_linting_fixes_autopep8(self, mock_run: Mock) -> None:
+
+
+def test_apply_linting_fixes_autopep8(self, mock_run: Mock) -> None:
         """Test applying linting fixes with autopep8."""
         mock_run.return_value = Mock(returncode=0)
 
@@ -630,7 +711,6 @@ test.py:3:1: W291 trailing whitespace"""
             success = fixer._apply_linting_fixes(["Fix with autopep8"])
 
             assert success is True
-            from pathlib import Path
 
             mock_run.assert_any_call(
                 ["autopep8", "--in-place", "--aggressive", "quantchain", "tests/"],
@@ -639,7 +719,9 @@ test.py:3:1: W291 trailing whitespace"""
             )
 
     @patch("subprocess.run")
-    def test_apply_linting_fixes_black_failure(self, mock_run: Mock) -> None:
+
+
+def test_apply_linting_fixes_black_failure(self, mock_run: Mock) -> None:
         """Test applying linting fixes when black fails."""
         mock_run.side_effect = subprocess.CalledProcessError(
             1, ["black"], "Formatting failed"
@@ -658,11 +740,11 @@ class TestMainCLI:
 
     # Note: These tests are placed here to increase __main__.py coverage
 
-    def test_main_no_args(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test main function with no arguments."""
-        import sys
 
-        from quantchain.tools.__main__ import main
+
+def test_main_no_args(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test main function with no arguments."""
+
 
         with patch.object(sys, "argv", ["python -m quantchain.tools"]):
             with pytest.raises(SystemExit) as exc_info:
@@ -674,11 +756,11 @@ class TestMainCLI:
             assert "Available commands:" in captured.out
 
     @patch("quantchain.tools.__main__.CIFixer")
-    def test_main_fix_failing_ci_checks_success(self, mock_fixer: Mock) -> None:
-        """Test fixing failing CI checks successfully."""
-        import sys
 
-        from quantchain.tools.__main__ import main
+
+def test_main_fix_failing_ci_checks_success(self, mock_fixer: Mock) -> None:
+        """Test fixing failing CI checks successfully."""
+
 
         mock_fixer.return_value.run_fix_process.return_value = True
 
@@ -693,11 +775,11 @@ class TestMainCLI:
             mock_fixer.return_value.run_fix_process.assert_called_once()
 
     @patch("quantchain.tools.__main__.CIFixer")
-    def test_main_fix_failing_ci_checks_failure(self, mock_fixer: Mock) -> None:
-        """Test fixing failing CI checks with failure."""
-        import sys
 
-        from quantchain.tools.__main__ import main
+
+def test_main_fix_failing_ci_checks_failure(self, mock_fixer: Mock) -> None:
+        """Test fixing failing CI checks with failure."""
+
 
         mock_fixer.return_value.run_fix_process.return_value = False
 
@@ -712,13 +794,13 @@ class TestMainCLI:
             mock_fixer.return_value.run_fix_process.assert_called_once()
 
     @patch("quantchain.tools.__main__.CIFixer")
-    def test_main_fix_failing_ci_checks_keyboard_interrupt(
+
+
+def test_main_fix_failing_ci_checks_keyboard_interrupt(
         self, mock_fixer: Mock
     ) -> None:
         """Test keyboard interrupt during CI fix process."""
-        import sys
 
-        from quantchain.tools.__main__ import main
 
         mock_fixer.return_value.run_fix_process.side_effect = KeyboardInterrupt()
 
@@ -732,13 +814,13 @@ class TestMainCLI:
             mock_fixer.assert_called_once()
 
     @patch("quantchain.tools.__main__.CIFixer")
-    def test_main_fix_failing_ci_checks_runtime_exception(
+
+
+def test_main_fix_failing_ci_checks_runtime_exception(
         self, mock_fixer: Mock, capsys: pytest.CaptureFixture[str]
     ) -> None:
         """Test runtime exception during CI fix process."""
-        import sys
 
-        from quantchain.tools.__main__ import main
 
         mock_fixer.return_value.run_fix_process.side_effect = RuntimeError(
             "Test runtime error"
@@ -756,11 +838,11 @@ class TestMainCLI:
             captured = capsys.readouterr()
             assert "Error: Test runtime error" in captured.out
 
-    def test_main_help_command(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test help command."""
-        import sys
 
-        from quantchain.tools.__main__ import main
+
+def test_main_help_command(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test help command."""
+
 
         with patch.object(sys, "argv", ["python -m quantchain.tools", "help"]):
             # Help command doesn't exit, it just prints help
@@ -771,11 +853,11 @@ class TestMainCLI:
             assert "Available commands:" in captured.out
             assert "fix-failing-ci-checks" in captured.out
 
-    def test_main_unknown_command(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test unknown command."""
-        import sys
 
-        from quantchain.tools.__main__ import main
+
+def test_main_unknown_command(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test unknown command."""
+
 
         with patch.object(sys, "argv", ["python -m quantchain.tools", "unknown"]):
             with pytest.raises(SystemExit) as exc_info:
@@ -786,11 +868,11 @@ class TestMainCLI:
             assert "Unknown command: unknown" in captured.out
             assert "Use 'help' to see available commands" in captured.out
 
-    def test_main_module_entry_point(self, capsys: pytest.CaptureFixture[str]) -> None:
-        """Test calling the module entry point by simulating if __name__ == '__main__'."""
-        import sys
 
-        from quantchain.tools import __main__
+
+def test_main_module_entry_point(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """Test calling the module entry point by simulating if __name__ == '__main__'."""
+
 
         # Save original argv and sys.modules state
         original_argv = sys.argv

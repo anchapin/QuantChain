@@ -1,8 +1,9 @@
 """Additional targeted coverage tests for config module."""
 
-import pytest
-import tempfile
 import os
+import tempfile
+
+import pytest
 
 from quantchain.core.config import QuantChainConfig
 
@@ -11,7 +12,9 @@ class TestConfigAdditionalCoverage:
     """Additional tests to target specific missing lines in config."""
 
     @pytest.mark.coverage
-    def test_config_properties_and_methods(self):
+
+
+def test_config_properties_and_methods(self):
         """Test config properties and method coverage."""
         config = QuantChainConfig()
 
@@ -33,7 +36,9 @@ class TestConfigAdditionalCoverage:
             assert config.broker_type == broker_type
 
     @pytest.mark.coverage
-    def test_config_validation_paths(self):
+
+
+def test_config_validation_paths(self):
         """Test config validation code paths."""
         config = QuantChainConfig()
 
@@ -70,7 +75,9 @@ class TestConfigAdditionalCoverage:
                         pass
 
     @pytest.mark.coverage
-    def test_config_file_operations(self):
+
+
+def test_config_file_operations(self):
         """Test config file operations."""
         config = QuantChainConfig()
 
@@ -98,7 +105,9 @@ class TestConfigAdditionalCoverage:
                 os.unlink(temp_file)
 
     @pytest.mark.coverage
-    def test_config_copy_and_clone(self):
+
+
+def test_config_copy_and_clone(self):
         """Test config copy and clone operations."""
         config = QuantChainConfig()
         config.llm_provider = "test_provider"
@@ -123,7 +132,9 @@ class TestConfigAdditionalCoverage:
                 pass
 
     @pytest.mark.coverage
-    def test_config_string_representation(self):
+
+
+def test_config_string_representation(self):
         """Test config string representation methods."""
         config = QuantChainConfig()
 
@@ -142,7 +153,9 @@ class TestConfigAdditionalCoverage:
             pass
 
     @pytest.mark.coverage
-    def test_config_equality_and_hash(self):
+
+
+def test_config_equality_and_hash(self):
         """Test config equality and hash methods."""
         config1 = QuantChainConfig()
         config2 = QuantChainConfig()
@@ -167,7 +180,9 @@ class TestConfigAdditionalCoverage:
             pass
 
     @pytest.mark.coverage
-    def test_config_getters_and_setters(self):
+
+
+def test_config_getters_and_setters(self):
         """Test config getter and setter methods."""
         config = QuantChainConfig()
 
@@ -193,7 +208,7 @@ class TestConfigAdditionalCoverage:
         for attr in attributes:
             # Test getter
             try:
-                value = getattr(config, attr)
+                getattr(config, attr)
                 # Should not raise exception
             except AttributeError:
                 pass  # Attribute might not exist

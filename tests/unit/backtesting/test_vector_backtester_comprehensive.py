@@ -15,18 +15,24 @@ from quantchain.backtesting.vector_backtester import (
 
 
 @pytest.mark.unit
+
+
 class TestVectorizedPositionManager:
     """Test cases for VectorizedPositionManager."""
 
     @pytest.fixture
-    def manager(self):
+
+
+def manager(self):
         """Create position manager instance."""
         return VectorizedPositionManager(
             initial_cash=100000.0, commission_rate=0.001, slippage_rate=0.0005
         )
 
     @pytest.fixture
-    def sample_signals_df(self):
+
+
+def sample_signals_df(self):
         """Create sample signals DataFrame."""
         dates = pd.date_range("2023-01-01", periods=10, freq="D")
         return pd.DataFrame(
@@ -37,14 +43,18 @@ class TestVectorizedPositionManager:
             }
         )
 
-    def test_initialization_default(self):
+
+
+def test_initialization_default(self):
         """Test default initialization."""
         manager = VectorizedPositionManager()
         assert manager.initial_cash == 100000.0
         assert manager.commission_rate == 0.0
         assert manager.slippage_rate == 0.0
 
-    def test_initialization_custom(self):
+
+
+def test_initialization_custom(self):
         """Test custom initialization."""
         manager = VectorizedPositionManager(
             initial_cash=50000.0, commission_rate=0.002, slippage_rate=0.001
@@ -53,7 +63,9 @@ class TestVectorizedPositionManager:
         assert manager.commission_rate == 0.002
         assert manager.slippage_rate == 0.001
 
-    def test_process_buy_signal_valid(self, manager):
+
+
+def test_process_buy_signal_valid(self, manager):
         """Test processing valid buy signal."""
         timestamp = pd.Timestamp("2023-01-01")
         price = 100.0
@@ -71,7 +83,9 @@ class TestVectorizedPositionManager:
         assert trade["signal"] == signal
         assert trade["price"] == price * (1 + manager.slippage_rate)
 
-    def test_process_buy_signal_insufficient_cash(self, manager):
+
+
+def test_process_buy_signal_insufficient_cash(self, manager):
         """Test buy signal with insufficient cash."""
         timestamp = pd.Timestamp("2023-01-01")
         price = 100.0
@@ -87,7 +101,9 @@ class TestVectorizedPositionManager:
         # Just check that a trade dictionary is returned
         assert isinstance(trade, dict)
 
-    def test_process_buy_signal_already_position(self, manager):
+
+
+def test_process_buy_signal_already_position(self, manager):
         """Test buy signal when already in position."""
         timestamp = pd.Timestamp("2023-01-01")
         price = 100.0
@@ -103,7 +119,9 @@ class TestVectorizedPositionManager:
         assert cash == current_cash  # Cash unchanged
         assert trade == {}  # No trade record
 
-    def test_process_sell_signal_long_position(self, manager):
+
+
+def test_process_sell_signal_long_position(self, manager):
         """Test selling from long position."""
         timestamp = pd.Timestamp("2023-01-01")
         price = 105.0
@@ -120,7 +138,9 @@ class TestVectorizedPositionManager:
         assert "timestamp" in trade
         assert trade["signal"] == signal
 
-    def test_process_sell_signal_no_position(self, manager):
+
+
+def test_process_sell_signal_no_position(self, manager):
         """Test sell signal with no position."""
         timestamp = pd.Timestamp("2023-01-01")
         price = 105.0
@@ -136,7 +156,9 @@ class TestVectorizedPositionManager:
         assert cash == current_cash  # Cash unchanged
         assert trade == {}  # No trade record
 
-    def test_process_signals(self, manager):
+
+
+def test_process_signals(self, manager):
         """Test processing multiple signals."""
         # Create simple signals and prices
         prices = pd.Series([100, 101, 102, 103, 104])
@@ -151,7 +173,9 @@ class TestVectorizedPositionManager:
         assert isinstance(trades, (pd.DataFrame, type(None)))
         assert isinstance(cash, (float, int))
 
-    def test_calculate_equity(self, manager):
+
+
+def test_calculate_equity(self, manager):
         """Test equity calculation."""
         prices = pd.Series([100, 101, 102, 103, 104])
         positions = pd.Series([0, 100, 100, 50, 0])
@@ -161,7 +185,9 @@ class TestVectorizedPositionManager:
         assert isinstance(equity, pd.Series)
         assert len(equity) == len(prices)
 
-    def test_commission_calculation(self, manager):
+
+
+def test_commission_calculation(self, manager):
         """Test commission calculation in trades."""
         timestamp = pd.Timestamp("2023-01-01")
         price = 100.0
@@ -176,7 +202,9 @@ class TestVectorizedPositionManager:
         expected_commission = trade["shares"] * trade["price"] * manager.commission_rate
         assert abs(trade["commission"] - expected_commission) < 0.01
 
-    def test_slippage_calculation(self, manager):
+
+
+def test_slippage_calculation(self, manager):
         """Test slippage calculation in trades."""
         timestamp = pd.Timestamp("2023-01-01")
         price = 100.0
@@ -197,11 +225,15 @@ class TestVectorizedPositionManager:
 
 
 @pytest.mark.unit
+
+
 class TestVectorBacktester:
     """Test cases for VectorBacktester."""
 
     @pytest.fixture
-    def config(self):
+
+
+def config(self):
         """Create backtest configuration."""
         return BacktestConfig(
             initial_cash=100000,
@@ -210,12 +242,16 @@ class TestVectorBacktester:
         )
 
     @pytest.fixture
-    def backtester(self, config):
+
+
+def backtester(self, config):
         """Create backtester instance."""
         return VectorBacktester(config=config)
 
     @pytest.fixture
-    def sample_data(self):
+
+
+def sample_data(self):
         """Create sample market data."""
         dates = pd.date_range("2023-01-01", periods=100, freq="D")
         return pd.DataFrame(
@@ -230,7 +266,9 @@ class TestVectorBacktester:
         )
 
     @pytest.fixture
-    def sample_signals(self):
+
+
+def sample_signals(self):
         """Create sample trading signals."""
         dates = pd.date_range("2023-01-01", periods=100, freq="D")
         return pd.Series(
@@ -238,21 +276,29 @@ class TestVectorBacktester:
             index=dates,
         )
 
-    def test_initialization_default(self):
+
+
+def test_initialization_default(self):
         """Test default initialization."""
         backtester = VectorBacktester()
         assert backtester.config is not None
 
-    def test_initialization_with_config(self, backtester, config):
+
+
+def test_initialization_with_config(self, backtester, config):
         """Test initialization with config."""
         assert backtester.config == config
 
-    def test_validate_inputs_valid(self, backtester, sample_data, sample_signals):
+
+
+def test_validate_inputs_valid(self, backtester, sample_data, sample_signals):
         """Test input validation with valid data."""
         # Should not raise any exception
         backtester._validate_inputs(sample_data, sample_signals)
 
-    def test_validate_inputs_empty_data(self, backtester):
+
+
+def test_validate_inputs_empty_data(self, backtester):
         """Test input validation with empty data."""
         empty_data = pd.DataFrame()
         signals = pd.Series([1, 0, -1])
@@ -260,21 +306,27 @@ class TestVectorBacktester:
         with pytest.raises(VectorBacktestError):
             backtester._validate_inputs(empty_data, signals)
 
-    def test_validate_inputs_empty_signals(self, backtester, sample_data):
+
+
+def test_validate_inputs_empty_signals(self, backtester, sample_data):
         """Test input validation with empty signals."""
         empty_signals = pd.Series([])
 
         with pytest.raises(SignalProcessingError):
             backtester._validate_inputs(sample_data, empty_signals)
 
-    def test_validate_inputs_mismatched_lengths(self, backtester, sample_data):
+
+
+def test_validate_inputs_mismatched_lengths(self, backtester, sample_data):
         """Test input validation with mismatched lengths."""
         short_signals = pd.Series([1, 0, -1])
 
         with pytest.raises(SignalProcessingError):
             backtester._validate_inputs(sample_data, short_signals)
 
-    def test_run_basic(self, backtester, sample_data, sample_signals):
+
+
+def test_run_basic(self, backtester, sample_data, sample_signals):
         """Test basic backtest run."""
         results = backtester.run(sample_signals, sample_data)
 
@@ -284,7 +336,9 @@ class TestVectorBacktester:
         assert isinstance(results.positions, pd.Series)
         assert isinstance(results.returns, pd.Series)
 
-    def test_run_with_cost_config(self, sample_data, sample_signals):
+
+
+def test_run_with_cost_config(self, sample_data, sample_signals):
         """Test backtest run with custom cost configuration."""
         config = BacktestConfig(
             commission_rate=0.002,
@@ -297,7 +351,9 @@ class TestVectorBacktester:
         # Results should reflect higher costs
         assert isinstance(results, VectorBacktestResult)
 
-    def test_get_results_after_run(self, backtester, sample_data, sample_signals):
+
+
+def test_get_results_after_run(self, backtester, sample_data, sample_signals):
         """Test getting results after run."""
         backtester.run(sample_signals, sample_data)
         results = backtester.get_results()
@@ -305,12 +361,16 @@ class TestVectorBacktester:
         assert results is not None
         assert isinstance(results, VectorBacktestResult)
 
-    def test_get_results_before_run(self, backtester):
+
+
+def test_get_results_before_run(self, backtester):
         """Test getting results before run."""
         results = backtester.get_results()
         assert results is None
 
-    def test_get_equity_curve_after_run(self, backtester, sample_data, sample_signals):
+
+
+def test_get_equity_curve_after_run(self, backtester, sample_data, sample_signals):
         """Test getting equity curve after run."""
         backtester.run(sample_signals, sample_data)
         equity_curve = backtester.get_equity_curve()
@@ -318,12 +378,16 @@ class TestVectorBacktester:
         assert equity_curve is not None
         assert isinstance(equity_curve, pd.Series)
 
-    def test_get_equity_curve_before_run(self, backtester):
+
+
+def test_get_equity_curve_before_run(self, backtester):
         """Test getting equity curve before run."""
         equity = backtester.get_equity_curve()
         assert equity is None
 
-    def test_run_multiple_times(self, backtester, sample_data, sample_signals):
+
+
+def test_run_multiple_times(self, backtester, sample_data, sample_signals):
         """Test running backtest multiple times."""
         results1 = backtester.run(sample_signals, sample_data)
         results2 = backtester.run(sample_signals, sample_data)
@@ -332,7 +396,9 @@ class TestVectorBacktester:
         assert results1 is not None
         assert results2 is not None
 
-    def test_edge_case_no_trades(self, backtester):
+
+
+def test_edge_case_no_trades(self, backtester):
         """Test edge case with no trades."""
         dates = pd.date_range("2023-01-01", periods=10, freq="D")
         data = pd.DataFrame(
@@ -350,7 +416,9 @@ class TestVectorBacktester:
         assert isinstance(results, VectorBacktestResult)
         assert len(results.trade_log) == 0
 
-    def test_edge_case_single_trade(self, backtester):
+
+
+def test_edge_case_single_trade(self, backtester):
         """Test edge case with single trade."""
         dates = pd.date_range("2023-01-01", periods=10, freq="D")
         data = pd.DataFrame(
@@ -370,10 +438,14 @@ class TestVectorBacktester:
 
 
 @pytest.mark.unit
+
+
 class TestVectorBacktestResult:
     """Test cases for VectorBacktestResult."""
 
-    def test_creation_minimal(self):
+
+
+def test_creation_minimal(self):
         """Test creation with minimal required fields."""
         dates = pd.date_range("2023-01-01", periods=5, freq="D")
         equity = pd.Series([100000, 101000, 102000, 103000, 104000], index=dates)
@@ -391,7 +463,9 @@ class TestVectorBacktestResult:
         assert result.returns.equals(returns)
         assert result.metrics == {}
 
-    def test_creation_with_metrics(self):
+
+
+def test_creation_with_metrics(self):
         """Test creation with metrics."""
         dates = pd.date_range("2023-01-01", periods=2, freq="D")
         equity = pd.Series([100000, 101000], index=dates)
@@ -410,7 +484,9 @@ class TestVectorBacktestResult:
 
         assert result.metrics == metrics
 
-    def test_data_consistency(self):
+
+
+def test_data_consistency(self):
         """Test data consistency across fields."""
         dates = pd.date_range("2023-01-01", periods=5, freq="D")
         equity = pd.Series([100000, 101000, 102000, 103000, 104000], index=dates)
@@ -428,16 +504,22 @@ class TestVectorBacktestResult:
 
 
 @pytest.mark.unit
+
+
 class TestExceptions:
     """Test custom exceptions."""
 
-    def test_vector_backtest_error(self):
+
+
+def test_vector_backtest_error(self):
         """Test VectorBacktestError."""
         error = VectorBacktestError("Test backtest error")
         assert str(error) == "Test backtest error"
         assert isinstance(error, Exception)
 
-    def test_signal_processing_error(self):
+
+
+def test_signal_processing_error(self):
         """Test SignalProcessingError."""
         error = SignalProcessingError("Test signal error")
         assert str(error) == "Test signal error"
@@ -445,10 +527,14 @@ class TestExceptions:
 
 
 @pytest.mark.unit
+
+
 class TestEdgeCases:
     """Test edge cases and error conditions."""
 
-    def test_nan_prices(self):
+
+
+def test_nan_prices(self):
         """Test handling of NaN prices."""
         manager = VectorizedPositionManager()
         dates = pd.date_range("2023-01-01", periods=5, freq="D")
@@ -464,7 +550,9 @@ class TestEdgeCases:
             # Or should raise appropriate error
             assert True
 
-    def test_calculate_signals_with_minimal_data(self):
+
+
+def test_calculate_signals_with_minimal_data(self):
         """Test signal calculation with minimal data."""
         backtester = VectorBacktester()
 
@@ -486,7 +574,9 @@ class TestEdgeCases:
         assert result is not None
         assert hasattr(result, "equity_curve")
 
-    def test_calculate_metrics_with_zero_data(self):
+
+
+def test_calculate_metrics_with_zero_data(self):
         """Test metrics calculation with zero data."""
         backtester = VectorBacktester()
 
@@ -499,7 +589,9 @@ class TestEdgeCases:
         with pytest.raises(VectorBacktestError, match="Empty data provided"):
             backtester.run(signals, data)
 
-    def test_calculate_metrics_with_single_trade(self):
+
+
+def test_calculate_metrics_with_single_trade(self):
         """Test metrics calculation with single trade."""
         backtester = VectorBacktester()
 
@@ -519,7 +611,9 @@ class TestEdgeCases:
         assert "total_trades" in result.metrics
         assert result.metrics["total_trades"] == 1
 
-    def test_calculate_metrics_with_no_trades(self):
+
+
+def test_calculate_metrics_with_no_trades(self):
         """Test metrics calculation with no trades."""
         backtester = VectorBacktester()
 
@@ -539,7 +633,9 @@ class TestEdgeCases:
         assert "total_trades" in result.metrics
         assert result.metrics["total_trades"] == 0
 
-    def test_validate_data_with_duplicate_dates(self):
+
+
+def test_validate_data_with_duplicate_dates(self):
         """Test data validation with duplicate dates."""
         backtester = VectorBacktester()
 
@@ -559,7 +655,9 @@ class TestEdgeCases:
             # Or should raise appropriate error
             assert True
 
-    def test_validate_data_with_unsorted_dates(self):
+
+
+def test_validate_data_with_unsorted_dates(self):
         """Test data validation with unsorted dates."""
         backtester = VectorBacktester()
 
@@ -579,7 +677,9 @@ class TestEdgeCases:
             # Or should raise appropriate error
             assert True
 
-    def test_validate_data_with_missing_timestamps(self):
+
+
+def test_validate_data_with_missing_timestamps(self):
         """Test data validation with missing timestamp column."""
         backtester = VectorBacktester()
 
@@ -588,10 +688,14 @@ class TestEdgeCases:
         signals = pd.Series([1, -1, 1])
 
         # Should raise error for missing close column
-        with pytest.raises(DataValidationError):  # Changed to match the actual exception
+        with pytest.raises(
+            DataValidationError
+        ):  # Changed to match the actual exception
             backtester.run(signals, data)
 
-    def test_calculate_signals_with_none_values(self):
+
+
+def test_calculate_signals_with_none_values(self):
         """Test signal calculation with None values."""
         backtester = VectorBacktester()
 
@@ -611,7 +715,9 @@ class TestEdgeCases:
             # Or should raise appropriate error
             assert True
 
-    def test_calculate_signals_with_empty_series(self):
+
+
+def test_calculate_signals_with_empty_series(self):
         """Test signal calculation with empty series."""
         backtester = VectorBacktester()
 
@@ -625,7 +731,9 @@ class TestEdgeCases:
         with pytest.raises(SignalProcessingError):
             backtester.run(signals, data)
 
-    def test_calculate_signals_with_single_value(self):
+
+
+def test_calculate_signals_with_single_value(self):
         """Test signal calculation with single value."""
         backtester = VectorBacktester()
 
@@ -649,7 +757,9 @@ class TestEdgeCases:
         assert result is not None
         assert hasattr(result, "equity_curve")
 
-    def test_calculate_signals_with_datetime_index(self):
+
+
+def test_calculate_signals_with_datetime_index(self):
         """Test signal calculation with datetime index."""
         backtester = VectorBacktester()
 
@@ -675,7 +785,9 @@ class TestEdgeCases:
         assert hasattr(result, "equity_curve")
         assert all(isinstance(idx, pd.Timestamp) for idx in result.equity_curve.index)
 
-    def test_calculate_signals_with_non_datetime_index(self):
+
+
+def test_calculate_signals_with_non_datetime_index(self):
         """Test signal calculation with non-datetime index."""
         backtester = VectorBacktester()
 
@@ -693,7 +805,9 @@ class TestEdgeCases:
         result = backtester.run(signals, data)
         assert result is not None
 
-    def test_calculate_metrics_with_infinite_equity(self):
+
+
+def test_calculate_metrics_with_infinite_equity(self):
         """Test metrics calculation with infinite equity."""
         # Note: _calculate_metrics doesn't exist, so this test is modified
         # to test the run method with appropriate data instead
@@ -714,7 +828,9 @@ class TestEdgeCases:
         # If no error, should return valid metrics
         assert isinstance(result.metrics, dict)
 
-    def test_calculate_metrics_with_nan_equity(self):
+
+
+def test_calculate_metrics_with_nan_equity(self):
         """Test metrics calculation with NaN equity."""
         # Note: _calculate_metrics doesn't exist, so this test is modified
         # to test the run method with appropriate data instead
@@ -735,16 +851,19 @@ class TestEdgeCases:
         # If no error, should return valid metrics
         assert isinstance(result.metrics, dict)
 
-    def test_calculate_metrics_with_zero_equity(self):
+
+
+def test_calculate_metrics_with_zero_equity(self):
         """Test metrics calculation with zero equity."""
-        backtester = VectorBacktester()
+        VectorBacktester()
 
         # Test with zero prices - this would cause division by zero
         # We'll skip this test as it's an edge case that's not properly handled
         # in the current implementation
-        pass
 
-    def test_calculate_metrics_with_negative_equity(self):
+
+
+def test_calculate_metrics_with_negative_equity(self):
         """Test metrics calculation with negative equity."""
         # Note: _calculate_metrics doesn't exist, so this test is modified
         # to test the run method with appropriate data instead
@@ -765,7 +884,9 @@ class TestEdgeCases:
         # If no error, should return valid metrics
         assert isinstance(result.metrics, dict)
 
-    def test_calculate_metrics_with_none_equity(self):
+
+
+def test_calculate_metrics_with_none_equity(self):
         """Test metrics calculation with None equity."""
         # Note: _calculate_metrics doesn't exist, so this test is modified
         # to test the run method with appropriate data instead
@@ -787,7 +908,9 @@ class TestEdgeCases:
         # If no error, should return valid metrics
         assert isinstance(result.metrics, dict)
 
-    def test_calculate_signals_with_non_numeric_data(self):
+
+
+def test_calculate_signals_with_non_numeric_data(self):
         """Test signal calculation with non-numeric data."""
         backtester = VectorBacktester()
 
@@ -803,7 +926,9 @@ class TestEdgeCases:
         # Should return valid results
         assert len(result.equity_curve) == 3
 
-    def test_inf_prices(self):
+
+
+def test_inf_prices(self):
         """Test handling of infinite prices."""
         manager = VectorizedPositionManager()
         dates = pd.date_range("2023-01-01", periods=5, freq="D")
@@ -819,7 +944,9 @@ class TestEdgeCases:
             # Or should raise appropriate error
             assert True
 
-    def test_negative_prices(self):
+
+
+def test_negative_prices(self):
         """Test handling of negative prices."""
         manager = VectorizedPositionManager()
         dates = pd.date_range("2023-01-01", periods=5, freq="D")
@@ -835,7 +962,9 @@ class TestEdgeCases:
             # Or should raise appropriate error
             assert True
 
-    def test_very_large_signals(self):
+
+
+def test_very_large_signals(self):
         """Test handling of very large signal values."""
         manager = VectorizedPositionManager()
         dates = pd.date_range("2023-01-01", periods=5, freq="D")
@@ -853,7 +982,9 @@ class TestEdgeCases:
             # Or should raise appropriate error
             assert True
 
-    def test_zero_commission_and_slippage(self):
+
+
+def test_zero_commission_and_slippage(self):
         """Test with zero commission and slippage."""
         manager = VectorizedPositionManager(
             initial_cash=100000, commission_rate=0.0, slippage_rate=0.0

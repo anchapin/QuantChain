@@ -1,4 +1,5 @@
-"""Example script demonstrating the Memecoin Vibe Trader agent.
+"""
+Example script demonstrating the Memecoin Vibe Trader agent.
 
 This example shows how to set up and run the Memecoin Vibe Trader that:
 1. Scans Dexscreener for new tokens
@@ -25,14 +26,14 @@ from quantchain.agents.memecoin_vibe_trader import (
     MemecoinVibeTraderConfig,
 )
 from quantchain.connectors.dexscreener_connector import DexscreenerDataConnector
-from quantchain.tools.social_media_scraper import SocialMediaScraper
-from quantchain.tools.execution import AlpacaExecutionTool
-from quantchain.core.config import get_config, QuantChainConfig
+from quantchain.core.config import QuantChainConfig, get_config
 from quantchain.core.llm_providers import (
-    OpenAIProvider,
     AnthropicProvider,
     OllamaProvider,
+    OpenAIProvider,
 )
+from quantchain.tools.execution import AlpacaExecutionTool
+from quantchain.tools.social_media_scraper import SocialMediaScraper
 
 
 def load_configuration() -> "QuantChainConfig":
@@ -47,7 +48,7 @@ def load_configuration() -> "QuantChainConfig":
     try:
         config = get_config()
     except Exception as e:
-        raise ValueError(f"Failed to load configuration: {e}")
+        raise ValueError(f"Failed to load configuration: {e}") from e
 
     # Validate required API keys
     required_keys = {
@@ -62,7 +63,7 @@ def load_configuration() -> "QuantChainConfig":
 
     if missing_keys:
         raise ValueError(
-            f"Missing required environment variables:\n"
+            "Missing required environment variables:\n"
             + "\n".join(f"  - {key}" for key in missing_keys)
             + "\n\nPlease set these in your .env file."
         )
@@ -167,7 +168,7 @@ def initialize_agent(config: "QuantChainConfig") -> MemecoinVibeTrader:
         return agent
 
     except Exception as e:
-        raise ValueError(f"Failed to initialize agent: {e}")
+        raise ValueError(f"Failed to initialize agent: {e}") from e
 
 
 def main() -> None:

@@ -1,38 +1,44 @@
 [
   {
-    "id": "check-act-installation",
-    "content": "Check if act CLI is already installed",
+    "id": "fix-syntax-errors",
+    "content": "Fix syntax errors in core modules (indentation, invalid syntax)",
     "status": "completed",
     "priority": "high"
   },
   {
-    "id": "install-act-if-needed",
-    "content": "Install act CLI if not already present",
+    "id": "fix-import-structure",
+    "content": "Fix module level import not at top of file (E402 errors)",
     "status": "completed",
     "priority": "high"
   },
   {
-    "id": "list-workflows",
-    "content": "List available GitHub workflows in the project",
+    "id": "fix-blank-lines",
+    "content": "Fix too many/expected blank lines (E303/E302 errors)",
     "status": "completed",
     "priority": "medium"
   },
   {
-    "id": "run-act-workflows",
-    "content": "Run act CLI to execute workflows locally",
+    "id": "fix-identity-checks",
+    "content": "Fix test for object identity (E714 errors)",
+    "status": "completed",
+    "priority": "low"
+  },
+  {
+    "id": "run-black-formatter",
+    "content": "Run black code formatter on all fixed files",
+    "status": "completed",
+    "priority": "medium"
+  },
+  {
+    "id": "verify-linting-passes",
+    "content": "Run full linting suite to verify all issues are resolved",
     "status": "completed",
     "priority": "high"
   },
   {
-    "id": "fix-critical-issues",
-    "content": "Fix critical undefined name errors found during workflow execution",
-    "status": "completed",
-    "priority": "high"
-  },
-  {
-    "id": "fix-formatting-issues",
-    "content": "Fix black formatting issues to make workflow pass",
-    "status": "in_progress",
-    "priority": "high"
+    "id": "remaining-issues",
+    "content": "Address remaining flake8 F401 (unused imports) and mypy type issues",
+    "status": "pending",
+    "priority": "low"
   }
 ]

@@ -1,18 +1,26 @@
 """Targeted tests to improve execution factory coverage."""
 
+
+
+
+
 import pytest
 from unittest.mock import patch, MagicMock
-
 from quantchain.tools.execution_factory import create_execution_interface
 from quantchain.core.config import QuantChainConfig
 from quantchain.core.exceptions import ConfigurationError
+import logging
+import io
+
 
 
 class TestExecutionFactoryTargeted:
     """Targeted tests for specific missing lines."""
 
     @pytest.mark.coverage
-    def test_error_handling_paths(self):
+
+
+def test_error_handling_paths(self):
         """Test specific error handling paths in execution factory."""
         config = QuantChainConfig()
 
@@ -26,7 +34,9 @@ class TestExecutionFactoryTargeted:
 
     @pytest.mark.coverage
     @patch("quantchain.tools.execution_factory.TutorialExecutor")
-    def test_tutorial_executor_creation(self, mock_tutorial):
+
+
+def test_tutorial_executor_creation(self, mock_tutorial):
         """Test tutorial executor creation path."""
         mock_instance = MagicMock()
         mock_tutorial.return_value = mock_instance
@@ -42,7 +52,9 @@ class TestExecutionFactoryTargeted:
 
     @pytest.mark.coverage
     @patch("quantchain.tools.execution_factory.PaperTradingExecutor")
-    def test_paper_trading_executor_creation(self, mock_paper):
+
+
+def test_paper_trading_executor_creation(self, mock_paper):
         """Test paper trading executor creation path."""
         mock_instance = MagicMock()
         mock_paper.return_value = mock_instance
@@ -57,7 +69,9 @@ class TestExecutionFactoryTargeted:
             pass
 
     @pytest.mark.coverage
-    def test_broker_type_validation(self):
+
+
+def test_broker_type_validation(self):
         """Test broker type validation paths."""
         config = QuantChainConfig()
 
@@ -73,7 +87,9 @@ class TestExecutionFactoryTargeted:
                 pass
 
     @pytest.mark.coverage
-    def test_config_attribute_access(self):
+
+
+def test_config_attribute_access(self):
         """Test configuration attribute access patterns."""
         config = QuantChainConfig()
 
@@ -107,7 +123,9 @@ class TestExecutionFactoryTargeted:
                 pass
 
     @pytest.mark.coverage
-    def test_edge_case_configurations(self):
+
+
+def test_edge_case_configurations(self):
         """Test edge case configurations."""
         config = QuantChainConfig()
 
@@ -131,7 +149,9 @@ class TestExecutionFactoryTargeted:
             pass
 
     @pytest.mark.coverage
-    def test_security_manager_integration(self):
+
+
+def test_security_manager_integration(self):
         """Test security manager integration paths."""
         config = QuantChainConfig()
         config.broker_type = "alpaca"
@@ -148,7 +168,9 @@ class TestExecutionFactoryTargeted:
             pass
 
     @pytest.mark.coverage
-    def test_fallback_scenarios(self):
+
+
+def test_fallback_scenarios(self):
         """Test fallback and error recovery scenarios."""
         config = QuantChainConfig()
 
@@ -174,14 +196,14 @@ class TestExecutionFactoryTargeted:
                 pass
 
     @pytest.mark.coverage
-    def test_logging_and_debug_paths(self):
+
+
+def test_logging_and_debug_paths(self):
         """Test logging and debug code paths."""
         config = QuantChainConfig()
         config.broker_type = "test_broker"
 
         # Capture logging if any
-        import logging
-        import io
 
         log_capture = io.StringIO()
         handler = logging.StreamHandler(log_capture)

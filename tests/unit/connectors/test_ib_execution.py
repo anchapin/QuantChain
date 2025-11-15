@@ -19,11 +19,15 @@ from quantchain.tools.trading_execution import (
 
 
 @pytest.mark.unit
+
+
 class TestIBExecutionConnector:
     """Test cases for IBExecutionConnector."""
 
     @pytest.fixture
-    def mock_ib_wrapper(self):
+
+
+def mock_ib_wrapper(self):
         """Create a mock IB wrapper."""
         wrapper = MagicMock()
         wrapper._connected = True
@@ -38,7 +42,9 @@ class TestIBExecutionConnector:
         return wrapper
 
     @pytest.fixture
-    def mock_ib_client(self, mock_ib_wrapper):
+
+
+def mock_ib_client(self, mock_ib_wrapper):
         """Create a mock IB client."""
         client = MagicMock()
         client.get_next_req_id.return_value = 1
@@ -47,7 +53,9 @@ class TestIBExecutionConnector:
     @patch("quantchain.connectors.ib_execution.threading.Thread")
     @patch("quantchain.connectors.ib_execution.IBWrapper")
     @patch("quantchain.connectors.ib_execution.IBClient")
-    def test_init_success(self, mock_client_class, mock_wrapper_class, mock_thread):
+
+
+def test_init_success(self, mock_client_class, mock_wrapper_class, mock_thread):
         """Test successful initialization of IB connector."""
         # Setup mocks
         mock_wrapper = MagicMock()
@@ -78,7 +86,9 @@ class TestIBExecutionConnector:
             # The connect shouldn't be called since we mocked it
             assert not mock_client.connect.called
 
-    def test_create_stock_contract(self, mock_ib_wrapper, mock_ib_client):
+
+
+def test_create_stock_contract(self, mock_ib_wrapper, mock_ib_client):
         """Test creating a stock contract."""
         with patch(
             "quantchain.connectors.ib_execution.IBWrapper", return_value=mock_ib_wrapper
@@ -95,7 +105,9 @@ class TestIBExecutionConnector:
             assert contract.currency == "USD"
             assert contract.exchange == "SMART"
 
-    def test_create_forex_contract(self, mock_ib_wrapper, mock_ib_client):
+
+
+def test_create_forex_contract(self, mock_ib_wrapper, mock_ib_client):
         """Test creating a forex contract."""
         with patch(
             "quantchain.connectors.ib_execution.IBWrapper", return_value=mock_ib_wrapper
@@ -112,7 +124,9 @@ class TestIBExecutionConnector:
             assert contract.currency == "USD"
             assert contract.exchange == "IDEALPRO"
 
-    def test_create_option_contract(self, mock_ib_wrapper, mock_ib_client):
+
+
+def test_create_option_contract(self, mock_ib_wrapper, mock_ib_client):
         """Test creating an option contract."""
         with patch(
             "quantchain.connectors.ib_execution.IBWrapper", return_value=mock_ib_wrapper
@@ -133,7 +147,9 @@ class TestIBExecutionConnector:
             assert contract.right == "CALL"
             assert contract.multiplier == "100"
 
-    def test_convert_market_order(self, mock_ib_wrapper, mock_ib_client):
+
+
+def test_convert_market_order(self, mock_ib_wrapper, mock_ib_client):
         """Test converting a market order to IB format."""
         with patch(
             "quantchain.connectors.ib_execution.IBWrapper", return_value=mock_ib_wrapper
@@ -159,7 +175,9 @@ class TestIBExecutionConnector:
             assert ib_order.totalQuantity == 100
             assert ib_order.tif == "DAY"
 
-    def test_convert_limit_order(self, mock_ib_wrapper, mock_ib_client):
+
+
+def test_convert_limit_order(self, mock_ib_wrapper, mock_ib_client):
         """Test converting a limit order to IB format."""
         with patch(
             "quantchain.connectors.ib_execution.IBWrapper", return_value=mock_ib_wrapper
@@ -187,7 +205,9 @@ class TestIBExecutionConnector:
             assert ib_order.lmtPrice == 150.25
             assert ib_order.tif == "GTC"
 
-    def test_convert_stop_order(self, mock_ib_wrapper, mock_ib_client):
+
+
+def test_convert_stop_order(self, mock_ib_wrapper, mock_ib_client):
         """Test converting a stop order to IB format."""
         with patch(
             "quantchain.connectors.ib_execution.IBWrapper", return_value=mock_ib_wrapper
@@ -215,7 +235,9 @@ class TestIBExecutionConnector:
             assert ib_order.auxPrice == 149.75
             assert ib_order.tif == "DAY"
 
-    def test_convert_stop_limit_order(self, mock_ib_wrapper, mock_ib_client):
+
+
+def test_convert_stop_limit_order(self, mock_ib_wrapper, mock_ib_client):
         """Test converting a stop limit order to IB format."""
         with patch(
             "quantchain.connectors.ib_execution.IBWrapper", return_value=mock_ib_wrapper
@@ -245,7 +267,9 @@ class TestIBExecutionConnector:
             assert ib_order.auxPrice == 149.75
             assert ib_order.tif == "DAY"
 
-    def test_place_order(self, mock_ib_wrapper, mock_ib_client):
+
+
+def test_place_order(self, mock_ib_wrapper, mock_ib_client):
         """Test placing an order."""
         with patch(
             "quantchain.connectors.ib_execution.IBWrapper", return_value=mock_ib_wrapper
@@ -275,7 +299,9 @@ class TestIBExecutionConnector:
                 assert result.status == OrderStatus.PENDING
                 assert result.filled_quantity == 0
 
-    def test_get_order(self, mock_ib_wrapper, mock_ib_client):
+
+
+def test_get_order(self, mock_ib_wrapper, mock_ib_client):
         """Test getting order status."""
         # Setup mock order status
         mock_ib_wrapper._order_statuses[1001] = {
@@ -302,7 +328,9 @@ class TestIBExecutionConnector:
             assert result.avg_fill_price == 150.25
             assert result.status == OrderStatus.FILLED
 
-    def test_get_order_not_found(self, mock_ib_wrapper, mock_ib_client):
+
+
+def test_get_order_not_found(self, mock_ib_wrapper, mock_ib_client):
         """Test getting a non-existent order."""
         with patch(
             "quantchain.connectors.ib_execution.IBWrapper", return_value=mock_ib_wrapper
@@ -318,7 +346,9 @@ class TestIBExecutionConnector:
             ):
                 connector.get_order("1001")
 
-    def test_cancel_order(self, mock_ib_wrapper, mock_ib_client):
+
+
+def test_cancel_order(self, mock_ib_wrapper, mock_ib_client):
         """Test canceling an order."""
         with patch(
             "quantchain.connectors.ib_execution.IBWrapper", return_value=mock_ib_wrapper
@@ -353,7 +383,9 @@ class TestIBExecutionConnector:
                 assert result.status == OrderStatus.CANCELLED
                 mock_ib_client.cancelOrder.assert_called_once_with(1001)
 
-    def test_get_account(self, mock_ib_wrapper, mock_ib_client):
+
+
+def test_get_account(self, mock_ib_wrapper, mock_ib_client):
         """Test getting account information."""
         # Setup mock account summary
         mock_ib_wrapper._account_summary = {
@@ -404,7 +436,9 @@ class TestIBExecutionConnector:
                 assert account.positions[1].quantity == 50
                 assert account.positions[1].avg_entry_price == 2500.50
 
-    def test_get_positions(self, mock_ib_wrapper, mock_ib_client):
+
+
+def test_get_positions(self, mock_ib_wrapper, mock_ib_client):
         """Test getting current positions."""
         # Setup mock positions
         mock_ib_wrapper._positions = [
@@ -445,7 +479,9 @@ class TestIBExecutionConnector:
             assert positions[1].current_price == 2500.50
             assert positions[1].market_value == 50 * 2500.50
 
-    def test_get_order_history(self, mock_ib_wrapper, mock_ib_client):
+
+
+def test_get_order_history(self, mock_ib_wrapper, mock_ib_client):
         """Test getting order history."""
         # Setup mock executions
         now = datetime.now(timezone.utc)
@@ -499,7 +535,9 @@ class TestIBExecutionConnector:
                 assert history[1].avg_fill_price == 2500.50
                 assert history[1].status == OrderStatus.FILLED
 
-    def test_validate_order(self, mock_ib_wrapper, mock_ib_client):
+
+
+def test_validate_order(self, mock_ib_wrapper, mock_ib_client):
         """Test order validation."""
         with patch(
             "quantchain.connectors.ib_execution.IBWrapper", return_value=mock_ib_wrapper
@@ -528,7 +566,9 @@ class TestIBExecutionConnector:
             with pytest.raises(ValidationError, match="Symbol is required"):
                 connector.validate_order(order)
 
-    def test_get_symbol_info(self, mock_ib_wrapper, mock_ib_client):
+
+
+def test_get_symbol_info(self, mock_ib_wrapper, mock_ib_client):
         """Test getting symbol information."""
         # Setup mock contract details
         mock_details = MagicMock()
@@ -562,7 +602,9 @@ class TestIBExecutionConnector:
                 assert info["price_precision"] == 2
                 assert info["multiplier"] == "1"
 
-    def test_is_market_open(self, mock_ib_wrapper, mock_ib_client):
+
+
+def test_is_market_open(self, mock_ib_wrapper, mock_ib_client):
         """Test checking if market is open."""
         with patch(
             "quantchain.connectors.ib_execution.IBWrapper", return_value=mock_ib_wrapper
@@ -577,7 +619,9 @@ class TestIBExecutionConnector:
             assert connector.is_market_open() is True
             assert connector.is_market_open("AAPL") is True
 
-    def test_disconnect(self, mock_ib_wrapper, mock_ib_client):
+
+
+def test_disconnect(self, mock_ib_wrapper, mock_ib_client):
         """Test disconnecting from IB."""
         with patch(
             "quantchain.connectors.ib_execution.IBWrapper", return_value=mock_ib_wrapper

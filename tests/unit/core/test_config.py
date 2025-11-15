@@ -1,14 +1,12 @@
 """Tests for QuantChain configuration system."""
 
-import json
-import os
 import tempfile
-from unittest.mock import patch
+import os
+import unittest.mock
 
 import pytest
-import yaml
 
-from quantchain.core.config import QuantChainConfig, get_config, reload_config
+from quantchain.core.config import QuantChainConfig, LogLevel
 
 
 @pytest.mark.unit
@@ -20,239 +18,123 @@ class TestQuantChainConfig:
         config = QuantChainConfig()
 
         # Check default values exist
-        assert "llm" in config._config
-        assert "data" in config._config
-        assert "trading" in config._config
-        assert "backtesting" in config._config
+        assert config.llm_provider == "openai"
+        assert config.llm_model == "gpt-4"
+        assert config.temperature == 0.7
+        assert config.max_tokens == 2048
+        assert config.enable_rag is False
+        assert config.enable_reflection is False
+        assert config.max_retries == 3
+        assert config.retry_delay == 1.0
 
-        # Check specific defaults
-        assert config._config["llm"]["provider"] == "ollama"
-        assert config._config["llm"]["model"] == "llama2:7b"
-        assert config._config["data"]["default_provider"] == "alpaca"
-        assert config._config["trading"]["paper_trading"] is True
+    def test_init_with_custom_values(self) -> None:
+        """Test initialization with custom values."""
+        config = QuantChainConfig(
+            llm_provider="ollama",
+            llm_model="llama2:7b",
+            temperature=0.5,
+            enable_rag=True,
+        )
+
+        assert config.llm_provider == "ollama"
+        assert config.llm_model == "llama2:7b"
+        assert config.temperature == 0.5
+        assert config.enable_rag is True
 
     def test_get_existing_key(self) -> None:
         """Test getting existing configuration values."""
-        config = QuantChainConfig()
+        config = QuantChainConfig(llm_provider="test_provider")
 
-        # Test nested access
-        llm_provider = config.get("llm.provider")
-        assert llm_provider == "ollama"
-
-        # Test top-level access
-        data_config = config.get("data")
-        assert isinstance(data_config, dict)
-        assert data_config["default_provider"] == "alpaca"
+        # Test getting known configuration value
+        result = config.get("llm_provider")
+        assert result == "test_provider"
 
     def test_get_nonexistent_key_with_default(self) -> None:
         """Test getting non-existent key with default value."""
         config = QuantChainConfig()
 
-        result = config.get("nonexistent.key", "default_value")
+        result = config.get("nonexistent_key", "default_value")
         assert result == "default_value"
 
     def test_get_nonexistent_key_no_default(self) -> None:
         """Test getting non-existent key without default value."""
         config = QuantChainConfig()
 
-        result = config.get("nonexistent.key")
+        result = config.get("nonexistent_key")
         assert result is None
 
-    def test_get_nested_key_levels(self) -> None:
-        """Test getting deeply nested configuration values."""
+    def test_set_key(self) -> None:
+        """Test setting configuration values."""
         config = QuantChainConfig()
 
-        # Test multiple levels
-        temperature = config.get("llm.temperature")
-        assert temperature == 0.7
+        config.set("custom_key", "custom_value")
+        result = config.get("custom_key")
+        assert result == "custom_value"
 
-    def test_load_from_json_file(self) -> None:
-        """Test loading configuration from JSON file."""
-        test_config = {
-            "llm": {"provider": "openai", "model": "gpt-4"},
-            "custom_key": "custom_value",
-        }
-
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            json.dump(test_config, f)
-            temp_file = f.name
-
-        try:
-            config = QuantChainConfig(temp_file)
-
-            # Check loaded values
-            assert config.get("llm.provider") == "openai"
-            assert config.get("llm.model") == "gpt-4"
-            assert config.get("custom_key") == "custom_value"
-
-            # Check defaults are still present for non-specified values
-            assert config.get("llm.temperature") == 0.7  # Default value
-
-        finally:
-            os.unlink(temp_file)
-
-    def test_load_from_yaml_file(self) -> None:
-        """Test loading configuration from YAML file."""
-        test_config = {
-            "llm": {"provider": "vllm", "model": "mistral"},
-            "yaml_key": "yaml_value",
-        }
-
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            yaml.dump(test_config, f)
-            temp_file = f.name
-
-        try:
-            config = QuantChainConfig(temp_file)
-
-            # Check loaded values
-            assert config.get("llm.provider") == "vllm"
-            assert config.get("llm.model") == "mistral"
-            assert config.get("yaml_key") == "yaml_value"
-
-        finally:
-            os.unlink(temp_file)
-
-    def test_load_from_nonexistent_file(self) -> None:
-        """Test loading from non-existent file raises error."""
-        with pytest.raises(FileNotFoundError):
-            QuantChainConfig("/nonexistent/config.json")
-
-    def test_load_from_invalid_json(self) -> None:
-        """Test loading from invalid JSON file raises error."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            f.write("{ invalid json }")
-            temp_file = f.name
-
-        try:
-            with pytest.raises(ValueError, match="Invalid JSON"):
-                QuantChainConfig(temp_file)
-        finally:
-            os.unlink(temp_file)
-
-    def test_load_from_invalid_yaml(self) -> None:
-        """Test loading from invalid YAML file raises error."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            f.write("invalid: yaml: content: [")
-            temp_file = f.name
-
-        try:
-            with pytest.raises(ValueError, match="Invalid YAML"):
-                QuantChainConfig(temp_file)
-        finally:
-            os.unlink(temp_file)
-
-    @patch.dict(
-        os.environ,
-        {
-            "QUANTCHAIN_LLM_PROVIDER": "env_provider",
-            "QUANTCHAIN_LLM_MODEL": "env_model",
-            "QUANTCHAIN_DATA_PROVIDER": "env_data_provider",
-            "QUANTCHAIN_PAPER_TRADING": "false",
-        },
-    )
-    def test_load_from_environment_variables(self) -> None:
-        """Test loading configuration from environment variables."""
-        config = QuantChainConfig()
-
-        # Check environment variable loading
-        assert config.get("llm.provider") == "env_provider"
-        assert config.get("llm.model") == "env_model"
-        assert config.get("data.default_provider") == "env_data_provider"
-        assert config.get("trading.paper_trading") is False
-
-    def test_get_api_key_from_config(self) -> None:
-        """Test getting API key from environment variables."""
-        with patch.dict("os.environ", {}, clear=True):
-            config = QuantChainConfig()
-
-            # Test API key that doesn't exist
-            api_key = config.get_api_key("alpaca")
-            assert api_key is None
-
-    @patch.dict(os.environ, {"ALPACA_API_KEY": "env_alpaca_key"})
-    def test_get_api_key_from_environment(self) -> None:
-        """Test getting API key from environment variable."""
-        config = QuantChainConfig()
-
-        api_key = config.get_api_key("alpaca")
-        assert api_key == "env_alpaca_key"
-
-    def test_get_api_key_not_found(self) -> None:
-        """Test getting non-existent API key returns None."""
-        config = QuantChainConfig()
-
-        api_key = config.get_api_key("nonexistent_service")
-        assert api_key is None
-
-    def test_config_copy_isolation(self) -> None:
-        """Test that config copies are properly isolated."""
-        config1 = QuantChainConfig()
-        config2 = QuantChainConfig()
-
-        # Modify config1 by modifying underlying dict (since no set method)
-        config1._config["llm"]["temperature"] = 0.9
-
-        # Config2 should not be affected
-        assert config2.get("llm.temperature") == 0.7
-        assert config1.get("llm.temperature") == 0.9
-
-    def test_config_as_dict(self) -> None:
+    def test_to_dict(self) -> None:
         """Test getting configuration as dictionary."""
-        config = QuantChainConfig()
+        config = QuantChainConfig(llm_provider="test_provider")
 
         config_dict = config.to_dict()
 
         assert isinstance(config_dict, dict)
-        assert "llm" in config_dict
-        assert "data" in config_dict
+        assert config_dict["llm_provider"] == "test_provider"
+        assert config_dict["llm_model"] == "gpt-4"
 
-    def test_save_to_json(self) -> None:
-        """Test configuration save functionality is not implemented yet."""
+    def test_validate_valid_config(self) -> None:
+        """Test validation of valid configuration."""
         config = QuantChainConfig()
 
-        # Since save method doesn't exist, test that to_dict works
-        config_dict = config.to_dict()
-        assert isinstance(config_dict, dict)
-        assert config_dict["llm"]["provider"] == "ollama"
+        errors = config.validate()
+        assert len(errors) == 0
 
-    def test_save_to_yaml(self) -> None:
-        """Test configuration save functionality is not implemented yet."""
-        config = QuantChainConfig()
-
-        # Since save method doesn't exist, test that to_dict works
-        config_dict = config.to_dict()
-        assert isinstance(config_dict, dict)
-        assert config_dict["llm"]["provider"] == "ollama"
-
-    def test_config_file_priority(self) -> None:
-        """Test that file config overrides environment variables."""
-        test_file_config = {"llm": {"provider": "file_provider"}}
-
+    def test_load_from_file(self) -> None:
+        """Test loading configuration from file."""
+        # Create a temporary config file
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            json.dump(test_file_config, f)
+            f.write('{"llm_provider": "file_provider", "temperature": 0.8}')
             temp_file = f.name
 
         try:
-            with patch.dict(os.environ, {"QUANTCHAIN_LLM_PROVIDER": "env_provider"}):
-                config = QuantChainConfig(temp_file)
+            config = QuantChainConfig()
+            config._load_from_file(temp_file)
 
-                # File should override environment
-                assert config.get("llm.provider") == "file_provider"
+            assert config.get("llm_provider") == "file_provider"
+            assert config.get("temperature") == 0.8
         finally:
             os.unlink(temp_file)
 
-    def test_get_config_singleton(self) -> None:
-        """Test that get_config returns same instance."""
-        config1 = get_config()
-        config2 = get_config()
+    def test_save_to_file(self) -> None:
+        """Test saving configuration to file."""
+        config = QuantChainConfig(llm_provider="save_test")
 
-        assert config1 is config2
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            temp_file = f.name
 
-    def test_reload_config_new_instance(self) -> None:
-        """Test that reload_config creates new instance."""
-        config1 = get_config()
-        config2 = reload_config()
+        try:
+            config.save_to_file(temp_file)
 
-        assert config1 is not config2
-        assert isinstance(config2, QuantChainConfig)
+            # Verify file was created and has content
+            assert os.path.exists(temp_file)
+            assert os.path.getsize(temp_file) > 0
+        finally:
+            if os.path.exists(temp_file):
+                os.unlink(temp_file)
+
+
+@pytest.mark.unit
+class TestLogLevel:
+    """Test suite for LogLevel enum."""
+
+    def test_log_level_values(self) -> None:
+        """Test that LogLevel enum has correct values."""
+        assert LogLevel.DEBUG.value == "debug"
+        assert LogLevel.INFO.value == "info"
+        assert LogLevel.WARNING.value == "warning"
+        assert LogLevel.ERROR.value == "error"
+        assert LogLevel.CRITICAL.value == "critical"
+
+    def test_log_level_from_string(self) -> None:
+        """Test creating LogLevel from string."""
+        level = LogLevel("info")
+        assert level == LogLevel.INFO

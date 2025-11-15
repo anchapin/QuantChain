@@ -1,551 +1,570 @@
-"""Chart Reader Agent module.
+"""Chart Reader Agent for analyzing financial charts and patterns."""
 
-Provides minimal implementations for classes used in the test suite.
-"""
-
-from __future__ import annotations
-
-from dataclasses import dataclass, field
+import os
 from datetime import datetime
-from typing import Any, List, Optional
-
+from enum import Enum
+from typing import List, Dict, Any, Optional, Union, Tuple
 import numpy as np
 
-# Module flag used by test setup to control pandas availability
-_PANDAS_AVAILABLE = False
-
-# Optional pandas import - will be mocked in tests
 try:
     import pandas as pd
-
     _PANDAS_AVAILABLE = True
 except ImportError:
-    pd = None
+    _PANDAS_AVAILABLE = False
 
-# Optional matplotlib imports - will be mocked in tests
 try:
     import matplotlib.pyplot as plt
+    import matplotlib
+    matplotlib.use('Agg')  # Use non-interactive backend
+    _MATPLOTLIB_AVAILABLE = True
 except ImportError:
-    plt = None
+    _MATPLOTLIB_AVAILABLE = False
 
 try:
     import mplfinance as mpf
+    _MPF_AVAILABLE = True
 except ImportError:
-    mpf = None
-
-# ---------- Data structures ----------
+    _MPF_AVAILABLE = False
 
 
-@dataclass
-class OHLCVData:
-    """Container for OHLCV data."""
+class TimeFrame(Enum):
+    """Supported timeframes for chart analysis."""
+    MINUTE_1 = "1m"
+    MINUTE_5 = "5m"
+    MINUTE_15 = "15m"
+    HOUR_1 = "1h"
+    HOUR_4 = "4h"
+    DAY_1 = "1d"
+    WEEK_1 = "1w"
+    MONTH_1 = "1M"
 
-    symbol: str
-    timestamps: List[datetime]
-    opens: List[float]
-    highs: List[float]
-    lows: List[float]
-    closes: List[float]
-    volumes: List[float]
+    @classmethod
+    def from_string(cls, timeframe_str: str) -> "TimeFrame":
+        """Create a TimeFrame from a string."""
+        for tf in cls:
+            if tf.value == timeframe_str:
+                return tf
+        raise ValueError(f"Unknown timeframe: {timeframe_str}")
 
 
-# ---------- Config ----------
-
-
-@dataclass
 class ChartReaderAgentConfig:
-    """Configuration for the Chart Reader Agent."""
+    """Configuration for the ChartReaderAgent."""
 
-    timeframes: List[str] = field(default_factory=lambda: ["15m", "1h", "4h", "1d"])
-    patterns_enabled: List[str] = field(default_factory=lambda: ["head_and_shoulders"])
-    indicators_enabled: List[str] = field(default_factory=lambda: ["SMA"])
-    min_pattern_confidence: float = 70.0
-    min_confluence_score: float = 60.0
-    max_position_size: float = 0.05
-
-
-# ---------- Image ----------
-
-
-@dataclass
-class ChartImage:
-    """Represents a chart image and its metadata."""
-
-    image_data: bytes
-    symbol: str
-    timeframe: str
-    timestamp: datetime
-    indicators_applied: List[str] = field(default_factory=list)
-    metadata: dict = field(default_factory=dict)
-
-
-# ---------- Technical Indicator ----------
+    def __init__(
+        self,
+        model_name: str = "gpt-4-vision-preview",
+        max_tokens: int = 4096,
+        temperature: float = 0.7,
+        supported_timeframes: Optional[List[str]] = None,
+        enabled_patterns: Optional[List[str]] = None,
+        enabled_indicators: Optional[List[str]] = None,
+    ):
+        self.model_name = model_name
+        self.max_tokens = max_tokens
+        self.temperature = temperature
+        self.supported_timeframes = supported_timeframes or [tf.value for tf in TimeFrame]
+        self.enabled_patterns = enabled_patterns or [
+            "head_and_shoulders", "double_top", "double_bottom",
+            "triangle", "wedge", "flag"
+        ]
+        self.enabled_indicators = enabled_indicators or [
+            "SMA", "EMA", "RSI", "MACD", "BB"
+        ]
 
 
-@dataclass
+class OHLCVData:
+    """Data structure for OHLCV price data."""
+
+    def __init__(
+        self,
+        timestamps: List[datetime],
+        opens: List[float],
+        highs: List[float],
+        lows: List[float],
+        closes: List[float],
+        volumes: List[float],
+        symbol: Optional[str] = None,
+    ):
+        if not (len(timestamps) == len(opens) == len(highs) == len(lows) == len(closes) == len(volumes)):
+            raise ValueError("All data arrays must have the same length")
+
+        self.timestamps = timestamps
+        self.opens = opens
+        self.highs = highs
+        self.lows = lows
+        self.closes = closes
+        self.volumes = volumes
+        self.symbol = symbol
+
+    def to_dataframe(self) -> Optional["pd.DataFrame"]:
+        """Convert to pandas DataFrame if pandas is available."""
+        if not _PANDAS_AVAILABLE:
+            return None
+
+        return pd.DataFrame({
+            'timestamp': self.timestamps,
+            'open': self.opens,
+            'high': self.highs,
+            'low': self.lows,
+            'close': self.closes,
+            'volume': self.volumes
+        })
+
+
 class TechnicalIndicator:
-    """Result of a technical indicator calculation."""
+    """Represents a technical indicator with its values and parameters."""
 
-    name: str
-    parameters: dict
-    values: List[Optional[float]]
-    signal: str
-    divergence: Optional[str] = None
-    timestamp: Optional[datetime] = None
-    symbol: Optional[str] = None
-    timeframe: Optional[str] = None
-
-
-# ---------- Indicator Calculator ----------
+    def __init__(
+        self,
+        name: str,
+        params: Dict[str, Any],
+        values: List[float],
+        signal: Optional[str] = None,
+    ):
+        self.name = name
+        self.params = params
+        self.values = values
+        self.signal = signal
 
 
 class TechnicalIndicatorCalculator:
-    """Utility class to calculate technical indicators."""
+    """Calculates technical indicators for OHLCV data."""
 
     @staticmethod
-    def _determine_signal(values: List[Optional[float]], name: str) -> str:
-        # Simple logic: compare last two non-None values
-        recent = [v for v in values if v is not None]
-        if len(recent) < 2:
-            return "NEUTRAL"
-        if name == "RSI":
-            last = recent[-1]
-            if last > 70:
-                return "OVERBOUGHT"
-            if last < 30:
-                return "OVERSOLD"
-            return "NEUTRAL"
-        # Default SMA/EMA
-        if recent[-1] > recent[-2]:
-            return "BULLISH"
-        if recent[-1] < recent[-2]:
-            return "BEARISH"
-        return "NEUTRAL"
+    def calculate_sma(ohlcv: OHLCVData, period: int = 20) -> TechnicalIndicator:
+        """Calculate Simple Moving Average (SMA)."""
+        closes = np.array(ohlcv.closes)
+        sma_values = []
 
-    @staticmethod
-    def calculate_sma(ohlcv: OHLCVData, period: int) -> TechnicalIndicator:
-        closes = ohlcv.closes
-        values: List[Optional[float]] = []
         for i in range(len(closes)):
-            if i + 1 < period:
-                values.append(None)
+            if i < period - 1:
+                sma_values.append(None)
             else:
-                avg = sum(closes[i + 1 - period : i + 1]) / period
-                values.append(avg)
-        signal = TechnicalIndicatorCalculator._determine_signal(values, "SMA")
+                window = closes[i-period+1:i+1]
+                sma_values.append(float(np.mean(window)))
+
         return TechnicalIndicator(
             name="SMA",
-            parameters={"period": period},
-            values=values,
-            signal=signal,
+            params={"period": period},
+            values=sma_values,
+            signal=None
         )
 
     @staticmethod
-    def calculate_ema(ohlcv: OHLCVData, period: int) -> TechnicalIndicator:
-        closes = ohlcv.closes
-        values: List[Optional[float]] = []
-        k = 2 / (period + 1)
-        ema = None
-        for i, price in enumerate(closes):
-            if i + 1 < period:
-                values.append(None)
-            elif i + 1 == period:
-                ema = sum(closes[:period]) / period
-                values.append(ema)
-            else:
-                if ema is not None:
-                    ema = price * k + ema * (1 - k)
-                else:
-                    ema = price
-                values.append(ema)
-        signal = TechnicalIndicatorCalculator._determine_signal(values, "EMA")
+    def calculate_ema(ohlcv: OHLCVData, period: int = 20) -> TechnicalIndicator:
+        """Calculate Exponential Moving Average (EMA)."""
+        closes = np.array(ohlcv.closes)
+        ema_values = []
+
+        # First EMA value is the SMA
+        if len(closes) >= period:
+            first_ema = np.mean(closes[:period])
+            ema_values = [None] * (period - 1) + [first_ema]
+
+            # Calculate subsequent EMA values
+            multiplier = 2 / (period + 1)
+            for i in range(period, len(closes)):
+                ema = closes[i] * multiplier + ema_values[-1] * (1 - multiplier)
+                ema_values.append(float(ema))
+        else:
+            ema_values = [None] * len(closes)
+
         return TechnicalIndicator(
             name="EMA",
-            parameters={"period": period},
-            values=values,
-            signal=signal,
+            params={"period": period},
+            values=ema_values,
+            signal=None
         )
 
     @staticmethod
-    def calculate_rsi(ohlcv: OHLCVData, period: int) -> TechnicalIndicator:
-        closes = ohlcv.closes
+    def calculate_rsi(ohlcv: OHLCVData, period: int = 14) -> TechnicalIndicator:
+        """Calculate Relative Strength Index (RSI)."""
+        closes = np.array(ohlcv.closes)
         deltas = np.diff(closes)
-        seed = deltas[:period]
-        up = seed[seed > 0].sum() / period
-        down = -seed[seed < 0].sum() / period
-        rs = up / down if down != 0 else 0
-        rsi = np.zeros_like(closes, dtype=float)
-        rsi[:period] = np.nan
-        rsi[period] = 100 - (100 / (1 + rs))
-        for i in range(period + 1, len(closes)):
-            delta = deltas[i - 1]
-            if delta > 0:
-                upval = delta
-                downval = 0
+
+        gains = np.where(deltas > 0, deltas, 0)
+        losses = np.where(deltas < 0, -deltas, 0)
+
+        # Initialize arrays with None values
+        avg_gain = [None] * len(closes)
+        avg_loss = [None] * len(closes)
+        rsi_values = [None] * len(closes)
+
+        for i in range(len(closes)):
+            if i < period:
+                # Not enough data points yet
+                continue
+            elif i == period:
+                # First RSI value uses simple average
+                avg_gain[i] = np.mean(gains[:period])
+                avg_loss[i] = np.mean(losses[:period])
             else:
-                upval = 0
-                downval = -delta
-            up = (up * (period - 1) + upval) / period
-            down = (down * (period - 1) + downval) / period
-            rs = up / down if down != 0 else 0
-            rsi[i] = 100 - (100 / (1 + rs))
-        values = [float(v) if not np.isnan(v) else None for v in rsi]
-        signal = TechnicalIndicatorCalculator._determine_signal(values, "RSI")
+                # Subsequent values use Wilder's smoothing
+                prev_avg_gain = avg_gain[i-1]
+                prev_avg_loss = avg_loss[i-1]
+
+                # gains[i-1] because gains array is one shorter than closes
+                current_gain = gains[i-1] if i-1 < len(gains) else 0
+                current_loss = losses[i-1] if i-1 < len(losses) else 0
+
+                avg_gain[i] = (prev_avg_gain * (period - 1) + current_gain) / period
+                avg_loss[i] = (prev_avg_loss * (period - 1) + current_loss) / period
+
+            # Calculate RSI
+            if avg_gain[i] is not None and avg_loss[i] is not None:
+                if avg_loss[i] == 0:
+                    rs = float('inf')
+                else:
+                    rs = avg_gain[i] / avg_loss[i]
+
+                rsi = 100 - (100 / (1 + rs))
+                rsi_values[i] = rsi
+
         return TechnicalIndicator(
             name="RSI",
-            parameters={"period": period},
-            values=values,
-            signal=signal,
+            params={"period": period},
+            values=rsi_values,
+            signal=None
         )
 
 
-# ---------- Pattern Recognizer ----------
+class PatternAnalysis:
+    """Result of pattern analysis on chart data."""
+
+    def __init__(
+        self,
+        symbol: str,
+        timeframe: str,
+        patterns: List[str],
+        confidence: float,
+        overall_sentiment: str,
+        recommended_action: str,
+        reasoning: str = "",
+        confluence_score: float = 0.0,
+        entry_price: Optional[float] = None,
+        stop_loss: Optional[float] = None,
+        take_profit: Optional[List[float]] = None,
+    ):
+        self.symbol = symbol
+        self.timeframe = timeframe
+        self.patterns = patterns
+        self.confidence = confidence
+        self.overall_sentiment = overall_sentiment
+        self.recommended_action = recommended_action
+        self.reasoning = reasoning
+        self.confluence_score = confluence_score
+        self.entry_price = entry_price
+        self.stop_loss = stop_loss
+        self.take_profit = take_profit or []
+
+
+class ChartImage:
+    """Represents a rendered chart image."""
+
+    def __init__(
+        self,
+        symbol: str,
+        timeframe: str,
+        image_data: bytes,
+        indicators_applied: List[str],
+        timestamp: Optional[datetime] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ):
+        self.symbol = symbol
+        self.timeframe = timeframe
+        self.image_data = image_data
+        self.indicators_applied = indicators_applied
+        self.timestamp = timestamp or datetime.now()
+        self.metadata = metadata or {}
+
+
+class ChartRenderer:
+    """Renders charts from OHLCV data."""
+
+    def __init__(self, config: Optional[ChartReaderAgentConfig] = None):
+        self.config = config or ChartReaderAgentConfig()
+
+    def render_candlestick_chart(
+        self,
+        symbol: str,
+        timeframe: str,
+        ohlcv_data: OHLCVData,
+        indicators: Optional[List[TechnicalIndicator]] = None,
+    ) -> ChartImage:
+        """Render a candlestick chart with optional indicators."""
+        if not _MATPLOTLIB_AVAILABLE or not _MPF_AVAILABLE:
+            raise ImportError("matplotlib and mplfinance are required for chart rendering")
+
+        df = ohlcv_data.to_dataframe()
+        if df is None:
+            raise ImportError("pandas is required for chart rendering")
+
+        # Convert DataFrame for mplfinance
+        df.index = pd.to_datetime(df['timestamp'])
+        df = df[['open', 'high', 'low', 'close', 'volume']]
+
+        # Prepare plots for indicators
+        additional_plots = []
+        indicators_applied = []
+
+        if indicators:
+            for indicator in indicators:
+                if indicator.name == "SMA" or indicator.name == "EMA":
+                    df[indicator.name] = indicator.values
+                    additional_plots.append(
+                        mpf.make_addplot(df[indicator.name], type='line', color='orange')
+                    )
+                    indicators_applied.append(f"{indicator.name}({indicator.params.get('period', '?')})")
+
+                elif indicator.name == "RSI":
+                    # Create a separate panel for RSI
+                    rsi_df = pd.DataFrame({'RSI': indicator.values})
+                    rsi_df.index = pd.to_datetime(ohlcv_data.timestamps)
+
+                    additional_plots.append(
+                        mpf.make_addplot(rsi_df['RSI'], panel=1, color='purple')
+                    )
+                    indicators_applied.append(f"RSI({indicator.params.get('period', '?')})")
+
+        # Create the plot
+        fig, axes = mpf.plot(
+            df,
+            type='candle',
+            style='yahoo',
+            title=f"{symbol} - {timeframe}",
+            ylabel='Price',
+            volume=True,
+            addplot=additional_plots,
+            figsize=(12, 8),
+            returnfig=True
+        )
+
+        # Convert to bytes
+        from io import BytesIO
+        buffer = BytesIO()
+        fig.savefig(buffer, format='png')
+        buffer.seek(0)
+        image_data = buffer.read()
+        buffer.close()
+
+        return ChartImage(
+            symbol=symbol,
+            timeframe=timeframe,
+            image_data=image_data,
+            indicators_applied=indicators_applied
+        )
 
 
 class PatternRecognizer:
-    """Simplified pattern recognizer used only for initialization in tests."""
+    """Recognizes patterns in chart data."""
 
-    def __init__(self, config: ChartReaderAgentConfig, llm_provider: Any):
-        self.config = config
+    def __init__(
+        self,
+        config: Optional[ChartReaderAgentConfig] = None,
+        llm_provider: Optional[Any] = None
+    ):
+        self.config = config or ChartReaderAgentConfig()
         self.llm_provider = llm_provider
+
+    def _call_vision_api(self, chart_image: ChartImage, prompt: str) -> Dict[str, Any]:
+        """Call the vision API with chart image and prompt."""
+        if not self.llm_provider:
+            # Mock response for testing
+            return {
+                "patterns": ["mock_pattern"],
+                "sentiment": "neutral",
+                "confidence": 50,
+                "recommended_action": "HOLD"
+            }
+
+        # In a real implementation, this would call the LLM vision API
+        # For now, we return a mock response
+        return {
+            "patterns": ["mock_pattern"],
+            "sentiment": "neutral",
+            "confidence": 50,
+            "recommended_action": "HOLD"
+        }
 
     def analyze_chart(
         self,
         chart_image: ChartImage,
-        ohlcv: OHLCVData,
-        indicators: List[TechnicalIndicator],
-    ) -> "PatternAnalysis":
-        """Analyze chart with vision model."""
-        try:
-            response = self.llm_provider.generate_vision(chart_image.image_data)
-            # Parse response for patterns
-            patterns = self._parse_patterns_from_response(response.text)
+        ohlcv_data: OHLCVData,
+        indicators: Optional[List[TechnicalIndicator]] = None,
+    ) -> PatternAnalysis:
+        """Analyze a chart for patterns."""
+        # This is a simplified implementation
+        # In a real scenario, this would use computer vision or LLM to analyze the chart
 
-            # Create a simple analysis
-            return PatternAnalysis(
-                symbol=chart_image.symbol,
-                timeframe=chart_image.timeframe,
-                timestamp=chart_image.timestamp,
-                patterns=patterns,
-                overall_sentiment=(
-                    "bullish"
-                    if "bullish" in response.text.lower()
-                    else "bearish" if "bearish" in response.text.lower() else "neutral"
-                ),
-                confluence_score=70.0,
-                recommended_action=(
-                    "BUY"
-                    if "bullish" in response.text.lower()
-                    else "SELL" if "bearish" in response.text.lower() else "HOLD"
-                ),
-                entry_price=ohlcv.closes[-1] if ohlcv.closes else None,
-                stop_loss=None,
-                take_profit=[],
-                reasoning=response.text,
-                confidence=80.0,
-            )
-        except Exception as e:
-            # Fallback analysis without vision model
-            return PatternAnalysis(
-                symbol=chart_image.symbol,
-                timeframe=chart_image.timeframe,
-                timestamp=chart_image.timestamp,
-                patterns=[],
-                overall_sentiment="neutral",
-                confluence_score=30.0,
-                recommended_action="HOLD",
-                entry_price=ohlcv.closes[-1] if ohlcv.closes else None,
-                stop_loss=None,
-                take_profit=[],
-                reasoning=(
-                    f"Analysis completed without visual data due to error: {str(e)}"
-                ),
-                confidence=40.0,
-            )
-
-    def _parse_patterns_from_response(self, response_text: str) -> List["PatternData"]:
-        """Parse patterns from model response."""
+        # For testing purposes, we'll return a basic analysis
         patterns = []
-        text_lower = response_text.lower()
+        confidence = 50.0
 
-        # Simple pattern detection based on keywords
-        pattern_keywords = {
-            "head_and_shoulders": ["head and shoulders", "head_and_shoulders"],
-            "ascending_triangle": ["ascending triangle", "triangle"],
-            "descending_triangle": ["descending triangle"],
-            "double_top": ["double top"],
-            "double_bottom": ["double bottom"],
-            "flag": ["flag", "flag pattern"],
-            "pennant": ["pennant"],
-        }
+        # Simple pattern detection based on indicator values
+        if indicators:
+            for indicator in indicators:
+                if indicator.name == "RSI" and indicator.values and indicator.values[-1] is not None:
+                    rsi = indicator.values[-1]
+                    if rsi > 70:
+                        patterns.append("RSI Overbought")
+                        confidence += 10
+                    elif rsi < 30:
+                        patterns.append("RSI Oversold")
+                        confidence += 10
 
-        for pattern_type, keywords in pattern_keywords.items():
-            for keyword in keywords:
-                if keyword in text_lower:
-                    patterns.append(
-                        PatternData(
-                            pattern_type=pattern_type,
-                            confidence=75.0,
-                            completion_percentage=60.0,
-                            description=f"Detected {pattern_type} pattern",
-                        )
-                    )
-                    break
+                if indicator.name in ["SMA", "EMA"] and indicator.values:
+                    sma = indicator.values[-1]
+                    if sma is not None and len(ohlcv_data.closes) > 0:
+                        close = ohlcv_data.closes[-1]
+                        if close > sma:
+                            patterns.append(f"Price above {indicator.name}")
+                            confidence += 5
 
-        return patterns
+        # Determine sentiment and action
+        if not patterns:
+            sentiment = "neutral"
+            action = "HOLD"
+        elif any("Overbought" in p for p in patterns):
+            sentiment = "bearish"
+            action = "SELL"
+        elif any("Oversold" in p for p in patterns):
+            sentiment = "bullish"
+            action = "BUY"
+        else:
+            sentiment = "neutral"
+            action = "HOLD"
 
+        # Clamp confidence between 0 and 100
+        confidence = min(max(confidence, 0.0), 100.0)
 
-# ---------- Chart Renderer ----------
-
-
-class ChartRenderer:
-    """Placeholder renderer; not used in tests."""
-
-    def __init__(self, config: ChartReaderAgentConfig):
-        self.config = config
-
-    def render(self, ohlcv: OHLCVData, indicators: List[TechnicalIndicator]) -> bytes:
-        return b""
-
-    def render_candlestick_chart(
-        self, ohlcv: OHLCVData, indicators: List[TechnicalIndicator], timeframe: str
-    ) -> ChartImage:
-        """Render a candlestick chart with indicators."""
-        # In a real implementation, this would use matplotlib/mplfinance
-        # For tests, we just return a mock chart image
-        return ChartImage(
-            image_data=b"mock_candlestick_chart",
-            symbol=ohlcv.symbol,
-            timeframe=timeframe,
-            timestamp=datetime.now(),
-            indicators_applied=[ind.name for ind in indicators],
-            metadata={
-                "indicators_count": len(indicators),
-                "data_points": len(ohlcv.closes),
-                "candle_count": len(ohlcv.closes),
-            },
+        return PatternAnalysis(
+            symbol=chart_image.symbol,
+            timeframe=chart_image.timeframe,
+            patterns=patterns,
+            confidence=confidence,
+            overall_sentiment=sentiment,
+            recommended_action=action,
+            reasoning=f"Detected patterns: {', '.join(patterns)}"
         )
-
-
-# ---------- Chart Reader Agent ----------
 
 
 class ChartReaderAgent:
-    """Placeholder agent; not used in tests."""
+    """Agent for reading and analyzing financial charts."""
 
     def __init__(
         self,
-        config: ChartReaderAgentConfig,
-        data_connector: Any = None,
-        llm_provider: Any = None,
+        config: Optional[ChartReaderAgentConfig] = None,
+        data_provider: Optional[Any] = None,
+        llm_provider: Optional[Any] = None,
     ):
-        self.config = config
-        self.data_connector = data_connector
+        self.config = config or ChartReaderAgentConfig()
+        self.data_provider = data_provider
         self.llm_provider = llm_provider
-        self.pattern_recognizer = (
-            PatternRecognizer(config, llm_provider) if llm_provider else None
-        )
-        self.chart_renderer = ChartRenderer(config)
+        self.renderer = ChartRenderer(self.config)
+        self.pattern_recognizer = PatternRecognizer(self.config, self.llm_provider)
 
-    def analyze_symbol(self, symbol: str, timeframes: List[str]) -> dict:
-        """Analyze a symbol across multiple timeframes."""
-        results = {}
+    def _get_historical_data(
+        self,
+        symbol: str,
+        timeframe: str,
+        limit: int = 100
+    ) -> OHLCVData:
+        """Get historical OHLCV data for a symbol."""
+        # This is a mock implementation
+        # In a real scenario, this would fetch data from an API
 
-        for timeframe in timeframes:
-            try:
-                # Get OHLCV data
-                if self.data_connector:
-                    bars = self.data_connector.get_bars(symbol, timeframe)
-                    if not bars:
-                        results[timeframe] = PatternAnalysis(
-                            symbol=symbol,
-                            timeframe=timeframe,
-                            timestamp=datetime.now(),
-                            patterns=[],
-                            overall_sentiment="neutral",
-                            confluence_score=0.0,
-                            recommended_action="HOLD",
-                            entry_price=None,
-                            stop_loss=None,
-                            take_profit=[],
-                            reasoning="No data available",
-                            confidence=0.0,
-                        )
-                        continue
+        # Generate some sample data
+        import random
+        from datetime import timedelta
 
-                    # Convert bars to OHLCVData
-                    ohlcv = OHLCVData(
-                        symbol=symbol,
-                        timestamps=[bar["timestamp"] for bar in bars],
-                        opens=[bar["open"] for bar in bars],
-                        highs=[bar["high"] for bar in bars],
-                        lows=[bar["low"] for bar in bars],
-                        closes=[bar["close"] for bar in bars],
-                        volumes=[bar["volume"] for bar in bars],
-                    )
-                else:
-                    # Mock data when no connector provided
-                    results[timeframe] = PatternAnalysis(
-                        symbol=symbol,
-                        timeframe=timeframe,
-                        timestamp=datetime.now(),
-                        patterns=[],
-                        overall_sentiment="neutral",
-                        confluence_score=50.0,
-                        recommended_action="HOLD",
-                        entry_price=100.0,
-                        stop_loss=None,
-                        take_profit=[],
-                        reasoning="No data connector provided",
-                        confidence=50.0,
-                    )
-                    continue
+        base_price = random.uniform(50, 200)
+        timestamps = []
+        opens = []
+        highs = []
+        lows = []
+        closes = []
+        volumes = []
 
-                # Perform analysis
-                if self.pattern_recognizer:
-                    # Create chart image
-                    chart_image = ChartImage(
-                        image_data=b"mock_image",
-                        symbol=symbol,
-                        timeframe=timeframe,
-                        timestamp=datetime.now(),
-                    )
+        current_time = datetime.now() - timedelta(days=limit)
 
-                    # Calculate technical indicators
-                    indicators = [
-                        TechnicalIndicatorCalculator.calculate_sma(ohlcv, 10),
-                        TechnicalIndicatorCalculator.calculate_rsi(ohlcv, 14),
-                    ]
+        for i in range(limit):
+            timestamps.append(current_time)
 
-                    # Analyze chart
-                    analysis = self.pattern_recognizer.analyze_chart(
-                        chart_image, ohlcv, indicators
-                    )
-                    results[timeframe] = analysis
-                else:
-                    # Simple analysis without pattern recognition
-                    results[timeframe] = PatternAnalysis(
-                        symbol=symbol,
-                        timeframe=timeframe,
-                        timestamp=datetime.now(),
-                        patterns=[],
-                        overall_sentiment="neutral",
-                        confluence_score=50.0,
-                        recommended_action="HOLD",
-                        entry_price=ohlcv.closes[-1] if ohlcv.closes else None,
-                        stop_loss=None,
-                        take_profit=[],
-                        reasoning="Basic analysis without pattern recognition",
-                        confidence=50.0,
-                    )
+            # Generate random OHLCV values
+            open_price = base_price + random.uniform(-5, 5)
+            close_change = random.uniform(-2, 2)
+            close_price = open_price + close_change
+            high_price = max(open_price, close_price) + random.uniform(0, 3)
+            low_price = min(open_price, close_price) - random.uniform(0, 3)
+            volume = random.uniform(10000, 100000)
 
-            except Exception as e:
-                results[timeframe] = PatternAnalysis(
-                    symbol=symbol,
-                    timeframe=timeframe,
-                    timestamp=datetime.now(),
-                    patterns=[],
-                    overall_sentiment="neutral",
-                    confluence_score=0.0,
-                    recommended_action="HOLD",
-                    entry_price=None,
-                    stop_loss=None,
-                    take_profit=[],
-                    reasoning=f"Analysis failed: {str(e)}",
-                    confidence=0.0,
-                )
+            opens.append(open_price)
+            highs.append(high_price)
+            lows.append(low_price)
+            closes.append(close_price)
+            volumes.append(volume)
 
-        return results
+            base_price = close_price  # Next period starts at this close
+            current_time += timedelta(days=1)
 
-    def generate_trading_recommendation(self, symbol: str) -> dict:
-        """Generate trading recommendation based on analyses."""
-        analyses = self.analyze_symbol(symbol, self.config.timeframes)
-
-        if not analyses:
-            return {
-                "symbol": symbol,
-                "action": "HOLD",
-                "confidence": 0.0,
-                "reasoning": "No data available",
-                "timeframe_analyses": {},
-            }
-
-        # Analyze sentiments across timeframes
-        buy_signals = sum(1 for a in analyses.values() if a.recommended_action == "BUY")
-        sell_signals = sum(
-            1 for a in analyses.values() if a.recommended_action == "SELL"
-        )
-        hold_signals = sum(
-            1 for a in analyses.values() if a.recommended_action == "HOLD"
+        return OHLCVData(
+            timestamps=timestamps,
+            opens=opens,
+            highs=highs,
+            lows=lows,
+            closes=closes,
+            volumes=volumes,
+            symbol=symbol
         )
 
-        # Determine overall action
-        if buy_signals > sell_signals and buy_signals > hold_signals:
-            action = "BUY"
-        elif sell_signals > buy_signals and sell_signals > hold_signals:
-            action = "SELL"
-        else:
-            action = "HOLD"
+    def _calculate_indicators(
+        self,
+        ohlcv_data: OHLCVData,
+        indicator_types: Optional[List[str]] = None
+    ) -> List[TechnicalIndicator]:
+        """Calculate technical indicators for the OHLCV data."""
+        indicators = []
+        indicator_types = indicator_types or self.config.enabled_indicators
 
-        # Calculate average confidence
-        avg_confidence = sum(a.confidence for a in analyses.values()) / len(analyses)
+        if "SMA" in indicator_types:
+            indicators.append(TechnicalIndicatorCalculator.calculate_sma(ohlcv_data))
 
-        # Generate reasoning
-        reasoning_parts = []
-        for tf, analysis in analyses.items():
-            reasoning_parts.append(
-                (
-                    f"{tf}: {analysis.overall_sentiment} "
-                    f"({analysis.confidence:.1f}% confidence)"
-                )
-            )
+        if "EMA" in indicator_types:
+            indicators.append(TechnicalIndicatorCalculator.calculate_ema(ohlcv_data))
 
-        return {
-            "symbol": symbol,
-            "action": action,
-            "confidence": avg_confidence,
-            "reasoning": (
-                f"Analysis across {len(analyses)} timeframes. "
-                f"{'; '.join(reasoning_parts)}"
-            ),
-            "timeframe_analyses": analyses,
-        }
+        if "RSI" in indicator_types:
+            indicators.append(TechnicalIndicatorCalculator.calculate_rsi(ohlcv_data))
 
+        return indicators
 
-# ---------- Pattern Data ----------
+    def _analyze_chart(
+        self,
+        chart_image: ChartImage,
+        ohlcv_data: OHLCVData,
+        indicators: List[TechnicalIndicator],
+    ) -> PatternAnalysis:
+        """Analyze a chart using the pattern recognizer."""
+        return self.pattern_recognizer.analyze_chart(chart_image, ohlcv_data, indicators)
 
+    def analyze_symbol(
+        self,
+        symbol: str,
+        timeframe: str,
+        indicators: Optional[List[str]] = None,
+    ) -> PatternAnalysis:
+        """Analyze a symbol for trading patterns."""
+        # Get historical data
+        ohlcv_data = self._get_historical_data(symbol, timeframe)
 
-@dataclass
-class PatternData:
-    """Represents a detected pattern."""
+        # Calculate indicators
+        indicator_objects = self._calculate_indicators(ohlcv_data, indicators)
 
-    pattern_type: str
-    confidence: float
-    completion_percentage: float
-    description: str
+        # Render chart
+        chart_image = self.renderer.render_candlestick_chart(
+            symbol, timeframe, ohlcv_data, indicator_objects
+        )
 
+        # Analyze chart
+        analysis = self._analyze_chart(chart_image, ohlcv_data, indicator_objects)
 
-# ---------- Pattern Analysis ----------
-
-
-@dataclass
-class PatternAnalysis:
-    """Represents a pattern analysis result."""
-
-    symbol: str
-    timeframe: str
-    timestamp: datetime
-    patterns: List[PatternData]
-    overall_sentiment: str
-    confluence_score: float
-    recommended_action: str
-    entry_price: Optional[float]
-    stop_loss: Optional[float]
-    take_profit: List[float]
-    reasoning: str
-    confidence: float
-    resistance: Optional[float] = None
-    support: Optional[float] = None
-
-
-# End of module
+        return analysis

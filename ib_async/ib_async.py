@@ -1,9 +1,15 @@
 # Stub implementation of ib_async classes used in tests
+
+
 class IB:
+
+
     def __init__(self):
         pass
 
-    def connectAsync(self, *args, **kwargs):
+
+
+    def connect_async(self, *args, **kwargs):
         # Fake async connect
         async def inner():
             return True
@@ -14,6 +20,8 @@ class IB:
 
 
 class Contract:
+
+
     def __init__(self, *args, **kwargs):
         pass
 
@@ -31,6 +39,8 @@ class Stock(Contract):
 
 
 class Order:
+
+
     def __init__(self, *args, **kwargs):
         pass
 
@@ -52,6 +62,8 @@ class StopLimitOrder(Order):
 
 
 class Option(Contract):
+
+
     def __init__(self, *args, **kwargs):
         pass
 
@@ -61,5 +73,7 @@ class RequestError(Exception):
 
 
 class Trade:
+
+
     def __init__(self, *args, **kwargs):
         pass

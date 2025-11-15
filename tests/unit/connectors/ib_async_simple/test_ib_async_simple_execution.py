@@ -1,29 +1,41 @@
 """Simple tests for IB Async Execution connector to improve coverage."""
 
+
+
 import pytest
 from unittest.mock import Mock, patch, AsyncMock
 import pandas as pd
 from datetime import datetime
+from quantchain.connectors.ib_async_execution import IBExecutionConnector
+from quantchain.tools.trading_execution import (
 
 try:
-    from quantchain.connectors.ib_async_execution import IBExecutionConnector
-    from quantchain.tools.trading_execution import (
-        OrderRequest, OrderSide, OrderType, TimeInForce, OrderResult,
-        ExecutionError, OrderNotFoundError, ValidationError
+        OrderRequest,
+        OrderSide,
+        OrderType,
+        TimeInForce,
+        OrderResult,
+        ExecutionError,
+        OrderNotFoundError,
+        ValidationError,
     )
+
     IB_ASYNC_AVAILABLE = True
 except ImportError:
     pytest.skip("IB Async execution connector not available")
     IBExecutionConnector = None
     IB_ASYNC_AVAILABLE = False
 
+
 # Test configuration and initialization
+
+
 def test_init_default_params():
     """Test initialization with default parameters."""
     if not IB_ASYNC_AVAILABLE:
         pytest.skip("IB Async execution connector not available")
 
-    with patch('quantchain.connectors.ib_async_execution.IB') as mock_ib:
+    with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib:
         mock_ib_instance = Mock()
         mock_ib_instance.connectAsync = AsyncMock()
         mock_ib.return_value = mock_ib_instance
@@ -35,22 +47,19 @@ def test_init_default_params():
         assert connector.client_id == 1
         assert connector.readonly is False
 
+
 def test_init_with_custom_params():
     """Test initialization with custom parameters."""
     if not IB_ASYNC_AVAILABLE:
         pytest.skip("IB Async execution connector not available")
 
-    with patch('quantchain.connectors.ib_async_execution.IB') as mock_ib:
+    with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib:
         mock_ib_instance = Mock()
         mock_ib_instance.connectAsync = AsyncMock()
         mock_ib.return_value = mock_ib_instance
 
         connector = IBExecutionConnector(
-            host="192.168.1.100",
-            port=4001,
-            client_id=999,
-            timeout=20,
-            readonly=True
+            host="192.168.1.100", port=4001, client_id=999, timeout=20, readonly=True
         )
 
         assert connector.host == "192.168.1.100"
@@ -59,22 +68,26 @@ def test_init_with_custom_params():
         assert connector.timeout == 20
         assert connector.readonly is True
 
+
 def test_init_without_ib_async():
     """Test initialization when ib_async is not available."""
     if IB_ASYNC_AVAILABLE:
         pytest.skip("IB Async execution connector is available")
 
-    with patch('quantchain.connectors.ib_async_execution.IB_ASYNC_AVAILABLE', False):
+    with patch("quantchain.connectors.ib_async_execution.IB_ASYNC_AVAILABLE", False):
         with pytest.raises(ImportError):
             IBExecutionConnector()
 
+
 # Test contract creation
+
+
 def test_create_stock_contract():
     """Test creating a stock contract."""
     if not IB_ASYNC_AVAILABLE:
         pytest.skip("IB Async execution connector not available")
 
-    with patch('quantchain.connectors.ib_async_execution.IB') as mock_ib:
+    with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib:
         mock_ib_instance = Mock()
         mock_ib_instance.connectAsync = AsyncMock()
         mock_ib.return_value = mock_ib_instance
@@ -86,13 +99,14 @@ def test_create_stock_contract():
         assert contract.symbol == "AAPL"
         assert contract.secType == "STK"
 
+
 def test_create_option_contract():
     """Test creating an option contract."""
     if not IB_ASYNC_AVAILABLE:
         pytest.skip("IB Async execution connector not available")
 
-    with patch('quantchain.connectors.ib_async_execution.IB') as mock_ib:
-        with patch('quantchain.connectors.ib_async_execution.Option') as mock_option:
+    with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib:
+        with patch("quantchain.connectors.ib_async_execution.Option") as mock_option:
             mock_ib_instance = Mock()
             mock_ib_instance.connectAsync = AsyncMock()
             mock_ib.return_value = mock_ib_instance
@@ -113,12 +127,13 @@ def test_create_option_contract():
             # Note: We'll check that the mock was called correctly since the attributes
             # are set on the real Option object which is mocked
 
+
 def test_create_forex_contract():
     """Test creating a forex contract."""
     if not IB_ASYNC_AVAILABLE:
         pytest.skip("IB Async execution connector not available")
 
-    with patch('quantchain.connectors.ib_async_execution.IB') as mock_ib:
+    with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib:
         mock_ib_instance = Mock()
         mock_ib_instance.connectAsync = AsyncMock()
         mock_ib.return_value = mock_ib_instance
@@ -131,12 +146,13 @@ def test_create_forex_contract():
         assert contract.currency == "USD"
         assert contract.secType == "CASH"
 
+
 def test_create_future_contract():
     """Test creating a future contract."""
     if not IB_ASYNC_AVAILABLE:
         pytest.skip("IB Async execution connector not available")
 
-    with patch('quantchain.connectors.ib_async_execution.IB') as mock_ib:
+    with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib:
         mock_ib_instance = Mock()
         mock_ib_instance.connectAsync = AsyncMock()
         mock_ib.return_value = mock_ib_instance
@@ -149,13 +165,16 @@ def test_create_future_contract():
         assert contract.secType == "FUT"
         assert contract.lastTradeDateOrContractMonth == "202312"
 
+
 # Test order validation
+
+
 def test_validate_order():
     """Test order validation."""
     if not IB_ASYNC_AVAILABLE:
         pytest.skip("IB Async execution connector not available")
 
-    with patch('quantchain.connectors.ib_async_execution.IB') as mock_ib:
+    with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib:
         mock_ib_instance = Mock()
         mock_ib_instance.connectAsync = AsyncMock()
         mock_ib.return_value = mock_ib_instance
@@ -168,7 +187,7 @@ def test_validate_order():
             side=OrderSide.BUY,
             order_type=OrderType.MARKET,
             quantity=100,
-            time_in_force=TimeInForce.DAY
+            time_in_force=TimeInForce.DAY,
         )
         connector.validate_order(valid_order)  # Should not raise exception
 
@@ -178,18 +197,21 @@ def test_validate_order():
             side=OrderSide.BUY,
             order_type=OrderType.MARKET,
             quantity=100,
-            time_in_force=TimeInForce.DAY
+            time_in_force=TimeInForce.DAY,
         )
         with pytest.raises(ValidationError):
             connector.validate_order(invalid_order)
 
+
 # Test is_market_open
+
+
 def test_is_market_open():
     """Test checking if market is open."""
     if not IB_ASYNC_AVAILABLE:
         pytest.skip("IB Async execution connector not available")
 
-    with patch('quantchain.connectors.ib_async_execution.IB') as mock_ib:
+    with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib:
         mock_ib_instance = Mock()
         mock_ib_instance.connectAsync = AsyncMock()
         mock_ib.return_value = mock_ib_instance
@@ -203,13 +225,16 @@ def test_is_market_open():
         result = connector.is_market_open("AAPL")
         assert isinstance(result, bool)  # Should return boolean
 
+
 # Test error handling
+
+
 def test_run_async_operation_success():
     """Test successful async operation execution."""
     if not IB_ASYNC_AVAILABLE:
         pytest.skip("IB Async execution connector not available")
 
-    with patch('quantchain.connectors.ib_async_execution.IB') as mock_ib:
+    with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib:
         mock_ib_instance = Mock()
         mock_ib_instance.connectAsync = AsyncMock()
         mock_ib.return_value = mock_ib_instance
@@ -223,12 +248,13 @@ def test_run_async_operation_success():
         result = connector._run_async(mock_async_func())
         assert result == "success"
 
+
 def test_run_async_operation_failure():
     """Test failed async operation execution."""
     if not IB_ASYNC_AVAILABLE:
         pytest.skip("IB Async execution connector not available")
 
-    with patch('quantchain.connectors.ib_async_execution.IB') as mock_ib:
+    with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib:
         mock_ib_instance = Mock()
         mock_ib_instance.connectAsync = AsyncMock()
         mock_ib.return_value = mock_ib_instance
@@ -242,13 +268,16 @@ def test_run_async_operation_failure():
         with pytest.raises(ExecutionError):
             connector._run_async(mock_async_func())
 
+
 # Test conversion functions
+
+
 def test_convert_ib_order_to_result():
     """Test conversion of IB order to OrderResult."""
     if not IB_ASYNC_AVAILABLE:
         pytest.skip("IB Async execution connector not available")
 
-    with patch('quantchain.connectors.ib_async_execution.IB') as mock_ib:
+    with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib:
         mock_ib_instance = Mock()
         mock_ib_instance.connectAsync = AsyncMock()
         mock_ib.return_value = mock_ib_instance
@@ -274,12 +303,13 @@ def test_convert_ib_order_to_result():
         # Skip it for now as the method implementation details are not stable
         pytest.skip("Convert IB order test not stable with current implementation")
 
+
 def test_disconnect():
     """Test disconnecting from IB."""
     if not IB_ASYNC_AVAILABLE:
         pytest.skip("IB Async execution connector not available")
 
-    with patch('quantchain.connectors.ib_async_execution.IB') as mock_ib:
+    with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib:
         mock_ib_instance = Mock()
         mock_ib_instance.connectAsync = AsyncMock()
         mock_ib.return_value = mock_ib_instance
@@ -289,12 +319,13 @@ def test_disconnect():
 
         mock_ib_instance.disconnect.assert_called_once()
 
+
 def test_get_symbol_info():
     """Test getting symbol information."""
     if not IB_ASYNC_AVAILABLE:
         pytest.skip("IB Async execution connector not available")
 
-    with patch('quantchain.connectors.ib_async_execution.IB') as mock_ib:
+    with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib:
         mock_ib_instance = Mock()
         mock_ib_instance.connectAsync = AsyncMock()
         mock_ib.return_value = mock_ib_instance
@@ -311,7 +342,7 @@ def test_get_symbol_info():
 
         connector = IBExecutionConnector()
 
-        with patch.object(connector, '_qualify_contract'):
+        with patch.object(connector, "_qualify_contract"):
             info = connector.get_symbol_info("AAPL")
 
             assert info["symbol"] == "AAPL"
@@ -322,6 +353,7 @@ def test_get_symbol_info():
             assert info["min_tick"] == 0.01
             assert info["price_precision"] == 2
             assert info["multiplier"] is None
+
 
 if __name__ == "__main__":
     pytest.main()

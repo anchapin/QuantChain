@@ -17,16 +17,22 @@ from quantchain.core.exceptions import (
 
 
 @pytest.mark.unit
+
+
 class TestAlphaVantageDataConnector:
     """Test suite for AlphaVantageDataConnector."""
 
     @pytest.fixture
-    def connector(self) -> AlphaVantageDataConnector:
+
+
+def connector(self) -> AlphaVantageDataConnector:
         """Create a test connector instance."""
         return AlphaVantageDataConnector("TEST123456789ABC")
 
     @pytest.fixture
-    def sample_intraday_response(self) -> dict:
+
+
+def sample_intraday_response(self) -> dict:
         """Sample Alpha Vantage TIME_SERIES_INTRADAY response."""
         return {
             "Meta Data": {
@@ -56,7 +62,9 @@ class TestAlphaVantageDataConnector:
         }
 
     @pytest.fixture
-    def sample_daily_response(self) -> dict:
+
+
+def sample_daily_response(self) -> dict:
         """Sample Alpha Vantage TIME_SERIES_DAILY response."""
         return {
             "Meta Data": {
@@ -85,7 +93,9 @@ class TestAlphaVantageDataConnector:
         }
 
     @pytest.fixture
-    def sample_quote_response(self) -> dict:
+
+
+def sample_quote_response(self) -> dict:
         """Sample Alpha Vantage GLOBAL_QUOTE response."""
         return {
             "Global Quote": {
@@ -101,7 +111,9 @@ class TestAlphaVantageDataConnector:
         }
 
     @pytest.fixture
-    def sample_fx_response(self) -> dict:
+
+
+def sample_fx_response(self) -> dict:
         """Sample Alpha Vantage CURRENCY_EXCHANGE_RATE response."""
         return {
             "Realtime Currency Exchange Rate": {
@@ -116,7 +128,9 @@ class TestAlphaVantageDataConnector:
         }
 
     @pytest.fixture
-    def sample_symbol_search_response(self) -> dict:
+
+
+def sample_symbol_search_response(self) -> dict:
         """Sample Alpha Vantage SYMBOL_SEARCH response."""
         return {
             "bestMatches": [
@@ -135,7 +149,9 @@ class TestAlphaVantageDataConnector:
         }
 
     @pytest.fixture
-    def sample_market_status_response(self) -> dict:
+
+
+def sample_market_status_response(self) -> dict:
         """Sample Alpha Vantage MARKET_STATUS response."""
         return {
             "market_status": [
@@ -148,7 +164,9 @@ class TestAlphaVantageDataConnector:
             ]
         }
 
-    def test_initialization_success(self) -> None:
+
+
+def test_initialization_success(self) -> None:
         """Test successful initialization."""
         connector = AlphaVantageDataConnector("TEST123456789ABC")
         assert connector.api_key == "TEST123456789ABC"
@@ -156,7 +174,9 @@ class TestAlphaVantageDataConnector:
         assert connector.max_retries == 3
         assert connector.cache_ttl == 3600
 
-    def test_initialization_with_custom_params(self) -> None:
+
+
+def test_initialization_with_custom_params(self) -> None:
         """Test initialization with custom parameters."""
         connector = AlphaVantageDataConnector(
             "TEST123456789ABC",
@@ -170,19 +190,25 @@ class TestAlphaVantageDataConnector:
         assert connector.cache_ttl == 7200
         assert connector.symbol_limit == 200
 
-    def test_initialization_invalid_key_format(self) -> None:
+
+
+def test_initialization_invalid_key_format(self) -> None:
         """Test initialization with invalid API key format."""
         with pytest.raises(ValueError):
             AlphaVantageDataConnector("invalid_key")
 
-    def test_is_forex_symbol(self, connector: AlphaVantageDataConnector) -> None:
+
+
+def test_is_forex_symbol(self, connector: AlphaVantageDataConnector) -> None:
         """Test forex symbol detection."""
         assert connector._is_forex_symbol("EUR/USD") is True
         assert connector._is_forex_symbol("GBP/JPY") is True
         assert connector._is_forex_symbol("AAPL") is False
         assert connector._is_forex_symbol("BTC-USD") is False
 
-    def test_parse_forex_symbol(self, connector: AlphaVantageDataConnector) -> None:
+
+
+def test_parse_forex_symbol(self, connector: AlphaVantageDataConnector) -> None:
         """Test forex symbol parsing."""
         base, quote = connector._parse_forex_symbol("EUR/USD")
         assert base == "EUR"
@@ -192,7 +218,9 @@ class TestAlphaVantageDataConnector:
         assert base == "GBP"
         assert quote == "JPY"
 
-    def test_parse_forex_symbol_invalid(
+
+
+def test_parse_forex_symbol_invalid(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test parsing invalid forex symbol."""
@@ -202,7 +230,9 @@ class TestAlphaVantageDataConnector:
         with pytest.raises(ValueError):
             connector._parse_forex_symbol("EUR/USD/JPY")
 
-    def test_convert_timeframe_intraday(
+
+
+def test_convert_timeframe_intraday(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test timeframe conversion for intraday."""
@@ -218,7 +248,9 @@ class TestAlphaVantageDataConnector:
         assert function == "TIME_SERIES_INTRADAY"
         assert interval == "60min"
 
-    def test_convert_timeframe_daily(
+
+
+def test_convert_timeframe_daily(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test timeframe conversion for daily."""
@@ -234,7 +266,9 @@ class TestAlphaVantageDataConnector:
         assert function == "TIME_SERIES_MONTHLY"
         assert interval is None
 
-    def test_convert_timeframe_forex(
+
+
+def test_convert_timeframe_forex(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test timeframe conversion for forex."""
@@ -246,7 +280,9 @@ class TestAlphaVantageDataConnector:
         assert function == "FX_INTRADAY"
         assert interval == "60min"
 
-    def test_convert_timeframe_invalid(
+
+
+def test_convert_timeframe_invalid(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test invalid timeframe conversion."""
@@ -256,7 +292,9 @@ class TestAlphaVantageDataConnector:
         with pytest.raises(ValueError):
             connector._convert_timeframe("invalid", False)
 
-    def test_make_request_success(self, connector: AlphaVantageDataConnector) -> None:
+
+
+def test_make_request_success(self, connector: AlphaVantageDataConnector) -> None:
         """Test successful API request."""
         mock_response = MagicMock()
         mock_response.json.return_value = {"test": "data"}
@@ -265,7 +303,9 @@ class TestAlphaVantageDataConnector:
             result = connector._make_request({"function": "TEST"})
             assert result == {"test": "data"}
 
-    def test_make_request_auth_error(
+
+
+def test_make_request_auth_error(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test request with authentication error."""
@@ -276,7 +316,9 @@ class TestAlphaVantageDataConnector:
             with pytest.raises(AuthenticationError):
                 connector._make_request({"function": "TEST"})
 
-    def test_make_request_rate_limit(
+
+
+def test_make_request_rate_limit(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test request with rate limit error."""
@@ -287,7 +329,9 @@ class TestAlphaVantageDataConnector:
             with pytest.raises(RateLimitError):
                 connector._make_request({"function": "TEST"})
 
-    def test_parse_time_series_data(self, connector: AlphaVantageDataConnector) -> None:
+
+
+def test_parse_time_series_data(self, connector: AlphaVantageDataConnector) -> None:
         """Test parsing time series data."""
         data = {
             "Time Series (1min)": {
@@ -326,7 +370,9 @@ class TestAlphaVantageDataConnector:
         assert df.iloc[1]["close"] == 150.75
         assert df.iloc[1]["volume"] == 1000
 
-    def test_get_historical_data_equity_intraday(
+
+
+def test_get_historical_data_equity_intraday(
         self, connector: AlphaVantageDataConnector, sample_intraday_response
     ) -> None:
         """Test getting historical equity intraday data."""
@@ -348,7 +394,9 @@ class TestAlphaVantageDataConnector:
                 "volume",
             ]
 
-    def test_get_historical_data_equity_daily(
+
+
+def test_get_historical_data_equity_daily(
         self, connector: AlphaVantageDataConnector, sample_daily_response
     ) -> None:
         """Test getting historical equity daily data."""
@@ -366,7 +414,9 @@ class TestAlphaVantageDataConnector:
             assert df.iloc[1]["open"] == 150.00  # 2024-01-01
             assert df.iloc[1]["close"] == 151.75
 
-    def test_get_historical_data_forex_daily(
+
+
+def test_get_historical_data_forex_daily(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test getting historical forex daily data."""
@@ -398,7 +448,9 @@ class TestAlphaVantageDataConnector:
             assert df.iloc[1]["open"] == 1.090  # 2024-01-010
             assert df.iloc[1]["close"] == 1.0950  # 2024-01-01
 
-    def test_get_historical_data_symbol_not_found(
+
+
+def test_get_historical_data_symbol_not_found(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test historical data with symbol not found."""
@@ -406,11 +458,12 @@ class TestAlphaVantageDataConnector:
 
         with patch.object(
             connector, "_make_request", return_value={"Error Message": "Invalid symbol"}
-        ):
-            with pytest.raises(SymbolNotFoundError):
-                connector.get_historical_data("INVALID", "1D", start_date)
+        ), pytest.raises(SymbolNotFoundError):
+            connector.get_historical_data("INVALID", "1D", start_date)
 
-    def test_get_historical_data_rate_limit(
+
+
+def test_get_historical_data_rate_limit(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test historical data with rate limit."""
@@ -420,11 +473,12 @@ class TestAlphaVantageDataConnector:
             connector,
             "_make_request",
             side_effect=RateLimitError("Rate limit exceeded"),
-        ):
-            with pytest.raises(RateLimitError):
-                connector.get_historical_data("AAPL", "1D", start_date)
+        ), pytest.raises(RateLimitError):
+            connector.get_historical_data("AAPL", "1D", start_date)
 
-    def test_get_historical_data_invalid_timeframe(
+
+
+def test_get_historical_data_invalid_timeframe(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test historical data with invalid timeframe."""
@@ -433,7 +487,9 @@ class TestAlphaVantageDataConnector:
         with pytest.raises(ValueError):
             connector.get_historical_data("AAPL", "invalid", start_date)
 
-    def test_get_real_time_data_equity(
+
+
+def test_get_real_time_data_equity(
         self, connector: AlphaVantageDataConnector, sample_quote_response
     ) -> None:
         """Test getting real-time equity data."""
@@ -445,7 +501,9 @@ class TestAlphaVantageDataConnector:
             assert data["price"] == 150.75
             assert "timestamp" in data
 
-    def test_get_real_time_data_forex(
+
+
+def test_get_real_time_data_forex(
         self, connector: AlphaVantageDataConnector, sample_fx_response
     ) -> None:
         """Test getting real-time forex data."""
@@ -455,27 +513,31 @@ class TestAlphaVantageDataConnector:
             assert data["price"] == 1.0950
             assert "timestamp" in data
 
-    def test_get_real_time_data_symbol_not_found(
+
+
+def test_get_real_time_data_symbol_not_found(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test real-time data with symbol not found."""
         with patch.object(
             connector, "_make_request", return_value={"Error Message": "Invalid symbol"}
-        ):
-            with pytest.raises(SymbolNotFoundError):
-                connector.get_real_time_data("INVALID")
+        ), pytest.raises(SymbolNotFoundError):
+            connector.get_real_time_data("INVALID")
 
-    def test_get_real_time_data_api_error(
+
+
+def test_get_real_time_data_api_error(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test real-time data with API error."""
         with patch.object(
             connector, "_make_request", side_effect=DataSourceError("API error")
-        ):
-            with pytest.raises(DataSourceError):
-                connector.get_real_time_data("AAPL")
+        ), pytest.raises(DataSourceError):
+            connector.get_real_time_data("AAPL")
 
-    def test_get_quote_equity(
+
+
+def test_get_quote_equity(
         self, connector: AlphaVantageDataConnector, sample_quote_response
     ) -> None:
         """Test getting equity quote."""
@@ -490,7 +552,9 @@ class TestAlphaVantageDataConnector:
             assert "bid_price" in quote
             assert "ask_price" in quote
 
-    def test_get_quote_forex(
+
+
+def test_get_quote_forex(
         self, connector: AlphaVantageDataConnector, sample_fx_response
     ) -> None:
         """Test getting forex quote."""
@@ -501,21 +565,24 @@ class TestAlphaVantageDataConnector:
             assert quote["last_price"] == 1.0950
             assert "timestamp" in quote
 
-    def test_get_quote_missing_symbol(
+
+
+def test_get_quote_missing_symbol(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test getting quote for missing symbol."""
         with patch.object(
             connector, "_make_request", return_value={"Error Message": "Invalid symbol"}
-        ):
-            with pytest.raises(SymbolNotFoundError):
-                connector.get_quote("INVALID")
+        ), pytest.raises(SymbolNotFoundError):
+            connector.get_quote("INVALID")
 
-    def test_get_available_symbols_all(
+
+
+def test_get_available_symbols_all(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test getting all available symbols."""
-        connector._symbol_cache: list[float] = ["AAPL", "GOOGL", "EUR/USD", "GBP/JPY"]
+        connector._symbol_cache: list = ["AAPL", "GOOGL", "EUR/USD", "GBP/JPY"]
         connector._cache_timestamp = datetime.now().timestamp()
 
         symbols = connector.get_available_symbols()
@@ -524,11 +591,13 @@ class TestAlphaVantageDataConnector:
         assert "AAPL" in symbols
         assert "EUR/USD" in symbols
 
-    def test_get_available_symbols_equity_filter(
+
+
+def test_get_available_symbols_equity_filter(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test getting available equity symbols."""
-        connector._symbol_cache: list[float] = ["AAPL", "GOOGL", "EUR/USD", "GBP/JPY"]
+        connector._symbol_cache: list = ["AAPL", "GOOGL", "EUR/USD", "GBP/JPY"]
         connector._cache_timestamp = datetime.now().timestamp()
 
         symbols = connector.get_available_symbols(market="equity")
@@ -538,11 +607,13 @@ class TestAlphaVantageDataConnector:
         assert "EUR/USD" not in symbols
         assert "GBP/JPY" not in symbols
 
-    def test_get_available_symbols_forex_filter(
+
+
+def test_get_available_symbols_forex_filter(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test getting available forex symbols."""
-        connector._symbol_cache: list[float] = ["AAPL", "GOOGL", "EUR/USD", "GBP/JPY"]
+        connector._symbol_cache: list = ["AAPL", "GOOGL", "EUR/USD", "GBP/JPY"]
         connector._cache_timestamp = datetime.now().timestamp()
 
         symbols = connector.get_available_symbols(market="forex")
@@ -552,11 +623,13 @@ class TestAlphaVantageDataConnector:
         assert "EUR/USD" in symbols
         assert "GBP/JPY" in symbols
 
-    def test_get_available_symbols_with_limit(
+
+
+def test_get_available_symbols_with_limit(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test getting available symbols with limit."""
-        connector._symbol_cache: list[float] = [
+        connector._symbol_cache: list = [
             "AAPL",
             "GOOGL",
             "MSFT",
@@ -570,7 +643,9 @@ class TestAlphaVantageDataConnector:
 
         assert len(symbols) == 3
 
-    def test_get_available_symbols_cache_refresh(
+
+
+def test_get_available_symbols_cache_refresh(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test cache refresh in get_available_symbols."""
@@ -583,7 +658,9 @@ class TestAlphaVantageDataConnector:
             connector.get_available_symbols()
             mock_refresh.assert_called_once()
 
-    def test_get_symbol_info_equity(
+
+
+def test_get_symbol_info_equity(
         self, connector: AlphaVantageDataConnector, sample_symbol_search_response
     ) -> None:
         """Test getting equity symbol info."""
@@ -599,7 +676,9 @@ class TestAlphaVantageDataConnector:
             assert info["price_precision"] == 2
             assert info["size_precision"] == 0
 
-    def test_get_symbol_info_forex(self, connector: AlphaVantageDataConnector) -> None:
+
+
+def test_get_symbol_info_forex(self, connector: AlphaVantageDataConnector) -> None:
         """Test getting forex symbol info."""
         fx_response = {
             "bestMatches": [
@@ -621,7 +700,9 @@ class TestAlphaVantageDataConnector:
             assert info["price_precision"] == 4
             assert info["size_precision"] == 8
 
-    def test_get_symbol_info_not_found(
+
+
+def test_get_symbol_info_not_found(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test getting symbol info for non-existent symbol."""
@@ -629,7 +710,9 @@ class TestAlphaVantageDataConnector:
             with pytest.raises(SymbolNotFoundError):
                 connector.get_symbol_info("INVALID")
 
-    def test_get_symbol_info_cache_hit(
+
+
+def test_get_symbol_info_cache_hit(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test cached symbol info retrieval."""
@@ -650,7 +733,9 @@ class TestAlphaVantageDataConnector:
 
         assert info == cached_info
 
-    def test_is_market_open_equity_open(
+
+
+def test_is_market_open_equity_open(
         self, connector: AlphaVantageDataConnector, sample_market_status_response
     ) -> None:
         """Test checking if equity market is open."""
@@ -660,7 +745,9 @@ class TestAlphaVantageDataConnector:
             is_open = connector.is_market_open("equity")
             assert is_open is True
 
-    def test_is_market_open_equity_closed(
+
+
+def test_is_market_open_equity_closed(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test checking if equity market is closed."""
@@ -678,22 +765,27 @@ class TestAlphaVantageDataConnector:
             is_open = connector.is_market_open("equity")
             assert is_open is False
 
-    def test_is_market_open_forex(self, connector: AlphaVantageDataConnector) -> None:
+
+
+def test_is_market_open_forex(self, connector: AlphaVantageDataConnector) -> None:
         """Test checking if forex market is open (always returns True)."""
         is_open = connector.is_market_open("forex")
         assert is_open is True
 
-    def test_is_market_open_api_error(
+
+
+def test_is_market_open_api_error(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test market status check with API error."""
         with patch.object(
             connector, "_make_request", side_effect=DataSourceError("API error")
-        ):
-            with pytest.raises(DataSourceError):
-                connector.is_market_open("equity")
+        ), pytest.raises(DataSourceError):
+            connector.is_market_open("equity")
 
-    def test_authentication_error(self, connector: AlphaVantageDataConnector) -> None:
+
+
+def test_authentication_error(self, connector: AlphaVantageDataConnector) -> None:
         """Test authentication error handling."""
         with patch.object(connector.session, "get") as mock_get:
             mock_response = MagicMock()
@@ -703,7 +795,9 @@ class TestAlphaVantageDataConnector:
             with pytest.raises(AuthenticationError):
                 connector._make_request({"function": "TEST"})
 
-    def test_rate_limit_error_detection(
+
+
+def test_rate_limit_error_detection(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test rate limit error detection."""
@@ -715,7 +809,9 @@ class TestAlphaVantageDataConnector:
             with pytest.raises(RateLimitError):
                 connector._make_request({"function": "TEST"})
 
-    def test_network_error_retry(self, connector: AlphaVantageDataConnector) -> None:
+
+
+def test_network_error_retry(self, connector: AlphaVantageDataConnector) -> None:
         """Test retry logic on network error."""
         with patch.object(connector.session, "get") as mock_get:
             mock_get.side_effect = [
@@ -728,11 +824,12 @@ class TestAlphaVantageDataConnector:
                 connector.retry_handler,
                 "execute",
                 side_effect=DataSourceError("Failed"),
-            ):
-                with pytest.raises(DataSourceError):
-                    connector._make_request({"function": "TEST"})
+            ), pytest.raises(DataSourceError):
+                connector._make_request({"function": "TEST"})
 
-    def test_malformed_response_handling(
+
+
+def test_malformed_response_handling(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test handling of malformed response."""
@@ -744,7 +841,9 @@ class TestAlphaVantageDataConnector:
             with pytest.raises(DataSourceError):
                 connector._make_request({"function": "TEST"})
 
-    def test_make_request_timeout(self, connector: AlphaVantageDataConnector) -> None:
+
+
+def test_make_request_timeout(self, connector: AlphaVantageDataConnector) -> None:
         """Test request timeout handling."""
         with patch.object(connector.session, "get") as mock_get:
             mock_get.side_effect = requests.exceptions.Timeout("Request timeout")
@@ -752,7 +851,9 @@ class TestAlphaVantageDataConnector:
             with pytest.raises(DataSourceError):
                 connector._make_request({"function": "TEST"})
 
-    def test_refresh_symbol_cache_success(
+
+
+def test_refresh_symbol_cache_success(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test successful symbol cache refresh."""
@@ -769,13 +870,15 @@ class TestAlphaVantageDataConnector:
             assert "AAPL" in connector._symbol_cache
             assert "GOOGL" in connector._symbol_cache
 
-    def test_refresh_symbol_cache_error(
+
+
+def test_refresh_symbol_cache_error(
         self, connector: AlphaVantageDataConnector
     ) -> None:
         """Test symbol cache refresh error handling."""
         # Set expired cache and empty initial cache to trigger refresh
         connector._cache_timestamp = 0
-        connector._symbol_cache: list[float] = []
+        connector._symbol_cache: list = []
 
         # Mock the logger to avoid actual logging
         with patch.object(connector.logger, "warning"):

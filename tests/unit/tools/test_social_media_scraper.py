@@ -1,5 +1,7 @@
 """Tests for social media scraper tool."""
 
+# Mock problematic imports before importing the target module
+
 import sys
 from typing import Any
 from unittest.mock import MagicMock, Mock, patch
@@ -10,7 +12,6 @@ from quantchain.core.exceptions import DataSourceError
 from quantchain.tools import social_media_scraper
 from quantchain.tools.social_media_scraper import SocialMediaScraper, SocialMetrics
 
-# Mock problematic imports before importing the target module
 sys.modules["torch"] = MagicMock()
 sys.modules["transformers"] = MagicMock()
 sys.modules["sentence_transformers"] = MagicMock()
@@ -19,7 +20,9 @@ sys.modules["sentence_transformers"] = MagicMock()
 class TestSocialMetrics:
     """Test the SocialMetrics data class."""
 
-    def test_social_metrics_default_values(self) -> None:
+
+
+def test_social_metrics_default_values(self) -> None:
         """Test SocialMetrics default initialization."""
         metrics = SocialMetrics()
 
@@ -29,7 +32,9 @@ class TestSocialMetrics:
         assert metrics.engagement_rate == 0.0
         assert metrics.sentiment_score == 0.5
 
-    def test_social_metrics_custom_values(self) -> None:
+
+
+def test_social_metrics_custom_values(self) -> None:
         """Test SocialMetrics with custom values."""
         metrics = SocialMetrics(
             telegram_followers=1000,
@@ -47,10 +52,14 @@ class TestSocialMetrics:
 
 
 @pytest.mark.unit
+
+
 class TestSocialMediaScraper:
     """Test the SocialMediaScraper class."""
 
-    def test_scraper_initialization_default(self) -> None:
+
+
+def test_scraper_initialization_default(self) -> None:
         """Test scraper initialization with default parameters."""
         scraper = SocialMediaScraper()
 
@@ -62,7 +71,9 @@ class TestSocialMediaScraper:
         assert scraper._min_request_interval == 1.0
         assert scraper.session is not None
 
-    def test_scraper_initialization_custom(self) -> None:
+
+
+def test_scraper_initialization_custom(self) -> None:
         """Test scraper initialization with custom parameters."""
         scraper = SocialMediaScraper(
             timeout=30,
@@ -79,13 +90,17 @@ class TestSocialMediaScraper:
         assert scraper.telegram_api_hash == "test_hash"
         assert scraper.session is not None
 
-    def test_requests_dependency_error(self) -> None:
+
+
+def test_requests_dependency_error(self) -> None:
         """Test that missing requests library raises ImportError."""
         with patch("quantchain.tools.social_media_scraper.requests", None):
             with pytest.raises(ImportError, match="The 'requests' library is required"):
                 SocialMediaScraper()
 
-    def test_aggregate_social_metrics_empty_data(self) -> None:
+
+
+def test_aggregate_social_metrics_empty_data(self) -> None:
         """Test aggregating metrics with empty data."""
         scraper = SocialMediaScraper()
         telegram_data: dict[str, Any] = {}
@@ -100,7 +115,9 @@ class TestSocialMediaScraper:
         assert metrics.engagement_rate == 0.0
         assert metrics.sentiment_score == 0.5
 
-    def test_aggregate_social_metrics_full_data(self) -> None:
+
+
+def test_aggregate_social_metrics_full_data(self) -> None:
         """Test aggregating metrics with complete data."""
         scraper = SocialMediaScraper()
         telegram_data = {"followers": 1000, "recent_posts": 10, "sentiment": 0.7}
@@ -119,7 +136,9 @@ class TestSocialMediaScraper:
         assert metrics.engagement_rate == 3.5
         assert metrics.sentiment_score == 0.8
 
-    def test_aggregate_social_metrics_twitter_more_posts(self) -> None:
+
+
+def test_aggregate_social_metrics_twitter_more_posts(self) -> None:
         """Test aggregation when Twitter has more recent posts."""
         scraper = SocialMediaScraper()
         telegram_data = {"recent_posts": 15}
@@ -129,7 +148,9 @@ class TestSocialMediaScraper:
 
         assert metrics.recent_posts == 25  # Should use Twitter's higher count
 
-    def test_get_social_metrics_no_session(self) -> None:
+
+
+def test_get_social_metrics_no_session(self) -> None:
         """Test get_social_metrics fails without session."""
         scraper = SocialMediaScraper()
         scraper.session = None
@@ -137,19 +158,22 @@ class TestSocialMediaScraper:
         with pytest.raises(DataSourceError, match="requests library not available"):
             scraper.get_social_metrics("BTC", "0x123")
 
-    def test_get_social_metrics_with_exception(self) -> None:
+
+
+def test_get_social_metrics_with_exception(self) -> None:
         """Test get_social_metrics handles exceptions properly."""
         scraper = SocialMediaScraper()
 
         with patch.object(
             scraper, "_get_telegram_metrics", side_effect=Exception("Network error")
-        ):
-            with pytest.raises(DataSourceError, match="Social media scraping failed"):
-                scraper.get_social_metrics("BTC", "0x123")
+        ), pytest.raises(DataSourceError, match="Social media scraping failed"):
+            scraper.get_social_metrics("BTC", "0x123")
 
     @patch.object(SocialMediaScraper, "_get_telegram_metrics")
     @patch.object(SocialMediaScraper, "_get_twitter_metrics")
-    def test_get_social_metrics_success(
+
+
+def test_get_social_metrics_success(
         self, mock_twitter: Mock, mock_telegram: Mock
     ) -> None:
         """Test successful social metrics retrieval."""
@@ -170,7 +194,9 @@ class TestSocialMediaScraper:
         assert metrics.engagement_rate == 2.5
         assert metrics.sentiment_score == 0.7
 
-    def test_get_telegram_metrics_success(self) -> None:
+
+
+def test_get_telegram_metrics_success(self) -> None:
         """Test successful Telegram metrics retrieval."""
         scraper = SocialMediaScraper()
 
@@ -185,7 +211,9 @@ class TestSocialMediaScraper:
             assert result["recent_posts"] == 5
             mock_search.assert_called()
 
-    def test_get_telegram_metrics_no_channels(self) -> None:
+
+
+def test_get_telegram_metrics_no_channels(self) -> None:
         """Test Telegram metrics when no channels found."""
         scraper = SocialMediaScraper()
 
@@ -195,7 +223,9 @@ class TestSocialMediaScraper:
             assert result["followers"] == 0
             assert result["recent_posts"] == 0
 
-    def test_get_telegram_metrics_exception_handling(self) -> None:
+
+
+def test_get_telegram_metrics_exception_handling(self) -> None:
         """Test Telegram metrics error handling."""
         scraper = SocialMediaScraper()
 
@@ -207,7 +237,9 @@ class TestSocialMediaScraper:
             assert result["followers"] == 0
             assert result["recent_posts"] == 0
 
-    def test_get_twitter_metrics_success(self) -> None:
+
+
+def test_get_twitter_metrics_success(self) -> None:
         """Test successful Twitter metrics retrieval."""
         scraper = SocialMediaScraper()
 
@@ -228,7 +260,9 @@ class TestSocialMediaScraper:
                 assert result["engagement_rate"] == 3.2
                 assert result["sentiment_score"] == 0.7
 
-    def test_get_twitter_metrics_no_account(self) -> None:
+
+
+def test_get_twitter_metrics_no_account(self) -> None:
         """Test Twitter metrics when no account found."""
         scraper = SocialMediaScraper()
 
@@ -240,7 +274,9 @@ class TestSocialMediaScraper:
             assert result["engagement_rate"] == 0.0
             assert result["sentiment_score"] == 0.5
 
-    def test_get_twitter_metrics_exception_handling(self) -> None:
+
+
+def test_get_twitter_metrics_exception_handling(self) -> None:
         """Test Twitter metrics error handling."""
         scraper = SocialMediaScraper()
 
@@ -254,7 +290,9 @@ class TestSocialMediaScraper:
             assert result["engagement_rate"] == 0.0
             assert result["sentiment_score"] == 0.5
 
-    def test_search_telegram_channels_crypto_keyword(self) -> None:
+
+
+def test_search_telegram_channels_crypto_keyword(self) -> None:
         """Test Telegram channel search with crypto keywords."""
         scraper = SocialMediaScraper()
 
@@ -265,7 +303,9 @@ class TestSocialMediaScraper:
         assert "members" in result[0]
         assert result[0]["url"] == "https://t.me/bitcoinofficial"
 
-    def test_search_telegram_channels_unknown_keyword(self) -> None:
+
+
+def test_search_telegram_channels_unknown_keyword(self) -> None:
         """Test Telegram channel search with unknown keywords."""
         scraper = SocialMediaScraper()
 
@@ -273,7 +313,9 @@ class TestSocialMediaScraper:
 
         assert len(result) == 0
 
-    def test_find_twitter_account_success(self) -> None:
+
+
+def test_find_twitter_account_success(self) -> None:
         """Test successful Twitter account finding."""
         scraper = SocialMediaScraper()
 
@@ -291,7 +333,9 @@ class TestSocialMediaScraper:
             assert result["username"] == "pepe"
             assert mock_info.call_count == 3
 
-    def test_find_twitter_account_not_found(self) -> None:
+
+
+def test_find_twitter_account_not_found(self) -> None:
         """Test Twitter account not found."""
         scraper = SocialMediaScraper()
 
@@ -300,7 +344,9 @@ class TestSocialMediaScraper:
 
             assert result is None
 
-    def test_get_twitter_account_info(self) -> None:
+
+
+def test_get_twitter_account_info(self) -> None:
         """Test Twitter account info retrieval."""
         scraper = SocialMediaScraper()
 
@@ -308,7 +354,9 @@ class TestSocialMediaScraper:
 
         assert result is None
 
-    def test_get_twitter_recent_activity(self) -> None:
+
+
+def test_get_twitter_recent_activity(self) -> None:
         """Test Twitter recent activity retrieval."""
         scraper = SocialMediaScraper()
 
@@ -318,14 +366,18 @@ class TestSocialMediaScraper:
         assert "engagement_rate" in result
         assert "sentiment_score" in result
 
-    def test_rate_limiting_logic(self) -> None:
+
+
+def test_rate_limiting_logic(self) -> None:
         """Test rate limiting parameters are set correctly."""
         scraper = SocialMediaScraper()
 
         assert scraper._min_request_interval == 1.0
         assert hasattr(scraper, "_last_request_time")
 
-    def test_retry_handler_initialization(self) -> None:
+
+
+def test_retry_handler_initialization(self) -> None:
         """Test retry handler is properly initialized."""
         scraper = SocialMediaScraper(max_retries=2, timeout=5)
 
@@ -333,7 +385,9 @@ class TestSocialMediaScraper:
         assert scraper._retry_handler.base_delay == 1.0
         assert scraper._retry_handler.backoff_factor == 2.0
 
-    def test_make_request_with_mock_session(self) -> None:
+
+
+def test_make_request_with_mock_session(self) -> None:
         """Test _make_request with a mocked successful response."""
         scraper = SocialMediaScraper()
 
@@ -347,7 +401,9 @@ class TestSocialMediaScraper:
             assert result == {"data": "test"}
             scraper.session.get.assert_called_once()
 
-    def test_get_beautiful_soup_available(self) -> None:
+
+
+def test_get_beautiful_soup_available(self) -> None:
         """Test BeautifulSoup function when available."""
         with patch.object(
             social_media_scraper, "_get_beautiful_soup", return_value="MockSoup"
@@ -355,7 +411,9 @@ class TestSocialMediaScraper:
             result = social_media_scraper._get_beautiful_soup()
             assert result == "MockSoup"
 
-    def test_get_beautiful_soup_unavailable(self) -> None:
+
+
+def test_get_beautiful_soup_unavailable(self) -> None:
         """Test BeautifulSoup function when not available."""
         with patch.object(
             social_media_scraper, "_get_beautiful_soup", return_value=None
@@ -365,10 +423,14 @@ class TestSocialMediaScraper:
 
 
 @pytest.mark.unit
+
+
 class TestSocialMediaScraperIntegration:
     """Integration tests for SocialMediaScraper."""
 
-    def test_scraper_with_mock_session_flow(self) -> None:
+
+
+def test_scraper_with_mock_session_flow(self) -> None:
         """Test complete data flow with mocked session."""
         with patch(
             "quantchain.tools.social_media_scraper.requests.Session"
@@ -380,7 +442,9 @@ class TestSocialMediaScraperIntegration:
 
             assert scraper.session == mock_session
 
-    def test_error_handling_resilience(self) -> None:
+
+
+def test_error_handling_resilience(self) -> None:
         """Test error handling maintains data integrity."""
         scraper = SocialMediaScraper()
 

@@ -8,13 +8,3 @@ try:
 except Exception as e:
     print(f"Exception type: {type(e).__name__}")
     print(f"Exception message: {e}")
-```
-
-Let me run this test script:
-<terminal>
-<command>
-python test_exception.py
-<cd>
-QuantChain
-</command>
-</terminal>

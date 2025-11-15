@@ -1,14 +1,17 @@
 """Tests for IB async execution connector."""
 
+
+
+
 import asyncio
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
-
 import pytest
+from quantchain.connectors.ib_async_execution import IBExecutionConnector
+from quantchain.tools.trading_execution import (
+from ib_async import (
 
 try:
-    from quantchain.connectors.ib_async_execution import IBExecutionConnector
-    from quantchain.tools.trading_execution import (
         AccountInfo,
         OrderRequest,
         OrderResult,
@@ -22,7 +25,6 @@ try:
         OrderNotFoundError,
         ValidationError,
     )
-    from ib_async import (
         IB,
         Contract,
         Stock,
@@ -51,7 +53,9 @@ class TestIBExecutionConnector:
     """Test cases for IBExecutionConnector."""
 
     @pytest.fixture
-    def mock_ib(self):
+
+
+def mock_ib(self):
         """Create a mock IB client."""
         mock_ib = MagicMock()
         mock_ib.connectAsync = AsyncMock()
@@ -70,7 +74,9 @@ class TestIBExecutionConnector:
         return mock_ib
 
     @pytest.fixture
-    def connector(self, mock_ib):
+
+
+def connector(self, mock_ib):
         """Create a connector instance with mocked IB."""
         with patch("quantchain.connectors.ib_async_execution.IB", return_value=mock_ib):
             with patch("asyncio.new_event_loop", return_value=asyncio.new_event_loop()):
@@ -88,7 +94,9 @@ class TestIBExecutionConnector:
                 connector._order_map = {}
                 return connector
 
-    def test_initialization(self):
+
+
+def test_initialization(self):
         """Test connector initialization."""
         # Test with default values
         mock_ib = MagicMock()
@@ -107,7 +115,9 @@ class TestIBExecutionConnector:
                     assert connector.readonly is False
                     assert connector.account is None
 
-    def test_initialization_with_custom_values(self):
+
+
+def test_initialization_with_custom_values(self):
         """Test initialization with custom values."""
         mock_ib = MagicMock()
         mock_ib.connectAsync = AsyncMock()
@@ -131,12 +141,16 @@ class TestIBExecutionConnector:
                     assert connector.readonly is True
                     assert connector.account == "DU123456"
 
-    def test_disconnect(self, connector, mock_ib):
+
+
+def test_disconnect(self, connector, mock_ib):
         """Test disconnecting from IB."""
         connector.disconnect()
         mock_ib.disconnect.assert_called_once()
 
-    def test_run_async(self, connector):
+
+
+def test_run_async(self, connector):
         """Test running async method in sync context."""
         async_mock = AsyncMock(return_value="test_result")
 
@@ -145,7 +159,9 @@ class TestIBExecutionConnector:
         assert result == "test_result"
         async_mock.assert_called_once_with("arg1", "arg2", kwarg1="value1")
 
-    def test_create_stock_contract(self, connector):
+
+
+def test_create_stock_contract(self, connector):
         """Test creating a stock contract."""
         # Mock the Stock class to avoid stub issues
         with patch("quantchain.connectors.ib_async_execution.Stock") as mock_stock:
@@ -162,7 +178,9 @@ class TestIBExecutionConnector:
             assert mock_contract.exchange == "SMART"
             assert mock_contract.currency == "USD"
 
-    def test_create_forex_contract(self, connector):
+
+
+def test_create_forex_contract(self, connector):
         """Test creating a forex contract."""
         with patch("quantchain.connectors.ib_async_execution.Forex") as mock_forex:
             mock_contract = MagicMock()
@@ -177,7 +195,9 @@ class TestIBExecutionConnector:
             assert mock_contract.currency == "USD"
             assert mock_contract.secType == "CASH"
 
-    def test_create_future_contract(self, connector):
+
+
+def test_create_future_contract(self, connector):
         """Test creating a future contract."""
         with patch("quantchain.connectors.ib_async_execution.Future") as mock_future:
             mock_contract = MagicMock()
@@ -192,7 +212,9 @@ class TestIBExecutionConnector:
             assert mock_contract.secType == "FUT"
             assert mock_contract.lastTradeDateOrContractMonth == "202312"
 
-    def test_convert_order_to_ib_market(self, connector):
+
+
+def test_convert_order_to_ib_market(self, connector):
         """Test converting market order to IB format."""
         # Mock order classes
         request = OrderRequest(
@@ -207,7 +229,9 @@ class TestIBExecutionConnector:
         assert ib_order.totalQuantity == 100
         assert ib_order.tif == "DAY"  # Default time in force
 
-    def test_convert_order_to_ib_limit(self, connector):
+
+
+def test_convert_order_to_ib_limit(self, connector):
         """Test converting limit order to IB format."""
         request = OrderRequest(
             symbol="AAPL",
@@ -223,7 +247,9 @@ class TestIBExecutionConnector:
         assert ib_order.lmtPrice == 150.25
         assert ib_order.tif == "DAY"  # Default time in force
 
-    def test_convert_order_to_ib_stop(self, connector):
+
+
+def test_convert_order_to_ib_stop(self, connector):
         """Test converting stop order to IB format."""
         request = OrderRequest(
             symbol="AAPL",
@@ -240,7 +266,9 @@ class TestIBExecutionConnector:
         assert ib_order.totalQuantity == 100
         assert ib_order.auxPrice == 150.50
 
-    def test_convert_order_to_ib_stop_limit(self, connector):
+
+
+def test_convert_order_to_ib_stop_limit(self, connector):
         """Test converting stop limit order to IB format."""
         request = OrderRequest(
             symbol="AAPL",
@@ -259,7 +287,9 @@ class TestIBExecutionConnector:
         assert ib_order.lmtPrice == 150.00
         assert ib_order.auxPrice == 149.50
 
-    def test_place_market_order(self, connector, mock_ib):
+
+
+def test_place_market_order(self, connector, mock_ib):
         """Test placing a market order."""
         # Mock IB components
         mock_contract = MagicMock(spec=Contract)
@@ -269,9 +299,15 @@ class TestIBExecutionConnector:
         mock_trade.orderStatus.status = "Submitted"
 
         with patch.object(connector, "_create_contract", return_value=mock_contract):
-            with patch.object(connector, "_qualify_contract", return_value=mock_contract):
+            with patch.object(
+                connector, "_qualify_contract", return_value=mock_contract
+            ):
                 with patch.object(connector, "_convert_order_to_ib") as mock_convert:
-                    with patch.object(connector, "_convert_ib_order_to_result", return_value=MagicMock()) as mock_result:
+                    with patch.object(
+                        connector,
+                        "_convert_ib_order_to_result",
+                        return_value=MagicMock(),
+                    ) as mock_result:
                         mock_ib.placeOrder.return_value = mock_trade
                         mock_convert.return_value = MagicMock()
 
@@ -291,7 +327,9 @@ class TestIBExecutionConnector:
                         mock_ib.placeOrder.assert_called_once()
                         mock_convert.assert_called_once_with(request)
 
-    def test_place_order_readonly_mode(self, connector):
+
+
+def test_place_order_readonly_mode(self, connector):
         """Test that orders cannot be placed in readonly mode."""
         connector.readonly = True
 
@@ -304,10 +342,14 @@ class TestIBExecutionConnector:
         )
 
         # Try to place order
-        with pytest.raises(ExecutionError, match="Cannot place orders in read-only mode"):
+        with pytest.raises(
+            ExecutionError, match="Cannot place orders in read-only mode"
+        ):
             connector.place_order(request)
 
-    def test_cancel_order(self, connector, mock_ib):
+
+
+def test_cancel_order(self, connector, mock_ib):
         """Test canceling an order."""
         # Mock IB components
         mock_trade = MagicMock(spec=Trade)
@@ -332,7 +374,9 @@ class TestIBExecutionConnector:
             assert result.order_id == "12345"
             mock_ib.cancelOrder.assert_called_once_with(mock_trade.order)
 
-    def test_cancel_order_not_found(self, connector, mock_ib):
+
+
+def test_cancel_order_not_found(self, connector, mock_ib):
         """Test canceling an order that doesn't exist."""
         # Set up trades mock to return empty list
         mock_ib.trades.return_value = []
@@ -341,7 +385,9 @@ class TestIBExecutionConnector:
         with pytest.raises(OrderNotFoundError, match="Order not found: 99999"):
             connector.cancel_order("99999")
 
-    def test_get_order(self, connector, mock_ib):
+
+
+def test_get_order(self, connector, mock_ib):
         """Test retrieving order details."""
         # Mock IB components
         mock_trade = MagicMock(spec=Trade)
@@ -373,7 +419,9 @@ class TestIBExecutionConnector:
             # Verify result
             assert result == mock_convert.return_value
 
-    def test_get_order_not_found(self, connector, mock_ib):
+
+
+def test_get_order_not_found(self, connector, mock_ib):
         """Test retrieving an order that doesn't exist."""
         # Set up trades mock to return empty list
         mock_ib.trades.return_value = []
@@ -382,7 +430,9 @@ class TestIBExecutionConnector:
         with pytest.raises(OrderNotFoundError, match="Order not found: 99999"):
             connector.get_order("99999")
 
-    def test_get_account(self, connector, mock_ib):
+
+
+def test_get_account(self, connector, mock_ib):
         """Test retrieving account information."""
         # Mock IB account summary
         mock_summary = [
@@ -415,7 +465,9 @@ class TestIBExecutionConnector:
         assert result.portfolio_value == 100000.0
         assert len(result.positions) == 1
 
-    def test_get_positions(self, connector, mock_ib):
+
+
+def test_get_positions(self, connector, mock_ib):
         """Test retrieving positions."""
         # Mock IB positions
         mock_position1 = MagicMock()
@@ -451,7 +503,9 @@ class TestIBExecutionConnector:
         assert msft.symbol == "MSFT"
         assert msft.quantity == -50.0
 
-    def test_get_positions_empty(self, connector, mock_ib):
+
+
+def test_get_positions_empty(self, connector, mock_ib):
         """Test retrieving empty positions."""
         # Mock empty positions
         mock_ib.positionsAsync.return_value = []
@@ -463,7 +517,9 @@ class TestIBExecutionConnector:
         # Verify result
         assert result == []
 
-    def test_get_order_history(self, connector, mock_ib):
+
+
+def test_get_order_history(self, connector, mock_ib):
         """Test retrieving order history."""
         # Mock IB filled orders
         mock_fill = MagicMock()
@@ -505,7 +561,9 @@ class TestIBExecutionConnector:
             # Verify result
             assert len(result) == 1
 
-    def test_is_market_open(self, connector, mock_ib):
+
+
+def test_is_market_open(self, connector, mock_ib):
         """Test checking if market is open."""
         # Mock IB market data
         mock_tick = MagicMock()
@@ -522,7 +580,9 @@ class TestIBExecutionConnector:
         # The implementation doesn't use reqMktDataAsync/cancelMktDataAsync anymore
         # It uses reqContractDetails instead
 
-    def test_validate_order(self, connector):
+
+
+def test_validate_order(self, connector):
         """Test order validation."""
         # Mock the _create_contract method to avoid stub issues
         with patch.object(connector, "_create_contract"):
@@ -566,7 +626,9 @@ class TestIBExecutionConnector:
             )
             connector.validate_order(valid_request)  # Should not raise
 
-    def test_validate_order_invalid_symbol(self, connector):
+
+
+def test_validate_order_invalid_symbol(self, connector):
         """Test order validation with invalid symbol."""
         with patch.object(connector, "_create_contract"):
             # Invalid empty symbol
@@ -579,11 +641,15 @@ class TestIBExecutionConnector:
                 )
                 connector.validate_order(invalid_request)
 
-    def test_validate_order_invalid_quantity(self, connector):
+
+
+def test_validate_order_invalid_quantity(self, connector):
         """Test order validation with invalid quantity."""
         with patch.object(connector, "_create_contract"):
             # Invalid zero quantity
-            with pytest.raises(ValidationError, match="Order quantity must be positive"):
+            with pytest.raises(
+                ValidationError, match="Order quantity must be positive"
+            ):
                 invalid_request = OrderRequest(
                     symbol="AAPL",
                     side=OrderSide.BUY,
@@ -593,7 +659,9 @@ class TestIBExecutionConnector:
                 connector.validate_order(invalid_request)
 
             # Invalid negative quantity
-            with pytest.raises(ValidationError, match="Order quantity must be positive"):
+            with pytest.raises(
+                ValidationError, match="Order quantity must be positive"
+            ):
                 invalid_request = OrderRequest(
                     symbol="AAPL",
                     side=OrderSide.BUY,
@@ -602,7 +670,9 @@ class TestIBExecutionConnector:
                 )
                 connector.validate_order(invalid_request)
 
-    def test_get_symbol_info(self, connector, mock_ib):
+
+
+def test_get_symbol_info(self, connector, mock_ib):
         """Test getting symbol information."""
         # Mock IB contract details
         mock_contract = MagicMock(spec=Contract)
@@ -639,14 +709,18 @@ class TestIBExecutionConnector:
         # primary_exchange is not included in the implementation's return value
         # assert result.get("primary_exchange") == "NASDAQ"
 
-    def test_convert_order_status(self, connector):
+
+
+def test_convert_order_status(self, connector):
         """Test converting IB order status to internal format."""
         # Test all status mappings
         for ib_status, internal_status in connector.STATUS_MAPPING.items():
             result = connector._convert_order_status(ib_status)
             assert result == internal_status
 
-    def test_convert_order_type(self, connector):
+
+
+def test_convert_order_type(self, connector):
         """Test converting IB order type to internal format."""
         # Test all type mappings
         assert connector._convert_ib_order_type(MarketOrder) == OrderType.MARKET
@@ -654,10 +728,14 @@ class TestIBExecutionConnector:
         assert connector._convert_ib_order_type(StopOrder) == OrderType.STOP
         assert connector._convert_ib_order_type(StopLimitOrder) == OrderType.STOP_LIMIT
 
-    def test_attribute_error_in_place_order(self, connector):
+
+
+def test_attribute_error_in_place_order(self, connector):
         """Test handling of attribute errors during order placement."""
         # Mock the _create_contract method to raise AttributeError
-        with patch.object(connector, "_create_contract", side_effect=AttributeError("Invalid API")):
+        with patch.object(
+            connector, "_create_contract", side_effect=AttributeError("Invalid API")
+        ):
             # Create order request
             request = OrderRequest(
                 symbol="AAPL",

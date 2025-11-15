@@ -6,13 +6,10 @@ Test suite for fine-tuning functionality including PEFT, quantization, and valid
 # flake8: noqa (Functions are imported dynamically within test methods)
 """
 
-from unittest.mock import Mock, patch
 
-import pytest
 
 # Check for optional dependencies
 try:
-    import torch
 
     torch.tensor([1])  # Basic test to ensure torch works
     HAS_TORCH = True
@@ -46,8 +43,6 @@ except ImportError:
     HAS_DATASETS = False
 
 # noqa: F401 (these functions are imported dynamically in test methods)
-from quantchain.tools.model_fine_tuning import EnvironmentError  # noqa: F401
-from quantchain.tools.model_fine_tuning import (
     DatasetError,
     FineTuningConfig,
     FineTuningError,
@@ -65,7 +60,27 @@ from quantchain.tools.model_fine_tuning import (
 class TestFineTuningConfig:
     """Test fine-tuning configuration class."""
 
-    def test_valid_config_creation(self) -> None:
+
+from unittest.mock import Mock, patch
+import pytest
+import torch
+from quantchain.tools.model_fine_tuning import EnvironmentError  # noqa: F401
+from quantchain.tools.model_fine_tuning import (
+from quantchain.tools.model_fine_tuning import prepare_financial_dataset
+from quantchain.tools.model_fine_tuning import prepare_financial_dataset
+from quantchain.tools.model_fine_tuning import fine_tune_model_qlora
+from quantchain.tools.model_fine_tuning import fine_tune_model_qlora
+from quantchain.tools.model_fine_tuning import fine_tune_model_qlora
+from quantchain.tools.model_fine_tuning import quantize_model
+from quantchain.tools.model_fine_tuning import quantize_model
+from quantchain.tools.model_fine_tuning import quantize_model
+from quantchain.tools.model_fine_tuning import validate_fine_tuned_model
+from quantchain.tools.model_fine_tuning import validate_fine_tuned_model
+from quantchain.tools.model_fine_tuning import (
+
+
+
+def test_valid_config_creation(self) -> None:
         """Test creating valid configuration."""
         config = FineTuningConfig(
             model_name="deepseek-r1-0528",
@@ -80,7 +95,9 @@ class TestFineTuningConfig:
         assert config.lora_alpha == 32  # Default value
         assert config.lora_dropout == 0.1  # Default value
 
-    def test_invalid_lora_r(self) -> None:
+
+
+def test_invalid_lora_r(self) -> None:
         """Test invalid LoRA r parameter."""
         with pytest.raises(ValueError, match="lora_r must be positive"):
             FineTuningConfig(
@@ -90,7 +107,9 @@ class TestFineTuningConfig:
                 lora_r=-1,
             )
 
-    def test_invalid_lora_alpha(self) -> None:
+
+
+def test_invalid_lora_alpha(self) -> None:
         """Test invalid LoRA alpha parameter."""
         with pytest.raises(ValueError, match="lora_alpha must be positive"):
             FineTuningConfig(
@@ -100,7 +119,9 @@ class TestFineTuningConfig:
                 lora_alpha=0,
             )
 
-    def test_invalid_lora_dropout(self) -> None:
+
+
+def test_invalid_lora_dropout(self) -> None:
         """Test invalid LoRA dropout parameter."""
         with pytest.raises(ValueError, match="lora_dropout must be between 0 and 1"):
             FineTuningConfig(
@@ -114,7 +135,9 @@ class TestFineTuningConfig:
 class TestTrainingArguments:
     """Test training arguments class."""
 
-    def test_default_training_args(self) -> None:
+
+
+def test_default_training_args(self) -> None:
         """Test creating training arguments with defaults."""
         args = TrainingArguments(output_dir="/tmp/output")
 
@@ -126,13 +149,17 @@ class TestTrainingArguments:
 
 @pytest.mark.skipif(not HAS_TORCH, reason="torch not available")
 @pytest.mark.requires_ml
+
+
 class TestSetupFineTuningEnvironment:
     """Test fine-tuning environment setup."""
 
     @patch("torch.cuda.is_available", return_value=True)
     @patch("torch.cuda.get_device_properties")
     @patch("os.makedirs")
-    def test_successful_setup(
+
+
+def test_successful_setup(
         self, mock_makedirs: Mock, mock_device_props: Mock, mock_cuda: Mock
     ) -> FineTuningConfig:
         """Test successful environment setup."""
@@ -154,7 +181,9 @@ class TestSetupFineTuningEnvironment:
         mock_makedirs.assert_called_once_with("/tmp/output", exist_ok=True)
 
     @patch("torch.cuda.is_available", return_value=False)
-    def test_no_cuda_available(self, mock_cuda: Mock) -> None:
+
+
+def test_no_cuda_available(self, mock_cuda: Mock) -> None:
         """Test environment setup without CUDA."""
         with pytest.raises(
             EnvironmentError, match="CUDA GPU not available for fine-tuning"
@@ -168,19 +197,25 @@ class TestSetupFineTuningEnvironment:
 
 @pytest.mark.skipif(not HAS_DATASETS, reason="datasets not available")
 @pytest.mark.requires_ml
+
+
 class TestPrepareFinancialDataset:
     """Test financial dataset preparation."""
 
     @patch("os.path.isfile", return_value=True)
     @patch("os.path.isdir", return_value=False)
-    def test_jsonl_dataset_loading(self, mock_isdir: Mock, mock_isfile: Mock) -> None:
+
+
+def test_jsonl_dataset_loading(self, mock_isdir: Mock, mock_isfile: Mock) -> None:
         """Test loading JSONL dataset."""
         # Skip this test as it requires actual file system access
         pytest.skip(
             "Dataset loading test requires file system access - skipping for CI"
         )
 
-    def test_unsupported_file_format(self) -> None:
+
+
+def test_unsupported_file_format(self) -> None:
         """Test handling of unsupported file format."""
         tokenizer_instance = Mock()
 
@@ -188,7 +223,6 @@ class TestPrepareFinancialDataset:
             # Mock load_dataset to simulate successful import but unsupported format
             mock_load.side_effect = Exception("Dataset path not found: /tmp/test.txt")
 
-            from quantchain.tools.model_fine_tuning import prepare_financial_dataset
 
             with pytest.raises(
                 DatasetError,
@@ -199,12 +233,13 @@ class TestPrepareFinancialDataset:
                 )
 
     @patch("quantchain.tools.model_fine_tuning.load_dataset")
-    def test_dataset_not_found(self, mock_load_dataset: Mock) -> None:
+
+
+def test_dataset_not_found(self, mock_load_dataset: Mock) -> None:
         """Test handling when dataset path doesn't exist."""
         mock_load_dataset.side_effect = Exception("File not found")
         tokenizer_instance = Mock()
 
-        from quantchain.tools.model_fine_tuning import prepare_financial_dataset
 
         with pytest.raises(DatasetError):
             prepare_financial_dataset(
@@ -217,12 +252,16 @@ class TestPrepareFinancialDataset:
     reason="torch, peft, or transformers not available",
 )
 @pytest.mark.requires_ml
+
+
 class TestFineTuneModelQLoRA:
     """Test QLoRA fine-tuning functionality."""
 
     @patch("torch.cuda.max_memory_allocated", return_value=15 * 1024**3)
     @patch("os.path.join")
-    def test_successful_qlora_fine_tuning(
+
+
+def test_successful_qlora_fine_tuning(
         self, mock_join: Mock, mock_cuda_mem: Mock
     ) -> None:
         """Test successful QLoRA fine-tuning."""
@@ -270,7 +309,6 @@ class TestFineTuneModelQLoRA:
             training_args = TrainingArguments(output_dir="/tmp/output")
             mock_dataset = Mock()
 
-            from quantchain.tools.model_fine_tuning import fine_tune_model_qlora
 
             result = fine_tune_model_qlora(config, mock_dataset, training_args)
 
@@ -279,7 +317,9 @@ class TestFineTuneModelQLoRA:
             assert result.training_loss == 0.5
             assert result.eval_loss == 0.6
 
-    def test_missing_dependencies(self) -> None:
+
+
+def test_missing_dependencies(self) -> None:
         """Test handling when required dependencies are missing."""
         config = FineTuningConfig(
             model_name="test-model",
@@ -294,7 +334,6 @@ class TestFineTuneModelQLoRA:
             "quantchain.tools.model_fine_tuning.fine_tune_model_qlora",
             side_effect=TrainingError("No package metadata was found for bitsandbytes"),
         ) as mock_fine_tune:
-            from quantchain.tools.model_fine_tuning import fine_tune_model_qlora
 
             # Should raise the mocked TrainingError
             with pytest.raises(
@@ -306,7 +345,9 @@ class TestFineTuneModelQLoRA:
             # Verify the mock was called
             mock_fine_tune.assert_called_once_with(config, mock_dataset, training_args)
 
-    def test_invalid_model_path(self) -> None:
+
+
+def test_invalid_model_path(self) -> None:
         """Test handling when model path is invalid."""
         config = FineTuningConfig(
             model_name="test-model",
@@ -323,7 +364,6 @@ class TestFineTuneModelQLoRA:
                 "Failed to load model/tokenizer: No model found at test-org/test-model"
             ),
         ) as mock_fine_tune:
-            from quantchain.tools.model_fine_tuning import fine_tune_model_qlora
 
             with pytest.raises(
                 TrainingError,
@@ -339,10 +379,14 @@ class TestFineTuneModelQLoRA:
 
 
 @pytest.mark.requires_ml
+
+
 class TestQuantizeModel:
     """Test model quantization functionality."""
 
-    def test_gguf_quantization(self) -> None:
+
+
+def test_gguf_quantization(self) -> None:
         """Test GGUF quantization."""
         with patch(
             "quantchain.tools.model_fine_tuning._quantize_to_gguf"
@@ -358,7 +402,6 @@ class TestQuantizeModel:
             )
             mock_quantize.return_value = mock_result
 
-            from quantchain.tools.model_fine_tuning import quantize_model
 
             result = quantize_model(
                 model_path="/tmp/model",
@@ -371,7 +414,9 @@ class TestQuantizeModel:
             assert result.quantized_model_path == "/tmp/output/model.gguf"
             assert result.compression_ratio == 3.33
 
-    def test_gptq_quantization(self) -> None:
+
+
+def test_gptq_quantization(self) -> None:
         """Test GPTQ quantization."""
         with patch(
             "quantchain.tools.model_fine_tuning._quantize_to_gptq"
@@ -387,7 +432,6 @@ class TestQuantizeModel:
             )
             mock_quantize.return_value = mock_result
 
-            from quantchain.tools.model_fine_tuning import quantize_model
 
             result = quantize_model(
                 model_path="/tmp/model",
@@ -399,13 +443,14 @@ class TestQuantizeModel:
             assert isinstance(result, QuantizationResult)
             assert result.quantized_model_path == "/tmp/output/model.gptq"
 
-    def test_unsupported_quantization_format(self) -> None:
+
+
+def test_unsupported_quantization_format(self) -> None:
         """Test handling of unsupported quantization format."""
         with pytest.raises(
             QuantizationError,
             match="Quantization failed: Unsupported quantization format",
         ):
-            from quantchain.tools.model_fine_tuning import quantize_model
 
             quantize_model(
                 model_path="/tmp/model",
@@ -415,15 +460,18 @@ class TestQuantizeModel:
 
 
 @pytest.mark.requires_ml
+
+
 class TestValidateFineTunedModel:
     """Test model validation functionality."""
 
-    def test_successful_validation(self) -> None:
+
+
+def test_successful_validation(self) -> None:
         """Test successful model validation."""
         with patch(
             "quantchain.tools.model_fine_tuning._get_directory_size", return_value=5.0
         ):
-            from quantchain.tools.model_fine_tuning import validate_fine_tuned_model
 
             result = validate_fine_tuned_model(
                 model_path="/tmp/model", test_dataset=Mock()
@@ -436,14 +484,15 @@ class TestValidateFineTunedModel:
             assert len(result.sample_outputs) == 2
             assert "accuracy" in result.performance_metrics
 
-    def test_validation_failure(self) -> None:
+
+
+def test_validation_failure(self) -> None:
         """Test handling when validation fails."""
         # Mock the validate_fine_tuned_model function to raise an exception
         with patch(
             "quantchain.tools.model_fine_tuning.ValidationReport",
             side_effect=Exception("Validation error"),
         ):
-            from quantchain.tools.model_fine_tuning import validate_fine_tuned_model
 
             with pytest.raises(ValidationError, match="Validation failed"):
                 validate_fine_tuned_model(model_path="/tmp/model", test_dataset=Mock())
@@ -452,7 +501,9 @@ class TestValidateFineTunedModel:
 class TestErrorClasses:
     """Test custom exception classes."""
 
-    def test_fine_tuning_error_hierarchy(self) -> None:
+
+
+def test_fine_tuning_error_hierarchy(self) -> None:
         """Test exception class hierarchy."""
         error = FineTuningError("Test error")
 
@@ -477,13 +528,17 @@ class TestErrorClasses:
 
 
 @pytest.mark.requires_ml
+
+
 class TestIntegration:
     """Integration tests for fine-tuning workflow."""
 
     @patch("torch.cuda.is_available", return_value=True)
     @patch("torch.cuda.get_device_properties")
     @patch("torch.cuda.max_memory_allocated", return_value=15 * 1024**3)
-    def test_end_to_end_workflow(
+
+
+def test_end_to_end_workflow(
         self, mock_cuda_mem: Mock, mock_device_props: Mock, mock_cuda: Mock
     ) -> None:
         """Test end-to-end fine-tuning workflow."""
@@ -538,7 +593,6 @@ class TestIntegration:
             mock_prepare.return_value = Mock()
 
             # Execute workflow
-            from quantchain.tools.model_fine_tuning import (
                 fine_tune_model_qlora,
                 prepare_financial_dataset,
                 quantize_model,

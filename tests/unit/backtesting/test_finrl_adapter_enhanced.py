@@ -1,12 +1,13 @@
 """Enhanced tests for FinRL adapter to reach 80% coverage."""
 
+
+# Check if finrl_adapter is available
+
 import pytest
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch, MagicMock
-
-# Check if finrl_adapter is available
 try:
     from quantchain.backtesting.finrl_adapter import (
         FinRLAdapter,
@@ -21,6 +22,7 @@ try:
         CCXTDataConnector,
         PolygonDataConnector,
     )
+
     FINRL_ADAPTER_AVAILABLE = True
 except ImportError as e:
     FINRL_ADAPTER_AVAILABLE = False
@@ -32,19 +34,26 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture
+
+
 def mock_market_data():
     """Create mock market data for testing."""
     dates = pd.date_range(start="2023-01-01", end="2023-01-10", freq="D")
-    return pd.DataFrame({
-        "open": np.random.uniform(100, 110, len(dates)),
-        "high": np.random.uniform(110, 120, len(dates)),
-        "low": np.random.uniform(90, 100, len(dates)),
-        "close": np.random.uniform(100, 110, len(dates)),
-        "volume": np.random.randint(1000, 10000, len(dates)),
-    }, index=dates)
+    return pd.DataFrame(
+        {
+            "open": np.random.uniform(100, 110, len(dates)),
+            "high": np.random.uniform(110, 120, len(dates)),
+            "low": np.random.uniform(90, 100, len(dates)),
+            "close": np.random.uniform(100, 110, len(dates)),
+            "volume": np.random.randint(1000, 10000, len(dates)),
+        },
+        index=dates,
+    )
 
 
 @pytest.fixture
+
+
 def mock_config():
     """Create mock configuration."""
     return {
@@ -56,49 +65,70 @@ def mock_config():
 
 
 @pytest.mark.unit
+
+
 class TestFinRLAdapterEnhanced:
     """Enhanced tests for FinRL adapter functionality."""
 
-    def test_get_connector_alpaca(self):
+
+
+def test_get_connector_alpaca(self):
         """Test get_connector with Alpaca."""
-        with patch("quantchain.backtesting.finrl_adapter.AlpacaDataConnector") as mock_connector:
+        with patch(
+            "quantchain.backtesting.finrl_adapter.AlpacaDataConnector"
+        ) as mock_connector:
             mock_connector.return_value = Mock()
             connector = get_connector("alpaca", api_key="test", secret_key="test")
             assert connector is not None
             mock_connector.assert_called_once()
 
-    def test_get_connector_ccxt(self):
+
+
+def test_get_connector_ccxt(self):
         """Test get_connector with CCXT."""
-        with patch("quantchain.backtesting.finrl_adapter.CCXTDataConnector") as mock_connector:
+        with patch(
+            "quantchain.backtesting.finrl_adapter.CCXTDataConnector"
+        ) as mock_connector:
             mock_connector.return_value = Mock()
             connector = get_connector("ccxt", exchange="binance")
             assert connector is not None
             mock_connector.assert_called_once()
 
-    def test_get_connector_polygon(self):
+
+
+def test_get_connector_polygon(self):
         """Test get_connector with Polygon."""
-        with patch("quantchain.backtesting.finrl_adapter.PolygonDataConnector") as mock_connector:
+        with patch(
+            "quantchain.backtesting.finrl_adapter.PolygonDataConnector"
+        ) as mock_connector:
             mock_connector.return_value = Mock()
             connector = get_connector("polygon", api_key="test")
             assert connector is not None
             mock_connector.assert_called_once()
 
-    def test_get_connector_invalid(self):
+
+
+def test_get_connector_invalid(self):
         """Test get_connector with invalid source."""
         with pytest.raises(ValueError):
             get_connector("invalid_source")
 
     @patch("quantchain.backtesting.finrl_adapter.AlpacaDataConnector")
-    def test_finrl_adapter_initialization(self, mock_alpaca):
+
+
+def test_finrl_adapter_initialization(self, mock_alpaca):
         """Test FinRLAdapter initialization."""
         mock_alpaca.return_value = Mock()
-        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame({
-            'open': [100.0, 101.0, 102.0],
-            'high': [101.0, 102.0, 103.0],
-            'low': [99.0, 100.0, 101.0],
-            'close': [100.5, 101.5, 102.5],
-            'volume': [10000, 11000, 12000]
-        }, index=pd.date_range('2023-01-01', periods=3, freq='D'))
+        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame(
+            {
+                "open": [100.0, 101.0, 102.0],
+                "high": [101.0, 102.0, 103.0],
+                "low": [99.0, 100.0, 101.0],
+                "close": [100.5, 101.5, 102.5],
+                "volume": [10000, 11000, 12000],
+            },
+            index=pd.date_range("2023-01-01", periods=3, freq="D"),
+        )
 
         adapter = FinRLAdapter(
             connector_type="alpaca",
@@ -113,16 +143,21 @@ class TestFinRLAdapterEnhanced:
         assert adapter.current_step == 0
 
     @patch("quantchain.backtesting.finrl_adapter.AlpacaDataConnector")
-    def test_finrl_adapter_reset(self, mock_alpaca, mock_market_data):
+
+
+def test_finrl_adapter_reset(self, mock_alpaca, mock_market_data):
         """Test FinRLAdapter reset method."""
         mock_alpaca.return_value = Mock()
-        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame({
-            'open': [100.0, 101.0, 102.0],
-            'high': [101.0, 102.0, 103.0],
-            'low': [99.0, 100.0, 101.0],
-            'close': [100.5, 101.5, 102.5],
-            'volume': [10000, 11000, 12000]
-        }, index=pd.date_range('2023-01-01', periods=3, freq='D'))
+        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame(
+            {
+                "open": [100.0, 101.0, 102.0],
+                "high": [101.0, 102.0, 103.0],
+                "low": [99.0, 100.0, 101.0],
+                "close": [100.5, 101.5, 102.5],
+                "volume": [10000, 11000, 12000],
+            },
+            index=pd.date_range("2023-01-01", periods=3, freq="D"),
+        )
 
         adapter = FinRLAdapter(
             connector_type="alpaca",
@@ -139,16 +174,21 @@ class TestFinRLAdapterEnhanced:
         assert obs is not None
 
     @patch("quantchain.backtesting.finrl_adapter.AlpacaDataConnector")
-    def test_finrl_adapter_step(self, mock_alpaca, mock_market_data):
+
+
+def test_finrl_adapter_step(self, mock_alpaca, mock_market_data):
         """Test FinRLAdapter step method."""
         mock_alpaca.return_value = Mock()
-        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame({
-            'open': [100.0, 101.0, 102.0],
-            'high': [101.0, 102.0, 103.0],
-            'low': [99.0, 100.0, 101.0],
-            'close': [100.5, 101.5, 102.5],
-            'volume': [10000, 11000, 12000]
-        }, index=pd.date_range('2023-01-01', periods=3, freq='D'))
+        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame(
+            {
+                "open": [100.0, 101.0, 102.0],
+                "high": [101.0, 102.0, 103.0],
+                "low": [99.0, 100.0, 101.0],
+                "close": [100.5, 101.5, 102.5],
+                "volume": [10000, 11000, 12000],
+            },
+            index=pd.date_range("2023-01-01", periods=3, freq="D"),
+        )
         adapter = FinRLAdapter(
             connector_type="alpaca",
             symbol="AAPL",
@@ -168,16 +208,21 @@ class TestFinRLAdapterEnhanced:
         assert isinstance(info, dict)
 
     @patch("quantchain.backtesting.finrl_adapter.AlpacaDataConnector")
-    def test_finrl_adapter_action_space(self, mock_alpaca):
+
+
+def test_finrl_adapter_action_space(self, mock_alpaca):
         """Test FinRLAdapter action space."""
         mock_alpaca.return_value = Mock()
-        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame({
-            'open': [100.0, 101.0, 102.0],
-            'high': [101.0, 102.0, 103.0],
-            'low': [99.0, 100.0, 101.0],
-            'close': [100.5, 101.5, 102.5],
-            'volume': [10000, 11000, 12000]
-        }, index=pd.date_range('2023-01-01', periods=3, freq='D'))
+        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame(
+            {
+                "open": [100.0, 101.0, 102.0],
+                "high": [101.0, 102.0, 103.0],
+                "low": [99.0, 100.0, 101.0],
+                "close": [100.5, 101.5, 102.5],
+                "volume": [10000, 11000, 12000],
+            },
+            index=pd.date_range("2023-01-01", periods=3, freq="D"),
+        )
         adapter = FinRLAdapter(
             connector_type="alpaca",
             symbol="AAPL",
@@ -186,20 +231,25 @@ class TestFinRLAdapterEnhanced:
         )
 
         if GYMNASIUM_AVAILABLE:
-            assert hasattr(adapter, 'action_space')
-            assert hasattr(adapter, 'observation_space')
+            assert hasattr(adapter, "action_space")
+            assert hasattr(adapter, "observation_space")
 
     @patch("quantchain.backtesting.finrl_adapter.AlpacaDataConnector")
-    def test_finrl_adapter_portfolio_metrics(self, mock_alpaca, mock_market_data):
+
+
+def test_finrl_adapter_portfolio_metrics(self, mock_alpaca, mock_market_data):
         """Test portfolio metrics calculation."""
         mock_alpaca.return_value = Mock()
-        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame({
-            'open': [100.0, 101.0, 102.0],
-            'high': [101.0, 102.0, 103.0],
-            'low': [99.0, 100.0, 101.0],
-            'close': [100.5, 101.5, 102.5],
-            'volume': [10000, 11000, 12000]
-        }, index=pd.date_range('2023-01-01', periods=3, freq='D'))
+        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame(
+            {
+                "open": [100.0, 101.0, 102.0],
+                "high": [101.0, 102.0, 103.0],
+                "low": [99.0, 100.0, 101.0],
+                "close": [100.5, 101.5, 102.5],
+                "volume": [10000, 11000, 12000],
+            },
+            index=pd.date_range("2023-01-01", periods=3, freq="D"),
+        )
 
         adapter = FinRLAdapter(
             connector_type="alpaca",
@@ -219,17 +269,22 @@ class TestFinRLAdapterEnhanced:
         assert total_value > 0
 
     @patch("quantchain.backtesting.finrl_adapter.AlpacaDataConnector")
-    def test_finrl_adapter_transaction_costs(self, mock_alpaca):
+
+
+def test_finrl_adapter_transaction_costs(self, mock_alpaca):
         """Test transaction cost calculation."""
         mock_alpaca.return_value = Mock()
         # Mock get_historical_data to return proper DataFrame
-        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame({
-            'open': [100.0, 101.0, 102.0],
-            'high': [101.0, 102.0, 103.0],
-            'low': [99.0, 100.0, 101.0],
-            'close': [100.5, 101.5, 102.5],
-            'volume': [10000, 11000, 12000]
-        }, index=pd.date_range('2023-01-01', periods=3, freq='D'))
+        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame(
+            {
+                "open": [100.0, 101.0, 102.0],
+                "high": [101.0, 102.0, 103.0],
+                "low": [99.0, 100.0, 101.0],
+                "close": [100.5, 101.5, 102.5],
+                "volume": [10000, 11000, 12000],
+            },
+            index=pd.date_range("2023-01-01", periods=3, freq="D"),
+        )
         adapter = FinRLAdapter(
             connector_type="alpaca",
             symbol="AAPL",
@@ -241,10 +296,7 @@ class TestFinRLAdapterEnhanced:
 
         # Test transaction costs through market_friction
         cost_info = adapter.market_friction.get_total_cost(
-            price=100.0,
-            quantity=100,
-            side="buy",
-            symbol="AAPL"
+            price=100.0, quantity=100, side="buy", symbol="AAPL"
         )
         assert "executed_price" in cost_info
         assert "total" in cost_info
@@ -253,10 +305,7 @@ class TestFinRLAdapterEnhanced:
 
         # Test sell transaction
         cost_info = adapter.market_friction.get_total_cost(
-            price=100.0,
-            quantity=100,
-            side="sell",
-            symbol="AAPL"
+            price=100.0, quantity=100, side="sell", symbol="AAPL"
         )
         assert "executed_price" in cost_info
         assert "total" in cost_info
@@ -264,7 +313,9 @@ class TestFinRLAdapterEnhanced:
         assert cost_info["total"] >= 0
 
     @patch("quantchain.backtesting.finrl_adapter.AlpacaDataConnector")
-    def test_finrl_adapter_edge_cases(self, mock_alpaca, mock_market_data):
+
+
+def test_finrl_adapter_edge_cases(self, mock_alpaca, mock_market_data):
         """Test edge cases and error handling."""
         mock_alpaca.return_value = Mock()
 
@@ -278,7 +329,7 @@ class TestFinRLAdapterEnhanced:
             )
 
         # Test with empty data
-        with patch.object(FinRLAdapter, '_setup_data_connector'):
+        with patch.object(FinRLAdapter, "_setup_data_connector"):
             # Skip data setup to test empty data case
             adapter = FinRLAdapter(
                 connector_type="alpaca",
@@ -292,16 +343,21 @@ class TestFinRLAdapterEnhanced:
                 adapter._get_observation()
 
     @patch("quantchain.backtesting.finrl_adapter.AlpacaDataConnector")
-    def test_finrl_adapter_observation_format(self, mock_alpaca, mock_market_data):
+
+
+def test_finrl_adapter_observation_format(self, mock_alpaca, mock_market_data):
         """Test observation format and structure."""
         mock_alpaca.return_value = Mock()
-        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame({
-            'open': [100.0, 101.0, 102.0],
-            'high': [101.0, 102.0, 103.0],
-            'low': [99.0, 100.0, 101.0],
-            'close': [100.5, 101.5, 102.5],
-            'volume': [10000, 11000, 12000]
-        }, index=pd.date_range('2023-01-01', periods=3, freq='D'))
+        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame(
+            {
+                "open": [100.0, 101.0, 102.0],
+                "high": [101.0, 102.0, 103.0],
+                "low": [99.0, 100.0, 101.0],
+                "close": [100.5, 101.5, 102.5],
+                "volume": [10000, 11000, 12000],
+            },
+            index=pd.date_range("2023-01-01", periods=3, freq="D"),
+        )
 
         adapter = FinRLAdapter(
             connector_type="alpaca",
@@ -320,16 +376,21 @@ class TestFinRLAdapterEnhanced:
             assert len(obs) == adapter.observation_space.shape[0]
 
     @patch("quantchain.backtesting.finrl_adapter.AlpacaDataConnector")
-    def test_finrl_adapter_reward_calculation(self, mock_alpaca, mock_market_data):
+
+
+def test_finrl_adapter_reward_calculation(self, mock_alpaca, mock_market_data):
         """Test reward calculation logic."""
         mock_alpaca.return_value = Mock()
-        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame({
-            'open': [100.0, 101.0, 102.0],
-            'high': [101.0, 102.0, 103.0],
-            'low': [99.0, 100.0, 101.0],
-            'close': [100.5, 101.5, 102.5],
-            'volume': [10000, 11000, 12000]
-        }, index=pd.date_range('2023-01-01', periods=3, freq='D'))
+        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame(
+            {
+                "open": [100.0, 101.0, 102.0],
+                "high": [101.0, 102.0, 103.0],
+                "low": [99.0, 100.0, 101.0],
+                "close": [100.5, 101.5, 102.5],
+                "volume": [10000, 11000, 12000],
+            },
+            index=pd.date_range("2023-01-01", periods=3, freq="D"),
+        )
 
         adapter = FinRLAdapter(
             connector_type="alpaca",
@@ -353,18 +414,23 @@ class TestFinRLAdapterEnhanced:
 
     @patch("quantchain.backtesting.finrl_adapter.MarketFrictionSimulator")
     @patch("quantchain.backtesting.finrl_adapter.AlpacaDataConnector")
-    def test_finrl_adapter_with_market_friction(self, mock_alpaca, mock_friction):
+
+
+def test_finrl_adapter_with_market_friction(self, mock_alpaca, mock_friction):
         """Test FinRLAdapter with market friction enabled."""
         mock_alpaca.return_value = Mock()
         mock_friction.return_value = Mock()
         # Mock get_historical_data to return proper DataFrame
-        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame({
-            'open': [100.0, 101.0, 102.0],
-            'high': [101.0, 102.0, 103.0],
-            'low': [99.0, 100.0, 101.0],
-            'close': [100.5, 101.5, 102.5],
-            'volume': [10000, 11000, 12000]
-        }, index=pd.date_range('2023-01-01', periods=3, freq='D'))
+        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame(
+            {
+                "open": [100.0, 101.0, 102.0],
+                "high": [101.0, 102.0, 103.0],
+                "low": [99.0, 100.0, 101.0],
+                "close": [100.5, 101.5, 102.5],
+                "volume": [10000, 11000, 12000],
+            },
+            index=pd.date_range("2023-01-01", periods=3, freq="D"),
+        )
 
         adapter = FinRLAdapter(
             connector_type="alpaca",
@@ -382,17 +448,22 @@ class TestFinRLAdapterEnhanced:
 
     @patch("quantchain.backtesting.finrl_adapter.PerformanceMetrics")
     @patch("quantchain.backtesting.finrl_adapter.AlpacaDataConnector")
-    def test_finrl_adapter_performance_metrics(self, mock_alpaca, mock_metrics):
+
+
+def test_finrl_adapter_performance_metrics(self, mock_alpaca, mock_metrics):
         """Test performance metrics integration."""
         mock_alpaca.return_value = Mock()
         # Mock get_historical_data to return proper DataFrame
-        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame({
-            'open': [100.0, 101.0, 102.0],
-            'high': [101.0, 102.0, 103.0],
-            'low': [99.0, 100.0, 101.0],
-            'close': [100.5, 101.5, 102.5],
-            'volume': [10000, 11000, 12000]
-        }, index=pd.date_range('2023-01-01', periods=3, freq='D'))
+        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame(
+            {
+                "open": [100.0, 101.0, 102.0],
+                "high": [101.0, 102.0, 103.0],
+                "low": [99.0, 100.0, 101.0],
+                "close": [100.5, 101.5, 102.5],
+                "volume": [10000, 11000, 12000],
+            },
+            index=pd.date_range("2023-01-01", periods=3, freq="D"),
+        )
         mock_metrics.return_value = Mock()
 
         adapter = FinRLAdapter(
@@ -410,17 +481,22 @@ class TestFinRLAdapterEnhanced:
         assert metrics is not None
 
     @patch("quantchain.backtesting.finrl_adapter.AlpacaDataConnector")
-    def test_finrl_adapter_action_validation(self, mock_alpaca):
+
+
+def test_finrl_adapter_action_validation(self, mock_alpaca):
         """Test action validation."""
         mock_alpaca.return_value = Mock()
         # Mock get_historical_data to return proper DataFrame
-        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame({
-            'open': [100.0, 101.0, 102.0],
-            'high': [101.0, 102.0, 103.0],
-            'low': [99.0, 100.0, 101.0],
-            'close': [100.5, 101.5, 102.5],
-            'volume': [10000, 11000, 12000]
-        }, index=pd.date_range('2023-01-01', periods=3, freq='D'))
+        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame(
+            {
+                "open": [100.0, 101.0, 102.0],
+                "high": [101.0, 102.0, 103.0],
+                "low": [99.0, 100.0, 101.0],
+                "close": [100.5, 101.5, 102.5],
+                "volume": [10000, 11000, 12000],
+            },
+            index=pd.date_range("2023-01-01", periods=3, freq="D"),
+        )
         adapter = FinRLAdapter(
             connector_type="alpaca",
             symbol="AAPL",
@@ -443,17 +519,22 @@ class TestFinRLAdapterEnhanced:
                 pass
 
     @patch("quantchain.backtesting.finrl_adapter.AlpacaDataConnector")
-    def test_finrl_adapter_data_handling(self, mock_alpaca, mock_market_data):
+
+
+def test_finrl_adapter_data_handling(self, mock_alpaca, mock_market_data):
         """Test data handling and processing."""
         mock_alpaca.return_value = Mock()
         # Mock get_historical_data to return proper DataFrame
-        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame({
-            'open': [100.0, 101.0, 102.0],
-            'high': [101.0, 102.0, 103.0],
-            'low': [99.0, 100.0, 101.0],
-            'close': [100.5, 101.5, 102.5],
-            'volume': [10000, 11000, 12000]
-        }, index=pd.date_range('2023-01-01', periods=3, freq='D'))
+        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame(
+            {
+                "open": [100.0, 101.0, 102.0],
+                "high": [101.0, 102.0, 103.0],
+                "low": [99.0, 100.0, 101.0],
+                "close": [100.5, 101.5, 102.5],
+                "volume": [10000, 11000, 12000],
+            },
+            index=pd.date_range("2023-01-01", periods=3, freq="D"),
+        )
         adapter = FinRLAdapter(
             connector_type="alpaca",
             symbol="AAPL",
@@ -465,22 +546,27 @@ class TestFinRLAdapterEnhanced:
         adapter.data = mock_market_data
 
         # Test data attributes
-        assert hasattr(adapter, 'market_data')
-        assert hasattr(adapter, 'data')
+        assert hasattr(adapter, "market_data")
+        assert hasattr(adapter, "data")
         assert isinstance(adapter.data, pd.DataFrame)
         assert not adapter.data.empty
 
     @patch("quantchain.backtesting.finrl_adapter.AlpacaDataConnector")
-    def test_finrl_adapter_edge_cases(self, mock_alpaca, mock_market_data):
+
+
+def test_finrl_adapter_edge_cases(self, mock_alpaca, mock_market_data):
         """Test edge cases and error handling."""
         mock_alpaca.return_value = Mock()
-        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame({
-            'open': [100.0, 101.0, 102.0],
-            'high': [101.0, 102.0, 103.0],
-            'low': [99.0, 100.0, 101.0],
-            'close': [100.5, 101.5, 102.5],
-            'volume': [10000, 11000, 12000]
-        }, index=pd.date_range('2023-01-01', periods=3, freq='D'))
+        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame(
+            {
+                "open": [100.0, 101.0, 102.0],
+                "high": [101.0, 102.0, 103.0],
+                "low": [99.0, 100.0, 101.0],
+                "close": [100.5, 101.5, 102.5],
+                "volume": [10000, 11000, 12000],
+            },
+            index=pd.date_range("2023-01-01", periods=3, freq="D"),
+        )
 
         adapter = FinRLAdapter(
             connector_type="alpaca",
@@ -505,16 +591,21 @@ class TestFinRLAdapterEnhanced:
         assert adapter.current_step > adapter.max_steps
 
     @patch("quantchain.backtesting.finrl_adapter.AlpacaDataConnector")
-    def test_finrl_adapter_close_cleanup(self, mock_alpaca, mock_market_data):
+
+
+def test_finrl_adapter_close_cleanup(self, mock_alpaca, mock_market_data):
         """Test cleanup and resource management on close."""
         mock_alpaca.return_value = Mock()
-        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame({
-            'open': [100.0, 101.0, 102.0],
-            'high': [101.0, 102.0, 103.0],
-            'low': [99.0, 100.0, 101.0],
-            'close': [100.5, 101.5, 102.5],
-            'volume': [10000, 11000, 12000]
-        }, index=pd.date_range('2023-01-01', periods=3, freq='D'))
+        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame(
+            {
+                "open": [100.0, 101.0, 102.0],
+                "high": [101.0, 102.0, 103.0],
+                "low": [99.0, 100.0, 101.0],
+                "close": [100.5, 101.5, 102.5],
+                "volume": [10000, 11000, 12000],
+            },
+            index=pd.date_range("2023-01-01", periods=3, freq="D"),
+        )
 
         adapter = FinRLAdapter(
             connector_type="alpaca",
@@ -532,17 +623,22 @@ class TestFinRLAdapterEnhanced:
         adapter.render(mode="human")  # With mode parameter
 
     @patch("quantchain.backtesting.finrl_adapter.AlpacaDataConnector")
-    def test_finrl_adapter_close(self, mock_alpaca):
+
+
+def test_finrl_adapter_close(self, mock_alpaca):
         """Test cleanup on close."""
         mock_alpaca.return_value = Mock()
         # Mock get_historical_data to return proper DataFrame
-        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame({
-            'open': [100.0, 101.0, 102.0],
-            'high': [101.0, 102.0, 103.0],
-            'low': [99.0, 100.0, 101.0],
-            'close': [100.5, 101.5, 102.5],
-            'volume': [10000, 11000, 12000]
-        }, index=pd.date_range('2023-01-01', periods=3, freq='D'))
+        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame(
+            {
+                "open": [100.0, 101.0, 102.0],
+                "high": [101.0, 102.0, 103.0],
+                "low": [99.0, 100.0, 101.0],
+                "close": [100.5, 101.5, 102.5],
+                "volume": [10000, 11000, 12000],
+            },
+            index=pd.date_range("2023-01-01", periods=3, freq="D"),
+        )
         adapter = FinRLAdapter(
             connector_type="alpaca",
             symbol="AAPL",
@@ -554,17 +650,22 @@ class TestFinRLAdapterEnhanced:
         adapter.close()  # Should not raise exceptions
 
     @patch("quantchain.backtesting.finrl_adapter.AlpacaDataConnector")
-    def test_finrl_adapter_seed(self, mock_alpaca):
+
+
+def test_finrl_adapter_seed(self, mock_alpaca):
         """Test random seed functionality."""
         mock_alpaca.return_value = Mock()
         # Mock get_historical_data to return proper DataFrame
-        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame({
-            'open': [100.0, 101.0, 102.0],
-            'high': [101.0, 102.0, 103.0],
-            'low': [99.0, 100.0, 101.0],
-            'close': [100.5, 101.5, 102.5],
-            'volume': [10000, 11000, 12000]
-        }, index=pd.date_range('2023-01-01', periods=3, freq='D'))
+        mock_alpaca.return_value.get_historical_data.return_value = pd.DataFrame(
+            {
+                "open": [100.0, 101.0, 102.0],
+                "high": [101.0, 102.0, 103.0],
+                "low": [99.0, 100.0, 101.0],
+                "close": [100.5, 101.5, 102.5],
+                "volume": [10000, 11000, 12000],
+            },
+            index=pd.date_range("2023-01-01", periods=3, freq="D"),
+        )
         adapter = FinRLAdapter(
             connector_type="alpaca",
             symbol="AAPL",

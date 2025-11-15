@@ -1,16 +1,8 @@
 """
 Comprehensive tests for web_dashboard.py to improve coverage from 51.7% to 90%+
 """
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-import json
-import warnings
 
 # Import the actual classes from the web_dashboard module
-from quantchain.tools.web_dashboard import (
     DashboardCharts,
     WebDashboardApp,
     create_dashboard,
@@ -21,10 +13,35 @@ from quantchain.tools.web_dashboard import (
 class TestDashboardCharts:
     """Test cases for the DashboardCharts class."""
 
+
+import pytest
+from unittest.mock import Mock, patch, MagicMock
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+import json
+import warnings
+from quantchain.tools.web_dashboard import (
+        from quantchain.tools.web_dashboard import go
+        from quantchain.tools.web_dashboard import go
+        from quantchain.tools.web_dashboard import go
+        from quantchain.tools.web_dashboard import Config
+        from quantchain.tools.web_dashboard import st
+        from quantchain.tools.web_dashboard import st
+        from quantchain.tools.web_dashboard import Config
+                import importlib
+                import quantchain.tools.web_dashboard
+                import importlib
+                import quantchain.tools.web_dashboard
+
+
+
     def test_init_default_theme(self):
         """Test initialization with default theme."""
         charts = DashboardCharts()
         assert charts.theme == "plotly_white"
+
+
 
     def test_init_custom_theme(self):
         """Test initialization with custom theme."""
@@ -32,9 +49,10 @@ class TestDashboardCharts:
         assert charts.theme == "plotly_dark"
 
     @patch('quantchain.tools.web_dashboard.HAS_PLOTLY', True)
+
+
     def test_create_line_chart_with_plotly(self):
         """Test creating a line chart with plotly available."""
-        from quantchain.tools.web_dashboard import go
 
         charts = DashboardCharts()
         x_data = [1, 2, 3, 4, 5]
@@ -50,6 +68,8 @@ class TestDashboardCharts:
             fig_instance.update_layout.assert_called_once_with(title=title, template=charts.theme)
 
     @patch('quantchain.tools.web_dashboard.HAS_PLOTLY', False)
+
+
     def test_create_line_chart_without_plotly(self):
         """Test creating a line chart without plotly."""
         charts = DashboardCharts()
@@ -61,9 +81,10 @@ class TestDashboardCharts:
             assert result is None
 
     @patch('quantchain.tools.web_dashboard.HAS_PLOTLY', True)
+
+
     def test_create_candlestick_chart_with_plotly(self):
         """Test creating a candlestick chart with plotly available."""
-        from quantchain.tools.web_dashboard import go
 
         charts = DashboardCharts()
 
@@ -84,6 +105,8 @@ class TestDashboardCharts:
             fig_instance.update_layout.assert_called_once_with(title=title, template=charts.theme)
 
     @patch('quantchain.tools.web_dashboard.HAS_PLOTLY', True)
+
+
     def test_create_candlestick_chart_invalid_dataframe(self):
         """Test creating a candlestick chart with invalid DataFrame."""
         charts = DashboardCharts()
@@ -97,6 +120,8 @@ class TestDashboardCharts:
             charts.create_candlestick_chart(df)
 
     @patch('quantchain.tools.web_dashboard.HAS_PLOTLY', False)
+
+
     def test_create_candlestick_chart_without_plotly(self):
         """Test creating a candlestick chart without plotly."""
         charts = DashboardCharts()
@@ -115,9 +140,10 @@ class TestDashboardCharts:
             assert result is None
 
     @patch('quantchain.tools.web_dashboard.HAS_PLOTLY', True)
+
+
     def test_create_performance_chart_with_plotly(self):
         """Test creating a performance chart with plotly available."""
-        from quantchain.tools.web_dashboard import go
 
         charts = DashboardCharts()
 
@@ -136,6 +162,8 @@ class TestDashboardCharts:
             assert kwargs.get('yaxis_title') == "Cumulative Return"
 
     @patch('quantchain.tools.web_dashboard.HAS_PLOTLY', False)
+
+
     def test_create_performance_chart_without_plotly(self):
         """Test creating a performance chart without plotly."""
         charts = DashboardCharts()
@@ -153,9 +181,10 @@ class TestWebDashboardApp:
     """Test cases for the WebDashboardApp class."""
 
     @patch('quantchain.tools.web_dashboard.HAS_STREAMLIT', True)
+
+
     def test_init_with_config(self):
         """Test initialization with config."""
-        from quantchain.tools.web_dashboard import Config
 
         config = Config()
         app = WebDashboardApp(config)
@@ -164,6 +193,8 @@ class TestWebDashboardApp:
         assert isinstance(app.charts, DashboardCharts)
 
     @patch('quantchain.tools.web_dashboard.HAS_STREAMLIT', False)
+
+
     def test_init_without_streamlit(self):
         """Test initialization without streamlit."""
         with patch('quantchain.tools.web_dashboard.logger') as mock_logger:
@@ -172,9 +203,10 @@ class TestWebDashboardApp:
             mock_logger.warning.assert_called_once_with("Streamlit not available - web app disabled")
 
     @patch('quantchain.tools.web_dashboard.HAS_STREAMLIT', True)
+
+
     def test_render_sidebar(self):
         """Test rendering sidebar."""
-        from quantchain.tools.web_dashboard import st
 
         app = WebDashboardApp()
 
@@ -201,9 +233,10 @@ class TestWebDashboardApp:
             assert params["risk_tolerance"] == 0.5
 
     @patch('quantchain.tools.web_dashboard.HAS_STREAMLIT', True)
+
+
     def test_render_main_content(self):
         """Test rendering main content."""
-        from quantchain.tools.web_dashboard import st
 
         app = WebDashboardApp()
         params = {
@@ -232,6 +265,8 @@ class TestWebDashboardApp:
             mock_columns.assert_called_once()
             assert mock_metric.call_count == 3
 
+
+
     def test_calculate_max_drawdown(self):
         """Test calculating maximum drawdown."""
         app = WebDashboardApp()
@@ -246,6 +281,8 @@ class TestWebDashboardApp:
         assert abs(max_drawdown - (-0.05)) < 0.01
 
     @patch('quantchain.tools.web_dashboard.HAS_STREAMLIT', True)
+
+
     def test_run_with_streamlit(self):
         """Test running the dashboard with streamlit."""
         app = WebDashboardApp()
@@ -261,6 +298,8 @@ class TestWebDashboardApp:
             mock_content.assert_called_once_with({"test": "params"})
 
     @patch('quantchain.tools.web_dashboard.HAS_STREAMLIT', False)
+
+
     def test_run_without_streamlit(self):
         """Test running the dashboard without streamlit."""
         app = WebDashboardApp()
@@ -278,9 +317,10 @@ class TestDashboardFunctions:
 
     @patch('quantchain.tools.web_dashboard.HAS_PLOTLY', True)
     @patch('quantchain.tools.web_dashboard.HAS_STREAMLIT', True)
+
+
     def test_create_dashboard_with_all_features(self):
         """Test creating a dashboard with all features."""
-        from quantchain.tools.web_dashboard import Config
 
         config = Config()
         dashboard = create_dashboard(config)
@@ -298,6 +338,8 @@ class TestDashboardFunctions:
         assert isinstance(dashboard["app"], WebDashboardApp)
 
     @patch('quantchain.tools.web_dashboard.HAS_PLOTLY', False)
+
+
     def test_create_dashboard_without_plotly(self):
         """Test creating a dashboard without plotly."""
         with patch('quantchain.tools.web_dashboard.logger') as mock_logger:
@@ -307,6 +349,8 @@ class TestDashboardFunctions:
             assert dashboard["has_plotly"] is False
 
     @patch('quantchain.tools.web_dashboard.HAS_STREAMLIT', False)
+
+
     def test_create_dashboard_without_streamlit(self):
         """Test creating a dashboard without streamlit."""
         with patch('quantchain.tools.web_dashboard.logger') as mock_logger:
@@ -316,6 +360,8 @@ class TestDashboardFunctions:
             assert dashboard["has_streamlit"] is False
 
     @patch('quantchain.tools.web_dashboard.HAS_PLOTLY', True)
+
+
     def test_render_static_dashboard_with_plotly(self):
         """Test rendering a static dashboard with plotly."""
         data = {
@@ -333,6 +379,8 @@ class TestDashboardFunctions:
             assert "<h1>QuantChain Dashboard</h1>" in result
 
     @patch('quantchain.tools.web_dashboard.HAS_PLOTLY', False)
+
+
     def test_render_static_dashboard_without_plotly(self):
         """Test rendering a static dashboard without plotly."""
         with patch('quantchain.tools.web_dashboard.logger') as mock_logger:
@@ -340,6 +388,8 @@ class TestDashboardFunctions:
 
             mock_logger.error.assert_called_once_with("Cannot render static dashboard - plotly not available")
             assert result == "<html><body><h1>Plotly not available for dashboard rendering</h1></body></html>"
+
+
 
     def test_render_static_dashboard_with_no_data(self):
         """Test rendering a static dashboard with no performance data."""
@@ -358,6 +408,8 @@ class TestDashboardFunctions:
 class TestOptionalDependencies:
     """Test cases for optional dependencies handling."""
 
+
+
     def test_plotly_import_warning(self):
         """Test that a warning is issued when plotly is not available."""
         with patch.dict('sys.modules', {'plotly': None}):
@@ -365,12 +417,12 @@ class TestOptionalDependencies:
                 warnings.simplefilter("always")
 
                 # Re-import the module to trigger the warning
-                import importlib
-                import quantchain.tools.web_dashboard
                 importlib.reload(quantchain.tools.web_dashboard)
 
                 # Should have issued an ImportWarning
                 assert any("plotly not available" in str(warning.message) for warning in w)
+
+
 
     def test_streamlit_import_warning(self):
         """Test that a warning is issued when streamlit is not available."""
@@ -379,14 +431,14 @@ class TestOptionalDependencies:
                 warnings.simplefilter("always")
 
                 # Re-import the module to trigger the warning
-                import importlib
-                import quantchain.tools.web_dashboard
                 importlib.reload(quantchain.tools.web_dashboard)
 
                 # Should have issued an ImportWarning
                 assert any("streamlit not available" in str(warning.message) for warning in w)
 
     @patch('quantchain.tools.web_dashboard.HAS_PLOTLY', False)
+
+
     def test_charts_disabled_without_plotly(self):
         """Test that charts are disabled when plotly is not available."""
         charts = DashboardCharts()
@@ -399,6 +451,8 @@ class TestOptionalDependencies:
         assert charts.create_performance_chart(pd.Series([0.01, 0.02])) is None
 
     @patch('quantchain.tools.web_dashboard.HAS_STREAMLIT', False)
+
+
     def test_app_disabled_without_streamlit(self):
         """Test that the app is disabled when streamlit is not available."""
         app = WebDashboardApp()

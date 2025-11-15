@@ -2,6 +2,7 @@
 """
 Simple test runner to execute our new test files directly
 """
+
 import subprocess
 import sys
 import os
@@ -35,8 +36,10 @@ def main():
     # Test files to run
     test_files = [
         "web_dashboard_tests.py",
-        "security_tests.py"
-        "ib_async_execution_tests.py"
+        "security_tests.py",
+        "ib_async_execution_tests.py",
+        "../tests/unit/backtesting/test_performance_metrics.py",
+        "../tests/unit/backtesting/test_market_friction.py"
     ]
 
     success_count = 0

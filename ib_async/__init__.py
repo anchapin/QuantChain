@@ -1,4 +1,6 @@
 # Stub package for ib_async
+
+
 import sys
 
 
@@ -35,6 +37,8 @@ class Order:
 
 
 class RequestError(Exception):
+
+
     def __init__(self, message, code=None):
         super().__init__(message)
         self.code = code

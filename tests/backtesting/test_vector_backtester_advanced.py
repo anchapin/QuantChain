@@ -1,25 +1,32 @@
 """Advanced tests for vector backtester covering edge cases and performance scenarios."""
 
+
+
 import pytest
 import numpy as np
 import pandas as pd
 from unittest.mock import patch, MagicMock
-
 from quantchain.backtesting.vector_backtester import (
+from quantchain.backtesting.engine import BacktestConfig
+from quantchain.backtesting.market_friction import MarketFrictionConfig
+import time
+import time
+import sys
+
     VectorBacktester,
     VectorBacktestResult,
     VectorizedPositionManager,
     VectorBacktestError,
     SignalProcessingError,
 )
-from quantchain.backtesting.engine import BacktestConfig
-from quantchain.backtesting.market_friction import MarketFrictionConfig
 
 
 class TestVectorizedPositionManagerAdvanced:
     """Advanced tests for VectorizedPositionManager."""
 
-    def _process_signals_and_get_equity(self, prices, signals, position_manager=None):
+
+
+def _process_signals_and_get_equity(self, prices, signals, position_manager=None):
         """
         Helper function to process signals and calculate equity curve.
 
@@ -34,17 +41,21 @@ class TestVectorizedPositionManagerAdvanced:
         if position_manager is None:
             position_manager = self.position_manager
 
-        positions, trades, current_cash = position_manager.process_signals(prices, signals)
+        positions, trades, current_cash = position_manager.process_signals(
+            prices, signals
+        )
         equity_curve = position_manager.calculate_equity(prices, positions)
 
         return {
             "positions": positions,
             "trade_log": trades,
             "equity_curve": equity_curve,
-            "current_cash": current_cash
+            "current_cash": current_cash,
         }
 
-    def setup_method(self):
+
+
+def setup_method(self):
         """Set up test fixtures."""
         # Create more complex test data
         dates = pd.date_range("2023-01-01", periods=1000, freq="D")
@@ -69,17 +80,23 @@ class TestVectorizedPositionManagerAdvanced:
             initial_cash=1000000, commission_rate=0.001, slippage_rate=0.0005
         )
 
-    def test_edge_case_all_zeros_signals(self):
+
+
+def test_edge_case_all_zeros_signals(self):
         """Test handling of all-zero signals."""
         zero_signals = pd.Series(0, index=self.signals.index)
-        positions, trades, current_cash = self.position_manager.process_signals(self.prices, zero_signals)
+        positions, trades, current_cash = self.position_manager.process_signals(
+            self.prices, zero_signals
+        )
 
         # Create result dict
         result = {
             "positions": positions,
             "trade_log": trades,
-            "equity_curve": self.position_manager.calculate_equity(self.prices, positions),
-            "current_cash": current_cash
+            "equity_curve": self.position_manager.calculate_equity(
+                self.prices, positions
+            ),
+            "current_cash": current_cash,
         }
 
         assert positions.sum() == 0
@@ -89,7 +106,9 @@ class TestVectorizedPositionManagerAdvanced:
             result["equity_curve"], self.position_manager.initial_cash, rtol=1e-10
         )
 
-    def test_edge_case_constant_buy_signals(self):
+
+
+def test_edge_case_constant_buy_signals(self):
         """Test handling of constant buy signals."""
         constant_buy = pd.Series(1, index=self.signals.index[:100])
         prices_subset = self.prices.iloc[:100]
@@ -102,7 +121,9 @@ class TestVectorizedPositionManagerAdvanced:
         assert len(result["trade_log"]) == 1
         assert result["trade_log"].iloc[0]["signal"] == 1
 
-    def test_edge_case_rapid_signal_fluctuations(self):
+
+
+def test_edge_case_rapid_signal_fluctuations(self):
         """Test handling of rapidly fluctuating signals."""
         # Create signals that flip between buy and sell rapidly
         fluctuating_signals = pd.Series(0, index=self.signals.index[:50])
@@ -110,13 +131,17 @@ class TestVectorizedPositionManagerAdvanced:
         fluctuating_signals[1::2] = -1  # Sell on odd indices
 
         prices_subset = self.prices.iloc[:50]
-        result = self._process_signals_and_get_equity(prices_subset, fluctuating_signals)
+        result = self._process_signals_and_get_equity(
+            prices_subset, fluctuating_signals
+        )
 
         # Should handle rapid fluctuations without errors
         assert len(result["equity_curve"]) == 50
         assert isinstance(result["trade_log"], pd.DataFrame)
 
-    def test_large_dataset_performance(self):
+
+
+def test_large_dataset_performance(self):
         """Test performance with large datasets."""
         # Create large dataset
         large_dates = pd.date_range("2020-01-01", periods=10000, freq="H")
@@ -128,7 +153,6 @@ class TestVectorizedPositionManagerAdvanced:
         )
 
         # This should complete without memory issues or excessive time
-        import time
 
         start_time = time.time()
 
@@ -141,7 +165,9 @@ class TestVectorizedPositionManagerAdvanced:
         assert execution_time < 5.0  # Should complete within 5 seconds
         assert len(result["equity_curve"]) == 10000
 
-    def test_extreme_price_movements(self):
+
+
+def test_extreme_price_movements(self):
         """Test handling of extreme price movements."""
         # Create prices with extreme movements
         extreme_prices = self.prices.copy()
@@ -159,7 +185,9 @@ class TestVectorizedPositionManagerAdvanced:
         assert len(result["equity_curve"]) == 500
         assert not result["equity_curve"].isna().all()
 
-    def test_nan_and_inf_handling(self):
+
+
+def test_nan_and_inf_handling(self):
         """Test handling of NaN and infinite values in data."""
         # Insert NaN and inf values
         dirty_prices = self.prices.copy()
@@ -177,7 +205,9 @@ class TestVectorizedPositionManagerAdvanced:
         # Equity curve should not contain NaN values (except possibly at problematic points)
         assert not result["equity_curve"].iloc[1:].isna().all()
 
-    def test_very_small_and_large_prices(self):
+
+
+def test_very_small_and_large_prices(self):
         """Test handling of very small and very large price values."""
         # Create prices with very small and large values
         small_prices = pd.Series(
@@ -192,19 +222,17 @@ class TestVectorizedPositionManagerAdvanced:
         large_signals = pd.Series([1, 0, -1, 0, 1], index=large_prices.index)
 
         # Should handle both cases without numerical overflow/underflow
-        small_result = self._process_signals_and_get_equity(
-            small_prices, small_signals
-        )
-        large_result = self._process_signals_and_get_equity(
-            large_prices, large_signals
-        )
+        small_result = self._process_signals_and_get_equity(small_prices, small_signals)
+        large_result = self._process_signals_and_get_equity(large_prices, large_signals)
 
         assert len(small_result["equity_curve"]) == 5
         assert len(large_result["equity_curve"]) == 5
         assert not np.isinf(small_result["equity_curve"]).any()
         assert not np.isinf(large_result["equity_curve"]).any()
 
-    def test_mixed_signal_values(self):
+
+
+def test_mixed_signal_values(self):
         """Test handling of various signal values (not just -1, 0, 1)."""
         # Create signals with various values
         mixed_signals = pd.Series(
@@ -220,7 +248,9 @@ class TestVectorizedPositionManagerAdvanced:
         assert len(result["equity_curve"]) == 8
         assert isinstance(result["trade_log"], pd.DataFrame)
 
-    def test_partial_position_signals(self):
+
+
+def test_partial_position_signals(self):
         """Test handling of partial position signals."""
         # Create signals for partial positions
         partial_signals = pd.Series(
@@ -237,7 +267,9 @@ class TestVectorizedPositionManagerAdvanced:
         # Position sizes should reflect signal magnitudes
         assert result["positions"].max() <= result["positions"].abs().max()
 
-    def test_high_frequency_signals(self):
+
+
+def test_high_frequency_signals(self):
         """Test handling of high-frequency trading signals."""
         # Create minute-level data for a day
         hf_dates = pd.date_range(
@@ -253,7 +285,9 @@ class TestVectorizedPositionManagerAdvanced:
         assert len(result["equity_curve"]) == 1440
         # Should handle high frequency data efficiently
 
-    def test_different_timeframes(self):
+
+
+def test_different_timeframes(self):
         """Test with different data timeframes."""
         # Test with different frequencies
         timeframes = ["1min", "5min", "15min", "1H", "4H", "1D"]
@@ -269,7 +303,9 @@ class TestVectorizedPositionManagerAdvanced:
 
             assert len(result["equity_curve"]) == 100
 
-    def test_gap_handling(self):
+
+
+def test_gap_handling(self):
         """Test handling of gaps in data."""
         # Create data with gaps
         dates_with_gaps = pd.date_range("2023-01-01", periods=100, freq="D")
@@ -286,7 +322,9 @@ class TestVectorizedPositionManagerAdvanced:
         assert len(result["equity_curve"]) == 94
         # Should handle gaps without issues
 
-    def test_duplicate_timestamps(self):
+
+
+def test_duplicate_timestamps(self):
         """Test handling of duplicate timestamps."""
         # Create data with duplicate timestamps
         dates = pd.date_range("2023-01-01", periods=10, freq="D")
@@ -305,7 +343,9 @@ class TestVectorizedPositionManagerAdvanced:
             # If it fails, that's also acceptable behavior for duplicate data
             pass
 
-    def test_empty_signals_subset(self):
+
+
+def test_empty_signals_subset(self):
         """Test with empty signals subset."""
         # Create a slice with no signals
         empty_signals = pd.Series([], dtype="float64")
@@ -317,7 +357,9 @@ class TestVectorizedPositionManagerAdvanced:
         assert len(result["positions"]) == 0
         assert len(result["trade_log"]) == 0
 
-    def test_single_data_point(self):
+
+
+def test_single_data_point(self):
         """Test with single data point."""
         single_date = pd.date_range("2023-01-01", periods=1)
         single_price = pd.Series([100], index=single_date)
@@ -327,7 +369,9 @@ class TestVectorizedPositionManagerAdvanced:
 
         assert len(result["equity_curve"]) == 1
 
-    def test_mismatched_lengths(self):
+
+
+def test_mismatched_lengths(self):
         """Test with mismatched price and signal lengths."""
         prices_100 = self.prices.iloc[:100]
         signals_50 = self.signals.iloc[:50]
@@ -336,7 +380,9 @@ class TestVectorizedPositionManagerAdvanced:
         with pytest.raises((ValueError, VectorBacktestError, SignalProcessingError)):
             self.position_manager.process_signals(prices_100, signals_50)
 
-    def test_very_high_commission_and_slippage(self):
+
+
+def test_very_high_commission_and_slippage(self):
         """Test with very high commission and slippage rates."""
         high_cost_manager = VectorizedPositionManager(
             initial_cash=100000,
@@ -351,7 +397,9 @@ class TestVectorizedPositionManagerAdvanced:
         # With such high costs, equity should decrease
         assert result["equity_curve"].iloc[-1] < result["equity_curve"].iloc[0]
 
-    def test_zero_commission_and_slippage(self):
+
+
+def test_zero_commission_and_slippage(self):
         """Test with zero commission and slippage."""
         no_cost_manager = VectorizedPositionManager(
             initial_cash=100000, commission_rate=0.0, slippage_rate=0.0
@@ -364,7 +412,9 @@ class TestVectorizedPositionManagerAdvanced:
         # Should still work without any costs
         assert len(result["equity_curve"]) == 100
 
-    def test_very_large_initial_cash(self):
+
+
+def test_very_large_initial_cash(self):
         """Test with very large initial cash amount."""
         rich_manager = VectorizedPositionManager(
             initial_cash=1e15,  # 1 quadrillion
@@ -379,7 +429,9 @@ class TestVectorizedPositionManagerAdvanced:
         assert len(result["equity_curve"]) == 100
         assert not np.isinf(result["equity_curve"]).any()
 
-    def test_very_small_initial_cash(self):
+
+
+def test_very_small_initial_cash(self):
         """Test with very small initial cash amount."""
         poor_manager = VectorizedPositionManager(
             initial_cash=0.01, commission_rate=0.001, slippage_rate=0.0005  # 1 cent
@@ -395,7 +447,9 @@ class TestVectorizedPositionManagerAdvanced:
 class TestVectorBacktesterAdvanced:
     """Advanced tests for VectorBacktester."""
 
-    def setup_method(self):
+
+
+def setup_method(self):
         """Set up test fixtures."""
         dates = pd.date_range("2023-01-01", periods=100, freq="D")
         np.random.seed(42)
@@ -426,7 +480,9 @@ class TestVectorBacktesterAdvanced:
 
         self.backtester = VectorBacktester(config=self.config)
 
-    def test_edge_case_single_row_data(self):
+
+
+def test_edge_case_single_row_data(self):
         """Test with single row of data."""
         single_row_data = self.data.iloc[:1]
 
@@ -438,7 +494,9 @@ class TestVectorBacktesterAdvanced:
         assert isinstance(result, VectorBacktestResult)
         assert len(result.equity_curve) == 1
 
-    def test_edge_case_empty_data(self):
+
+
+def test_edge_case_empty_data(self):
         """Test with empty data."""
         empty_data = pd.DataFrame()
         empty_signals = pd.Series()
@@ -447,7 +505,9 @@ class TestVectorBacktesterAdvanced:
         with pytest.raises(VectorBacktestError):
             self.backtester.run(data=empty_data, signals=empty_signals)
 
-    def test_corrupt_data_handling(self):
+
+
+def test_corrupt_data_handling(self):
         """Test handling of corrupt data."""
         corrupt_data = self.data.copy()
         corrupt_data.iloc[50, 0] = np.nan  # NaN in open
@@ -465,7 +525,9 @@ class TestVectorBacktesterAdvanced:
             # If it fails, that's acceptable for clearly corrupt data
             pass
 
-    def test_multiple_symbol_data(self):
+
+
+def test_multiple_symbol_data(self):
         """Test with multiple symbols in data."""
         # Create multi-index data for multiple symbols
         symbols = ["AAPL", "GOOGL", "MSFT"]
@@ -488,7 +550,9 @@ class TestVectorBacktesterAdvanced:
             # May fail if not designed for multi-symbol
             pass
 
-    def test_non_standard_column_names(self):
+
+
+def test_non_standard_column_names(self):
         """Test with non-standard column names."""
         non_standard_data = self.data.rename(
             columns={
@@ -511,7 +575,9 @@ class TestVectorBacktesterAdvanced:
             # Acceptable if it requires specific column names
             pass
 
-    def test_missing_required_columns(self):
+
+
+def test_missing_required_columns(self):
         """Test with missing required columns."""
         incomplete_data = self.data.drop(columns=["volume"])
 
@@ -527,7 +593,9 @@ class TestVectorBacktesterAdvanced:
             # If it fails, that's also acceptable behavior
             pass
 
-    def test_very_large_dataset_stress_test(self):
+
+
+def test_very_large_dataset_stress_test(self):
         """Test stress handling of very large datasets."""
         # Create large dataset
         large_dates = pd.date_range("2020-01-01", periods=50000, freq="H")
@@ -546,7 +614,6 @@ class TestVectorBacktesterAdvanced:
             np.random.choice([-1, 0, 1], 50000), index=large_dates
         )
 
-        import time
 
         start_time = time.time()
 
@@ -563,7 +630,9 @@ class TestVectorBacktesterAdvanced:
             # Acceptable for very large datasets
             pytest.skip("Large dataset test skipped due to memory constraints")
 
-    def test_concurrent_execution_simulation(self):
+
+
+def test_concurrent_execution_simulation(self):
         """Test simulation of concurrent execution scenarios."""
         # Create signals that would theoretically execute simultaneously
         concurrent_signals = pd.Series(0, index=self.data.index)
@@ -574,7 +643,9 @@ class TestVectorBacktesterAdvanced:
         assert isinstance(result, VectorBacktestResult)
         # Should handle signals that occur at same timestamp
 
-    def test_market_closed_scenarios(self):
+
+
+def test_market_closed_scenarios(self):
         """Test scenarios simulating market closed periods."""
         # Create data with gaps (market closed periods)
         market_dates = pd.date_range("2023-01-01", periods=100, freq="D")
@@ -593,11 +664,15 @@ class TestVectorBacktesterAdvanced:
         assert isinstance(result, VectorBacktestResult)
         # Should handle irregular trading days
 
-    def test_extreme_commission_scenarios(self):
+
+
+def test_extreme_commission_scenarios(self):
         """Test extreme commission scenarios."""
         # Test with very high commission
         high_commission_config = BacktestConfig(
-            initial_cash=100000, commission_rate=0.5, slippage_rate=0.0  # 50% commission
+            initial_cash=100000,
+            commission_rate=0.5,
+            slippage_rate=0.0,  # 50% commission
         )
 
         high_commission_backtester = VectorBacktester(config=high_commission_config)
@@ -608,9 +683,10 @@ class TestVectorBacktesterAdvanced:
         # With 50% commission, should lose money rapidly
         assert result.equity_curve.iloc[-1] < result.equity_curve.iloc[0]
 
-    def test_memory_efficiency_validation(self):
+
+
+def test_memory_efficiency_validation(self):
         """Test memory efficiency of operations."""
-        import sys
 
         # Check memory usage before and after operations
         initial_size = sys.getsizeof(self.data) + sys.getsizeof(self.signals)

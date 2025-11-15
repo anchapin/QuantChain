@@ -1,11 +1,19 @@
 """Additional coverage tests for LangGraphBacktestAdapter to boost coverage from 24% to 80%+."""
 
+
+
 import numpy as np
 import pandas as pd
 import pytest
 from unittest.mock import MagicMock, patch
-
 from quantchain.backtesting.langgraph_adapter import (
+import tempfile
+from datetime import datetime
+from quantchain.backtesting.langgraph_adapter import bar_to_agent_state
+from quantchain.backtesting.langgraph_adapter import agent_state_to_signal
+from quantchain.backtesting.langgraph_adapter import capture_reasoning
+from quantchain.backtesting.langgraph_adapter import (
+
     LangGraphBacktestAdapter,
     AgentExecutionError,
     TimeoutError,
@@ -27,10 +35,14 @@ from quantchain.backtesting.langgraph_adapter import (
 
 
 @pytest.mark.unit
+
+
 class TestLangGraphAdapterCoverage:
     """Coverage-focused tests for LangGraphBacktestAdapter and related classes."""
 
-    def test_adapter_with_minimal_data(self):
+
+
+def test_adapter_with_minimal_data(self):
         """Test adapter with minimal valid data."""
         with patch("quantchain.backtesting.langgraph_adapter.StateGraph", MagicMock()):
             mock_graph = MagicMock()
@@ -40,34 +52,40 @@ class TestLangGraphAdapterCoverage:
             assert adapter is not None
             assert adapter.agent_graph == mock_graph
 
-    def test_adapter_with_no_langgraph(self):
+
+
+def test_adapter_with_no_langgraph(self):
         """Test adapter when langgraph is not available."""
         # Mock langgraph as unavailable
-        with patch("quantchain.backtesting.langgraph_adapter.LANGGRAPH_AVAILABLE", False):
+        with patch(
+            "quantchain.backtesting.langgraph_adapter.LANGGRAPH_AVAILABLE", False
+        ):
             # Should not raise error directly, but adapter will be limited
             mock_graph = MagicMock()
             adapter = LangGraphBacktestAdapter(mock_graph)
             assert adapter is not None
 
-    def test_agent_state_initialization(self):
+
+
+def test_agent_state_initialization(self):
         """Test AgentState initialization with defaults."""
         state = AgentState()
         assert state.cash == 100000.0
         assert state.positions == {}
         assert state.equity == 100000.0
 
-    def test_agent_state_with_custom_values(self):
+
+
+def test_agent_state_with_custom_values(self):
         """Test AgentState with custom values."""
-        custom_state = AgentState(
-            cash=50000.0,
-            positions={"AAPL": 100},
-            equity=55000.0
-        )
+        custom_state = AgentState(cash=50000.0, positions={"AAPL": 100}, equity=55000.0)
         assert custom_state.cash == 50000.0
         assert custom_state.positions == {"AAPL": 100}
         assert custom_state.equity == 55000.0
 
-    def test_position_manager_initialization(self):
+
+
+def test_position_manager_initialization(self):
         """Test PositionManager initialization with defaults."""
         manager = PositionManager()
         assert manager.initial_cash == 100000.0
@@ -75,13 +93,17 @@ class TestLangGraphAdapterCoverage:
         assert manager.positions == {}
         assert manager.trades == []
 
-    def test_position_manager_with_custom_initial_cash(self):
+
+
+def test_position_manager_with_custom_initial_cash(self):
         """Test PositionManager with custom initial cash."""
         manager = PositionManager(initial_cash=50000.0)
         assert manager.initial_cash == 50000.0
         assert manager.cash == 50000.0
 
-    def test_position_manager_update_position(self):
+
+
+def test_position_manager_update_position(self):
         """Test PositionManager update_position method."""
         manager = PositionManager()
 
@@ -90,18 +112,22 @@ class TestLangGraphAdapterCoverage:
         assert manager.positions["AAPL"] == 100
         assert manager.cash < 100000.0  # Cash should decrease
 
-    def test_position_manager_calculate_equity(self):
+
+
+def test_position_manager_calculate_equity(self):
         """Test PositionManager calculate_equity method."""
         manager = PositionManager()
         manager.update_position("AAPL", 100, 150.0)
 
         # Mock current price
-        with patch.object(manager, 'calculate_equity') as mock_calc:
+        with patch.object(manager, "calculate_equity") as mock_calc:
             mock_calc.return_value = 115000.0  # 100000 - 15000 + 15000*100/100
             equity = manager.calculate_equity()
             assert equity == 115000.0
 
-    def test_deterministic_llm_wrapper_initialization(self):
+
+
+def test_deterministic_llm_wrapper_initialization(self):
         """Test DeterministicLLMWrapper initialization."""
         # Test with default empty rules
         wrapper = DeterministicLLMWrapper()
@@ -112,7 +138,9 @@ class TestLangGraphAdapterCoverage:
         wrapper = DeterministicLLMWrapper(rules)
         assert wrapper.response_rules == rules
 
-    def test_deterministic_llm_wrapper_call(self):
+
+
+def test_deterministic_llm_wrapper_call(self):
         """Test DeterministicLLMWrapper __call__ method."""
         wrapper = DeterministicLLMWrapper({"test": "response"})
 
@@ -124,19 +152,23 @@ class TestLangGraphAdapterCoverage:
         result = wrapper("unknown")
         assert result == ""  # Default empty response when no rule matches
 
-    def test_deterministic_llm_wrapper_add_rule(self):
+
+
+def test_deterministic_llm_wrapper_add_rule(self):
         """Test DeterministicLLMWrapper add_rule method."""
         wrapper = DeterministicLLMWrapper()
         wrapper.add_rule("new_condition", "new_response")
         assert wrapper.response_rules["new_condition"] == "new_response"
 
-    def test_deterministic_llm_wrapper_load_save_scenario(self):
+
+
+def test_deterministic_llm_wrapper_load_save_scenario(self):
         """Test DeterministicLLMWrapper load/save scenario methods."""
         wrapper = DeterministicLLMWrapper({"test": "response"})
 
         # Test save scenario
-        import tempfile
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
             temp_path = f.name
         wrapper.save_scenario(temp_path)
         assert True  # Successfully saved to file
@@ -146,13 +178,17 @@ class TestLangGraphAdapterCoverage:
         new_wrapper.load_scenario(temp_path)
         assert new_wrapper.response_rules == wrapper.response_rules
 
-    def test_agent_strategy_initialization(self):
+
+
+def test_agent_strategy_initialization(self):
         """Test AgentStrategy initialization."""
         mock_adapter = MagicMock()
         strategy = AgentStrategy(mock_adapter)
         assert strategy.adapter == mock_adapter
 
-    def test_agent_strategy_init(self):
+
+
+def test_agent_strategy_init(self):
         """Test AgentStrategy init method."""
         mock_adapter = MagicMock()
         strategy = AgentStrategy(mock_adapter)
@@ -165,7 +201,9 @@ class TestLangGraphAdapterCoverage:
         # init() returns None, so we just verify it doesn't raise an error
         assert strategy.position_manager is not None
 
-    def test_agent_strategy_next(self):
+
+
+def test_agent_strategy_next(self):
         """Test AgentStrategy next method."""
         mock_adapter = MagicMock()
         strategy = AgentStrategy(mock_adapter)
@@ -183,25 +221,19 @@ class TestLangGraphAdapterCoverage:
             "cash": 100000.0,
             "positions": {},
             "equity": 100000.0,
-            "current_bar": {"symbol": "AAPL", "price": 100.0}
+            "current_bar": {"symbol": "AAPL", "price": 100.0},
         }
         mock_adapter.agent_graph.invoke.return_value = mock_agent_state
 
         # Mock config to work with dictionary-like access
         mock_adapter.config = {
             "rate_limit_per_second": 10,
-            "max_concurrent_requests": 5
+            "max_concurrent_requests": 5,
         }
         mock_adapter.reasoning_log = []
 
         # Create mock bar data
-        bar_data = {
-            "Open": 100,
-            "High": 101,
-            "Low": 99,
-            "Close": 100.5,
-            "Volume": 1000
-        }
+        bar_data = {"Open": 100, "High": 101, "Low": 99, "Close": 100.5, "Volume": 1000}
 
         # Initialize strategy first
         strategy.init(initial_cash=100000.0)
@@ -212,9 +244,8 @@ class TestLangGraphAdapterCoverage:
 
 
 
-    def test_reasoning_entry_creation(self):
+def test_reasoning_entry_creation(self):
         """Test ReasoningEntry creation."""
-        from datetime import datetime
 
         entry = ReasoningEntry(
             timestamp=datetime.now(),
@@ -227,7 +258,7 @@ class TestLangGraphAdapterCoverage:
             confidence=0.8,
             quantity=100,
             execution_details={"type": "market"},
-            execution_time_ms=50.0
+            execution_time_ms=50.0,
         )
 
         assert entry.step == 1
@@ -237,7 +268,9 @@ class TestLangGraphAdapterCoverage:
         assert entry.quantity == 100
         assert entry.execution_time_ms == 50.0
 
-    def test_exceptions_creation(self):
+
+
+def test_exceptions_creation(self):
         """Test all exception classes can be created."""
         # Test all exception classes
         exceptions = [
@@ -248,20 +281,23 @@ class TestLangGraphAdapterCoverage:
             PositionError("Invalid position"),
             DeterministicRuleError("Invalid rule"),
             ScenarioLoadError("Failed to load"),
-            ReproducibilityError("Cannot reproduce")
+            ReproducibilityError("Cannot reproduce"),
         ]
 
         for exc in exceptions:
             assert isinstance(exc, Exception)
 
-    def test_langgraph_availability(self):
+
+
+def test_langgraph_availability(self):
         """Test langgraph availability flag."""
         # Test that LANGGRAPH_AVAILABLE exists
         assert LANGGRAPH_AVAILABLE is not None
 
-    def test_bar_to_agent_state_conversion(self):
+
+
+def test_bar_to_agent_state_conversion(self):
         """Test bar_to_agent_state function."""
-        from quantchain.backtesting.langgraph_adapter import bar_to_agent_state
 
         # Create test bar data
         bar = {
@@ -270,7 +306,7 @@ class TestLangGraphAdapterCoverage:
             "Low": 99.0,
             "Close": 100.5,
             "Volume": 1000,
-            "symbol": "AAPL"
+            "symbol": "AAPL",
         }
 
         # Create current state and position manager
@@ -284,9 +320,8 @@ class TestLangGraphAdapterCoverage:
 
 
 
-    def test_agent_state_to_signal_conversion(self):
+def test_agent_state_to_signal_conversion(self):
         """Test agent_state_to_signal function."""
-        from quantchain.backtesting.langgraph_adapter import agent_state_to_signal
 
         # Create test state with all required fields
         state = AgentState()
@@ -300,9 +335,10 @@ class TestLangGraphAdapterCoverage:
         signal = agent_state_to_signal(state)
         assert signal == "buy"
 
-    def test_capture_reasoning_function(self):
+
+
+def test_capture_reasoning_function(self):
         """Test capture_reasoning function."""
-        from quantchain.backtesting.langgraph_adapter import capture_reasoning
 
         # Create test state
         state = AgentState()
@@ -323,11 +359,16 @@ class TestLangGraphAdapterCoverage:
         assert "BUY" in entry.signal
         assert entry.confidence == 0.8
 
-    def test_create_standard_trading_agent(self):
+
+
+def test_create_standard_trading_agent(self):
         """Test create_standard_trading_agent function."""
         with patch("quantchain.backtesting.langgraph_adapter.StateGraph", MagicMock()):
-            with patch("quantchain.backtesting.langgraph_adapter.DeterministicLLMWrapper"):
-                from quantchain.backtesting.langgraph_adapter import create_standard_trading_agent
+            with patch(
+                "quantchain.backtesting.langgraph_adapter.DeterministicLLMWrapper"
+            ):
+                    create_standard_trading_agent,
+                )
 
                 # Test creation - function takes no parameters
                 agent = create_standard_trading_agent()

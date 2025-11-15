@@ -1,13 +1,15 @@
 """Enhanced tests for IB async execution connector to reach 80% coverage."""
 
+
+# Check if ib_async_execution is available
+
 import pytest
 import asyncio
 from datetime import datetime, timezone, timedelta
 from unittest.mock import Mock, patch, MagicMock, AsyncMock
+from quantchain.connectors.ib_async_execution import (
 
-# Check if ib_async_execution is available
 try:
-    from quantchain.connectors.ib_async_execution import (
         IBExecutionConnector,
         IB_ASYNC_AVAILABLE,
         IB,
@@ -26,6 +28,7 @@ try:
         InsufficientFundsError,
         OrderNotFoundError,
     )
+
     IB_EXECUTION_AVAILABLE = True
 except ImportError as e:
     IB_EXECUTION_AVAILABLE = False
@@ -37,6 +40,8 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture
+
+
 def mock_ib():
     """Create a mock IB client."""
     # Create a regular Mock instead of AsyncMock to avoid attribute issues
@@ -61,6 +66,8 @@ def mock_ib():
 
 
 @pytest.fixture
+
+
 def ib_connector():
     """Create IB execution connector with mocked IB."""
     # Create a connector instance directly without calling _connect
@@ -99,17 +106,24 @@ def ib_connector():
 
 
 @pytest.mark.unit
+
+
 class TestIBExecutionConnectorEnhanced:
     """Enhanced tests for IB execution connector."""
 
-    def test_connector_initialization_parameters(self):
+
+
+def test_connector_initialization_parameters(self):
         """Test connector initialization with various parameters."""
         # Create a mock IB instance that returns True for isConnected
         mock_ib_instance = Mock()
         mock_ib_instance.isConnected = Mock(return_value=True)
 
-        with patch("quantchain.connectors.ib_async_execution.IB", return_value=mock_ib_instance), \
-             patch("quantchain.connectors.ib_async_execution.IBExecutionConnector._connect"):
+        with patch(
+            "quantchain.connectors.ib_async_execution.IB", return_value=mock_ib_instance
+        ), patch(
+            "quantchain.connectors.ib_async_execution.IBExecutionConnector._connect"
+        ):
 
             # Test with all parameters
             connector = IBExecutionConnector(
@@ -128,7 +142,9 @@ class TestIBExecutionConnectorEnhanced:
             assert connector.readonly is False
             assert connector.account == "DU123456"
 
-    def test_connect_success(self, ib_connector):
+
+
+def test_connect_success(self, ib_connector):
         """Test successful connection to IB."""
         # Set up the mock to return True for connection status
         ib_connector.ib.isConnected.return_value = True
@@ -138,7 +154,9 @@ class TestIBExecutionConnectorEnhanced:
         assert result is True
         ib_connector.ib.isConnected.assert_called_once()
 
-    def test_connect_failure(self, ib_connector):
+
+
+def test_connect_failure(self, ib_connector):
         """Test connection failure to IB."""
         # Set up the mock to return False for connection status
         ib_connector.ib.isConnected.return_value = False
@@ -148,7 +166,9 @@ class TestIBExecutionConnectorEnhanced:
         assert result is False
         ib_connector.ib.isConnected.assert_called_once()
 
-    def test_disconnect(self, ib_connector):
+
+
+def test_disconnect(self, ib_connector):
         """Test disconnection from IB."""
         # Set up mock for disconnect method
         ib_connector.ib.disconnect = Mock()
@@ -158,7 +178,9 @@ class TestIBExecutionConnectorEnhanced:
 
         ib_connector.ib.disconnect.assert_called_once()
 
-    def test_is_connected(self, ib_connector):
+
+
+def test_is_connected(self, ib_connector):
         """Test checking connection status."""
         ib_connector.ib.isConnected.return_value = True
 
@@ -168,7 +190,9 @@ class TestIBExecutionConnectorEnhanced:
         ib_connector.ib.isConnected.assert_called_once()
 
     @pytest.mark.skip("submit_order method not implemented in current version")
-    def test_submit_market_order(self, ib_connector):
+
+
+def test_submit_market_order(self, ib_connector):
         """Test submitting a market order."""
         order_request = OrderRequest(
             symbol="AAPL",
@@ -189,11 +213,12 @@ class TestIBExecutionConnectorEnhanced:
         mock_ib.reqAllOpenOrders = AsyncMock()
 
         # Mock order status event
-        def mock_event_handler(func):
+
+
+def mock_event_handler(func):
             # Simulate order status update
             asyncio.create_task(
-                asyncio.sleep(0.1)
-                .then(lambda _: func(mock_order, mock_contract))
+                asyncio.sleep(0.1).then(lambda _: func(mock_order, mock_contract))
             )
             return None
 
@@ -206,7 +231,9 @@ class TestIBExecutionConnectorEnhanced:
         assert result.status == OrderStatus.SUBMITTED
 
     @pytest.mark.skip("submit_order method not implemented in current version")
-    def test_submit_limit_order(self, ib_connector):
+
+
+def test_submit_limit_order(self, ib_connector):
         """Test submitting a limit order."""
         order_request = OrderRequest(
             symbol="AAPL",
@@ -226,10 +253,11 @@ class TestIBExecutionConnectorEnhanced:
         mock_ib.placeOrder = AsyncMock()
         mock_ib.reqAllOpenOrders = AsyncMock()
 
-        def mock_event_handler(func):
+
+
+def mock_event_handler(func):
             asyncio.create_task(
-                asyncio.sleep(0.1)
-                .then(lambda _: func(mock_order, mock_contract))
+                asyncio.sleep(0.1).then(lambda _: func(mock_order, mock_contract))
             )
             return None
 
@@ -242,7 +270,9 @@ class TestIBExecutionConnectorEnhanced:
         assert result.status == OrderStatus.ACCEPTED
 
     @pytest.mark.skip("submit_order method not implemented in current version")
-    def test_submit_stop_order(self, ib_connector):
+
+
+def test_submit_stop_order(self, ib_connector):
         """Test submitting a stop order."""
         order_request = OrderRequest(
             symbol="AAPL",
@@ -262,10 +292,11 @@ class TestIBExecutionConnectorEnhanced:
         mock_ib.placeOrder = AsyncMock()
         mock_ib.reqAllOpenOrders = AsyncMock()
 
-        def mock_event_handler(func):
+
+
+def mock_event_handler(func):
             asyncio.create_task(
-                asyncio.sleep(0.1)
-                .then(lambda _: func(mock_order, mock_contract))
+                asyncio.sleep(0.1).then(lambda _: func(mock_order, mock_contract))
             )
             return None
 
@@ -277,7 +308,9 @@ class TestIBExecutionConnectorEnhanced:
         assert result.order_id == 12347
 
     @pytest.mark.skip("cancel_order method not implemented in current version")
-    def test_cancel_order(self, ib_connector):
+
+
+def test_cancel_order(self, ib_connector):
         """Test cancelling an order."""
         order_id = 12345
 
@@ -287,7 +320,9 @@ class TestIBExecutionConnectorEnhanced:
         ib_connector.ib.cancelOrder.assert_called_once()
 
     @pytest.mark.skip("cancel_order method not implemented in current version")
-    def test_cancel_nonexistent_order(self, ib_connector):
+
+
+def test_cancel_nonexistent_order(self, ib_connector):
         """Test cancelling a non-existent order."""
         order_id = 99999
 
@@ -297,7 +332,9 @@ class TestIBExecutionConnectorEnhanced:
             ib_connector.cancel_order(order_id)
 
     @pytest.mark.skip("get_order_status method not implemented in current version")
-    def test_get_order_status(self, ib_connector):
+
+
+def test_get_order_status(self, ib_connector):
         """Test getting order status."""
         order_id = 12345
 
@@ -312,7 +349,9 @@ class TestIBExecutionConnectorEnhanced:
         assert result == OrderStatus.FILLED
 
     @pytest.mark.skip("get_account_info method not implemented in current version")
-    def test_get_account_info(self, ib_connector):
+
+
+def test_get_account_info(self, ib_connector):
         """Test getting account information."""
         mock_summary = Mock()
         mock_summary.tag = "NetLiquidation"
@@ -328,7 +367,9 @@ class TestIBExecutionConnectorEnhanced:
         assert result.currency == "USD"
 
     @pytest.mark.skip("get_positions method not implemented in current version")
-    def test_get_positions(self, ib_connector):
+
+
+def test_get_positions(self, ib_connector):
         """Test getting positions."""
         mock_position = Mock()
         mock_position.contract.symbol = "AAPL"
@@ -347,7 +388,9 @@ class TestIBExecutionConnectorEnhanced:
         assert result[0].average_price == 150.0
 
     @pytest.mark.skip("get_positions method not implemented in current version")
-    def test_get_positions_empty(self, ib_connector):
+
+
+def test_get_positions_empty(self, ib_connector):
         """Test getting positions when none exist."""
         ib_connector.ib.reqPositions.return_value = []
 
@@ -356,7 +399,9 @@ class TestIBExecutionConnectorEnhanced:
         assert isinstance(result, list)
         assert len(result) == 0
 
-    def test_create_stock_contract(self, ib_connector):
+
+
+def test_create_stock_contract(self, ib_connector):
         """Test creating stock contract."""
         contract = ib_connector._create_contract("AAPL")
 
@@ -364,7 +409,9 @@ class TestIBExecutionConnectorEnhanced:
         assert contract.secType == "STK"
         assert contract.currency == "USD"
 
-    def test_create_option_contract(self, ib_connector):
+
+
+def test_create_option_contract(self, ib_connector):
         """Test creating option contract."""
         # Create an option symbol in the format expected by _create_contract
         symbol = "AAPL 231215 150 C"
@@ -388,7 +435,9 @@ class TestIBExecutionConnectorEnhanced:
             # Skip if Option constructor doesn't work in stub
             pytest.skip("Option constructor not properly implemented in stub")
 
-    def test_create_future_contract(self, ib_connector):
+
+
+def test_create_future_contract(self, ib_connector):
         """Test creating future contract."""
         try:
             contract = ib_connector._create_contract("ESZ3")
@@ -412,10 +461,12 @@ class TestIBExecutionConnectorEnhanced:
             # Skip if Future constructor doesn't work in stub
             pytest.skip("Future constructor not properly implemented in stub")
 
-    def test_validate_order_request(self, ib_connector):
+
+
+def test_validate_order_request(self, ib_connector):
         """Test order validation."""
         # Check if the _validate_order method exists
-        if hasattr(ib_connector, '_validate_order'):
+        if hasattr(ib_connector, "_validate_order"):
             # Valid order
             valid_order = OrderRequest(
                 symbol="AAPL",
@@ -447,10 +498,12 @@ class TestIBExecutionConnectorEnhanced:
             # Skip test if method doesn't exist
             pytest.skip("_validate_order method not implemented")
 
-    def test_validate_order_request_limit_price(self, ib_connector):
+
+
+def test_validate_order_request_limit_price(self, ib_connector):
         """Test order validation for limit orders."""
         # Check if the _validate_order method exists
-        if hasattr(ib_connector, '_validate_order'):
+        if hasattr(ib_connector, "_validate_order"):
             # Invalid limit order - no price
             order = OrderRequest(
                 symbol="AAPL",
@@ -469,10 +522,12 @@ class TestIBExecutionConnectorEnhanced:
             # Skip test if method doesn't exist
             pytest.skip("_validate_order method not implemented")
 
-    def test_validate_order_request_stop_price(self, ib_connector):
+
+
+def test_validate_order_request_stop_price(self, ib_connector):
         """Test order validation for stop orders."""
         # Check if the _validate_order method exists
-        if hasattr(ib_connector, '_validate_order'):
+        if hasattr(ib_connector, "_validate_order"):
             # Invalid stop order - no stop price
             order = OrderRequest(
                 symbol="AAPL",
@@ -491,31 +546,48 @@ class TestIBExecutionConnectorEnhanced:
             # Skip test if method doesn't exist
             pytest.skip("_validate_order method not implemented")
 
-    def test_map_order_status(self, ib_connector):
+
+
+def test_map_order_status(self, ib_connector):
         """Test mapping IB order status to OrderStatus enum."""
         # Check if the _convert_order_status method exists
-        if hasattr(ib_connector, '_convert_order_status'):
+        if hasattr(ib_connector, "_convert_order_status"):
             # Test mapping of common statuses
-            assert ib_connector._convert_order_status("Submitted") == OrderStatus.PENDING
+            assert (
+                ib_connector._convert_order_status("Submitted") == OrderStatus.PENDING
+            )
             assert ib_connector._convert_order_status("Filled") == OrderStatus.FILLED
-            assert ib_connector._convert_order_status("Cancelled") == OrderStatus.CANCELLED
-            assert ib_connector._convert_order_status("ApiCancelled") == OrderStatus.CANCELLED
-            assert ib_connector._convert_order_status("Inactive") == OrderStatus.REJECTED
+            assert (
+                ib_connector._convert_order_status("Cancelled") == OrderStatus.CANCELLED
+            )
+            assert (
+                ib_connector._convert_order_status("ApiCancelled")
+                == OrderStatus.CANCELLED
+            )
+            assert (
+                ib_connector._convert_order_status("Inactive") == OrderStatus.REJECTED
+            )
         else:
             # Skip test if method doesn't exist
             pytest.skip("_convert_order_status method not implemented")
 
-    def test_map_order_status_unknown(self, ib_connector):
+
+
+def test_map_order_status_unknown(self, ib_connector):
         """Test mapping of unknown order status."""
         # Check if the _convert_order_status method exists
-        if hasattr(ib_connector, '_convert_order_status'):
+        if hasattr(ib_connector, "_convert_order_status"):
             unknown_status = ib_connector._convert_order_status("UnknownStatus")
-            assert unknown_status == OrderStatus.PENDING  # Default to PENDING instead of REJECTED
+            assert (
+                unknown_status == OrderStatus.PENDING
+            )  # Default to PENDING instead of REJECTED
         else:
             # Skip test if method doesn't exist
             pytest.skip("_convert_order_status method not implemented")
 
-    def test_error_handling_connection_timeout(self, ib_connector):
+
+
+def test_error_handling_connection_timeout(self, ib_connector):
         """Test handling connection timeout."""
         # Simulate connection timeout by setting isConnected to False
         ib_connector.ib.isConnected.return_value = False
@@ -524,10 +596,12 @@ class TestIBExecutionConnectorEnhanced:
 
         assert result is False
 
-    def test_error_handling_insufficient_funds(self, ib_connector):
+
+
+def test_error_handling_insufficient_funds(self, ib_connector):
         """Test handling insufficient funds error."""
         # Check if the submit_order method exists
-        if hasattr(ib_connector, 'submit_order'):
+        if hasattr(ib_connector, "submit_order"):
             order_request = OrderRequest(
                 symbol="AAPL",
                 side=OrderSide.BUY,
@@ -545,10 +619,12 @@ class TestIBExecutionConnectorEnhanced:
             # Skip test if method doesn't exist
             pytest.skip("submit_order method not implemented")
 
-    def test_market_data_subscription(self, ib_connector):
+
+
+def test_market_data_subscription(self, ib_connector):
         """Test market data subscription."""
         # Check if the subscribe_market_data method exists
-        if hasattr(ib_connector, 'subscribe_market_data'):
+        if hasattr(ib_connector, "subscribe_market_data"):
             symbol = "AAPL"
 
             mock_contract = Mock(spec=Contract)
@@ -562,10 +638,12 @@ class TestIBExecutionConnectorEnhanced:
             # Skip test if method doesn't exist
             pytest.skip("subscribe_market_data method not implemented")
 
-    def test_cancel_market_data_subscription(self, ib_connector):
+
+
+def test_cancel_market_data_subscription(self, ib_connector):
         """Test cancelling market data subscription."""
         # Check if the cancel_market_data_subscription method exists
-        if hasattr(ib_connector, 'cancel_market_data_subscription'):
+        if hasattr(ib_connector, "cancel_market_data_subscription"):
             symbol = "AAPL"
 
             mock_contract = Mock(spec=Contract)
@@ -579,18 +657,34 @@ class TestIBExecutionConnectorEnhanced:
             # Skip test if method doesn't exist
             pytest.skip("cancel_market_data_subscription method not implemented")
 
-    def test_historical_data_request(self, ib_connector):
+
+
+def test_historical_data_request(self, ib_connector):
         """Test historical data request."""
         # Check if the get_historical_data method exists
-        if hasattr(ib_connector, 'get_historical_data'):
+        if hasattr(ib_connector, "get_historical_data"):
             symbol = "AAPL"
             duration = "1 D"
             bar_size = "1 min"
 
             mock_contract = Mock(spec=Contract)
             mock_bars = [
-                Mock(open=100, high=101, low=99, close=100.5, volume=1000, date=datetime.now()),
-                Mock(open=100.5, high=102, low=100, close=101, volume=1200, date=datetime.now()),
+                Mock(
+                    open=100,
+                    high=101,
+                    low=99,
+                    close=100.5,
+                    volume=1000,
+                    date=datetime.now(),
+                ),
+                Mock(
+                    open=100.5,
+                    high=102,
+                    low=100,
+                    close=101,
+                    volume=1200,
+                    date=datetime.now(),
+                ),
             ]
 
             ib_connector.ib.qualifyContractsAsync.return_value = [mock_contract]
@@ -605,12 +699,16 @@ class TestIBExecutionConnectorEnhanced:
             # Skip test if method doesn't exist
             pytest.skip("get_historical_data method not implemented")
 
-    def test_order_events_handling(self, ib_connector):
+
+
+def test_order_events_handling(self, ib_connector):
         """Test handling of order events."""
         order_id = 12345
         status_updates = []
 
-        def status_handler(order):
+
+
+def status_handler(order):
             status_updates.append(order.status)
 
         # Register for order status updates
@@ -629,10 +727,12 @@ class TestIBExecutionConnectorEnhanced:
         assert status_updates[0] == "Submitted"
         assert status_updates[1] == "Filled"
 
-    def test_error_mapping(self, ib_connector):
+
+
+def test_error_mapping(self, ib_connector):
         """Test mapping of error messages."""
         # Check if the _map_error method exists
-        if hasattr(ib_connector, '_map_error'):
+        if hasattr(ib_connector, "_map_error"):
             # Test common error patterns
             error = ib_connector._map_error("No security definition has been found")
             assert "security" in error.lower()
@@ -647,7 +747,9 @@ class TestIBExecutionConnectorEnhanced:
             pytest.skip("_map_error method not implemented")
 
     @pytest.mark.skip("concurrent order handling not implemented in current version")
-    def test_concurrent_orders(self, ib_connector):
+
+
+def test_concurrent_orders(self, ib_connector):
         """Test handling of multiple concurrent orders."""
         # Create multiple orders
         orders = [
@@ -668,9 +770,15 @@ class TestIBExecutionConnectorEnhanced:
         # Submit orders concurrently (simplified test)
         tasks = []
         for order in orders:
-            def create_event_handler(task_count):
-                def handler(order, contract):
+
+
+
+def create_event_handler(task_count):
+
+
+def handler(order, contract):
                     return None
+
                 return handler
 
             ib_connector.ib.orderStatusEvent = create_event_handler(len(tasks))

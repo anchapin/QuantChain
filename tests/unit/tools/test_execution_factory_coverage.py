@@ -1,17 +1,24 @@
 """Additional coverage tests for execution factory."""
 
+
+
+
+
 import pytest
 from unittest.mock import patch
-
 from quantchain.tools.execution_factory import create_execution_interface
 from quantchain.core.config import QuantChainConfig
+from quantchain.core.exceptions import AuthenticationError, ConfigurationError
+
 
 
 class TestExecutionFactoryCoverage:
     """Additional tests to improve execution factory coverage."""
 
     @pytest.mark.coverage
-    def test_factory_edge_cases(self):
+
+
+def test_factory_edge_cases(self):
         """Test execution factory edge cases."""
         config = QuantChainConfig()
 
@@ -31,7 +38,9 @@ class TestExecutionFactoryCoverage:
             pass
 
     @pytest.mark.coverage
-    def test_factory_invalid_configurations(self):
+
+
+def test_factory_invalid_configurations(self):
         """Test factory with invalid configurations."""
         config = QuantChainConfig()
 
@@ -48,9 +57,10 @@ class TestExecutionFactoryCoverage:
 
     @pytest.mark.coverage
     @patch("quantchain.tools.execution_factory.PaperTradingExecutor")
-    def test_factory_mock_scenarios(self, mock_paper):
+
+
+def test_factory_mock_scenarios(self, mock_paper):
         """Test factory scenarios with mocking."""
-        from quantchain.core.exceptions import AuthenticationError, ConfigurationError
 
         # Configure mock
         mock_instance = mock_paper.return_value
@@ -70,7 +80,9 @@ class TestExecutionFactoryCoverage:
             pass
 
     @pytest.mark.coverage
-    def test_factory_error_handling(self):
+
+
+def test_factory_error_handling(self):
         """Test factory error handling."""
         config = QuantChainConfig()
 
@@ -100,7 +112,9 @@ class TestExecutionFactoryCoverage:
                 pass  # Expected to raise an exception
 
     @pytest.mark.coverage
-    def test_factory_backends_coverage(self):
+
+
+def test_factory_backends_coverage(self):
         """Test coverage for different backend types."""
         config = QuantChainConfig()
 
@@ -124,7 +138,9 @@ class TestExecutionFactoryCoverage:
                 pass
 
     @pytest.mark.coverage
-    def test_factory_configuration_validation(self):
+
+
+def test_factory_configuration_validation(self):
         """Test factory configuration validation."""
         config = QuantChainConfig()
 

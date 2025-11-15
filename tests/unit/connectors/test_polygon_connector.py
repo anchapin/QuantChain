@@ -1,13 +1,16 @@
 """Tests for Polygon.io data connector."""
 
+
+
+
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
-
 import pandas as pd
 import pytest
-
 from quantchain.connectors.polygon_connector import PolygonDataConnector
 from quantchain.core.exceptions import (
+import time
+
     AuthenticationError,
     DataSourceError,
     RateLimitError,
@@ -16,16 +19,22 @@ from quantchain.core.exceptions import (
 
 
 @pytest.mark.unit
+
+
 class TestPolygonDataConnector:
     """Test suite for PolygonDataConnector."""
 
     @pytest.fixture
-    def connector(self) -> PolygonDataConnector:
+
+
+def connector(self) -> PolygonDataConnector:
         """Create a test connector instance."""
         return PolygonDataConnector("MOCK_API_KEY_FOR_TESTS")
 
     @pytest.fixture
-    def sample_equity_bar(self) -> MagicMock:
+
+
+def sample_equity_bar(self) -> MagicMock:
         """Sample equity bar data."""
         bar = MagicMock()
         bar.timestamp = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -38,7 +47,9 @@ class TestPolygonDataConnector:
         return bar
 
     @pytest.fixture
-    def sample_forex_bar(self) -> MagicMock:
+
+
+def sample_forex_bar(self) -> MagicMock:
         """Sample forex bar data."""
         bar = MagicMock()
         bar.timestamp = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -51,7 +62,9 @@ class TestPolygonDataConnector:
         return bar
 
     @pytest.fixture
-    def sample_trade(self) -> MagicMock:
+
+
+def sample_trade(self) -> MagicMock:
         """Sample trade data."""
         trade = MagicMock()
         trade.price = 153.25
@@ -60,7 +73,9 @@ class TestPolygonDataConnector:
         return trade
 
     @pytest.fixture
-    def sample_quote(self) -> MagicMock:
+
+
+def sample_quote(self) -> MagicMock:
         """Sample quote data."""
         quote = MagicMock()
         quote.bid_price = 152.75
@@ -71,7 +86,9 @@ class TestPolygonDataConnector:
         return quote
 
     @pytest.fixture
-    def sample_ticker(self) -> MagicMock:
+
+
+def sample_ticker(self) -> MagicMock:
         """Sample ticker data."""
         ticker = MagicMock()
         ticker.ticker = "AAPL"
@@ -81,7 +98,9 @@ class TestPolygonDataConnector:
         ticker.primary_exchange = "NASDAQ"
         return ticker
 
-    def test_initialization_success(self) -> None:
+
+
+def test_initialization_success(self) -> None:
         """Test successful initialization."""
         with patch("quantchain.connectors.polygon_connector.RESTClient") as mock_client:
             connector = PolygonDataConnector("MOCK_API_KEY")
@@ -91,7 +110,9 @@ class TestPolygonDataConnector:
             assert connector.limit == 5000
             mock_client.assert_called_once_with(api_key="MOCK_API_KEY")
 
-    def test_initialization_auth_failure(self) -> None:
+
+
+def test_initialization_auth_failure(self) -> None:
         """Test initialization failure due to auth error."""
         with patch(
             "quantchain.connectors.polygon_connector.RESTClient",
@@ -100,7 +121,9 @@ class TestPolygonDataConnector:
             with pytest.raises(AuthenticationError):
                 PolygonDataConnector("BAD_MOCK_KEY")
 
-    def test_is_forex_symbol(self, connector: PolygonDataConnector) -> None:
+
+
+def test_is_forex_symbol(self, connector: PolygonDataConnector) -> None:
         """Test forex symbol detection."""
         assert connector._is_forex_symbol("C:EURUSD") is True
         assert connector._is_forex_symbol("C:GBPJPY") is True
@@ -109,13 +132,17 @@ class TestPolygonDataConnector:
         )  # EUR/USD is not a Polygon forex format
         assert connector._is_forex_symbol("AAPL") is False
 
-    def test_normalize_forex_symbol(self, connector: PolygonDataConnector) -> None:
+
+
+def test_normalize_forex_symbol(self, connector: PolygonDataConnector) -> None:
         """Test forex symbol normalization."""
         assert connector._normalize_forex_symbol("C:EURUSD") == "C:EURUSD"
         assert connector._normalize_forex_symbol("EUR/USD") == "C:EURUSD"
         assert connector._normalize_forex_symbol("EURUSD") == "C:EURUSD"
 
-    def test_convert_timeframe(self, connector: PolygonDataConnector) -> None:
+
+
+def test_convert_timeframe(self, connector: PolygonDataConnector) -> None:
         """Test timeframe conversion."""
         assert connector._convert_timeframe("1Min") == (1, "minute")
         assert connector._convert_timeframe("5Min") == (5, "minute")
@@ -127,7 +154,9 @@ class TestPolygonDataConnector:
         with pytest.raises(ValueError):
             connector._convert_timeframe("invalid")
 
-    def test_get_historical_data_equity(
+
+
+def test_get_historical_data_equity(
         self, connector: PolygonDataConnector, sample_equity_bar: MagicMock
     ) -> None:
         """Test historical data retrieval for equities."""
@@ -135,7 +164,7 @@ class TestPolygonDataConnector:
         end_date = datetime(2024, 1, 2, tzinfo=timezone.utc)
 
         with patch.object(connector.client, "list_aggs") as mock_list_aggs:
-            mock_list_aggs.return_value: list[float] = [sample_equity_bar]
+            mock_list_aggs.return_value: list = [sample_equity_bar]
 
             df = connector.get_historical_data("AAPL", "1D", start_date, end_date)
 
@@ -145,7 +174,9 @@ class TestPolygonDataConnector:
             assert df.iloc[0]["volume"] == 1000000
             mock_list_aggs.assert_called_once()
 
-    def test_get_historical_data_forex(
+
+
+def test_get_historical_data_forex(
         self, connector: PolygonDataConnector, sample_forex_bar: MagicMock
     ) -> None:
         """Test historical data retrieval for forex."""
@@ -153,7 +184,7 @@ class TestPolygonDataConnector:
         end_date = datetime(2024, 1, 2, tzinfo=timezone.utc)
 
         with patch.object(connector.client, "list_aggs") as mock_list_aggs:
-            mock_list_aggs.return_value: list[float] = [sample_forex_bar]
+            mock_list_aggs.return_value: list = [sample_forex_bar]
 
             df = connector.get_historical_data("C:EURUSD", "1H", start_date, end_date)
 
@@ -162,7 +193,9 @@ class TestPolygonDataConnector:
             assert df.iloc[0]["close"] == 1.0855
             mock_list_aggs.assert_called_once()
 
-    def test_get_historical_data_symbol_not_found(
+
+
+def test_get_historical_data_symbol_not_found(
         self, connector: PolygonDataConnector
     ) -> None:
         """Test historical data retrieval for non-existent symbol."""
@@ -170,12 +203,14 @@ class TestPolygonDataConnector:
         end_date = datetime(2024, 1, 2, tzinfo=timezone.utc)
 
         with patch.object(connector.client, "list_aggs") as mock_list_aggs:
-            mock_list_aggs.return_value: list[float] = []
+            mock_list_aggs.return_value: list = []
 
             with pytest.raises(SymbolNotFoundError):
                 connector.get_historical_data("INVALID", "1D", start_date, end_date)
 
-    def test_get_historical_data_invalid_timeframe(
+
+
+def test_get_historical_data_invalid_timeframe(
         self, connector: PolygonDataConnector
     ) -> None:
         """Test historical data retrieval with invalid timeframe."""
@@ -184,7 +219,9 @@ class TestPolygonDataConnector:
         with pytest.raises(ValueError):
             connector.get_historical_data("AAPL", "invalid", start_date)
 
-    def test_get_historical_data_rate_limit(
+
+
+def test_get_historical_data_rate_limit(
         self, connector: PolygonDataConnector
     ) -> None:
         """Test rate limit handling."""
@@ -197,7 +234,9 @@ class TestPolygonDataConnector:
             with pytest.raises(RateLimitError):
                 connector.get_historical_data("AAPL", "1D", start_date, end_date)
 
-    def test_get_real_time_data_equity(
+
+
+def test_get_real_time_data_equity(
         self,
         connector: PolygonDataConnector,
         sample_trade: MagicMock,
@@ -219,7 +258,9 @@ class TestPolygonDataConnector:
             assert "ask" in data
             assert data["price"] == 153.25
 
-    def test_get_real_time_data_forex(self, connector: PolygonDataConnector) -> None:
+
+
+def test_get_real_time_data_forex(self, connector: PolygonDataConnector) -> None:
         """Test real-time data retrieval for forex."""
         mock_forex_quote = MagicMock()
         mock_forex_quote.bid = 1.0850
@@ -239,7 +280,9 @@ class TestPolygonDataConnector:
             assert "ask" in data
             assert data["bid"] == 1.0850
 
-    def test_get_real_time_data_missing_symbol(
+
+
+def test_get_real_time_data_missing_symbol(
         self, connector: PolygonDataConnector
     ) -> None:
         """Test real-time data retrieval for missing symbol."""
@@ -249,7 +292,9 @@ class TestPolygonDataConnector:
             with pytest.raises(SymbolNotFoundError):
                 connector.get_real_time_data("INVALID")
 
-    def test_get_quote_equity(
+
+
+def test_get_quote_equity(
         self, connector: PolygonDataConnector, sample_quote: MagicMock
     ) -> None:
         """Test quote retrieval for equities."""
@@ -265,7 +310,9 @@ class TestPolygonDataConnector:
             assert quote["bid_price"] == 152.75
             assert quote["ask_price"] == 153.25
 
-    def test_get_quote_forex(self, connector: PolygonDataConnector) -> None:
+
+
+def test_get_quote_forex(self, connector: PolygonDataConnector) -> None:
         """Test quote retrieval for forex."""
         mock_forex_quote = MagicMock()
         mock_forex_quote.bid = 1.0850
@@ -284,7 +331,9 @@ class TestPolygonDataConnector:
             assert quote["bid_price"] == 1.0850
             assert quote["ask_price"] == 1.0860
 
-    def test_get_quote_missing_symbol(self, connector: PolygonDataConnector) -> None:
+
+
+def test_get_quote_missing_symbol(self, connector: PolygonDataConnector) -> None:
         """Test quote retrieval for missing symbol."""
         with patch.object(connector.client, "get_last_quote") as mock_quote:
             mock_quote.side_effect = Exception("Not found")
@@ -292,7 +341,9 @@ class TestPolygonDataConnector:
             with pytest.raises(SymbolNotFoundError):
                 connector.get_quote("INVALID")
 
-    def test_get_available_symbols_all(
+
+
+def test_get_available_symbols_all(
         self, connector: PolygonDataConnector, sample_ticker: MagicMock
     ) -> None:
         """Test getting all available symbols."""
@@ -304,7 +355,9 @@ class TestPolygonDataConnector:
             assert isinstance(symbols, list)
             assert "AAPL" in symbols
 
-    def test_get_available_symbols_equity_filter(
+
+
+def test_get_available_symbols_equity_filter(
         self, connector: PolygonDataConnector, sample_ticker: MagicMock
     ) -> None:
         """Test getting symbols with equity filter."""
@@ -320,7 +373,9 @@ class TestPolygonDataConnector:
             assert isinstance(symbols, list)
             assert "AAPL" in symbols
 
-    def test_get_available_symbols_forex_filter(
+
+
+def test_get_available_symbols_forex_filter(
         self, connector: PolygonDataConnector
     ) -> None:
         """Test getting symbols with forex filter."""
@@ -338,7 +393,9 @@ class TestPolygonDataConnector:
             assert isinstance(symbols, list)
             assert "C:EURUSD" in symbols
 
-    def test_get_available_symbols_with_limit(
+
+
+def test_get_available_symbols_with_limit(
         self, connector: PolygonDataConnector, sample_ticker: MagicMock
     ) -> None:
         """Test getting symbols with limit."""
@@ -350,7 +407,9 @@ class TestPolygonDataConnector:
             assert isinstance(symbols, list)
             assert len(symbols) <= 1
 
-    def test_get_symbol_info_equity(
+
+
+def test_get_symbol_info_equity(
         self, connector: PolygonDataConnector, sample_ticker: MagicMock
     ) -> None:
         """Test getting symbol info for equity."""
@@ -364,7 +423,9 @@ class TestPolygonDataConnector:
             assert info["name"] == "Apple Inc."
             assert info["market"] == "equity"
 
-    def test_get_symbol_info_forex(self, connector: PolygonDataConnector) -> None:
+
+
+def test_get_symbol_info_forex(self, connector: PolygonDataConnector) -> None:
         """Test getting symbol info for forex."""
         forex_ticker = MagicMock()
         forex_ticker.ticker = "C:EURUSD"
@@ -381,7 +442,9 @@ class TestPolygonDataConnector:
             assert info["symbol"] == "C:EURUSD"
             assert info["market"] == "forex"
 
-    def test_get_symbol_info_not_found(self, connector: PolygonDataConnector) -> None:
+
+
+def test_get_symbol_info_not_found(self, connector: PolygonDataConnector) -> None:
         """Test getting symbol info for non-existent symbol."""
         with patch.object(connector, "_refresh_symbol_cache"):
             connector._symbol_cache = {}
@@ -390,7 +453,9 @@ class TestPolygonDataConnector:
             with pytest.raises(SymbolNotFoundError):
                 connector.get_symbol_info("INVALID")
 
-    def test_get_symbol_info_cache_hit(
+
+
+def test_get_symbol_info_cache_hit(
         self, connector: PolygonDataConnector, sample_ticker: MagicMock
     ) -> None:
         """Test symbol info cache hit."""
@@ -409,7 +474,9 @@ class TestPolygonDataConnector:
             info2 = connector.get_symbol_info("AAPL")
             assert info2["symbol"] == "AAPL"
 
-    def test_is_market_open_true(self, connector: PolygonDataConnector) -> None:
+
+
+def test_is_market_open_true(self, connector: PolygonDataConnector) -> None:
         """Test market status when open."""
         mock_status = MagicMock()
         mock_status.market = "open"
@@ -421,7 +488,9 @@ class TestPolygonDataConnector:
 
             assert is_open is True
 
-    def test_is_market_open_false(self, connector: PolygonDataConnector) -> None:
+
+
+def test_is_market_open_false(self, connector: PolygonDataConnector) -> None:
         """Test market status when closed."""
         mock_status = MagicMock()
         mock_status.market = "closed"
@@ -433,12 +502,16 @@ class TestPolygonDataConnector:
 
             assert is_open is False
 
-    def test_is_market_open_forex(self, connector: PolygonDataConnector) -> None:
+
+
+def test_is_market_open_forex(self, connector: PolygonDataConnector) -> None:
         """Test forex market status (always open)."""
         is_open = connector.is_market_open("forex")
         assert is_open is True
 
-    def test_is_market_open_error(self, connector: PolygonDataConnector) -> None:
+
+
+def test_is_market_open_error(self, connector: PolygonDataConnector) -> None:
         """Test market status with API error."""
         with patch.object(connector.client, "get_market_status") as mock_get_status:
             mock_get_status.side_effect = Exception("API Error")
@@ -446,28 +519,31 @@ class TestPolygonDataConnector:
             with pytest.raises(DataSourceError):
                 connector.is_market_open()
 
-    def test_refresh_symbol_cache(
+
+
+def test_refresh_symbol_cache(
         self, connector: PolygonDataConnector, sample_ticker: MagicMock
     ) -> None:
         """Test symbol cache refresh."""
         with patch.object(connector.client, "list_tickers") as mock_list_tickers:
-            mock_list_tickers.return_value: list[float] = [sample_ticker]
+            mock_list_tickers.return_value: list = [sample_ticker]
 
             connector._refresh_symbol_cache()
 
             assert "AAPL" in connector._symbol_cache
 
-    def test_cache_expiration(
+
+
+def test_cache_expiration(
         self, connector: PolygonDataConnector, sample_ticker: MagicMock
     ) -> None:
         """Test cache expiration."""
         # Set cache timestamp to past
-        import time
 
         connector._cache_timestamp = time.time() - 7200  # 2 hours ago
 
         with patch.object(connector.client, "list_tickers") as mock_list_tickers:
-            mock_list_tickers.return_value: list[float] = [sample_ticker]
+            mock_list_tickers.return_value: list = [sample_ticker]
 
             connector._refresh_symbol_cache()
 
@@ -476,7 +552,9 @@ class TestPolygonDataConnector:
             mock_list_tickers.assert_any_call(market="stocks", active=True)
             mock_list_tickers.assert_any_call(market="fx", active=True)
 
-    def test_invalidate_cache(self, connector: PolygonDataConnector) -> None:
+
+
+def test_invalidate_cache(self, connector: PolygonDataConnector) -> None:
         """Test cache invalidation."""
         connector._symbol_cache = {"AAPL": "data"}
         connector._cache_timestamp = 123456789
@@ -486,7 +564,9 @@ class TestPolygonDataConnector:
         assert len(connector._symbol_cache) == 0
         assert connector._cache_timestamp is None
 
-    def test_authentication_error_handling(self) -> None:
+
+
+def test_authentication_error_handling(self) -> None:
         """Test authentication error handling during init."""
         with patch(
             "quantchain.connectors.polygon_connector.RESTClient",
@@ -495,7 +575,9 @@ class TestPolygonDataConnector:
             with pytest.raises(AuthenticationError):
                 PolygonDataConnector("INVALID_MOCK_KEY")
 
-    def test_rate_limit_detection(self, connector: PolygonDataConnector) -> None:
+
+
+def test_rate_limit_detection(self, connector: PolygonDataConnector) -> None:
         """Test rate limit detection."""
         with patch.object(connector.client, "list_aggs") as mock_list_aggs:
             # Test various rate limit error messages
@@ -512,7 +594,9 @@ class TestPolygonDataConnector:
                 with pytest.raises(RateLimitError):
                     connector.get_historical_data("AAPL", "1D", start_date)
 
-    def test_network_error_handling(self, connector: PolygonDataConnector) -> None:
+
+
+def test_network_error_handling(self, connector: PolygonDataConnector) -> None:
         """Test network error handling."""
         with patch.object(connector.client, "list_aggs") as mock_list_aggs:
             mock_list_aggs.side_effect = Exception("Network timeout")
@@ -522,14 +606,16 @@ class TestPolygonDataConnector:
             with pytest.raises(DataSourceError):
                 connector.get_historical_data("AAPL", "1D", start_date)
 
-    def test_invalid_response_handling(self, connector: PolygonDataConnector) -> None:
+
+
+def test_invalid_response_handling(self, connector: PolygonDataConnector) -> None:
         """Test invalid response handling."""
         with patch.object(connector.client, "list_aggs") as mock_list_aggs:
             # Return an object without expected attributes
             invalid_bar = MagicMock()
             del invalid_bar.timestamp  # Remove required attribute
 
-            mock_list_aggs.return_value: list[float] = [invalid_bar]
+            mock_list_aggs.return_value: list = [invalid_bar]
 
             start_date = datetime(2024, 1, 1, tzinfo=timezone.utc)
 
@@ -537,19 +623,25 @@ class TestPolygonDataConnector:
             with pytest.raises(DataSourceError):
                 connector.get_historical_data("AAPL", "1D", start_date)
 
-    def test_custom_cache_ttl(self) -> None:
+
+
+def test_custom_cache_ttl(self) -> None:
         """Test custom cache TTL configuration."""
         with patch("quantchain.connectors.polygon_connector.RESTClient"):
             connector = PolygonDataConnector("MOCK_API_KEY", cache_ttl=1800)
             assert connector.cache_ttl == 1800
 
-    def test_custom_adjusted_flag(self) -> None:
+
+
+def test_custom_adjusted_flag(self) -> None:
         """Test custom adjusted flag configuration."""
         with patch("quantchain.connectors.polygon_connector.RESTClient"):
             connector = PolygonDataConnector("MOCK_API_KEY", adjusted=False)
             assert connector.adjusted is False
 
-    def test_custom_limit(self) -> None:
+
+
+def test_custom_limit(self) -> None:
         """Test custom limit configuration."""
         with patch("quantchain.connectors.polygon_connector.RESTClient"):
             connector = PolygonDataConnector("MOCK_API_KEY", limit=1000)

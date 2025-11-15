@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 QuantChain Installation Script
 Comprehensive quantitative trading framework
@@ -11,11 +11,9 @@ from pathlib import Path
 # Try to use setuptools, fallback to distutils
 try:
     from setuptools import setup, find_packages
-
     HAS_SETUPTOOLS = True
 except ImportError:
     from distutils.core import setup
-
     HAS_SETUPTOOLS = False
 
 # Version information

@@ -1,12 +1,17 @@
 """Tests for Alpaca execution tool."""
 
+
+
+
 from datetime import datetime
 from unittest.mock import MagicMock, patch
-
 import pytest
-
 from quantchain.tools.execution import AlpacaExecutionTool
 from quantchain.tools.trading_execution import (
+from quantchain.tools.trading_execution import ExecutionError
+from quantchain.tools.trading_execution import ExecutionError
+from quantchain.tools.trading_execution import ExecutionError
+
     ExecutionError,
     OrderRequest,
     OrderResult,
@@ -17,10 +22,14 @@ from quantchain.tools.trading_execution import (
 
 
 @pytest.mark.unit
+
+
 class TestAlpacaExecutionTool:
     """Test the AlpacaExecutionTool class."""
 
-    def test_from_credentials_paper_trading(self) -> None:
+
+
+def test_from_credentials_paper_trading(self) -> None:
         """Test tool creation with paper trading."""
         with patch(
             "quantchain.tools.execution.AlpacaExecutionConnector"
@@ -37,7 +46,9 @@ class TestAlpacaExecutionTool:
                 api_key="test_key", api_secret="test_secret", use_paper=True
             )
 
-    def test_from_credentials_live_trading(self) -> None:
+
+
+def test_from_credentials_live_trading(self) -> None:
         """Test tool creation with live trading."""
         with patch(
             "quantchain.tools.execution.AlpacaExecutionConnector"
@@ -60,7 +71,9 @@ class TestAlpacaExecutionTool:
                 timeout=30,
             )
 
-    def test_from_credentials_with_kwargs(self) -> None:
+
+
+def test_from_credentials_with_kwargs(self) -> None:
         """Test tool creation passes through additional kwargs."""
         with patch(
             "quantchain.tools.execution.AlpacaExecutionConnector"
@@ -84,7 +97,9 @@ class TestAlpacaExecutionTool:
                 another_param=123,
             )
 
-    def test_execute_market_order_buy(self) -> None:
+
+
+def test_execute_market_order_buy(self) -> None:
         """Test market order execution for buy side."""
         # Setup mock connector and tool directly
         mock_connector = MagicMock()
@@ -119,7 +134,9 @@ class TestAlpacaExecutionTool:
         assert call_args.quantity == 100.0
         assert call_args.order_type == OrderType.MARKET
 
-    def test_execute_market_order_sell(self) -> None:
+
+
+def test_execute_market_order_sell(self) -> None:
         """Test market order execution for sell side."""
         # Setup mock connector
         mock_connector = MagicMock()
@@ -153,9 +170,10 @@ class TestAlpacaExecutionTool:
         assert call_args.quantity == 50.0
         assert call_args.order_type == OrderType.MARKET
 
-    def test_execute_market_order_connector_error(self) -> None:
+
+
+def test_execute_market_order_connector_error(self) -> None:
         """Test handling of connector errors during order execution."""
-        from quantchain.tools.trading_execution import ExecutionError
 
         mock_connector = MagicMock()
         mock_connector.place_order.side_effect = ExecutionError("API error")
@@ -165,7 +183,9 @@ class TestAlpacaExecutionTool:
         with pytest.raises(ExecutionError, match="API error"):
             tool.execute_market_order("BTC", "buy", 1.0)
 
-    def test_tool_dataclass_structure(self) -> None:
+
+
+def test_tool_dataclass_structure(self) -> None:
         """Test that tool maintains proper dataclass structure."""
         mock_connector = MagicMock()
         tool = AlpacaExecutionTool(connector=mock_connector)
@@ -173,7 +193,9 @@ class TestAlpacaExecutionTool:
         assert hasattr(tool, "connector")
         assert tool.connector == mock_connector
 
-    def test_execute_market_order_parameters(self) -> None:
+
+
+def test_execute_market_order_parameters(self) -> None:
         """Test various parameter combinations for market orders."""
         mock_connector = MagicMock()
         mock_result = OrderResult(
@@ -214,7 +236,9 @@ class TestAlpacaExecutionTool:
         assert first_order_request.order_type == OrderType.MARKET
         assert second_order_request.order_type == OrderType.MARKET
 
-    def test_execute_market_order_invalid_side(self) -> None:
+
+
+def test_execute_market_order_invalid_side(self) -> None:
         """Test ValueError is raised for invalid order sides."""
         mock_connector = MagicMock()
         tool = AlpacaExecutionTool(connector=mock_connector)
@@ -237,7 +261,9 @@ class TestAlpacaExecutionTool:
             with pytest.raises(ValueError, match="Invalid side"):
                 tool.execute_market_order("AAPL", invalid_side, 10.0)
 
-    def test_execute_market_order_valid_case_insensitive(self) -> None:
+
+
+def test_execute_market_order_valid_case_insensitive(self) -> None:
         """Test that valid sides work regardless of case."""
         mock_connector = MagicMock()
         mock_result = OrderResult(
@@ -259,7 +285,7 @@ class TestAlpacaExecutionTool:
         tool = AlpacaExecutionTool(connector=mock_connector)
 
         # Test that case-insensitive valid sides work
-        valid_sides: list[float] = [
+        valid_sides: list = [
             "buy",
             "BUY",
             "Buy",
@@ -277,7 +303,9 @@ class TestAlpacaExecutionTool:
         # Verify all calls were made
         assert mock_connector.place_order.call_count == len(valid_sides)
 
-    def test_get_account_balance(self) -> None:
+
+
+def test_get_account_balance(self) -> None:
         """Test get_account_balance method."""
         # Setup mock account data
         mock_account = MagicMock()
@@ -303,7 +331,9 @@ class TestAlpacaExecutionTool:
         assert result == expected_result
         mock_connector.get_account.assert_called_once()
 
-    def test_get_positions(self) -> None:
+
+
+def test_get_positions(self) -> None:
         """Test get_positions method."""
         # Setup mock positions data
         mock_position1 = MagicMock()
@@ -324,7 +354,7 @@ class TestAlpacaExecutionTool:
         mock_position2.unrealized_pnl = -250.0
         mock_position2.unrealized_pnl_percent = -2.5
 
-        mock_positions: list[float] = [mock_position1, mock_position2]
+        mock_positions: list = [mock_position1, mock_position2]
 
         mock_connector = MagicMock()
         mock_connector.get_positions.return_value = mock_positions
@@ -357,9 +387,10 @@ class TestAlpacaExecutionTool:
         assert result == expected_result
         mock_connector.get_positions.assert_called_once()
 
-    def test_get_account_balance_connector_error(self) -> None:
+
+
+def test_get_account_balance_connector_error(self) -> None:
         """Test handling of connector errors in get_account_balance."""
-        from quantchain.tools.trading_execution import ExecutionError
 
         mock_connector = MagicMock()
         mock_connector.get_account.side_effect = ExecutionError("API error")
@@ -369,9 +400,10 @@ class TestAlpacaExecutionTool:
         with pytest.raises(ExecutionError, match="API error"):
             tool.get_account_balance()
 
-    def test_get_positions_connector_error(self) -> None:
+
+
+def test_get_positions_connector_error(self) -> None:
         """Test handling of connector errors in get_positions."""
-        from quantchain.tools.trading_execution import ExecutionError
 
         mock_connector = MagicMock()
         mock_connector.get_positions.side_effect = ExecutionError("API error")
@@ -381,7 +413,9 @@ class TestAlpacaExecutionTool:
         with pytest.raises(ExecutionError, match="API error"):
             tool.get_positions()
 
-    def test_get_account_balance_empty_positions(self) -> None:
+
+
+def test_get_account_balance_empty_positions(self) -> None:
         """Test get_account_balance with empty/zero values."""
         mock_account = MagicMock()
         mock_account.buying_power = 0.0
@@ -405,10 +439,12 @@ class TestAlpacaExecutionTool:
 
         assert result == expected_result
 
-    def test_get_positions_empty_list(self) -> None:
+
+
+def test_get_positions_empty_list(self) -> None:
         """Test get_positions when no positions exist."""
         mock_connector = MagicMock()
-        mock_connector.get_positions.return_value: list[float] = []
+        mock_connector.get_positions.return_value: list = []
 
         tool = AlpacaExecutionTool(connector=mock_connector)
 
@@ -419,10 +455,14 @@ class TestAlpacaExecutionTool:
 
 
 @pytest.mark.unit
+
+
 class TestAlpacaExecutionToolIntegration:
     """Integration tests for AlpacaExecutionTool."""
 
-    def test_tool_lifecycle(self) -> None:
+
+
+def test_tool_lifecycle(self) -> None:
         """Test complete tool lifecycle from creation to execution."""
         with patch(
             "quantchain.tools.execution.AlpacaExecutionConnector"
@@ -459,7 +499,9 @@ class TestAlpacaExecutionToolIntegration:
             mock_connector_class.assert_called_once()
             mock_connector.place_order.assert_called_once()
 
-    def test_error_propagation(self) -> None:
+
+
+def test_error_propagation(self) -> None:
         """Test that connector errors are properly propagated."""
         with patch(
             "quantchain.tools.execution.AlpacaExecutionConnector"

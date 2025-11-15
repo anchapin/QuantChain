@@ -1,25 +1,29 @@
 """Backtest tests for MemecoinVibeTrader agent."""
 
+
+
+
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock
-
 import pytest
-
 from quantchain.agents.memecoin_vibe_trader import (
+from quantchain.connectors.dexscreener_connector import DexscreenerDataConnector
+from quantchain.tools.execution import AlpacaExecutionTool
+from quantchain.tools.social_media_scraper import SocialMediaScraper
+
     MemecoinVibeTrader,
     MemecoinVibeTraderConfig,
     SocialMetrics,
 )
-from quantchain.connectors.dexscreener_connector import DexscreenerDataConnector
-from quantchain.tools.execution import AlpacaExecutionTool
-from quantchain.tools.social_media_scraper import SocialMediaScraper
 
 
 class TestMemecoinVibeTraderBacktest:
     """Test suite for MemecoinVibeTrader agent backtesting."""
 
     @pytest.fixture
-    def mock_dex_connector(self) -> MagicMock:
+
+
+def mock_dex_connector(self) -> MagicMock:
         """Create a mock DexscreenerDataConnector."""
         mock_connector = MagicMock(spec=DexscreenerDataConnector)
 
@@ -41,7 +45,9 @@ class TestMemecoinVibeTraderBacktest:
         return mock_connector
 
     @pytest.fixture
-    def mock_social_scraper(self) -> MagicMock:
+
+
+def mock_social_scraper(self) -> MagicMock:
         """Create a mock SocialMediaScraper."""
         mock_scraper = MagicMock(spec=SocialMediaScraper)
 
@@ -57,7 +63,9 @@ class TestMemecoinVibeTraderBacktest:
         return mock_scraper
 
     @pytest.fixture
-    def mock_execution_tool(self) -> MagicMock:
+
+
+def mock_execution_tool(self) -> MagicMock:
         """Create a mock AlpacaExecutionTool."""
         mock_tool = MagicMock(spec=AlpacaExecutionTool)
 
@@ -68,7 +76,7 @@ class TestMemecoinVibeTraderBacktest:
         }
 
         # Mock empty current positions
-        mock_tool.get_positions.return_value: list[float] = []
+        mock_tool.get_positions.return_value: list = []
 
         # Mock successful order execution
         mock_order = MagicMock()
@@ -78,7 +86,9 @@ class TestMemecoinVibeTraderBacktest:
         return mock_tool
 
     @pytest.fixture
-    def mock_llm(self) -> MagicMock:
+
+
+def mock_llm(self) -> MagicMock:
         """Create a mock LLM that returns deterministic responses."""
         mock_llm = MagicMock()
 
@@ -95,7 +105,9 @@ Token shows excellent momentum and viral potential."""
         return mock_llm
 
     @pytest.fixture
-    def trader_config(self) -> MemecoinVibeTraderConfig:
+
+
+def trader_config(self) -> MemecoinVibeTraderConfig:
         """Create a test configuration for the trader."""
         return MemecoinVibeTraderConfig(
             scan_interval=3600,
@@ -108,7 +120,9 @@ Token shows excellent momentum and viral potential."""
         )
 
     @pytest.fixture
-    def memecoin_trader(
+
+
+def memecoin_trader(
         self,
         trader_config: MemecoinVibeTraderConfig,
         mock_dex_connector: MagicMock,
@@ -125,7 +139,9 @@ Token shows excellent momentum and viral potential."""
             llm=mock_llm,
         )
 
-    def test_memecoin_trader_identifies_and_trades_target(
+
+
+def test_memecoin_trader_identifies_and_trades_target(
         self,
         memecoin_trader: MemecoinVibeTrader,
         mock_dex_connector: MagicMock,
@@ -176,7 +192,9 @@ Token shows excellent momentum and viral potential."""
         # Verify LLM was called for assessment
         assert mock_llm.invoke.called, "LLM should be invoked for token assessment"
 
-    def test_memecoin_trader_skips_low_vibe_tokens(
+
+
+def test_memecoin_trader_skips_low_vibe_tokens(
         self,
         trader_config: MemecoinVibeTraderConfig,
         mock_dex_connector: MagicMock,
@@ -216,7 +234,9 @@ REASONING: Low social engagement and poor community metrics."""
         # Verify order was not executed
         mock_execution_tool.execute_market_order.assert_not_called()
 
-    def test_memecoin_trader_respects_position_limits(
+
+
+def test_memecoin_trader_respects_position_limits(
         self,
         mock_dex_connector: MagicMock,
         mock_social_scraper: MagicMock,
@@ -250,7 +270,9 @@ REASONING: Low social engagement and poor community metrics."""
         # Mock social scraper to return different metrics for each token
         call_count = 0
 
-        def mock_get_social_metrics(symbol: str, address: str) -> SocialMetrics:
+
+
+def mock_get_social_metrics(symbol: str, address: str) -> SocialMetrics:
             nonlocal call_count
             call_count += 1
             return SocialMetrics(
@@ -267,7 +289,9 @@ REASONING: Low social engagement and poor community metrics."""
         mock_llm = MagicMock()
         call_count = 0
 
-        def mock_invoke(prompt: str) -> MagicMock:
+
+
+def mock_invoke(prompt: str) -> MagicMock:
             nonlocal call_count
             call_count += 1
             response_mock = MagicMock()
@@ -300,7 +324,9 @@ REASONING: High potential token with strong metrics."""
         ), "Should only execute 1 trade (respecting max_positions)"
         assert len(results["trades"]) == 1, "Should have exactly 1 trade in results"
 
-    def test_memecoin_trader_handles_empty_token_list(
+
+
+def test_memecoin_trader_handles_empty_token_list(
         self,
         trader_config: MemecoinVibeTraderConfig,
         mock_dex_connector: MagicMock,
@@ -310,7 +336,7 @@ REASONING: High potential token with strong metrics."""
     ) -> None:
         """Test behavior when no new tokens are found."""
         # Mock to return empty list
-        mock_dex_connector.get_new_token_pairs.return_value: list[float] = []
+        mock_dex_connector.get_new_token_pairs.return_value: list = []
 
         trader = MemecoinVibeTrader(
             config=trader_config,
@@ -337,7 +363,9 @@ REASONING: High potential token with strong metrics."""
         mock_llm.invoke.assert_not_called()
         mock_execution_tool.execute_market_order.assert_not_called()
 
-    def test_memecoin_trader_handles_component_failures_gracefully(
+
+
+def test_memecoin_trader_handles_component_failures_gracefully(
         self,
         trader_config: MemecoinVibeTraderConfig,
         mock_dex_connector: MagicMock,
@@ -375,7 +403,9 @@ REASONING: High potential token with strong metrics."""
         ), "Should execute trade using default social metrics"
         assert len(results["trades"]) == 1, "Should have one trade in results"
 
-    def test_memecoin_trader_position_sizing_calculation(
+
+
+def test_memecoin_trader_position_sizing_calculation(
         self,
         trader_config: MemecoinVibeTraderConfig,
         mock_dex_connector: MagicMock,

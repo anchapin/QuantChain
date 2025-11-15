@@ -1,12 +1,17 @@
 """Integration tests for end-to-end workflows in QuantChain."""
 
+
+
+
 from datetime import datetime
 from unittest.mock import Mock, patch
-
 import pandas as pd
 import pytest
-
 from quantchain.backtesting.engine import (
+from quantchain.connectors.dexscreener_connector import DexscreenerDataConnector
+from quantchain.core.exceptions import DataSourceError
+from quantchain.tools.execution import AlpacaExecutionTool
+
     BacktestConfig,
     BacktestEngine,
     BacktestResult,
@@ -14,12 +19,11 @@ from quantchain.backtesting.engine import (
     filter_data_by_date_range,
     validate_ohlcv_data,
 )
-from quantchain.connectors.dexscreener_connector import DexscreenerDataConnector
-from quantchain.core.exceptions import DataSourceError
-from quantchain.tools.execution import AlpacaExecutionTool
 
 
 @pytest.fixture
+
+
 def sample_ohlcv_data():
     """Create sample OHLCV data for testing."""
     dates = pd.date_range("2023-01-01", periods=10, freq="D")
@@ -92,6 +96,8 @@ def sample_ohlcv_data():
 
 
 @pytest.fixture
+
+
 def sample_strategy_config():
     """Create sample strategy configuration for testing."""
     return {
@@ -108,12 +114,16 @@ def sample_strategy_config():
 class TestDataValidationWorkflow:
     """Test data validation workflow as part of end-to-end process."""
 
-    def test_validate_ohlcv_data_success(self, sample_ohlcv_data) -> None:
+
+
+def test_validate_ohlcv_data_success(self, sample_ohlcv_data) -> None:
         """Test successful validation of OHLCV data."""
         # Should not raise any exceptions
         validate_ohlcv_data(sample_ohlcv_data)
 
-    def test_validate_ohlcv_data_missing_columns(self, sample_ohlcv_data) -> None:
+
+
+def test_validate_ohlcv_data_missing_columns(self, sample_ohlcv_data) -> None:
         """Test validation fails with missing columns."""
         # Remove a required column
         invalid_data = sample_ohlcv_data.drop(columns=["volume"])
@@ -121,7 +131,9 @@ class TestDataValidationWorkflow:
         with pytest.raises(Exception):  # DataValidationError
             validate_ohlcv_data(invalid_data)
 
-    def test_filter_data_by_date_range(self, sample_ohlcv_data) -> None:
+
+
+def test_filter_data_by_date_range(self, sample_ohlcv_data) -> None:
         """Test filtering data by date range."""
         # Filter to middle 5 days
         start_date = datetime(2023, 1, 3)
@@ -141,7 +153,9 @@ class TestDataValidationWorkflow:
 class TestBacktestWorkflow:
     """Test complete backtesting workflow."""
 
-    def test_backtest_config_creation(self) -> None:
+
+
+def test_backtest_config_creation(self) -> None:
         """Test creating backtest configuration."""
         config = BacktestConfig(
             initial_cash=100000.0,
@@ -155,7 +169,9 @@ class TestBacktestWorkflow:
         assert config.slippage_rate == 0.0001
         assert config.data_frequency == "1d"
 
-    def test_simple_backtest_execution(self, sample_ohlcv_data) -> None:
+
+
+def test_simple_backtest_execution(self, sample_ohlcv_data) -> None:
         """Test executing a simple backtest."""
         # Create a mock engine
         mock_engine = Mock(spec=BacktestEngine)
@@ -206,7 +222,9 @@ class TestBacktestWorkflow:
 class TestAgentExecutionWorkflow:
     """Test agent execution workflow from data retrieval to execution."""
 
-    def test_dexscreener_data_retrieval(self) -> None:
+
+
+def test_dexscreener_data_retrieval(self) -> None:
         """Test retrieving data from DexScreener."""
         # Mock connector's get_new_token_pairs method directly
         with patch.object(
@@ -233,7 +251,9 @@ class TestAgentExecutionWorkflow:
             assert result[0]["volume_24h"] == 150000
             assert result[0]["liquidity"] == 50000
 
-    def test_execution_workflow(self) -> None:
+
+
+def test_execution_workflow(self) -> None:
         """Test trade execution workflow."""
         # Mock connector first
         mock_connector = Mock()
@@ -262,7 +282,9 @@ class TestAgentExecutionWorkflow:
 class TestIntegratedWorkflow:
     """Test complete integrated workflow from data to execution."""
 
-    def test_complete_trading_workflow(
+
+
+def test_complete_trading_workflow(
         self, sample_ohlcv_data, sample_strategy_config
     ) -> None:
         """Test complete trading workflow from data retrieval to execution."""
@@ -336,10 +358,14 @@ class TestIntegratedWorkflow:
 
 
 @pytest.mark.integration
+
+
 class TestSystemIntegration:
     """Test system-level integration between components."""
 
-    def test_error_handling_workflow(self, sample_ohlcv_data) -> None:
+
+
+def test_error_handling_workflow(self, sample_ohlcv_data) -> None:
         """Test error handling in integrated workflow."""
         # Test error propagation through the system
         with patch(

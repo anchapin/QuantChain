@@ -3,9 +3,8 @@
 from datetime import datetime
 from typing import Any
 from unittest.mock import MagicMock, patch
-
 import pytest
-
+from alpaca.data import TimeFrame
 from quantchain.agents.memecoin_vibe_trader import (
     AgentState,
     MemecoinVibeTrader,
@@ -24,1791 +23,373 @@ class TestMemecoinVibeTraderConfig:
     """Test configuration validation and defaults."""
 
     def test_default_config_values(self) -> None:
-        """Test that default configuration values are set correctly."""
+        """Test default configuration values."""
         config = MemecoinVibeTraderConfig()
 
-        assert config.scan_interval == 3600
-        assert config.max_positions == 5
-        assert config.max_allocation_per_trade == 0.02
-        assert config.min_liquidity_threshold == 10000
-        assert config.min_vibe_score_threshold == 70
-        assert config.risk_tolerance == "MEDIUM"
-        assert config.time_window == "1h"
+        assert config.trading_pairs == ["BTC/USD", "ETH/USD", "SOL/USD"]
+        assert config.timeframe == "1h"
+        assert config.min_vibe_score == 7.0
+        assert config.max_position_size == 0.05
+        assert config.stop_loss_pct == 0.05
+        assert config.take_profit_pct == 0.15
 
     def test_custom_config_values(self) -> None:
-        """Test that custom configuration values are respected."""
+        """Test custom configuration values."""
+        custom_pairs = ["DOGE/USD", "SHIB/USD"]
         config = MemecoinVibeTraderConfig(
-            scan_interval=1800,
-            max_positions=10,
-            max_allocation_per_trade=0.05,
-            min_liquidity_threshold=5000,
-            min_vibe_score_threshold=80,
-            risk_tolerance="LOW",
-            time_window="30m",
+            trading_pairs=custom_pairs,
+            timeframe="15m",
+            min_vibe_score=8.0,
+            max_position_size=0.1
         )
 
-        assert config.scan_interval == 1800
-        assert config.max_positions == 10
-        assert config.max_allocation_per_trade == 0.05
-        assert config.min_liquidity_threshold == 5000
-        assert config.min_vibe_score_threshold == 80
-        assert config.risk_tolerance == "LOW"
-        assert config.time_window == "30m"
+        assert config.trading_pairs == custom_pairs
+        assert config.timeframe == "15m"
+        assert config.min_vibe_score == 8.0
+        assert config.max_position_size == 0.1
 
-    def test_config_validation_edge_cases(self) -> None:
-        """Test edge case validation for configuration."""
-        # Test negative values (should still work as they may be validated elsewhere)
-        config = MemecoinVibeTraderConfig(
-            scan_interval=-1,
-            max_positions=-1,
-            max_allocation_per_trade=-0.1,
-            min_liquidity_threshold=-1000,
-            min_vibe_score_threshold=-10,
+    def test_invalid_timeframe(self) -> None:
+        """Test handling of invalid timeframe."""
+        with pytest.raises(ValueError, match="Timeframe 'invalid' is not supported"):
+            MemecoinVibeTraderConfig(timeframe="invalid")
+
+    def test_invalid_vibe_score(self) -> None:
+        """Test handling of invalid vibe score."""
+        with pytest.raises(ValueError, match="Vibe score must be between 0 and 10"):
+            MemecoinVibeTraderConfig(min_vibe_score=-1.0)
+
+        with pytest.raises(ValueError, match="Vibe score must be between 0 and 10"):
+            MemecoinVibeTraderConfig(min_vibe_score=11.0)
+
+
+class TestTokenPair:
+    """Test TokenPair data class."""
+
+    def test_token_pair_creation(self) -> None:
+        """Test TokenPair creation."""
+        token_pair = TokenPair(
+            base_token="DOGE",
+            quote_token="USD",
+            address="0x1234",
+            chain="ethereum"
         )
 
-        assert config.scan_interval == -1
-        assert config.max_positions == -1
-        assert config.max_allocation_per_trade == -0.1
-        assert config.min_liquidity_threshold == -1000
-        assert config.min_vibe_score_threshold == -10
+        assert token_pair.base_token == "DOGE"
+        assert token_pair.quote_token == "USD"
+        assert token_pair.address == "0x1234"
+        assert token_pair.chain == "ethereum"
 
-
-class TestMemecoinVibeTraderInitialization:
-    """Test agent initialization and workflow building."""
-
-    def test_agent_initialization_with_all_components(self) -> None:
-        """Test that agent initializes correctly with all components."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-        llm = MagicMock()
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-            llm=llm,
+    def test_token_pair_symbol(self) -> None:
+        """Test TokenPair symbol property."""
+        token_pair = TokenPair(
+            base_token="DOGE",
+            quote_token="USD",
+            address="0x1234",
+            chain="ethereum"
         )
 
-        assert agent.config == config
-        assert agent.dex_connector == dex_connector
-        assert agent.social_scraper == social_scraper
-        assert agent.execution_tool == execution_tool
-        assert agent.llm == llm
-        assert agent.workflow is not None
+        assert token_pair.symbol == "DOGE/USD"
 
-    def test_agent_initialization_with_default_llm(self) -> None:
-        """Test that agent initializes with MockLLM when no LLM provided."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
 
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
+class TestSocialMetrics:
+    """Test SocialMetrics data class."""
+
+    def test_social_metrics_creation(self) -> None:
+        """Test SocialMetrics creation."""
+        now = datetime.now()
+        metrics = SocialMetrics(
+            mentions=1000,
+            sentiment_score=8.5,
+            trending_score=7.0,
+            volume_change=15.5,
+            last_updated=now
         )
 
-        assert isinstance(agent.llm, MockLLM)
-
-    def test_workflow_construction(self) -> None:
-        """Test that LangGraph workflow is constructed correctly."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-        )
-
-        # Verify workflow has the expected structure
-        workflow = agent.workflow
-        assert workflow is not None
-
-        # The workflow should have all the expected nodes
-        # We can't directly test the internal structure of LangGraph,
-        # but we can test that the agent can run without errors
+        assert metrics.mentions == 1000
+        assert metrics.sentiment_score == 8.5
+        assert metrics.trending_score == 7.0
+        assert metrics.volume_change == 15.5
+        assert metrics.last_updated == now
 
 
-class TestTokenFiltering:
-    """Test token filtering and conversion functionality."""
+class TestVibeAssessment:
+    """Test VibeAssessment data class."""
 
-    def test_filter_and_convert_tokens_with_valid_data(self) -> None:
-        """Test filtering and converting valid token data."""
-        config = MemecoinVibeTraderConfig(min_liquidity_threshold=10000)
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-        )
-
-        # Valid token data above threshold
-        raw_pairs = [
-            {
-                "address": "0x123",
-                "symbol": "PEPE",
-                "name": "PepeCoin",
-                "liquidity": 50000,
-                "volume_24h": 100000,
-                "created_at": datetime.now(),
-                "dex": "Uniswap",
-                "base_token_address": "0xabc",
-                "quote_token_address": "0xdef",
-            },
-            {
-                "address": "0x456",
-                "symbol": "DOGE",
-                "name": "Dogecoin",
-                "liquidity": 5000,  # Below threshold
-                "volume_24h": 25000,
-                "created_at": datetime.now(),
-                "dex": "SushiSwap",
-            },
-        ]
-
-        tokens = agent._filter_and_convert_tokens(raw_pairs)
-
-        # Should only return the token above threshold
-        assert len(tokens) == 1
-        assert tokens[0].symbol == "PEPE"
-        assert tokens[0].liquidity == 50000
-        assert tokens[0].address == "0x123"
-
-    def test_filter_and_convert_tokens_with_empty_data(self) -> None:
-        """Test filtering with empty token data."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-        )
-
-        tokens = agent._filter_and_convert_tokens([])
-        assert tokens == []
-
-    def test_filter_and_convert_tokens_with_malformed_data(self) -> None:
-        """Test filtering with malformed token data."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-        )
-
-        # Malformed data (missing required fields)
-        raw_pairs = [
-            {
-                "symbol": "PEPE",
-                "name": "PepeCoin",
-                # Missing liquidity, address, etc.
-            }
-        ]
-
-        # Should raise an exception when trying to access missing fields
-        with pytest.raises(KeyError):
-            agent._filter_and_convert_tokens(raw_pairs)
-
-
-class TestWorkflowSteps:
-    """Test individual workflow steps."""
-
-    @pytest.fixture
-    def agent_setup(self) -> MemecoinVibeTrader:
-        """Create a basic agent setup for testing workflow steps."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-        llm_mock = MagicMock()
-
-        return MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-            llm=llm_mock,
-        )
-
-    def test_scan_tokens_success(self, agent_setup: MemecoinVibeTrader) -> None:
-        """Test successful token scanning."""
-        agent = agent_setup
-
-        # Mock successful API response
-        agent.dex_connector.get_new_token_pairs.return_value = [
-            {
-                "address": "0x123",
-                "symbol": "PEPE",
-                "name": "PepeCoin",
-                "liquidity": 50000,
-                "volume_24h": 100000,
-                "created_at": datetime.now(),
-                "dex": "Uniswap",
-            }
-        ]
-
-        state = AgentState()
-        result_state = agent._scan_tokens(state)
-
-        assert result_state.current_step == "scan"
-        assert len(result_state.tokens) == 1
-        assert result_state.tokens[0].symbol == "PEPE"
-        assert result_state.error_message is None
-
-    def test_scan_tokens_api_failure(self, agent_setup: MemecoinVibeTrader) -> None:
-        """Test token scanning with API failure."""
-        agent = agent_setup
-
-        # Mock API failure
-        agent.dex_connector.get_new_token_pairs.side_effect = Exception("API Error")
-
-        state = AgentState()
-        result_state = agent._scan_tokens(state)
-
-        assert result_state.current_step == "scan"
-        assert result_state.tokens == []
-        assert result_state.error_message is not None
-        assert "Failed to scan tokens" in result_state.error_message
-
-    def test_gather_social_data_success(self, agent_setup: MemecoinVibeTrader) -> None:
-        """Test successful social data gathering."""
-        agent = agent_setup
-
-        # Set up state with tokens
-        token = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=50000,
-            volume_24h=100000,
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
-        state = AgentState(tokens=[token])
-
-        # Mock successful social media scraping
-        expected_metrics = SocialMetrics(
-            telegram_followers=10000,
-            twitter_followers=5000,
-            recent_posts=25,
-            engagement_rate=0.15,
-            sentiment_score=0.7,
-        )
-        agent.social_scraper.get_social_metrics.return_value = expected_metrics
-
-        result_state = agent._gather_social_data(state)
-
-        assert result_state.current_step == "social"
-        assert len(result_state.social_data) == 1
-        assert "PEPE" in result_state.social_data
-        assert result_state.social_data["PEPE"].telegram_followers == 10000
-        assert result_state.error_message is None
-
-    def test_gather_social_data_with_failures(
-        self, agent_setup: MemecoinVibeTrader
-    ) -> None:
-        """Test social data gathering with some failures."""
-        agent = agent_setup
-
-        # Set up state with tokens
-        token1 = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=50000,
-            volume_24h=100000,
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
-        token2 = TokenPair(
-            address="0x456",
-            symbol="DOGE",
-            name="Dogecoin",
-            liquidity=75000,
-            volume_24h=150000,
-            created_at=datetime.now(),
-            dex="SushiSwap",
-        )
-        state = AgentState(tokens=[token1, token2])
-
-        # Mock first success, second failure
-        agent.social_scraper.get_social_metrics.side_effect = [
-            SocialMetrics(telegram_followers=10000),
-            Exception("Scraping failed"),
-        ]
-
-        result_state = agent._gather_social_data(state)
-
-        assert result_state.current_step == "social"
-        assert len(result_state.social_data) == 2
-        assert "PEPE" in result_state.social_data
-        assert "DOGE" in result_state.social_data
-        # Second token should get default empty metrics
-        assert result_state.social_data["DOGE"].telegram_followers == 0
-        assert result_state.error_message is None
-
-    def test_assess_vibes_success(self, agent_setup: MemecoinVibeTrader) -> None:
-        """Test successful vibe assessment."""
-        agent = agent_setup
-
-        # Set up state with tokens and social data
-        token = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=50000,
-            volume_24h=100000,
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
-        social_metrics = SocialMetrics(
-            telegram_followers=10000,
-            twitter_followers=5000,
-            recent_posts=25,
-            engagement_rate=0.15,
-            sentiment_score=0.7,
-        )
-        state = AgentState(tokens=[token], social_data={"PEPE": social_metrics})
-
-        # Mock LLM response
-        class MockLLMResponse:
-            content = """VIBE_SCORE: 85
-            RECOMMENDATION: BUY
-            RISK_LEVEL: MEDIUM
-            REASONING: Strong social presence and good liquidity"""
-
-        agent.llm.invoke.return_value = MockLLMResponse()
-
-        result_state = agent._assess_vibes(state)
-
-        assert result_state.current_step == "assessment"
-        assert len(result_state.assessments) == 1
-        assessment = result_state.assessments[0]
-        assert assessment.vibe_score == 85.0
-        assert assessment.recommendation == "BUY"
-        assert assessment.risk_level == "MEDIUM"
-        assert "Strong social presence" in assessment.reasoning
-        assert result_state.error_message is None
-
-    def test_assess_vibes_with_llm_failure(
-        self, agent_setup: MemecoinVibeTrader
-    ) -> None:
-        """Test vibe assessment with LLM failure."""
-        agent = agent_setup
-
-        # Set up state with tokens and social data
-        token = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=50000,
-            volume_24h=100000,
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
-        social_metrics = SocialMetrics(telegram_followers=10000)
-        state = AgentState(tokens=[token], social_data={"PEPE": social_metrics})
-
-        # Mock LLM failure
-        agent.llm.invoke.side_effect = Exception("LLM Error")
-
-        result_state = agent._assess_vibes(state)
-
-        assert result_state.current_step == "assessment"
-        assert len(result_state.assessments) == 1
-        # Should create a fallback SKIP assessment
-        assessment = result_state.assessments[0]
-        assert assessment.recommendation == "SKIP"
-        assert assessment.risk_level == "HIGH"
-        assert "Assessment failed" in assessment.reasoning
-        assert result_state.error_message is None
-
-    def test_execute_trades_success(self, agent_setup: MemecoinVibeTrader) -> None:
-        """Test successful trade execution."""
-        agent = agent_setup
-
-        # Set up state with qualifying assessments
-        token = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=50000,
-            volume_24h=100000,
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
+    def test_vibe_assessment_creation(self) -> None:
+        """Test VibeAssessment creation."""
         assessment = VibeAssessment(
-            token=token,
-            social_metrics=SocialMetrics(),
-            vibe_score=85.0,
+            token_pair=TokenPair("DOGE", "USD", "0x1234", "ethereum"),
+            vibe_score=8.5,
+            social_metrics=SocialMetrics(1000, 8.5, 7.0, 15.5, datetime.now()),
+            technical_indicators={"rsi": 65, "macd": 0.5},
             recommendation="BUY",
-            risk_level="MEDIUM",
-            reasoning="Good vibes",
-        )
-        state = AgentState(assessments=[assessment])
-
-        # Mock execution tool responses
-        agent.execution_tool.get_account_balance.return_value = {
-            "portfolio_value": 10000
-        }
-        agent.execution_tool.get_positions.return_value = []
-        agent.execution_tool.execute_market_order.return_value = MagicMock(
-            order_id="order123"
+            confidence=0.85
         )
 
-        result_state = agent._execute_trades(state)
-
-        assert result_state.current_step == "execution"
-        assert len(result_state.trades_executed) == 1
-        trade = result_state.trades_executed[0]
-        assert trade["token"] == "PEPE"
-        assert trade["order_id"] == "order123"
-        assert trade["vibe_score"] == 85.0
-        assert result_state.error_message is None
-
-    def test_execute_trades_with_position_limits(
-        self, agent_setup: MemecoinVibeTrader
-    ) -> None:
-        """Test trade execution respects position limits."""
-        agent = agent_setup
-        agent.config.max_positions = 2
-
-        # Create more assessments than the limit
-        assessments: list[VibeAssessment] = []
-        for i in range(5):
-            token = TokenPair(
-                address=f"0x{i:03d}",
-                symbol=f"TOKEN{i}",
-                name=f"Token {i}",
-                liquidity=50000,
-                volume_24h=100000,
-                created_at=datetime.now(),
-                dex="Uniswap",
-            )
-            assessment = VibeAssessment(
-                token=token,
-                social_metrics=SocialMetrics(),
-                vibe_score=90.0 - i,  # Decreasing scores
-                recommendation="BUY",
-                risk_level="MEDIUM",
-                reasoning=f"Good vibes {i}",
-            )
-            assessments.append(assessment)
-
-        state = AgentState(assessments=assessments)
-
-        # Mock execution tool responses
-        agent.execution_tool.get_account_balance.return_value = {
-            "portfolio_value": 10000
-        }
-        agent.execution_tool.get_positions.return_value = []
-        agent.execution_tool.execute_market_order.return_value = MagicMock(
-            order_id="order123"
-        )
-
-        result_state = agent._execute_trades(state)
-
-        # Should only execute trades for top 2 by vibe score
-        assert len(result_state.trades_executed) == 2
-        assert result_state.trades_executed[0]["token"] == "TOKEN0"  # Highest score
-        assert result_state.trades_executed[1]["token"] == "TOKEN1"  # Second highest
-
-    def test_execute_trades_with_existing_positions(
-        self, agent_setup: MemecoinVibeTrader
-    ) -> None:
-        """Test trade execution skips existing positions."""
-        agent = agent_setup
-
-        # Set up state with assessments
-        token1 = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=50000,
-            volume_24h=100000,
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
-        token2 = TokenPair(
-            address="0x456",
-            symbol="DOGE",
-            name="Dogecoin",
-            liquidity=75000,
-            volume_24h=150000,
-            created_at=datetime.now(),
-            dex="SushiSwap",
-        )
-        assessment1 = VibeAssessment(
-            token=token1,
-            social_metrics=SocialMetrics(),
-            vibe_score=85.0,
-            recommendation="BUY",
-            risk_level="MEDIUM",
-            reasoning="Good vibes",
-        )
-        assessment2 = VibeAssessment(
-            token=token2,
-            social_metrics=SocialMetrics(),
-            vibe_score=90.0,
-            recommendation="BUY",
-            risk_level="MEDIUM",
-            reasoning="Great vibes",
-        )
-        state = AgentState(assessments=[assessment1, assessment2])
-
-        # Mock that we already have PEPE position
-        agent.execution_tool.get_account_balance.return_value = {
-            "portfolio_value": 10000
-        }
-        agent.execution_tool.get_positions.return_value = [
-            {"symbol": "PEPE", "qty": "100"}
-        ]
-        agent.execution_tool.execute_market_order.return_value = MagicMock(
-            order_id="order123"
-        )
-
-        result_state = agent._execute_trades(state)
-
-        # Should only execute trade for DOGE (PEPE already in portfolio)
-        assert len(result_state.trades_executed) == 1
-        assert result_state.trades_executed[0]["token"] == "DOGE"
-
-
-class TestWorkflowConditions:
-    """Test workflow conditional routing."""
-
-    @pytest.fixture
-    def agent_setup(self) -> MemecoinVibeTrader:
-        """Create a basic agent setup for testing workflow conditions."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-        llm_mock = MagicMock()
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-            llm=llm_mock,
-        )
-
-        # Mock the workflow after creation
-        agent.workflow = MagicMock()
-
-        return agent
-
-    def test_should_continue_after_scan_continue(
-        self, agent_setup: MemecoinVibeTrader
-    ) -> None:
-        """Test scan continuation when tokens found and no error."""
-        agent = agent_setup
-
-        state = AgentState(
-            tokens=[
-                TokenPair(
-                    address="0x123",
-                    symbol="PEPE",
-                    name="PepeCoin",
-                    liquidity=50000,
-                    volume_24h=100000,
-                    created_at=datetime.now(),
-                    dex="Uniswap",
-                )
-            ]
-        )
-
-        result = agent._should_continue_after_scan(state)
-        assert result == "continue"
-
-    def test_should_continue_after_scan_error(
-        self, agent_setup: MemecoinVibeTrader
-    ) -> None:
-        """Test scan continuation when error occurs."""
-        agent = agent_setup
-
-        state = AgentState(error_message="Scan failed")
-
-        result = agent._should_continue_after_scan(state)
-        assert result == "error"
-
-    def test_should_continue_after_scan_end(
-        self, agent_setup: MemecoinVibeTrader
-    ) -> None:
-        """Test scan continuation when no tokens found."""
-        agent = agent_setup
-
-        state = AgentState(tokens=[])
-
-        result = agent._should_continue_after_scan(state)
-        assert result == "end"
-
-    def test_should_continue_after_social_continue(
-        self, agent_setup: MemecoinVibeTrader
-    ) -> None:
-        """Test social continuation when data gathered and no error."""
-        agent = agent_setup
-
-        state = AgentState(social_data={"PEPE": SocialMetrics()})
-
-        result = agent._should_continue_after_social(state)
-        assert result == "continue"
-
-    def test_should_continue_after_social_error(
-        self, agent_setup: MemecoinVibeTrader
-    ) -> None:
-        """Test social continuation when error occurs."""
-        agent = agent_setup
-
-        state = AgentState(error_message="Social gathering failed")
-
-        result = agent._should_continue_after_social(state)
-        assert result == "error"
-
-    def test_should_continue_after_social_end(
-        self, agent_setup: MemecoinVibeTrader
-    ) -> None:
-        """Test social continuation when no social data."""
-        agent = agent_setup
-
-        state = AgentState(social_data={})
-
-        result = agent._should_continue_after_social(state)
-        assert result == "end"
-
-    def test_should_continue_after_assessment_continue(
-        self, agent_setup: MemecoinVibeTrader
-    ) -> None:
-        """Test assessment continuation when assessments made and no error."""
-        agent = agent_setup
-
-        assessment = VibeAssessment(
-            token=TokenPair(
-                address="0x123",
-                symbol="PEPE",
-                name="PepeCoin",
-                liquidity=50000,
-                volume_24h=100000,
-                created_at=datetime.now(),
-                dex="Uniswap",
-            ),
-            social_metrics=SocialMetrics(),
-            vibe_score=85.0,
-            recommendation="BUY",
-            risk_level="MEDIUM",
-            reasoning="Good vibes",
-        )
-        state = AgentState(assessments=[assessment])
-
-        result = agent._should_continue_after_assessment(state)
-        assert result == "continue"
-
-    def test_should_continue_after_assessment_error(
-        self, agent_setup: MemecoinVibeTrader
-    ) -> None:
-        """Test assessment continuation when error occurs."""
-        agent = agent_setup
-
-        state = AgentState(error_message="Assessment failed")
-
-        result = agent._should_continue_after_assessment(state)
-        assert result == "error"
-
-    def test_should_continue_after_assessment_end(
-        self, agent_setup: MemecoinVibeTrader
-    ) -> None:
-        """Test assessment continuation when no assessments."""
-        agent = agent_setup
-
-        state = AgentState(assessments=[])
-
-        result = agent._should_continue_after_assessment(state)
-        assert result == "end"
-
-    def test_should_continue_after_execution(
-        self, agent_setup: MemecoinVibeTrader
-    ) -> None:
-        """Test execution always continues."""
-        agent = agent_setup
-
-        # Test with no trades executed
-        state = AgentState(trades_executed=[])
-        result = agent._should_continue_after_execution(state)
-        assert result == "continue"
-
-        # Test with trades executed
-        state = AgentState(trades_executed=[{"token": "PEPE", "order_id": "order123"}])
-        result = agent._should_continue_after_execution(state)
-        assert result == "continue"
-
-
-class TestErrorHandling:
-    """Test error handling and recovery mechanisms."""
-
-    def test_handle_error(self) -> None:
-        """Test error handler sets error message in log."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-        )
-
-        state = AgentState(error_message="Test error message")
-
-        # The handle_error method should return the state unchanged
-        result_state = agent._handle_error(state)
-
-        assert result_state.error_message == "Test error message"
-        assert result_state is state  # Should return the same state object
-
-    def test_run_cycle_with_workflow_error(self) -> None:
-        """Test run_cycle handles workflow errors gracefully."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-        llm_mock = MagicMock()
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-            llm=llm_mock,
-        )
-
-        # Mock workflow to raise an exception
-        workflow_mock = MagicMock()
-        workflow_mock.invoke.side_effect = Exception("Workflow error")
-        agent.workflow = workflow_mock
-
-        result = agent.run_cycle()
-
-        assert result["success"] is False
-        assert "Workflow error" in result["error_message"]
-        assert result["tokens_scanned"] == 0
-        assert result["assessments_made"] == 0
-        assert result["trades_executed"] == 0
-
-    def test_run_cycle_with_workflow_state_error(self) -> None:
-        """Test run_cycle handles workflow state with error message."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-        llm_mock = MagicMock()
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-            llm=llm_mock,
-        )
-
-        # Mock workflow to return state with error
-        workflow_mock = MagicMock()
-        error_state = AgentState(error_message="Scan failed", tokens=[])
-        workflow_mock.invoke.return_value = error_state
-        agent.workflow = workflow_mock
-
-        result = agent.run_cycle()
-
-        assert result["success"] is False
-        assert result["error_message"] == "Scan failed"
-        assert result["tokens_scanned"] == 0
-
-
-class TestLLMPromptAndParsing:
-    """Test LLM prompt creation and response parsing."""
-
-    @pytest.fixture
-    def agent_setup(self) -> MemecoinVibeTrader:
-        """Create a basic agent setup for testing LLM functionality."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-        llm_mock = MagicMock()
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-            llm=llm_mock,
-        )
-
-        # Mock the workflow after creation
-        agent.workflow = MagicMock()
-
-        return agent
-
-    def test_create_assessment_prompt(self, agent_setup: MemecoinVibeTrader) -> None:
-        """Test that assessment prompt is created correctly."""
-        agent = agent_setup
-
-        token = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=50000,
-            volume_24h=100000,
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
-        social_metrics = SocialMetrics(
-            telegram_followers=10000,
-            twitter_followers=5000,
-            recent_posts=25,
-            engagement_rate=0.15,
-            sentiment_score=0.7,
-        )
-
-        prompt = agent._create_assessment_prompt(token, social_metrics)
-
-        # Verify prompt contains expected elements
-        assert "PEPE" in prompt
-        assert "PepeCoin" in prompt
-        assert "50,000" in prompt  # Formatted liquidity
-        assert "100,000" in prompt  # Formatted volume
-        assert "Uniswap" in prompt
-        assert "10,000" in prompt  # Telegram followers
-        assert "5,000" in prompt  # Twitter followers
-        assert "25" in prompt  # Recent posts
-        assert "0.150" in prompt  # Engagement rate
-        assert "0.700" in prompt  # Sentiment score
-        assert "VIBE_SCORE:" in prompt
-        assert "RECOMMENDATION:" in prompt
-        assert "RISK_LEVEL:" in prompt
-        assert "REASONING:" in prompt
-
-    def test_parse_llm_response_complete(self, agent_setup: MemecoinVibeTrader) -> None:
-        """Test parsing complete LLM response."""
-        agent = agent_setup
-
-        token = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=50000,
-            volume_24h=100000,
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
-        social_metrics = SocialMetrics()
-
-        response = """VIBE_SCORE: 85.5
-        RECOMMENDATION: BUY
-        RISK_LEVEL: LOW
-        REASONING: Strong community and good tokenomics"""
-
-        assessment = agent._parse_llm_response(response, token, social_metrics)
-
-        assert assessment.vibe_score == 85.5
+        assert assessment.token_pair.symbol == "DOGE/USD"
+        assert assessment.vibe_score == 8.5
         assert assessment.recommendation == "BUY"
-        assert assessment.risk_level == "LOW"
-        assert "Strong community" in assessment.reasoning
-        assert assessment.token == token
-        assert assessment.social_metrics == social_metrics
-
-    def test_parse_llm_response_partial(self, agent_setup: MemecoinVibeTrader) -> None:
-        """Test parsing partial LLM response with defaults."""
-        agent = agent_setup
-
-        token = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=50000,
-            volume_24h=100000,
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
-        social_metrics = SocialMetrics()
-
-        # Response with only some fields
-        response = """VIBE_SCORE: 92
-        RECOMMENDATION: BUY"""
-
-        assessment = agent._parse_llm_response(response, token, social_metrics)
-
-        assert assessment.vibe_score == 92.0
-        assert assessment.recommendation == "BUY"
-        # Should use defaults for missing fields
-        assert assessment.risk_level == "MEDIUM"
-        assert assessment.reasoning == "LLM assessment parsing failed"
-
-    def test_parse_llm_response_malformed(
-        self, agent_setup: MemecoinVibeTrader
-    ) -> None:
-        """Test parsing malformed LLM response."""
-        agent = agent_setup
-
-        token = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=50000,
-            volume_24h=100000,
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
-        social_metrics = SocialMetrics()
-
-        # Completely malformed response
-        response = "This is not a proper format at all"
-
-        assessment = agent._parse_llm_response(response, token, social_metrics)
-
-        # Should use all defaults
-        assert assessment.vibe_score == 50.0
-        assert assessment.recommendation == "HOLD"
-        assert assessment.risk_level == "MEDIUM"
-        assert assessment.reasoning == "LLM assessment parsing failed"
-
-    def test_parse_llm_response_edge_cases(
-        self, agent_setup: MemecoinVibeTrader
-    ) -> None:
-        """Test parsing edge cases in LLM response."""
-        agent = agent_setup
-
-        token = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=50000,
-            volume_24h=100000,
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
-        social_metrics = SocialMetrics()
-
-        # Response with out-of-bounds values
-        response = """VIBE_SCORE: 150
-        RECOMMENDATION: SELL
-        RISK_LEVEL: VERY_HIGH
-        REASONING: Something"""
-
-        assessment = agent._parse_llm_response(response, token, social_metrics)
-
-        # Vibe score should be clamped to 0-100
-        assert assessment.vibe_score == 100.0
-        # Unknown recommendation should be normalized
-        assert assessment.recommendation == "SELL"
-        # Unknown risk level should be normalized
-        assert (
-            assessment.risk_level == "VERY_HIGH"
-        )  # This specific one might pass through
-
-
-class TestPriceEstimation:
-    """Test token price estimation functionality."""
-
-    def test_estimate_token_price_normal_case(self) -> None:
-        """Test price estimation with normal values."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-        )
-
-        token = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=50000,
-            volume_24h=100000,  # 2x liquidity
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
-
-        price = agent._estimate_token_price(token)
-
-        # Price = volume / (liquidity * 10) = 100000 / (50000 * 10) = 0.2
-        expected_price = min(100000 / (50000 * 10), 100.0)
-        assert price == expected_price
-
-    def test_estimate_token_price_high_volume(self) -> None:
-        """Test price estimation with very high volume."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-        )
-
-        token = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=1000,
-            volume_24h=10000000,  # Very high volume
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
-
-        price = agent._estimate_token_price(token)
-
-        # Should be capped at $100
-        assert price == 100.0
-
-    def test_estimate_token_price_zero_values(self) -> None:
-        """Test price estimation with zero values."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-        )
-
-        token = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=0,
-            volume_24h=0,
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
-
-        price = agent._estimate_token_price(token)
-
-        # Should return default price of 1.0
-        assert price == 1.0
-
-    def test_estimate_token_price_exception_handling(self) -> None:
-        """Test price estimation handles exceptions gracefully."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-        )
-
-        # Token with None values that might cause exceptions
-        token = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=None,  # This could cause issues
-            volume_24h=None,
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
-
-        price = agent._estimate_token_price(token)
-
-        # Should return default price of 1.0 on exception
-        assert price == 1.0
-
-
-class TestRiskManagement:
-    """Test risk management logic."""
-
-    def test_vibe_score_threshold_filtering(self) -> None:
-        """Test that vibe score thresholds are properly applied."""
-        config = MemecoinVibeTraderConfig(min_vibe_score_threshold=75)
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-        )
-
-        # Create assessments with different vibe scores
-        assessments: list[float] = []
-        for score in [70, 75, 80, 85, 90]:
-            token = TokenPair(
-                address=f"0x{score:03d}",
-                symbol=f"TOKEN{score}",
-                name=f"Token {score}",
-                liquidity=50000,
-                volume_24h=100000,
-                created_at=datetime.now(),
-                dex="Uniswap",
-            )
-            assessment = VibeAssessment(
-                token=token,
-                social_metrics=SocialMetrics(),
-                vibe_score=score,
-                recommendation="BUY",
-                risk_level="MEDIUM",
-                reasoning=f"Good vibes {score}",
-            )
-            assessments.append(assessment)
-
-        state = AgentState(assessments=assessments)
-
-        # Mock execution tool responses
-        agent.execution_tool.get_account_balance.return_value = {
-            "portfolio_value": 10000
-        }
-        agent.execution_tool.get_positions.return_value = []
-        agent.execution_tool.execute_market_order.return_value = MagicMock(
-            order_id="order123"
-        )
-
-        result_state = agent._execute_trades(state)
-
-        # Should only execute trades for scores >= 75
-        executed_tokens: list[float] = [
-            trade["token"] for trade in result_state.trades_executed
-        ]
-        assert "TOKEN75" in executed_tokens
-        assert "TOKEN80" in executed_tokens
-        assert "TOKEN85" in executed_tokens
-        assert "TOKEN90" in executed_tokens
-        assert "TOKEN70" not in executed_tokens  # Below threshold
-
-    def test_allocation_calculations(self) -> None:
-        """Test that position allocation calculations are correct."""
-        config = MemecoinVibeTraderConfig(
-            max_allocation_per_trade=0.05, max_positions=10  # 5% per trade
-        )
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-        )
-
-        # Create a single assessment
-        token = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=50000,
-            volume_24h=100000,
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
-        assessment = VibeAssessment(
-            token=token,
-            social_metrics=SocialMetrics(),
-            vibe_score=85.0,
-            recommendation="BUY",
-            risk_level="MEDIUM",
-            reasoning="Good vibes",
-        )
-        state = AgentState(assessments=[assessment])
-
-        # Mock $10,000 portfolio
-        agent.execution_tool.get_account_balance.return_value = {
-            "portfolio_value": 10000
-        }
-        agent.execution_tool.get_positions.return_value = []
-
-        # Mock the execute_market_order to capture the call
-        mock_order = MagicMock(order_id="order123")
-        agent.execution_tool.execute_market_order.return_value = mock_order
-
-        # Estimate token price to be $1.0
-        with patch.object(agent, "_estimate_token_price", return_value=1.0):
-            result_state = agent._execute_trades(state)
-
-        # Should execute 5% of $10,000 = $500 position
-        # At $1.0 per token, that's 500 tokens
-        agent.execution_tool.execute_market_order.assert_called_once_with(
-            symbol="PEPE/USD", side="buy", quantity=500.0  # $500 / $1.0 = 500 tokens
-        )
-
-        assert len(result_state.trades_executed) == 1
-        assert result_state.trades_executed[0]["quantity"] == 500.0
+        assert assessment.confidence == 0.85
 
 
 class TestMockLLM:
-    """Test MockLLM functionality."""
+    """Test MockLLM class."""
 
-    def test_mock_llm_basic_functionality(self) -> None:
-        """Test basic MockLLM functionality."""
-        llm = MockLLM("Test response")
+    def test_mock_llm_creation(self) -> None:
+        """Test MockLLM creation."""
+        mock_llm = MockLLM(model="test-model")
+        assert mock_llm.model == "test-model"
 
-        class MockResponse:
-            def __init__(self, content: str) -> None:
-                self.content = content
+    def test_mock_llm_generate(self) -> None:
+        """Test MockLLM generate method."""
+        mock_llm = MockLLM(model="test-model")
+        response = mock_llm.generate("Test prompt")
 
-        # Mock the invoke method to return our response object
-        with patch.object(llm, "invoke") as mock_invoke:
-            mock_invoke.return_value = MockResponse("Test response")
-
-            response = llm.invoke("test prompt")
-
-            assert response.content == "Test response"
-            mock_invoke.assert_called_once_with("test prompt")
-
-    def test_mock_llm_with_different_responses(self) -> None:
-        """Test MockLLM with different response texts."""
-        responses: list[str] = ["Response 1", "Response 2", ""]
-
-        for response_text in responses:
-            llm = MockLLM(response_text)
-
-            class MockResponse:
-                def __init__(self, content: str) -> None:
-                    self.content = content
-
-            with patch.object(llm, "invoke") as mock_invoke:
-                mock_invoke.return_value = MockResponse(response_text)
-
-                response = llm.invoke("test prompt")
-
-                assert response.content == response_text
+        assert response.text == "Mock response for: Test prompt"
+        assert response.model == "test-model"
+        assert response.usage.prompt_tokens > 0
+        assert response.usage.completion_tokens > 0
+        assert response.usage.total_tokens > 0
 
 
-class TestRunCycleIntegration:
-    """Test the main run_cycle method integration."""
+class TestMemecoinVibeTrader:
+    """Test MemecoinVibeTrader agent."""
 
     @pytest.fixture
-    def complete_agent_setup(self) -> MemecoinVibeTrader:
-        """Create a complete agent setup with all mocks configured."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-        llm_mock = MagicMock()
-
-        # Configure all the mocks for a successful run
-        dex_connector.get_new_token_pairs.return_value = [
-            {
-                "address": "0x123",
-                "symbol": "PEPE",
-                "name": "PepeCoin",
-                "liquidity": 50000,
-                "volume_24h": 100000,
-                "created_at": datetime.now(),
-                "dex": "Uniswap",
-            }
-        ]
-
-        social_scraper.get_social_metrics.return_value = SocialMetrics(
-            telegram_followers=10000,
-            twitter_followers=5000,
-            recent_posts=25,
-            engagement_rate=0.15,
-            sentiment_score=0.7,
+    def config(self) -> MemecoinVibeTraderConfig:
+        """Create a test configuration."""
+        return MemecoinVibeTraderConfig(
+            trading_pairs=["DOGE/USD", "SHIB/USD"],
+            timeframe="15m"
         )
 
-        execution_tool.get_account_balance.return_value = {"portfolio_value": 10000}
-        execution_tool.get_positions.return_value = []
-        execution_tool.execute_market_order.return_value = MagicMock(
-            order_id="order123"
+    @pytest.fixture
+    def mock_social_scraper(self) -> MagicMock:
+        """Create a mock social media scraper."""
+        scraper = MagicMock(spec=SocialMediaScraper)
+        # Return a SocialMediaMetrics object that matches what get_metrics returns
+        from quantchain.tools.social_media_scraper import SocialMediaMetrics
+        scraper.get_metrics.return_value = SocialMediaMetrics(
+            platform="twitter",
+            symbol="DOGE",
+            post_count=1000,
+            total_likes=5000,
+            total_shares=1000,
+            total_comments=2000,
+            unique_authors=800
         )
+        return scraper
 
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-            llm=llm_mock,
-        )
-
-        # Mock the workflow after creation
-        workflow_mock = MagicMock()
-        agent.workflow = workflow_mock
-
-        return agent
-
-    def test_run_cycle_success_case(
-        self, complete_agent_setup: MemecoinVibeTrader
-    ) -> None:
-        """Test successful complete run cycle."""
-        agent = complete_agent_setup
-
-        # Mock LLM response
-        class MockLLMResponse:
-            content = """VIBE_SCORE: 85
-            RECOMMENDATION: BUY
-            RISK_LEVEL: MEDIUM
-            REASONING: Strong community and good tokenomics"""
-
-        agent.llm.invoke.return_value = MockLLMResponse()
-
-        # Mock workflow to return successful state
-        mock_state = {
-            "error_message": None,
-            "tokens": [
-                {
-                    "address": "0x123",
-                    "symbol": "PEPE",
-                    "name": "PepeCoin",
-                    "liquidity": 50000,
-                    "volume_24h": 100000,
-                    "created_at": datetime.now(),
-                    "dex": "Uniswap",
-                }
-            ],
-            "assessments": [MagicMock()],
-            "trades_executed": [
-                {
-                    "token": "PEPE",
-                    "order_id": "test_order_123",
-                    "quantity": 100.0,
-                    "vibe_score": 85.0,
-                    "timestamp": datetime.now().isoformat(),
-                }
-            ],
-            "current_step": "complete",
+    @pytest.fixture
+    def mock_data_connector(self) -> MagicMock:
+        """Create a mock data connector."""
+        connector = MagicMock(spec=DexscreenerDataConnector)
+        connector.get_historical_data.return_value = {
+            "timestamp": [datetime.now()],
+            "open": [0.1],
+            "high": [0.12],
+            "low": [0.09],
+            "close": [0.11],
+            "volume": [1000000]
         }
-        agent.workflow.invoke.return_value = mock_state
+        return connector
 
-        # Estimate token price to be $1.0 for predictable calculations
-        with patch.object(agent, "_estimate_token_price", return_value=1.0):
-            result = agent.run_cycle()
+    @pytest.fixture
+    def mock_execution_tool(self) -> MagicMock:
+        """Create a mock execution tool."""
+        tool = MagicMock(spec=AlpacaExecutionTool)
+        tool.place_order.return_value = {"order_id": "12345", "status": "filled"}
+        # Add get_position method for SELL tests
+        tool.get_position.return_value = 1000  # Mock position value
+        return tool
 
-        # Verify successful result
-        assert result["success"] is True
-        assert result["tokens_scanned"] == 1
-        assert result["assessments_made"] == 1
-        assert result["trades_executed"] == 1
-        assert result["error_message"] is None
-        assert len(result["trades"]) == 1
-        assert result["trades"][0]["token"] == "PEPE"
+    @pytest.fixture
+    def mock_llm(self) -> MockLLM:
+        """Create a mock LLM."""
+        return MockLLM(model="test-model")
 
-    def test_run_cycle_no_tokens_found(
-        self, complete_agent_setup: MemecoinVibeTrader
+    def test_initialization(
+        self,
+        config: MemecoinVibeTraderConfig,
+        mock_social_scraper: MagicMock,
+        mock_data_connector: MagicMock,
+        mock_execution_tool: MagicMock,
+        mock_llm: MockLLM
     ) -> None:
-        """Test run cycle when no tokens are found."""
-        agent = complete_agent_setup
+        """Test MemecoinVibeTrader initialization."""
+        trader = MemecoinVibeTrader(
+            config=config,
+            social_scraper=mock_social_scraper,
+            data_connector=mock_data_connector,
+            execution_tool=mock_execution_tool,
+            llm=mock_llm
+        )
 
-        # Mock no tokens found
-        agent.dex_connector.get_new_token_pairs.return_value = []
+        assert trader.config == config
+        assert trader.social_scraper == mock_social_scraper
+        assert trader.data_connector == mock_data_connector
+        assert trader.execution_tool == mock_execution_tool
+        assert trader.llm == mock_llm
+        assert trader.state == AgentState.INITIALIZED
 
-        # Mock workflow to return successful state with no tokens
-        mock_state: dict[str, Any] = {
-            "error_message": None,
-            "tokens": [],
-            "assessments": [],
-            "trades_executed": [],
-            "current_step": "complete",
-        }
-        agent.workflow.invoke.return_value = mock_state
-
-        result = agent.run_cycle()
-
-        # Should still be successful but with zero results
-        assert result["success"] is True
-        assert result["tokens_scanned"] == 0
-        assert result["assessments_made"] == 0
-        assert result["trades_executed"] == 0
-        assert result["error_message"] is None
-
-    def test_run_cycle_no_qualifying_assessments(
-        self, complete_agent_setup: MemecoinVibeTrader
+    def test_assess_vibe(
+        self,
+        config: MemecoinVibeTraderConfig,
+        mock_social_scraper: MagicMock,
+        mock_data_connector: MagicMock,
+        mock_execution_tool: MagicMock,
+        mock_llm: MockLLM
     ) -> None:
-        """Test run cycle when no assessments qualify for trading."""
-        agent = complete_agent_setup
+        """Test vibe assessment functionality."""
+        trader = MemecoinVibeTrader(
+            config=config,
+            social_scraper=mock_social_scraper,
+            data_connector=mock_data_connector,
+            execution_tool=mock_execution_tool,
+            llm=mock_llm
+        )
 
-        # Mock LLM response with SKIP recommendation
-        class MockLLMResponse:
-            content = """VIBE_SCORE: 50
-            RECOMMENDATION: SKIP
-            RISK_LEVEL: HIGH
-            REASONING: Weak community and poor tokenomics"""
+        token_pair = TokenPair("DOGE", "USD", "0x1234", "ethereum")
+        assessment = trader._assess_vibe(token_pair)
 
-        agent.llm.invoke.return_value = MockLLMResponse()
+        assert assessment.token_pair == token_pair
+        assert assessment.vibe_score >= 0
+        assert assessment.vibe_score <= 10
+        assert assessment.recommendation in ["BUY", "SELL", "HOLD"]
+        assert 0 <= assessment.confidence <= 1
 
-        # Mock workflow to return successful state with assessments but no trades
-        mock_state = {
-            "error_message": None,
-            "tokens": [
-                {
-                    "address": "0x123",
-                    "symbol": "PEPE",
-                    "name": "PepeCoin",
-                    "liquidity": 50000,
-                    "volume_24h": 100000,
-                    "created_at": datetime.now(),
-                    "dex": "Uniswap",
-                }
-            ],
-            "assessments": [MagicMock()],
-            "trades_executed": [],
-            "current_step": "complete",
-        }
-        agent.workflow.invoke.return_value = mock_state
+        # Check that social scraper was called
+        mock_social_scraper.get_metrics.assert_called_with(token_pair.symbol)
 
-        result = agent.run_cycle()
-
-        # Should be successful but execute no trades
-        assert result["success"] is True
-        assert result["tokens_scanned"] == 1
-        assert result["assessments_made"] == 1
-        assert result["trades_executed"] == 0
-        assert result["error_message"] is None
-
-    def test_run_cycle_exception_handling(
-        self, complete_agent_setup: MemecoinVibeTrader
+    def test_execute_decision_buy(
+        self,
+        config: MemecoinVibeTraderConfig,
+        mock_social_scraper: MagicMock,
+        mock_data_connector: MagicMock,
+        mock_execution_tool: MagicMock,
+        mock_llm: MockLLM
     ) -> None:
-        """Test run cycle handles unexpected exceptions."""
-        agent = complete_agent_setup
-
-        # Mock workflow to raise an unexpected exception
-        agent.workflow.invoke.side_effect = RuntimeError("Unexpected error")
-
-        result = agent.run_cycle()
-
-        # Should handle the exception gracefully
-        assert result["success"] is False
-        assert "Unexpected error" in result["error_message"]
-        assert result["tokens_scanned"] == 0
-        assert result["assessments_made"] == 0
-        assert result["trades_executed"] == 0
-
-    def test_run_cycle_state_normalization(
-        self, complete_agent_setup: MemecoinVibeTrader
-    ) -> None:
-        """Test that run_cycle properly normalizes different state types."""
-        agent = complete_agent_setup
-
-        # Mock workflow to return a dict instead of AgentState
-        mock_state = {
-            "error_message": None,
-            "tokens": [
-                TokenPair(
-                    address="0x123",
-                    symbol="PEPE",
-                    name="PepeCoin",
-                    liquidity=50000,
-                    volume_24h=100000,
-                    created_at=datetime.now(),
-                    dex="Uniswap",
-                )
-            ],
-            "assessments": [
-                VibeAssessment(
-                    token=TokenPair(
-                        address="0x123",
-                        symbol="PEPE",
-                        name="PepeCoin",
-                        liquidity=50000,
-                        volume_24h=100000,
-                        created_at=datetime.now(),
-                        dex="Uniswap",
-                    ),
-                    social_metrics=SocialMetrics(),
-                    vibe_score=85.0,
-                    recommendation="BUY",
-                    risk_level="MEDIUM",
-                    reasoning="Good vibes",
-                )
-            ],
-            "trades_executed": [{"token": "PEPE", "order_id": "order123"}],
-            "current_step": "execution",
-        }
-        agent.workflow.invoke.return_value = mock_state
-
-        # Mock LLM response
-        class MockLLMResponse:
-            content = """VIBE_SCORE: 85
-            RECOMMENDATION: BUY
-            RISK_LEVEL: MEDIUM
-            REASONING: Strong community"""
-
-        agent.llm.invoke.return_value = MockLLMResponse()
-
-        # Estimate token price
-        with patch.object(agent, "_estimate_token_price", return_value=1.0):
-            result = agent.run_cycle()
-
-        # Should handle the dict state correctly
-        assert result["success"] is True
-        assert result["tokens_scanned"] == 1
-        assert result["assessments_made"] == 1
-        assert result["trades_executed"] == 1
-
-
-class TestParallelExecutionSafety:
-    """Test that tests can run safely in parallel."""
-
-    def test_isolated_test_execution(self) -> None:
-        """Test that each test runs in isolation."""
-        # This test should be safe to run in parallel with others
-        config = MemecoinVibeTraderConfig()
-        assert config.scan_interval == 3600
-
-    def test_no_shared_state(self) -> None:
-        """Test that tests don't share state."""
-        # Create fresh mocks for each test
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-
-        agent = MemecoinVibeTrader(
-            config=MemecoinVibeTraderConfig(),
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-        )
-
-        # Each agent should have its own independent state
-        assert agent.config is not None
-        assert agent.workflow is not None
-
-
-class TestEdgeCases:
-    """Test edge cases and boundary conditions."""
-
-    def test_empty_token_list_handling(self) -> None:
-        """Test handling of empty token lists."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-
-        agent = MemecoinVibeTrader(
+        """Test executing a BUY decision."""
+        trader = MemecoinVibeTrader(
             config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
+            social_scraper=mock_social_scraper,
+            data_connector=mock_data_connector,
+            execution_tool=mock_execution_tool,
+            llm=mock_llm
         )
 
-        # Test filtering empty list
-        result = agent._filter_and_convert_tokens([])
-        assert result == []
-
-    def test_extreme_vibe_scores(self) -> None:
-        """Test handling of extreme vibe scores."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-        )
-
-        token = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=50000,
-            volume_24h=100000,
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
-        social_metrics = SocialMetrics()
-
-        # Test with score above 100 (should be clamped)
-        response = "VIBE_SCORE: 150"
-        assessment = agent._parse_llm_response(response, token, social_metrics)
-        assert assessment.vibe_score == 100.0
-
-        # Test with negative score (should be clamped)
-        response = "VIBE_SCORE: -10"
-        assessment = agent._parse_llm_response(response, token, social_metrics)
-        assert assessment.vibe_score == 0.0
-
-    def test_all_recommendation_types(self) -> None:
-        """Test all possible recommendation types."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-        )
-
-        token = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=50000,
-            volume_24h=100000,
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
-        social_metrics = SocialMetrics()
-
-        recommendations: list[str] = ["BUY", "HOLD", "SKIP", "SELL"]
-
-        for rec in recommendations:
-            response = f"VIBE_SCORE: 50\nRECOMMENDATION: {rec}"
-            assessment = agent._parse_llm_response(response, token, social_metrics)
-            assert assessment.recommendation == rec
-
-    def test_risk_level_variations(self) -> None:
-        """Test different risk levels."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-        )
-
-        token = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=50000,
-            volume_24h=100000,
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
-        social_metrics = SocialMetrics()
-
-        risk_levels: list[str] = ["LOW", "MEDIUM", "HIGH"]
-
-        for risk in risk_levels:
-            response = f"VIBE_SCORE: 50\nRISK_LEVEL: {risk}"
-            assessment = agent._parse_llm_response(response, token, social_metrics)
-            assert assessment.risk_level == risk
-
-    def test_zero_portfolio_value(self) -> None:
-        """Test handling of zero portfolio value."""
-        config = MemecoinVibeTraderConfig()
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-
-        agent = MemecoinVibeTrader(
-            config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
-        )
-
-        token = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=50000,
-            volume_24h=100000,
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
+        token_pair = TokenPair("DOGE", "USD", "0x1234", "ethereum")
         assessment = VibeAssessment(
-            token=token,
-            social_metrics=SocialMetrics(),
-            vibe_score=85.0,
+            token_pair=token_pair,
+            vibe_score=9.0,
+            social_metrics=SocialMetrics(1000, 9.0, 8.0, 20.0, datetime.now()),
+            technical_indicators={"rsi": 30, "macd": -0.2},
             recommendation="BUY",
-            risk_level="MEDIUM",
-            reasoning="Good vibes",
+            confidence=0.9
         )
-        state = AgentState(assessments=[assessment])
 
-        # Mock zero portfolio value
-        agent.execution_tool.get_account_balance.return_value = {"portfolio_value": 0}
-        agent.execution_tool.get_positions.return_value = []
+        trader._execute_decision(assessment)
 
-        result_state = agent._execute_trades(state)
+        # Check that execution tool was called with BUY order
+        mock_execution_tool.place_order.assert_called_once()
+        args, kwargs = mock_execution_tool.place_order.call_args
+        assert kwargs["side"] == "BUY"
+        assert kwargs["symbol"] == token_pair.symbol
 
-        # Should handle zero portfolio gracefully
-        assert len(result_state.trades_executed) == 0
-
-    def test_very_small_allocation_percentage(self) -> None:
-        """Test very small allocation percentages."""
-        config = MemecoinVibeTraderConfig(max_allocation_per_trade=0.001)  # 0.1%
-        dex_connector = MagicMock(spec=DexscreenerDataConnector)
-        social_scraper = MagicMock(spec=SocialMediaScraper)
-        execution_tool = MagicMock(spec=AlpacaExecutionTool)
-
-        agent = MemecoinVibeTrader(
+    def test_execute_decision_sell(
+        self,
+        config: MemecoinVibeTraderConfig,
+        mock_social_scraper: MagicMock,
+        mock_data_connector: MagicMock,
+        mock_execution_tool: MagicMock,
+        mock_llm: MockLLM
+    ) -> None:
+        """Test executing a SELL decision."""
+        trader = MemecoinVibeTrader(
             config=config,
-            dex_connector=dex_connector,
-            social_scraper=social_scraper,
-            execution_tool=execution_tool,
+            social_scraper=mock_social_scraper,
+            data_connector=mock_data_connector,
+            execution_tool=mock_execution_tool,
+            llm=mock_llm
         )
 
-        token = TokenPair(
-            address="0x123",
-            symbol="PEPE",
-            name="PepeCoin",
-            liquidity=50000,
-            volume_24h=100000,
-            created_at=datetime.now(),
-            dex="Uniswap",
-        )
+        token_pair = TokenPair("DOGE", "USD", "0x1234", "ethereum")
         assessment = VibeAssessment(
-            token=token,
-            social_metrics=SocialMetrics(),
-            vibe_score=85.0,
-            recommendation="BUY",
-            risk_level="MEDIUM",
-            reasoning="Good vibes",
+            token_pair=token_pair,
+            vibe_score=2.0,
+            social_metrics=SocialMetrics(100, 2.0, 1.0, -5.0, datetime.now()),
+            technical_indicators={"rsi": 80, "macd": 0.3},
+            recommendation="SELL",
+            confidence=0.8
         )
-        state = AgentState(assessments=[assessment])
 
-        agent.execution_tool.get_account_balance.return_value = {
-            "portfolio_value": 10000
-        }
-        agent.execution_tool.get_positions.return_value = []
+        # Set up mock execution tool to return position for SELL test
+        mock_execution_tool.get_position.return_value = 1000
 
-        with patch.object(agent, "_estimate_token_price", return_value=1.0):
-            agent._execute_trades(state)
+        trader._execute_decision(assessment)
 
-        # Should calculate 0.1% of $10,000 = $10 position
-        # At $1.0 per token, that's 10 tokens
-        agent.execution_tool.execute_market_order.assert_called_once_with(
-            symbol="PEPE/USD", side="buy", quantity=10.0
+        # Check that execution tool was called with SELL order
+        mock_execution_tool.place_order.assert_called_once()
+        args, kwargs = mock_execution_tool.place_order.call_args
+        assert kwargs["side"] == "SELL"
+        assert kwargs["symbol"] == token_pair.symbol
+
+    def test_run_cycle(
+        self,
+        config: MemecoinVibeTraderConfig,
+        mock_social_scraper: MagicMock,
+        mock_data_connector: MagicMock,
+        mock_execution_tool: MagicMock,
+        mock_llm: MockLLM
+    ) -> None:
+        """Test running a single trading cycle."""
+        trader = MemecoinVibeTrader(
+            config=config,
+            social_scraper=mock_social_scraper,
+            data_connector=mock_data_connector,
+            execution_tool=mock_execution_tool,
+            llm=mock_llm
         )
+
+        # Start the trader before running cycle
+        trader.start()
+        trader.run_cycle()
+
+        # Verify that the trader has assessed each trading pair
+        for pair_symbol in config.trading_pairs:
+            # Check that social scraper was called for each pair
+            print(f"Checking for call to get_metrics with {pair_symbol}")
+            print(f"Actual calls: {mock_social_scraper.get_metrics.mock_calls}")
+            mock_social_scraper.get_metrics.assert_any_call(pair_symbol)
+
+    def test_state_transitions(
+        self,
+        config: MemecoinVibeTraderConfig,
+        mock_social_scraper: MagicMock,
+        mock_data_connector: MagicMock,
+        mock_execution_tool: MagicMock,
+        mock_llm: MockLLM
+    ) -> None:
+        """Test state transitions during operation."""
+        trader = MemecoinVibeTrader(
+            config=config,
+            social_scraper=mock_social_scraper,
+            data_connector=mock_data_connector,
+            execution_tool=mock_execution_tool,
+            llm=mock_llm
+        )
+
+        # Initial state
+        assert trader.state == AgentState.INITIALIZED
+
+        # Start trading
+        trader.start()
+        assert trader.state == AgentState.ACTIVE
+
+        # Stop trading
+        trader.stop()
+        assert trader.state == AgentState.STOPPED
+
+        # Reset state
+        trader.reset()
+        assert trader.state == AgentState.INITIALIZED

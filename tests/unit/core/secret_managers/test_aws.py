@@ -1,14 +1,17 @@
 """Comprehensive tests for AWS Secrets Manager implementation."""
 
+
+
+# Import the module under test
+
 import json
 import os
 from unittest.mock import Mock, patch
-
 import pytest
+from quantchain.core.secret_managers.aws import (
+from botocore.exceptions import ClientError
 
-# Import the module under test
 try:
-    from quantchain.core.secret_managers.aws import (
         AWSSecretManagerConfig,
         AWSSecretManagerError,
         AWSSecretsManager,
@@ -16,11 +19,14 @@ try:
     )
 
     try:
-        from botocore.exceptions import ClientError
     except ImportError:
         # Mock ClientError for testing when botocore is not available
-        class ClientError(Exception):
-            def __init__(self, error_response, operation_name):
+
+
+class ClientError(Exception):
+
+
+def __init__(self, error_response, operation_name):
                 self.response = error_response
 
     _AWS_AVAILABLE = True
@@ -28,24 +34,34 @@ except ImportError:
     _AWS_AVAILABLE = False
 
     # Mock classes for when boto3 is not available
-    class ClientError(Exception):
-        def __init__(self, error_response, operation_name):
+
+
+class ClientError(Exception):
+
+
+def __init__(self, error_response, operation_name):
             self.response = error_response
 
 
 @pytest.mark.skipif(not _AWS_AVAILABLE, reason="boto3 not installed")
 @pytest.mark.unit
+
+
 class TestAWSSecretManagerConfig:
     """Test AWS Secrets Manager configuration."""
 
-    def test_default_config(self) -> None:
+
+
+def test_default_config(self) -> None:
         """Test default configuration values."""
         config = AWSSecretManagerConfig()
         assert config.region_name == "us-east-1"
         assert config.max_retries == 3
         assert config.backoff_factor == 1.0
 
-    def test_custom_config(self) -> None:
+
+
+def test_custom_config(self) -> None:
         """Test custom configuration values."""
         config = AWSSecretManagerConfig(
             region_name="us-west-2", max_retries=5, backoff_factor=2.0
@@ -57,11 +73,15 @@ class TestAWSSecretManagerConfig:
 
 @pytest.mark.skipif(not _AWS_AVAILABLE, reason="boto3 not installed")
 @pytest.mark.unit
+
+
 class TestAWSSecretsManager:
     """Test AWS Secrets Manager implementation."""
 
     @patch("boto3.Session")
-    def test_init_with_explicit_credentials(self, mock_session: Mock) -> None:
+
+
+def test_init_with_explicit_credentials(self, mock_session: Mock) -> None:
         """Test initialization with explicit credentials."""
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
@@ -79,7 +99,9 @@ class TestAWSSecretsManager:
         mock_client.list_secrets.assert_called_once_with(MaxResults=1)
 
     @patch("boto3.Session")
-    def test_init_with_env_credentials(self, mock_session: Mock) -> None:
+
+
+def test_init_with_env_credentials(self, mock_session: Mock) -> None:
         """Test initialization with environment variables."""
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
@@ -100,7 +122,9 @@ class TestAWSSecretsManager:
             assert manager.aws_secret_access_key == "env_secret"
 
     @patch("boto3.Session")
-    def test_init_with_profile(self, mock_session: Mock) -> None:
+
+
+def test_init_with_profile(self, mock_session: Mock) -> None:
         """Test initialization with AWS profile."""
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
@@ -111,7 +135,9 @@ class TestAWSSecretsManager:
         mock_session.assert_called_once_with(profile_name="test-profile")
 
     @patch("boto3.Session")
-    def test_init_connection_failure(self, mock_session: Mock) -> None:
+
+
+def test_init_connection_failure(self, mock_session: Mock) -> None:
         """Test initialization with connection failure."""
         mock_client = Mock()
         mock_client.list_secrets.side_effect = Exception("Connection failed")
@@ -123,7 +149,9 @@ class TestAWSSecretsManager:
             AWSSecretsManager()
 
     @patch("boto3.Session")
-    def test_get_secret_success_string(self, mock_session: Mock) -> None:
+
+
+def test_get_secret_success_string(self, mock_session: Mock) -> None:
         """Test successful secret retrieval as string."""
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
@@ -139,7 +167,9 @@ class TestAWSSecretsManager:
         mock_client.get_secret_value.assert_called_once_with(SecretId="test_secret")
 
     @patch("boto3.Session")
-    def test_get_secret_success_json_single_value(self, mock_session: Mock) -> None:
+
+
+def test_get_secret_success_json_single_value(self, mock_session: Mock) -> None:
         """Test successful secret retrieval as JSON with single value."""
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
@@ -154,7 +184,9 @@ class TestAWSSecretsManager:
         assert result == "value"
 
     @patch("boto3.Session")
-    def test_get_secret_success_json_multiple_values(self, mock_session: Mock) -> None:
+
+
+def test_get_secret_success_json_multiple_values(self, mock_session: Mock) -> None:
         """Test successful secret retrieval as JSON with multiple values."""
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
@@ -169,7 +201,9 @@ class TestAWSSecretsManager:
         assert result == '{"key1": "value1", "key2": "value2"}'
 
     @patch("boto3.Session")
-    def test_get_secret_success_binary(self, mock_session: Mock) -> None:
+
+
+def test_get_secret_success_binary(self, mock_session: Mock) -> None:
         """Test successful secret retrieval as binary data."""
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
@@ -182,7 +216,9 @@ class TestAWSSecretsManager:
         assert result == "binary_data"
 
     @patch("boto3.Session")
-    def test_get_secret_not_found(self, mock_session: Mock) -> None:
+
+
+def test_get_secret_not_found(self, mock_session: Mock) -> None:
         """Test secret not found case."""
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
@@ -197,7 +233,9 @@ class TestAWSSecretsManager:
         assert result is None
 
     @patch("boto3.Session")
-    def test_get_secret_client_error(self, mock_session: Mock) -> None:
+
+
+def test_get_secret_client_error(self, mock_session: Mock) -> None:
         """Test client error during secret retrieval."""
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
@@ -218,7 +256,9 @@ class TestAWSSecretsManager:
         assert result is None
 
     @patch("boto3.Session")
-    def test_get_service_credentials_success(self, mock_session: Mock) -> None:
+
+
+def test_get_service_credentials_success(self, mock_session: Mock) -> None:
         """Test successful service credentials retrieval."""
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
@@ -236,7 +276,9 @@ class TestAWSSecretsManager:
         )
 
     @patch("boto3.Session")
-    def test_get_service_credentials_not_json(self, mock_session: Mock) -> None:
+
+
+def test_get_service_credentials_not_json(self, mock_session: Mock) -> None:
         """Test service credentials retrieval with non-JSON string."""
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
@@ -251,7 +293,9 @@ class TestAWSSecretsManager:
         assert result == {"value": "plain_text_secret"}
 
     @patch("boto3.Session")
-    def test_get_service_credentials_not_found(self, mock_session: Mock) -> None:
+
+
+def test_get_service_credentials_not_found(self, mock_session: Mock) -> None:
         """Test service credentials not found."""
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
@@ -266,7 +310,9 @@ class TestAWSSecretsManager:
         assert result == {}
 
     @patch("boto3.Session")
-    def test_validate_service_success(self, mock_session: Mock) -> None:
+
+
+def test_validate_service_success(self, mock_session: Mock) -> None:
         """Test successful service validation."""
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
@@ -282,7 +328,9 @@ class TestAWSSecretsManager:
         )
 
     @patch("boto3.Session")
-    def test_validate_service_not_found(self, mock_session: Mock) -> None:
+
+
+def test_validate_service_not_found(self, mock_session: Mock) -> None:
         """Test service validation when not found."""
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
@@ -297,7 +345,9 @@ class TestAWSSecretsManager:
         assert result is False
 
     @patch("boto3.Session")
-    def test_validate_service_other_error(self, mock_session: Mock) -> None:
+
+
+def test_validate_service_other_error(self, mock_session: Mock) -> None:
         """Test service validation with other error."""
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
@@ -315,11 +365,15 @@ class TestAWSSecretsManager:
 
 @pytest.mark.skipif(not _AWS_AVAILABLE, reason="boto3 not installed")
 @pytest.mark.unit
+
+
 class TestCreateAWSSecretManager:
     """Test factory function for AWS Secrets Manager."""
 
     @patch("boto3.Session")
-    def test_create_aws_secret_manager(self, mock_session: Mock) -> None:
+
+
+def test_create_aws_secret_manager(self, mock_session: Mock) -> None:
         """Test creating AWS Secret Manager with factory function."""
         mock_client = Mock()
         mock_client.list_secrets.return_value = {"SecretList": []}
@@ -333,10 +387,14 @@ class TestCreateAWSSecretManager:
 
 @pytest.mark.skipif(not _AWS_AVAILABLE, reason="boto3 not installed")
 @pytest.mark.unit
+
+
 class TestAWSSecretManagerError:
     """Test AWS Secret Manager error class."""
 
-    def test_error_instantiation(self) -> None:
+
+
+def test_error_instantiation(self) -> None:
         """Test creating an AWS Secret Manager error."""
         error = AWSSecretManagerError("Test error")
         assert str(error) == "Test error"

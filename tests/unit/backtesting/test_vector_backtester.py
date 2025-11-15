@@ -1,12 +1,15 @@
 """Tests for vector_backtester module."""
 
-from unittest.mock import patch
 
+
+
+from unittest.mock import patch
 import pandas as pd
 import pytest
-
 from quantchain.backtesting.engine import BacktestConfig
 from quantchain.backtesting.vector_backtester import (
+from quantchain.backtesting.engine import ConfigurationError
+
     SignalProcessingError,
     VectorBacktester,
     VectorBacktestError,
@@ -18,7 +21,9 @@ from quantchain.backtesting.vector_backtester import (
 class TestVectorBacktestError:
     """Test VectorBacktestError exception."""
 
-    def test_error_creation(self):
+
+
+def test_error_creation(self):
         """Test error can be created with message."""
         error = VectorBacktestError("Test message")
         assert str(error) == "Test message"
@@ -28,7 +33,9 @@ class TestVectorBacktestError:
 class TestSignalProcessingError:
     """Test SignalProcessingError exception."""
 
-    def test_error_creation(self):
+
+
+def test_error_creation(self):
         """Test error can be created with message."""
         error = SignalProcessingError("Test signal error")
         assert str(error) == "Test signal error"
@@ -38,7 +45,9 @@ class TestSignalProcessingError:
 class TestVectorBacktestResult:
     """Test VectorBacktestResult dataclass."""
 
-    def test_creation(self):
+
+
+def test_creation(self):
         """Test result can be created with required fields."""
         equity = pd.Series([100, 110, 105])
         trades = pd.DataFrame({"symbol": ["AAPL"], "price": [100]})
@@ -55,7 +64,9 @@ class TestVectorBacktestResult:
         assert result.returns.equals(returns)
         assert result.metrics == {}
 
-    def test_creation_with_metrics(self):
+
+
+def test_creation_with_metrics(self):
         """Test result can be created with metrics."""
         equity = pd.Series([100, 110])
         trades = pd.DataFrame()
@@ -77,20 +88,26 @@ class TestVectorBacktestResult:
 class TestVectorizedPositionManager:
     """Test VectorizedPositionManager class."""
 
-    def test_init_default(self):
+
+
+def test_init_default(self):
         """Test initialization with default parameters."""
         manager = VectorizedPositionManager()
         assert manager.initial_cash == 100000.0
         assert manager.commission_rate == 0.0
 
-    def test_init_custom(self):
+
+
+def test_init_custom(self):
         """Test initialization with custom parameters."""
         manager = VectorizedPositionManager(initial_cash=50000.0, commission_rate=0.001)
         assert manager.initial_cash == 50000.0
         assert manager.commission_rate == 0.001
 
     @patch("quantchain.backtesting.vector_backtester.pd.DataFrame")
-    def test_process_signals(self, mock_dataframe):
+
+
+def test_process_signals(self, mock_dataframe):
         """Test signal processing."""
         manager = VectorizedPositionManager()
 
@@ -121,7 +138,9 @@ class TestVectorizedPositionManager:
 class TestVectorBacktester:
     """Test VectorBacktester class."""
 
-    def test_init_minimal(self):
+
+
+def test_init_minimal(self):
         """Test minimal initialization."""
         config = BacktestConfig(
             start_date="2023-01-01", end_date="2023-01-31", initial_cash=100000
@@ -130,7 +149,9 @@ class TestVectorBacktester:
         backtester = VectorBacktester(config=config)
         assert backtester.config == config
 
-    def test_init_with_friction(self):
+
+
+def test_init_with_friction(self):
         """Test initialization with friction parameters in config."""
         config = BacktestConfig(
             start_date="2023-01-01",
@@ -145,7 +166,9 @@ class TestVectorBacktester:
         assert backtester.config.commission_rate == 0.001
         assert backtester.config.slippage_rate == 0.0001
 
-    def test_validate_data_empty_dataframe(self):
+
+
+def test_validate_data_empty_dataframe(self):
         """Test data validation with empty dataframe."""
         config = BacktestConfig(
             start_date="2023-01-01", end_date="2023-01-31", initial_cash=100000
@@ -159,7 +182,9 @@ class TestVectorBacktester:
             with pytest.raises(VectorBacktestError):
                 backtester._validate_inputs(data, signals)
 
-    def test_validate_data_missing_columns(self):
+
+
+def test_validate_data_missing_columns(self):
         """Test data validation with missing required columns."""
         config = BacktestConfig(
             start_date="2023-01-01", end_date="2023-01-31", initial_cash=100000
@@ -179,7 +204,9 @@ class TestVectorBacktester:
             except VectorBacktestError:
                 pass  # Expected for this test
 
-    def test_validate_data_valid(self):
+
+
+def test_validate_data_valid(self):
         """Test data validation with valid data."""
         config = BacktestConfig(
             start_date="2023-01-01", end_date="2023-01-31", initial_cash=100000
@@ -200,7 +227,9 @@ class TestVectorBacktester:
             # Should not raise an exception
             backtester._validate_inputs(data, signals)
 
-    def test_run_backtest_missing_data(self):
+
+
+def test_run_backtest_missing_data(self):
         """Test backtest run with missing data."""
         config = BacktestConfig(
             start_date="2023-01-01", end_date="2023-01-31", initial_cash=100000
@@ -214,9 +243,10 @@ class TestVectorBacktester:
         with pytest.raises(VectorBacktestError):
             backtester.run(data, signals)
 
-    def test_run_backtest_invalid_date_range(self):
+
+
+def test_run_backtest_invalid_date_range(self):
         """Test backtest run with invalid date range is caught at config level."""
-        from quantchain.backtesting.engine import ConfigurationError
 
         # Invalid date range should be caught at config creation
         with pytest.raises(ConfigurationError):
@@ -227,7 +257,9 @@ class TestVectorBacktester:
             )
 
     @patch("quantchain.backtesting.vector_backtester.VectorizedPositionManager")
-    def test_run_backtest_successful(self, mock_manager):
+
+
+def test_run_backtest_successful(self, mock_manager):
         """Test successful backtest run - simplified for coverage."""
         config = BacktestConfig(
             start_date="2023-01-01", end_date="2023-01-31", initial_cash=100000
@@ -242,7 +274,9 @@ class TestVectorBacktester:
         # Check that position manager is created
         assert backtester.position_manager is not None
 
-    def test_calculate_metrics_empty_data(self):
+
+
+def test_calculate_metrics_empty_data(self):
         """Test metrics calculation with empty data."""
         config = BacktestConfig(
             start_date="2023-01-01", end_date="2023-01-31", initial_cash=100000
@@ -259,7 +293,9 @@ class TestVectorBacktester:
             result = backtester._calculate_performance_metrics(pd.Series([]))
             assert isinstance(result, dict)
 
-    def test_calculate_metrics_valid_data(self):
+
+
+def test_calculate_metrics_valid_data(self):
         """Test metrics calculation with valid data."""
         config = BacktestConfig(
             start_date="2023-01-01", end_date="2023-01-31", initial_cash=100000

@@ -1,15 +1,22 @@
 """Additional coverage tests for config module."""
 
-import pytest
 
+
+
+
+import pytest
 from quantchain.core.config import QuantChainConfig
+import os
+
 
 
 class TestConfigCoverage:
     """Additional tests to improve config coverage."""
 
     @pytest.mark.coverage
-    def test_config_edge_cases(self):
+
+
+def test_config_edge_cases(self):
         """Test config edge cases."""
         # Test config with None values
         config = QuantChainConfig()
@@ -30,7 +37,9 @@ class TestConfigCoverage:
         assert config is not None
 
     @pytest.mark.coverage
-    def test_config_update_methods(self):
+
+
+def test_config_update_methods(self):
         """Test config update methods if they exist."""
         config = QuantChainConfig()
 
@@ -49,7 +58,9 @@ class TestConfigCoverage:
                 pass
 
     @pytest.mark.coverage
-    def test_config_serialization(self):
+
+
+def test_config_serialization(self):
         """Test config serialization if methods exist."""
         config = QuantChainConfig()
 
@@ -72,9 +83,10 @@ class TestConfigCoverage:
                 pass
 
     @pytest.mark.coverage
-    def test_config_env_integration(self):
+
+
+def test_config_env_integration(self):
         """Test config environment variable integration."""
-        import os
 
         # Set some test environment variables
         os.environ["QUANTCHAIN_LLM_PROVIDER"] = "test_provider"
@@ -93,7 +105,9 @@ class TestConfigCoverage:
             os.environ.pop("QUANTCHAIN_MODEL_NAME", None)
 
     @pytest.mark.coverage
-    def test_config_validation_edge_cases(self):
+
+
+def test_config_validation_edge_cases(self):
         """Test config validation edge cases."""
         config = QuantChainConfig()
 

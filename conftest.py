@@ -2,10 +2,11 @@
 Root pytest configuration for QuantChain.
 """
 
-import os
 import json
-from typing import Any
+import os
 from datetime import datetime
+from typing import Any
+
 import psutil
 
 # Pytest configuration
@@ -13,6 +14,8 @@ pytest_plugins: list[str] = []
 
 
 # Test markers
+
+
 def pytest_configure(config: Any) -> None:
     config.addinivalue_line("markers", "unit: mark test as a unit test")
     config.addinivalue_line("markers", "integration: mark test as an integration test")
@@ -27,6 +30,8 @@ def pytest_configure(config: Any) -> None:
 
 def pytest_sessionstart(session: Any) -> None:
     """Log resources at the start of the test session."""
+    import os
+
     if os.getenv("CI") or os.getenv("MONITOR_RESOURCES"):
         log_resources("session_start")
 
@@ -38,10 +43,9 @@ def pytest_sessionfinish(session: Any) -> None:
 
 
 def pytest_runtest_makereport(item: Any, call: Any) -> None:
-    """Log resources after each test if it's a CI environment or monitoring is enabled."""
-    if os.getenv("CI") or os.getenv("MONITOR_RESOURCES"):
-        if call.when == "call":
-            log_resources(f"test_{item.name}_after")
+    """Log resources after each test if CI is enabled or monitoring is on."""
+    if (os.getenv("CI") or os.getenv("MONITOR_RESOURCES")) and call.when == "call":
+        log_resources(f"test_{item.name}_after")
 
 
 def log_resources(context: str) -> None:

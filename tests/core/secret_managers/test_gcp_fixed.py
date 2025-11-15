@@ -1,23 +1,37 @@
 """Tests for GCP Secret Manager implementation."""
 
+
+
+
+
 import pytest
 from unittest.mock import MagicMock, patch
 import json
 import os
-
 from quantchain.core.secret_managers.gcp import GCPSecretManager
+from google.api_core import exceptions as gcp_exceptions
+from google.api_core import exceptions as gcp_exceptions
+from google.api_core import exceptions as gcp_exceptions
+from google.api_core import exceptions as gcp_exceptions
+from google.api_core import exceptions as gcp_exceptions
+from google.api_core import exceptions as gcp_exceptions
+
 
 
 class TestGCPSecretManagerFixed:
     """Test cases for GCPSecretManager with actual implementation."""
 
-    def setup_method(self):
+
+
+def setup_method(self):
         """Set up test fixtures."""
         self.project_id = "test-project-123"
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_initialization_with_project_id(self, mock_secretmanager):
+
+
+def test_initialization_with_project_id(self, mock_secretmanager):
         """Test manager initialization with project ID."""
         mock_client = MagicMock()
         mock_secretmanager.SecretManagerServiceClient.return_value = mock_client
@@ -33,7 +47,9 @@ class TestGCPSecretManagerFixed:
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch.dict(os.environ, {"GCP_PROJECT": "env-project-456"})
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_initialization_with_env_project_id(self, mock_secretmanager):
+
+
+def test_initialization_with_env_project_id(self, mock_secretmanager):
         """Test manager initialization using environment project ID."""
         mock_client = MagicMock()
         mock_secretmanager.SecretManagerServiceClient.return_value = mock_client
@@ -48,14 +64,18 @@ class TestGCPSecretManagerFixed:
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_initialization_no_project_id(self, mock_secretmanager):
+
+
+def test_initialization_no_project_id(self, mock_secretmanager):
         """Test manager initialization fails without project ID."""
         with patch.dict(os.environ, {}, clear=True):
             with pytest.raises(ValueError, match="GCP project ID must be provided"):
                 GCPSecretManager()
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", False)
-    def test_initialization_library_not_available(self):
+
+
+def test_initialization_library_not_available(self):
         """Test manager initialization fails when library not available."""
         with pytest.raises(
             ImportError, match="google-cloud-secret-manager library is required"
@@ -64,7 +84,9 @@ class TestGCPSecretManagerFixed:
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_get_secret_success_json(self, mock_secretmanager):
+
+
+def test_get_secret_success_json(self, mock_secretmanager):
         """Test successful JSON secret retrieval."""
         mock_client = MagicMock()
         mock_secretmanager.SecretManagerServiceClient.return_value = mock_client
@@ -95,7 +117,9 @@ class TestGCPSecretManagerFixed:
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_get_secret_success_single_value_json(self, mock_secretmanager):
+
+
+def test_get_secret_success_single_value_json(self, mock_secretmanager):
         """Test successful single value JSON secret retrieval."""
         mock_client = MagicMock()
         mock_secretmanager.SecretManagerServiceClient.return_value = mock_client
@@ -118,7 +142,9 @@ class TestGCPSecretManagerFixed:
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_get_secret_success_binary(self, mock_secretmanager):
+
+
+def test_get_secret_success_binary(self, mock_secretmanager):
         """Test successful binary secret retrieval."""
         mock_client = MagicMock()
         mock_secretmanager.SecretManagerServiceClient.return_value = mock_client
@@ -140,7 +166,9 @@ class TestGCPSecretManagerFixed:
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_get_secret_success_string(self, mock_secretmanager):
+
+
+def test_get_secret_success_string(self, mock_secretmanager):
         """Test successful string secret retrieval (non-JSON)."""
         mock_client = MagicMock()
         mock_secretmanager.SecretManagerServiceClient.return_value = mock_client
@@ -163,7 +191,9 @@ class TestGCPSecretManagerFixed:
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_get_secret_not_found(self, mock_secretmanager):
+
+
+def test_get_secret_not_found(self, mock_secretmanager):
         """Test secret not found error."""
         mock_client = MagicMock()
         mock_secretmanager.SecretManagerServiceClient.return_value = mock_client
@@ -171,7 +201,6 @@ class TestGCPSecretManagerFixed:
         # Mock successful connection
         mock_client.list_secrets.return_value = []
 
-        from google.api_core import exceptions as gcp_exceptions
 
         mock_client.access_secret_version.side_effect = gcp_exceptions.NotFound(
             "Secret not found"
@@ -184,7 +213,9 @@ class TestGCPSecretManagerFixed:
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_get_secret_permission_denied(self, mock_secretmanager):
+
+
+def test_get_secret_permission_denied(self, mock_secretmanager):
         """Test permission denied error."""
         mock_client = MagicMock()
         mock_secretmanager.SecretManagerServiceClient.return_value = mock_client
@@ -192,7 +223,6 @@ class TestGCPSecretManagerFixed:
         # Mock successful connection
         mock_client.list_secrets.return_value = []
 
-        from google.api_core import exceptions as gcp_exceptions
 
         mock_client.access_secret_version.side_effect = gcp_exceptions.PermissionDenied(
             "Access denied"
@@ -205,7 +235,9 @@ class TestGCPSecretManagerFixed:
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_get_secret_already_quantchain_prefix(self, mock_secretmanager):
+
+
+def test_get_secret_already_quantchain_prefix(self, mock_secretmanager):
         """Test get_secret with quantchain/ prefix."""
         mock_client = MagicMock()
         mock_secretmanager.SecretManagerServiceClient.return_value = mock_client
@@ -232,7 +264,9 @@ class TestGCPSecretManagerFixed:
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_get_service_credentials_success(self, mock_secretmanager):
+
+
+def test_get_service_credentials_success(self, mock_secretmanager):
         """Test successful service credentials retrieval."""
         mock_client = MagicMock()
         mock_secretmanager.SecretManagerServiceClient.return_value = mock_client
@@ -267,7 +301,9 @@ class TestGCPSecretManagerFixed:
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_get_service_credentials_not_found(self, mock_secretmanager):
+
+
+def test_get_service_credentials_not_found(self, mock_secretmanager):
         """Test service credentials not found."""
         mock_client = MagicMock()
         mock_secretmanager.SecretManagerServiceClient.return_value = mock_client
@@ -275,7 +311,6 @@ class TestGCPSecretManagerFixed:
         # Mock successful connection
         mock_client.list_secrets.return_value = []
 
-        from google.api_core import exceptions as gcp_exceptions
 
         mock_client.access_secret_version.side_effect = gcp_exceptions.NotFound(
             "Secret not found"
@@ -288,7 +323,9 @@ class TestGCPSecretManagerFixed:
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_get_service_credentials_invalid_json(self, mock_secretmanager):
+
+
+def test_get_service_credentials_invalid_json(self, mock_secretmanager):
         """Test service credentials with invalid JSON."""
         mock_client = MagicMock()
         mock_secretmanager.SecretManagerServiceClient.return_value = mock_client
@@ -310,7 +347,9 @@ class TestGCPSecretManagerFixed:
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_validate_service_success(self, mock_secretmanager):
+
+
+def test_validate_service_success(self, mock_secretmanager):
         """Test successful service validation."""
         mock_client = MagicMock()
         mock_secretmanager.SecretManagerServiceClient.return_value = mock_client
@@ -335,7 +374,9 @@ class TestGCPSecretManagerFixed:
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_validate_service_not_found(self, mock_secretmanager):
+
+
+def test_validate_service_not_found(self, mock_secretmanager):
         """Test service validation when secret not found."""
         mock_client = MagicMock()
         mock_secretmanager.SecretManagerServiceClient.return_value = mock_client
@@ -343,7 +384,6 @@ class TestGCPSecretManagerFixed:
         # Mock successful connection
         mock_client.list_secrets.return_value = []
 
-        from google.api_core import exceptions as gcp_exceptions
 
         mock_client.get_secret.side_effect = gcp_exceptions.NotFound("Secret not found")
 
@@ -354,7 +394,9 @@ class TestGCPSecretManagerFixed:
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_validate_service_permission_denied(self, mock_secretmanager):
+
+
+def test_validate_service_permission_denied(self, mock_secretmanager):
         """Test service validation when access denied."""
         mock_client = MagicMock()
         mock_secretmanager.SecretManagerServiceClient.return_value = mock_client
@@ -362,7 +404,6 @@ class TestGCPSecretManagerFixed:
         # Mock successful connection
         mock_client.list_secrets.return_value = []
 
-        from google.api_core import exceptions as gcp_exceptions
 
         mock_client.get_secret.side_effect = gcp_exceptions.PermissionDenied(
             "Access denied"
@@ -375,7 +416,9 @@ class TestGCPSecretManagerFixed:
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_get_api_key_convenience(self, mock_secretmanager):
+
+
+def test_get_api_key_convenience(self, mock_secretmanager):
         """Test get_api_key convenience method."""
         mock_client = MagicMock()
         mock_secretmanager.SecretManagerServiceClient.return_value = mock_client
@@ -401,7 +444,9 @@ class TestGCPSecretManagerFixed:
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_get_api_secret_convenience(self, mock_secretmanager):
+
+
+def test_get_api_secret_convenience(self, mock_secretmanager):
         """Test get_api_secret convenience method."""
         mock_client = MagicMock()
         mock_secretmanager.SecretManagerServiceClient.return_value = mock_client
@@ -427,7 +472,9 @@ class TestGCPSecretManagerFixed:
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_has_credentials_convenience(self, mock_secretmanager):
+
+
+def test_has_credentials_convenience(self, mock_secretmanager):
         """Test has_credentials convenience method."""
         mock_client = MagicMock()
         mock_secretmanager.SecretManagerServiceClient.return_value = mock_client
@@ -450,7 +497,9 @@ class TestGCPSecretManagerFixed:
 
     @patch("quantchain.core.secret_managers.gcp.GCP_AVAILABLE", True)
     @patch("quantchain.core.secret_managers.gcp.secretmanager")
-    def test_has_credentials_empty(self, mock_secretmanager):
+
+
+def test_has_credentials_empty(self, mock_secretmanager):
         """Test has_credentials convenience method with no credentials."""
         mock_client = MagicMock()
         mock_secretmanager.SecretManagerServiceClient.return_value = mock_client
@@ -458,7 +507,6 @@ class TestGCPSecretManagerFixed:
         # Mock successful connection
         mock_client.list_secrets.return_value = []
 
-        from google.api_core import exceptions as gcp_exceptions
 
         mock_client.access_secret_version.side_effect = gcp_exceptions.NotFound(
             "Secret not found"

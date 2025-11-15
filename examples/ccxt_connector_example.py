@@ -1,7 +1,9 @@
 """Example of using the CCXT data connector."""
 
-from quantchain.connectors.ccxt_connector import CCXTDataConnector
+
 from datetime import datetime, timedelta
+
+from quantchain.connectors.ccxt_connector import CCXTDataConnector
 
 
 def main():
@@ -46,7 +48,7 @@ def main():
     print("\n=== Getting Detailed Quote ===")
     try:
         quote = connector.get_quote("BTC/USDT")
-        print(f"Quote for BTC/USDT:")
+        print("Quote for BTC/USDT:")
         print(f"  Last Price: ${quote['last_price']:.2f}")
         print(f"  Bid Price: ${quote['bid_price']:.2f} (Size: {quote['bid_size']})")
         print(f"  Ask Price: ${quote['ask_price']:.2f} (Size: {quote['ask_size']})")
@@ -58,7 +60,7 @@ def main():
     print("\n=== Getting Available Symbols ===")
     try:
         symbols = connector.get_available_symbols(limit=10)
-        print(f"First 10 available symbols:")
+        print("First 10 available symbols:")
         for symbol in symbols:
             print(f"  - {symbol}")
 
@@ -69,7 +71,7 @@ def main():
     print("\n=== Getting Symbol Information ===")
     try:
         info = connector.get_symbol_info("BTC/USDT")
-        print(f"BTC/USDT Symbol Info:")
+        print("BTC/USDT Symbol Info:")
         print(f"  Market: {info['market']}")
         print(f"  Currency: {info['currency']}")
         print(f"  Min Order Size: {info['min_order_size']}")
@@ -97,7 +99,7 @@ def main():
 
         # Get symbol info from Kraken
         kraken_info = kraken_connector.get_symbol_info("BTC/USD")
-        print(f"BTC/USD on Kraken:")
+        print("BTC/USD on Kraken:")
         print(f"  Market: {kraken_info['market']}")
         print(f"  Currency: {kraken_info['currency']}")
 

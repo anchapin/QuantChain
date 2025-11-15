@@ -1,6 +1,16 @@
 """
 Comprehensive tests for ib_async_execution.py to improve coverage from 52.3% to 90%+
 """
+    Contract, Stock, Option, Future, Forex, Order, LimitOrder,
+    MarketOrder, StopOrder, RequestError
+)
+
+# Mock missing classes that aren't directly available in ib_async
+
+
+class Commodity:
+    """Mock Commodity class"""
+
 import pytest
 from unittest.mock import Mock, patch, MagicMock, AsyncMock
 import asyncio
@@ -10,48 +20,66 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 import ib_async
 from ib_async import (
-    Contract, Stock, Option, Future, Forex, Order, LimitOrder,
-    MarketOrder, StopOrder, RequestError
-)
+from quantchain.connectors.ib_async_execution import (
+        from quantchain.tools.trading_execution import (
+        from quantchain.tools.trading_execution import OrderStatus, OrderResult
+        from quantchain.tools.trading_execution import (
+        from quantchain.tools.trading_execution import ValidationError
+        from quantchain.tools.trading_execution import OrderNotFoundError
+        from quantchain.tools.trading_execution import OrderNotFoundError
+        from quantchain.tools.trading_execution import (
+        from quantchain.tools.trading_execution import (
 
-# Mock missing classes that aren't directly available in ib_async
-class Commodity:
-    """Mock Commodity class"""
     pass
+
+
 
 class Bond:
     """Mock Bond class"""
     pass
 
+
+
 class CFD:
     """Mock CFD class"""
     pass
+
+
 
 class MutualFund:
     """Mock MutualFund class"""
     pass
 
+
+
 class Warrant:
     """Mock Warrant class"""
     pass
+
+
 
 class TrailOrder:
     """Mock TrailOrder class"""
     pass
 
+
+
 class Execution:
     """Mock Execution class"""
     pass
+
+
 
 class Fill:
     """Mock Fill class"""
     pass
 
+
+
 class CommissionReport:
     """Mock CommissionReport class"""
     pass
 
-from quantchain.connectors.ib_async_execution import (
     IBExecutionConnector,
     ExecutionError,
     InsufficientFundsError,
@@ -59,10 +87,14 @@ from quantchain.connectors.ib_async_execution import (
     ValidationError,
 )
 
+
+
 class TestIBExecutionConnector:
     """Test cases for IBExecutionConnector class"""
 
     @pytest.fixture
+
+
     def mock_ib(self):
         """Mock IB client"""
         mock = Mock(spec=ib_async.IB)
@@ -99,6 +131,8 @@ class TestIBExecutionConnector:
         return mock
 
     @pytest.fixture
+
+
     def ib_connector(self, mock_ib):
         """Create IBExecutionConnector instance with mocked IB client"""
         # Mock connectAsync for initialization
@@ -116,9 +150,10 @@ class TestIBExecutionConnector:
             return connector
 
     @pytest.fixture
+
+
     def sample_order_request(self):
         """Sample order request for testing"""
-        from quantchain.tools.trading_execution import (
             OrderRequest, OrderSide, OrderType, TimeInForce
         )
         return OrderRequest(
@@ -131,6 +166,8 @@ class TestIBExecutionConnector:
         )
 
     @pytest.fixture
+
+
     def sample_contract(self):
         """Sample contract for testing"""
         contract = Mock(spec=Stock)
@@ -138,6 +175,8 @@ class TestIBExecutionConnector:
         contract.exchange = "SMART"
         contract.currency = "USD"
         return contract
+
+
 
     def test_init(self):
         """Test IBExecutionConnector initialization"""
@@ -153,14 +192,17 @@ class TestIBExecutionConnector:
             assert connector.readonly is False
             mock_ib.assert_called_once()
 
+
+
     def test_disconnect(self, ib_connector, mock_ib):
         """Test disconnecting from IB"""
         ib_connector.disconnect()
         mock_ib.disconnect.assert_called_once()
 
+
+
     def test_place_order_market(self, ib_connector, mock_ib, sample_order_request):
         """Test placing a market order"""
-        from quantchain.tools.trading_execution import OrderStatus, OrderResult
 
         # Mock order placement
         mock_trade = Mock()
@@ -179,9 +221,10 @@ class TestIBExecutionConnector:
         assert result.status == OrderStatus.FILLED
         mock_ib.placeOrder.assert_called_once()
 
+
+
     def test_place_order_limit(self, ib_connector, mock_ib):
         """Test placing a limit order"""
-        from quantchain.tools.trading_execution import (
             OrderRequest, OrderSide, OrderType, TimeInForce, OrderStatus, OrderResult
         )
 
@@ -212,14 +255,17 @@ class TestIBExecutionConnector:
         assert result.status == OrderStatus.PENDING
         mock_ib.placeOrder.assert_called_once()
 
+
+
     def test_place_order_with_error(self, ib_connector, mock_ib, sample_order_request):
         """Test placing an order with error"""
-        from quantchain.tools.trading_execution import ValidationError
 
         # Mock contract qualification to raise an error
         with patch.object(ib_connector, '_qualify_contract', side_effect=RequestError("Invalid contract")):
             with pytest.raises(ExecutionError):
                 ib_connector.place_order(sample_order_request)
+
+
 
     def test_cancel_order(self, ib_connector, mock_ib):
         """Test cancelling an order"""
@@ -237,12 +283,15 @@ class TestIBExecutionConnector:
         mock_ib.cancelOrder.assert_called_once()
         assert order_id not in ib_connector._order_map
 
+
+
     def test_cancel_nonexistent_order(self, ib_connector):
         """Test cancelling a non-existent order"""
-        from quantchain.tools.trading_execution import OrderNotFoundError
 
         with pytest.raises(OrderNotFoundError):
             ib_connector.cancel_order("99999")
+
+
 
     def test_get_order(self, ib_connector, mock_ib):
         """Test getting order details"""
@@ -257,12 +306,15 @@ class TestIBExecutionConnector:
 
         assert result.order_id == order_id
 
+
+
     def test_get_order_nonexistent(self, ib_connector):
         """Test getting a non-existent order"""
-        from quantchain.tools.trading_execution import OrderNotFoundError
 
         with pytest.raises(OrderNotFoundError):
             ib_connector.get_order("99999")
+
+
 
     def test_get_account(self, ib_connector, mock_ib):
         """Test getting account information"""
@@ -286,6 +338,8 @@ class TestIBExecutionConnector:
         assert "buying_power" in account
         assert account["buying_power"] == 200000.0
 
+
+
     def test_get_positions(self, ib_connector, mock_ib):
         """Test getting positions"""
         # Mock positions
@@ -306,6 +360,8 @@ class TestIBExecutionConnector:
         assert positions[0]["current_price"] == 150.0
         assert positions[0]["unrealized_pnl"] == 500.0
 
+
+
     def test_get_order_history(self, ib_connector, mock_ib):
         """Test getting order history"""
         # Mock order executions
@@ -325,6 +381,8 @@ class TestIBExecutionConnector:
         assert orders[0]["side"] == "BUY"
         assert orders[0]["quantity"] == 100
         assert orders[0]["price"] == 150.0
+
+
 
     def test_get_historical_data(self, ib_connector, mock_ib, sample_contract):
         """Test getting historical data"""
@@ -356,6 +414,8 @@ class TestIBExecutionConnector:
         assert "close" in data.columns
         assert "volume" in data.columns
 
+
+
     def test_is_market_open(self, ib_connector):
         """Test checking if market is open"""
         # Test forex (always open 24/5)
@@ -365,9 +425,10 @@ class TestIBExecutionConnector:
         with patch.object(ib_connector, '_create_contract', side_effect=Exception()):
             assert ib_connector.is_market_open("INVALID") is True
 
+
+
     def test_validate_order(self, ib_connector):
         """Test order validation"""
-        from quantchain.tools.trading_execution import (
             OrderRequest, OrderSide, OrderType, TimeInForce
         )
 
@@ -395,6 +456,8 @@ class TestIBExecutionConnector:
         with pytest.raises(ValidationError):
             ib_connector.validate_order(invalid_order)
 
+
+
     def test_get_symbol_info(self, ib_connector, mock_ib):
         """Test getting symbol information"""
         # Mock contract details
@@ -421,6 +484,8 @@ class TestIBExecutionConnector:
         assert info["price_precision"] == 2
         assert info["multiplier"] is None
 
+
+
     def test_get_symbol_info_with_error(self, ib_connector, mock_ib):
         """Test getting symbol information with error"""
         # Mock contract details to raise an error
@@ -436,6 +501,8 @@ class TestIBExecutionConnectorAsync:
     """Test cases for async methods in IBExecutionConnector"""
 
     @pytest.fixture
+
+
     def mock_ib(self):
         """Mock IB client"""
         mock = Mock(spec=ib_async.IB)
@@ -472,6 +539,8 @@ class TestIBExecutionConnectorAsync:
         return mock
 
     @pytest.fixture
+
+
     def ib_connector(self, mock_ib):
         """Create IBExecutionConnector instance with mocked IB client"""
         # Mock connectAsync for initialization
@@ -486,7 +555,6 @@ class TestIBExecutionConnectorAsync:
     @pytest.mark.asyncio
     async def test_async_place_order(self, ib_connector, mock_ib):
         """Test async order placement"""
-        from quantchain.tools.trading_execution import (
             OrderRequest, OrderSide, OrderType, TimeInForce
         )
 

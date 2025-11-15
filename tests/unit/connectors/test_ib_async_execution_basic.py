@@ -1,12 +1,16 @@
 """Basic tests for IB async execution connector."""
 
+
+
 import pytest
+from quantchain.connectors.ib_async_execution import (
+from unittest.mock import Mock, patch
 
 try:
-    from quantchain.connectors.ib_async_execution import (
         IBExecutionConnector,
         IB_ASYNC_AVAILABLE,
     )
+
     IB_EXECUTION_AVAILABLE = True
 except ImportError as e:
     IB_EXECUTION_AVAILABLE = False
@@ -18,20 +22,27 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.mark.unit
+
+
 class TestIBExecutionBasic:
     """Basic tests for IB execution connector."""
 
-    def test_ib_async_availability_constant(self):
+
+
+def test_ib_async_availability_constant(self):
         """Test IB_ASYNC_AVAILABLE constant is defined."""
         assert isinstance(IB_ASYNC_AVAILABLE, bool)
 
-    def test_class_import(self):
+
+
+def test_class_import(self):
         """Test IBExecutionConnector class can be imported."""
         assert IBExecutionConnector is not None
 
-    def test_class_instantiation_with_mock(self):
+
+
+def test_class_instantiation_with_mock(self):
         """Test class can be instantiated with mocked IB."""
-        from unittest.mock import Mock, patch
 
         with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib:
             # Create a mock IB instance

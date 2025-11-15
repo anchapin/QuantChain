@@ -1,12 +1,15 @@
 """Tests for FinRL adapter that bridges QuantChain with FinRL framework."""
 
+
+
 import pytest
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch, AsyncMock
-
 from quantchain.backtesting.finrl_adapter import (
+from gymnasium import spaces
+
     FinRLAdapter,
     get_connector,
 )
@@ -15,7 +18,9 @@ from quantchain.backtesting.finrl_adapter import (
 class TestGetConnector:
     """Test cases for get_connector function."""
 
-    def test_get_connector_alpaca(self):
+
+
+def test_get_connector_alpaca(self):
         """Test getting Alpaca connector."""
         with patch(
             "quantchain.backtesting.finrl_adapter.AlpacaDataConnector"
@@ -28,7 +33,9 @@ class TestGetConnector:
             mock_alpaca.assert_called_once_with(api_key="test", secret_key="test")
             assert result == mock_instance
 
-    def test_get_connector_polygon(self):
+
+
+def test_get_connector_polygon(self):
         """Test getting Polygon connector."""
         with patch(
             "quantchain.backtesting.finrl_adapter.PolygonDataConnector"
@@ -41,7 +48,9 @@ class TestGetConnector:
             mock_polygon.assert_called_once_with(api_key="test")
             assert result == mock_instance
 
-    def test_get_connector_ccxt(self):
+
+
+def test_get_connector_ccxt(self):
         """Test getting CCXT connector."""
         with patch(
             "quantchain.backtesting.finrl_adapter.CCXTDataConnector"
@@ -54,12 +63,16 @@ class TestGetConnector:
             mock_ccxt.assert_called_once_with(exchange_id="binance")
             assert result == mock_instance
 
-    def test_get_connector_unknown(self):
+
+
+def test_get_connector_unknown(self):
         """Test getting unknown connector raises error."""
         with pytest.raises(ValueError, match="Unknown connector: unknown"):
             get_connector("unknown")
 
-    def test_get_connector_case_insensitive(self):
+
+
+def test_get_connector_case_insensitive(self):
         """Test that connector names are case insensitive."""
         with patch(
             "quantchain.backtesting.finrl_adapter.AlpacaDataConnector"
@@ -76,7 +89,9 @@ class TestGetConnector:
 class TestFinRLAdapter:
     """Test cases for FinRLAdapter class."""
 
-    def setup_method(self):
+
+
+def setup_method(self):
         """Set up test fixtures."""
         self.start_date = "2023-01-01"
         self.end_date = "2023-01-31"
@@ -86,7 +101,9 @@ class TestFinRLAdapter:
     @patch("quantchain.backtesting.finrl_adapter.get_connector")
     @patch("quantchain.backtesting.finrl_adapter.MarketFrictionSimulator")
     @patch("quantchain.backtesting.finrl_adapter.PerformanceMetrics")
-    def test_adapter_initialization(
+
+
+def test_adapter_initialization(
         self, mock_metrics, mock_friction, mock_get_connector
     ):
         """Test adapter initialization with default parameters."""
@@ -97,14 +114,16 @@ class TestFinRLAdapter:
         prices = [100 + i * 0.1 for i in range(len(dates))]
         volumes = [1000000 + i * 10000 for i in range(len(dates))]
 
-        market_data = pd.DataFrame({
-            "timestamp": dates,
-            "open": prices,
-            "high": [p * 1.02 for p in prices],
-            "low": [p * 0.98 for p in prices],
-            "close": prices,
-            "volume": volumes
-        })
+        market_data = pd.DataFrame(
+            {
+                "timestamp": dates,
+                "open": prices,
+                "high": [p * 1.02 for p in prices],
+                "low": [p * 0.98 for p in prices],
+                "close": prices,
+                "volume": volumes,
+            }
+        )
 
         mock_connector.get_historical_data.return_value = market_data
         mock_get_connector.return_value = mock_connector
@@ -114,14 +133,16 @@ class TestFinRLAdapter:
         prices = [100 + i * 0.1 for i in range(len(dates))]
         volumes = [1000000 + i * 10000 for i in range(len(dates))]
 
-        market_data = pd.DataFrame({
-            "timestamp": dates,
-            "open": prices,
-            "high": [p * 1.02 for p in prices],
-            "low": [p * 0.98 for p in prices],
-            "close": prices,
-            "volume": volumes
-        })
+        market_data = pd.DataFrame(
+            {
+                "timestamp": dates,
+                "open": prices,
+                "high": [p * 1.02 for p in prices],
+                "low": [p * 0.98 for p in prices],
+                "close": prices,
+                "volume": volumes,
+            }
+        )
 
         mock_connector.get_historical_data.return_value = market_data
         mock_get_connector.return_value = mock_connector
@@ -142,7 +163,9 @@ class TestFinRLAdapter:
     @patch("quantchain.backtesting.finrl_adapter.get_connector")
     @patch("quantchain.backtesting.finrl_adapter.MarketFrictionSimulator")
     @patch("quantchain.backtesting.finrl_adapter.PerformanceMetrics")
-    def test_adapter_initialization_custom_params(
+
+
+def test_adapter_initialization_custom_params(
         self, mock_metrics, mock_friction, mock_get_connector
     ):
         """Test adapter initialization with custom parameters."""
@@ -153,14 +176,16 @@ class TestFinRLAdapter:
         prices = [100 + i * 0.1 for i in range(len(dates))]
         volumes = [1000000 + i * 10000 for i in range(len(dates))]
 
-        market_data = pd.DataFrame({
-            "timestamp": dates,
-            "open": prices,
-            "high": [p * 1.02 for p in prices],
-            "low": [p * 0.98 for p in prices],
-            "close": prices,
-            "volume": volumes
-        })
+        market_data = pd.DataFrame(
+            {
+                "timestamp": dates,
+                "open": prices,
+                "high": [p * 1.02 for p in prices],
+                "low": [p * 0.98 for p in prices],
+                "close": prices,
+                "volume": volumes,
+            }
+        )
 
         mock_connector.get_historical_data.return_value = market_data
         mock_get_connector.return_value = mock_connector
@@ -190,7 +215,9 @@ class TestFinRLAdapter:
         mock_get_connector.assert_called_once_with("polygon", api_key="test_key")
 
     @patch("quantchain.backtesting.finrl_adapter.get_connector")
-    def test_observation_space_setup(self, mock_get_connector):
+
+
+def test_observation_space_setup(self, mock_get_connector):
         """Test observation space is set up correctly."""
         mock_connector = MagicMock()
         mock_get_connector.return_value = mock_connector
@@ -221,7 +248,9 @@ class TestFinRLAdapter:
         assert adapter.observation_space.shape == (4,)  # 4 features
 
     @patch("quantchain.backtesting.finrl_adapter.get_connector")
-    def test_action_space_setup(self, mock_get_connector):
+
+
+def test_action_space_setup(self, mock_get_connector):
         """Test action space is set up correctly."""
         mock_connector = MagicMock()
 
@@ -230,14 +259,16 @@ class TestFinRLAdapter:
         prices = [100 + i * 0.1 for i in range(len(dates))]
         volumes = [1000000 + i * 10000 for i in range(len(dates))]
 
-        market_data = pd.DataFrame({
-            "timestamp": dates,
-            "open": prices,
-            "high": [p * 1.02 for p in prices],
-            "low": [p * 0.98 for p in prices],
-            "close": prices,
-            "volume": volumes
-        })
+        market_data = pd.DataFrame(
+            {
+                "timestamp": dates,
+                "open": prices,
+                "high": [p * 1.02 for p in prices],
+                "low": [p * 0.98 for p in prices],
+                "close": prices,
+                "volume": volumes,
+            }
+        )
 
         mock_connector.get_historical_data.return_value = market_data
         mock_get_connector.return_value = mock_connector
@@ -247,7 +278,6 @@ class TestFinRLAdapter:
         )
 
         # Default action space should be Box with shape (2,) for [action_type(0-2), amount(0-1)]
-        from gymnasium import spaces
 
         assert isinstance(adapter.action_space, spaces.Box)
         assert adapter.action_space.shape == (2,)
@@ -256,7 +286,9 @@ class TestFinRLAdapter:
         assert adapter.action_space.low[1] == 0
         assert adapter.action_space.high[1] == 1
 
-    def test_reset_method(self):
+
+
+def test_reset_method(self):
         """Test environment reset functionality."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector"
@@ -288,7 +320,9 @@ class TestFinRLAdapter:
             assert observation is not None
             assert adapter.current_step == 0
 
-    def test_step_method_buy_action(self):
+
+
+def test_step_method_buy_action(self):
         """Test step method with buy action."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector"
@@ -326,7 +360,9 @@ class TestFinRLAdapter:
             assert isinstance(info, dict)
             assert adapter.current_step == 1
 
-    def test_step_method_sell_action(self):
+
+
+def test_step_method_sell_action(self):
         """Test step method with sell action."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector"
@@ -362,7 +398,9 @@ class TestFinRLAdapter:
             assert isinstance(reward, (int, float))
             assert isinstance(terminated, bool)
 
-    def test_step_method_hold_action(self):
+
+
+def test_step_method_hold_action(self):
         """Test step method with hold action."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector"
@@ -398,7 +436,9 @@ class TestFinRLAdapter:
             assert isinstance(reward, (int, float))
             assert isinstance(terminated, bool)
 
-    def test_episode_termination(self):
+
+
+def test_episode_termination(self):
         """Test episode termination when data is exhausted."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector"
@@ -439,7 +479,9 @@ class TestFinRLAdapter:
             observation, reward, terminated, info = adapter.step([1, 0])
             assert terminated is True
 
-    def test_reward_calculation_simple_return(self):
+
+
+def test_reward_calculation_simple_return(self):
         """Test reward calculation with simple return strategy."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector"
@@ -488,7 +530,9 @@ class TestFinRLAdapter:
             # Reward should be calculated
             assert isinstance(reward, (int, float))
 
-    def test_reward_calculation_risk_adjusted(self):
+
+
+def test_reward_calculation_risk_adjusted(self):
         """Test reward calculation with risk-adjusted strategy."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector"
@@ -523,7 +567,9 @@ class TestFinRLAdapter:
             # Reward should be calculated
             assert isinstance(reward, (int, float))
 
-    def test_reward_calculation_sharpe_ratio(self):
+
+
+def test_reward_calculation_sharpe_ratio(self):
         """Test reward calculation with Sharpe ratio strategy."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector"
@@ -559,7 +605,9 @@ class TestFinRLAdapter:
                 observation, reward, _, _ = adapter.step([1, 0])
                 assert isinstance(reward, (int, float))
 
-    def test_invalid_reward_strategy(self):
+
+
+def test_invalid_reward_strategy(self):
         """Test initialization with invalid reward strategy."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector"
@@ -572,14 +620,16 @@ class TestFinRLAdapter:
             prices = [100 + i * 0.1 for i in range(len(dates))]
             volumes = [1000000 + i * 10000 for i in range(len(dates))]
 
-            market_data = pd.DataFrame({
-                "timestamp": dates,
-                "open": prices,
-                "high": [p * 1.02 for p in prices],
-                "low": [p * 0.98 for p in prices],
-                "close": prices,
-                "volume": volumes
-            })
+            market_data = pd.DataFrame(
+                {
+                    "timestamp": dates,
+                    "open": prices,
+                    "high": [p * 1.02 for p in prices],
+                    "low": [p * 0.98 for p in prices],
+                    "close": prices,
+                    "volume": volumes,
+                }
+            )
 
             mock_connector.get_historical_data.return_value = market_data
 
@@ -595,7 +645,9 @@ class TestFinRLAdapter:
             # Adapter should initialize successfully
             assert adapter.reward_strategy == "invalid_strategy"
 
-    def test_market_friction_application(self):
+
+
+def test_market_friction_application(self):
         """Test that market friction is applied to trades."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector"
@@ -638,7 +690,9 @@ class TestFinRLAdapter:
                 # Check that the market friction simulator was initialized with the correct config
                 assert adapter.market_friction is not None
 
-    def test_observation_features_processing(self):
+
+
+def test_observation_features_processing(self):
         """Test that observation features are processed correctly."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector"
@@ -675,15 +729,15 @@ class TestFinRLAdapter:
             # Observation should have correct number of features
             assert len(observation) == 3
 
-    def test_render_method(self):
+
+
+def test_render_method(self):
         """Test render method functionality."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector"
         ) as mock_get_connector:
             mock_connector = MagicMock()
             mock_get_connector.return_value = mock_connector
-
-
 
             # Should not crash
             try:
@@ -692,7 +746,9 @@ class TestFinRLAdapter:
                 # Rendering might fail in test environment, that's okay
                 pass
 
-    def test_close_method(self):
+
+
+def test_close_method(self):
         """Test close method functionality."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector"
@@ -705,14 +761,16 @@ class TestFinRLAdapter:
             prices = [100 + i * 0.1 for i in range(len(dates))]
             volumes = [1000000 + i * 10000 for i in range(len(dates))]
 
-            market_data = pd.DataFrame({
-                "timestamp": dates,
-                "open": prices,
-                "high": [p * 1.02 for p in prices],
-                "low": [p * 0.98 for p in prices],
-                "close": prices,
-                "volume": volumes
-            })
+            market_data = pd.DataFrame(
+                {
+                    "timestamp": dates,
+                    "open": prices,
+                    "high": [p * 1.02 for p in prices],
+                    "low": [p * 0.98 for p in prices],
+                    "close": prices,
+                    "volume": volumes,
+                }
+            )
 
             mock_connector.get_historical_data.return_value = market_data
 
@@ -723,7 +781,9 @@ class TestFinRLAdapter:
             # Should not crash
             adapter.close()
 
-    def test_portfolio_state_tracking(self):
+
+
+def test_portfolio_state_tracking(self):
         """Test that portfolio state is tracked correctly."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector"
@@ -761,7 +821,9 @@ class TestFinRLAdapter:
             assert adapter.position > 0
             assert adapter.balance < adapter.initial_balance
 
-    def test_data_loading_error_handling(self):
+
+
+def test_data_loading_error_handling(self):
         """Test handling of data loading errors."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector"
@@ -776,14 +838,18 @@ class TestFinRLAdapter:
 
             with pytest.raises(Exception):
                 FinRLAdapter(
-                    symbol=self.symbol, start_date=self.start_date, end_date=self.end_date
+                    symbol=self.symbol,
+                    start_date=self.start_date,
+                    end_date=self.end_date,
                 )
 
             # Reset should handle the error gracefully
             with pytest.raises(Exception):
                 adapter.reset()
 
-    def test_step_before_reset_error(self):
+
+
+def test_step_before_reset_error(self):
         """Test that calling step before reset raises appropriate error."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector"

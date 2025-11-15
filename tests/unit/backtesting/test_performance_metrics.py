@@ -1,14 +1,23 @@
 """Tests for performance metrics module to boost coverage from 14% to 80%."""
-from typing import Any, Dict, Optional
 
+
+
+
+
+from typing import Any, Dict, Optional
 import numpy as np
 import pandas as pd
 import pytest
-
 from quantchain.backtesting.engine import MetricsResult
 from unittest.mock import patch
-
 from quantchain.backtesting.performance_metrics import (
+from quantchain.backtesting.engine import MetricsResult
+from quantchain.backtesting.engine import (
+from quantchain.backtesting.engine import MetricsResult
+from quantchain.backtesting.engine import MetricsResult
+from quantchain.backtesting.performance_metrics import MetricsCalculationError
+from quantchain.backtesting.performance_metrics import MissingColumnError
+
     InsufficientDataError,
     InvalidFrequencyError,
     MetricsCalculationError,
@@ -18,22 +27,30 @@ from quantchain.backtesting.performance_metrics import (
 
 
 @pytest.mark.unit
+
+
 class TestPerformanceMetrics:
     """Tests for PerformanceMetrics to boost coverage."""
 
-    def test_init(self):
+
+
+def test_init(self):
         """Test initialization."""
         calculator = PerformanceMetrics()
         assert calculator is not None
         assert hasattr(calculator, "calculate_all_metrics")
         assert hasattr(calculator, "calculate_total_return")
 
-    def test_init_with_risk_free_rate(self):
+
+
+def test_init_with_risk_free_rate(self):
         """Test initialization with custom risk-free rate."""
         calculator = PerformanceMetrics(risk_free_rate=0.03)
         assert calculator.risk_free_rate == 0.03
 
-    def test_calculate_returns_empty_series(self):
+
+
+def test_calculate_returns_empty_series(self):
         """Test returns calculation with empty series."""
         calculator = PerformanceMetrics()
 
@@ -41,7 +58,9 @@ class TestPerformanceMetrics:
         with pytest.raises(InsufficientDataError):
             calculator.calculate_returns(prices)
 
-    def test_calculate_returns_single_value(self):
+
+
+def test_calculate_returns_single_value(self):
         """Test returns calculation with single value."""
         calculator = PerformanceMetrics()
 
@@ -51,7 +70,9 @@ class TestPerformanceMetrics:
         assert not pd.isna(returns.iloc[0])
         assert abs(returns.iloc[0] - 0.05) < 1e-10
 
-    def test_calculate_total_return(self):
+
+
+def test_calculate_total_return(self):
         """Test total return calculation."""
         calculator = PerformanceMetrics()
 
@@ -61,7 +82,9 @@ class TestPerformanceMetrics:
         expected_return = (110 - 100) / 100
         assert abs(total_return - expected_return) < 1e-10
 
-    def test_calculate_total_return_negative(self):
+
+
+def test_calculate_total_return_negative(self):
         """Test total return calculation with loss."""
         calculator = PerformanceMetrics()
 
@@ -71,7 +94,9 @@ class TestPerformanceMetrics:
         expected_return = (85 - 100) / 100
         assert abs(total_return - expected_return) < 1e-10
 
-    def test_calculate_annualized_return(self):
+
+
+def test_calculate_annualized_return(self):
         """Test annualized return calculation."""
         calculator = PerformanceMetrics()
 
@@ -83,7 +108,9 @@ class TestPerformanceMetrics:
         annual_return = calculator.calculate_annualized_return(returns)
         assert isinstance(annual_return, float)
 
-    def test_calculate_annualized_return_insufficient_data(self):
+
+
+def test_calculate_annualized_return_insufficient_data(self):
         """Test annualized return with insufficient data."""
         calculator = PerformanceMetrics()
 
@@ -97,7 +124,9 @@ class TestPerformanceMetrics:
         assert isinstance(annual_return, float)
         assert isinstance(annual_return, float)
 
-    def test_calculate_sharpe_ratio(self):
+
+
+def test_calculate_sharpe_ratio(self):
         """Test Sharpe ratio calculation."""
         calculator = PerformanceMetrics(risk_free_rate=0.02)
 
@@ -107,7 +136,9 @@ class TestPerformanceMetrics:
         sharpe_ratio = calculator.calculate_sharpe_ratio(returns)
         assert isinstance(sharpe_ratio, float)
 
-    def test_calculate_sharpe_ratio_zero_volatility(self):
+
+
+def test_calculate_sharpe_ratio_zero_volatility(self):
         """Test Sharpe ratio with zero volatility."""
         calculator = PerformanceMetrics(risk_free_rate=0.02)
 
@@ -118,7 +149,9 @@ class TestPerformanceMetrics:
         # Should handle zero volatility gracefully
         assert isinstance(sharpe_ratio, float)
 
-    def test_calculate_sharpe_ratio_negative_volatility(self):
+
+
+def test_calculate_sharpe_ratio_negative_volatility(self):
         """Test Sharpe ratio with negative returns."""
         calculator = PerformanceMetrics(risk_free_rate=0.02)
 
@@ -128,7 +161,9 @@ class TestPerformanceMetrics:
         sharpe_ratio = calculator.calculate_sharpe_ratio(returns)
         assert isinstance(sharpe_ratio, float)
 
-    def test_calculate_sortino_ratio(self):
+
+
+def test_calculate_sortino_ratio(self):
         """Test Sortino ratio calculation."""
         calculator = PerformanceMetrics(risk_free_rate=0.02)
 
@@ -138,7 +173,9 @@ class TestPerformanceMetrics:
         sortino_ratio = calculator.calculate_sortino_ratio(returns)
         assert isinstance(sortino_ratio, float)
 
-    def test_calculate_max_drawdown_basic(self):
+
+
+def test_calculate_max_drawdown_basic(self):
         """Test basic max drawdown calculation."""
         calculator = PerformanceMetrics()
 
@@ -151,7 +188,9 @@ class TestPerformanceMetrics:
         assert "max_drawdown" in max_dd
         assert max_dd["max_drawdown"] > 0
 
-    def test_calculate_max_drawdown_no_drawdown(self):
+
+
+def test_calculate_max_drawdown_no_drawdown(self):
         """Test max drawdown with no drawdown."""
         calculator = PerformanceMetrics()
 
@@ -161,7 +200,9 @@ class TestPerformanceMetrics:
         max_dd = calculator.calculate_max_drawdown(prices)
         assert max_dd["max_drawdown"] == 0.0
 
-    def test_calculate_max_drawdown_empty_series(self):
+
+
+def test_calculate_max_drawdown_empty_series(self):
         """Test max drawdown with empty series."""
         calculator = PerformanceMetrics()
 
@@ -173,7 +214,9 @@ class TestPerformanceMetrics:
         assert result["max_drawdown_start"] is None
         assert result["max_drawdown_end"] is None
 
-    def test_calculate_max_drawdown_single_value(self):
+
+
+def test_calculate_max_drawdown_single_value(self):
         """Test max drawdown with single value."""
         calculator = PerformanceMetrics()
 
@@ -182,7 +225,9 @@ class TestPerformanceMetrics:
         max_dd = calculator.calculate_max_drawdown(prices)
         assert max_dd["max_drawdown"] == 0.0
 
-    def test_calculate_calmar_ratio(self):
+
+
+def test_calculate_calmar_ratio(self):
         """Test Calmar ratio calculation."""
         calculator = PerformanceMetrics()
 
@@ -193,7 +238,9 @@ class TestPerformanceMetrics:
         calmar_ratio = calculator.calculate_calmar_ratio(returns, max_dd)
         assert isinstance(calmar_ratio, float)
 
-    def test_calculate_calmar_ratio_no_drawdown(self):
+
+
+def test_calculate_calmar_ratio_no_drawdown(self):
         """Test Calmar ratio with no drawdown."""
         calculator = PerformanceMetrics()
 
@@ -204,21 +251,25 @@ class TestPerformanceMetrics:
         # Should handle gracefully
         assert isinstance(calmar_ratio, (float, type(None)))
 
-    def test_calculate_win_rate(self):
+
+
+def test_calculate_win_rate(self):
         """Test win rate calculation."""
         calculator = PerformanceMetrics()
 
         trades = pd.DataFrame(
             {
                 "side": ["long", "short", "long", "short", "long", "short"],
-                "pnl": [10.0, -5.0, 15.0, -8.0, 20.0, -10.0]
+                "pnl": [10.0, -5.0, 15.0, -8.0, 20.0, -10.0],
             }
         )
 
         win_rate = calculator.calculate_win_rate(trades)
         assert isinstance(win_rate, float)
 
-    def test_calculate_win_rate_empty_trades(self):
+
+
+def test_calculate_win_rate_empty_trades(self):
         """Test win rate with empty trades."""
         calculator = PerformanceMetrics()
 
@@ -227,7 +278,9 @@ class TestPerformanceMetrics:
         win_rate = calculator.calculate_win_rate(trades)
         assert win_rate == 0.0
 
-    def test_calculate_profit_factor(self):
+
+
+def test_calculate_profit_factor(self):
         """Test profit factor calculation."""
         calculator = PerformanceMetrics()
 
@@ -241,14 +294,16 @@ class TestPerformanceMetrics:
                     95,
                     105,
                 ],  # long profit, short profit, long loss, short loss
-                "pnl": [10.0, 10.0, -5.0, -5.0]
+                "pnl": [10.0, 10.0, -5.0, -5.0],
             }
         )
 
         profit_factor = calculator.calculate_profit_factor(trades)
         assert isinstance(profit_factor, float)
 
-    def test_calculate_all_metrics_basic(self):
+
+
+def test_calculate_all_metrics_basic(self):
         """Test comprehensive metrics calculation."""
         calculator = PerformanceMetrics(risk_free_rate=0.02)
 
@@ -258,7 +313,7 @@ class TestPerformanceMetrics:
         trades = pd.DataFrame({"pnl": np.random.normal(0.5, 2.0, 10)})
 
         metrics = calculator.calculate_all_metrics(equity_curve, trades)
-        from quantchain.backtesting.engine import MetricsResult
+
         assert isinstance(metrics, MetricsResult)
 
         # Check for expected basic metrics
@@ -266,7 +321,9 @@ class TestPerformanceMetrics:
         assert hasattr(metrics, "sharpe_ratio")
         assert hasattr(metrics, "max_drawdown")
 
-    def test_generate_tear_sheet(self):
+
+
+def test_generate_tear_sheet(self):
         """Test tear sheet generation."""
         calculator = PerformanceMetrics()
 
@@ -282,12 +339,15 @@ class TestPerformanceMetrics:
                 "exit_price": [110, 90, 95, 105],
                 "entry_date": pd.date_range("2024-01-01", periods=4, freq="D"),
                 "exit_date": pd.date_range("2024-01-02", periods=4, freq="D"),
-                "pnl": [10.0, 10.0, -5.0, -5.0]
+                "pnl": [10.0, 10.0, -5.0, -5.0],
             }
         )
 
         # Create BacktestResult
-        from quantchain.backtesting.engine import BacktestResult, BacktestConfig, MetricsResult
+            BacktestResult,
+            BacktestConfig,
+            MetricsResult,
+        )
 
         # Create metrics
         metrics = MetricsResult(
@@ -323,7 +383,7 @@ class TestPerformanceMetrics:
             cvar_95=-0.03,
             skewness=0.1,
             kurtosis=0.2,
-            additional_metrics={}
+            additional_metrics={},
         )
 
         # Create config
@@ -335,13 +395,15 @@ class TestPerformanceMetrics:
             summary_stats={},
             metrics=metrics,
             execution_time=1.0,
-            config=config
+            config=config,
         )
 
         # Mock QUANTSTATS_AVAILABLE to avoid requiring the library
-        with patch('quantchain.backtesting.performance_metrics.QUANTSTATS_AVAILABLE', True):
+        with patch(
+            "quantchain.backtesting.performance_metrics.QUANTSTATS_AVAILABLE", True
+        ):
             # Mock the quantstats module
-            with patch('quantchain.backtesting.performance_metrics.qs') as mock_qs:
+            with patch("quantchain.backtesting.performance_metrics.qs") as mock_qs:
                 # Setup mock return values
                 mock_qs.reports.metrics.return_value = {"sharpe": 1.5}
                 mock_qs.reports.html.return_value = None
@@ -349,25 +411,33 @@ class TestPerformanceMetrics:
                 tear_sheet = calculator.generate_tear_sheet(results)
                 assert isinstance(tear_sheet, (dict, str))
 
-    def test_validate_insufficient_data(self):
+
+
+def test_validate_insufficient_data(self):
         """Test insufficient data validation."""
         # Private method _validate_insufficient_data doesn't exist in implementation
         # This test is disabled
         pytest.skip("Private method _validate_insufficient_data not implemented")
 
-    def test_validate_frequency_regular(self):
+
+
+def test_validate_frequency_regular(self):
         """Test frequency validation for regular data."""
         # Private method _validate_frequency doesn't exist in implementation
         # This test is disabled
         pytest.skip("Private method _validate_frequency not implemented")
 
-    def test_validate_frequency_irregular(self):
+
+
+def test_validate_frequency_irregular(self):
         """Test frequency validation for irregular data."""
         # Private method _validate_frequency doesn't exist in implementation
         # This test is disabled
         pytest.skip("Private method _validate_frequency not implemented")
 
-    def test_benchmark_returns_property(self):
+
+
+def test_benchmark_returns_property(self):
         """Test benchmark returns property."""
         calculator = PerformanceMetrics()
 
@@ -380,20 +450,26 @@ class TestPerformanceMetrics:
         calculator_with_benchmark = PerformanceMetrics(benchmark_returns=benchmark)
         assert calculator_with_benchmark.benchmark_returns is not None
 
-    def test_risk_free_rate_property(self):
+
+
+def test_risk_free_rate_property(self):
         """Test risk-free rate property."""
         calculator = PerformanceMetrics(risk_free_rate=0.03)
 
         assert calculator.risk_free_rate == 0.03
 
-    def test_empty_string_risk_free_rate(self):
+
+
+def test_empty_string_risk_free_rate(self):
         """Test empty string risk-free rate."""
         calculator = PerformanceMetrics(risk_free_rate="")
 
         # Empty string is stored as-is
         assert calculator.risk_free_rate == ""
 
-    def test_set_risk_free_rate_invalid(self):
+
+
+def test_set_risk_free_rate_invalid(self):
         """Test setting invalid risk-free rate."""
         calculator = PerformanceMetrics()
 
@@ -401,7 +477,9 @@ class TestPerformanceMetrics:
         calculator.risk_free_rate = "invalid"
         assert calculator.risk_free_rate == "invalid"
 
-    def test_all_metrics_with_very_small_dataset(self):
+
+
+def test_all_metrics_with_very_small_dataset(self):
         """Test all metrics calculation with very small dataset."""
         calculator = PerformanceMetrics()
 
@@ -414,11 +492,13 @@ class TestPerformanceMetrics:
         assert not equity_curve.isnull().any()
         assert not np.isinf(equity_curve).any()
 
-        from quantchain.backtesting.engine import MetricsResult
+
         metrics = calculator.calculate_all_metrics(equity_curve, trades)
         assert isinstance(metrics, MetricsResult)
 
-    def test_edge_case_nan_values(self):
+
+
+def test_edge_case_nan_values(self):
         """Test handling of NaN values in price data."""
         calculator = PerformanceMetrics()
 
@@ -432,7 +512,9 @@ class TestPerformanceMetrics:
         # NaN values are dropped, so we get 2 returns
         assert len(returns) == 2
 
-    def test_edge_case_inf_values(self):
+
+
+def test_edge_case_inf_values(self):
         """Test handling of infinite values."""
         calculator = PerformanceMetrics()
 
@@ -443,7 +525,9 @@ class TestPerformanceMetrics:
         returns = calculator.calculate_returns(prices)
         assert returns is not None
 
-    def test_large_dataset_performance(self):
+
+
+def test_large_dataset_performance(self):
         """Test performance with large dataset."""
         calculator = PerformanceMetrics()
 
@@ -454,86 +538,93 @@ class TestPerformanceMetrics:
         trades = pd.DataFrame({"pnl": np.random.normal(0.5, 2.0, 100)})
 
         metrics = calculator.calculate_all_metrics(equity_curve, trades)
-        from quantchain.backtesting.engine import MetricsResult
+
         assert isinstance(metrics, MetricsResult)
 
 
 class TestPerformanceMetricsCoverage:
     """Additional test cases for improved PerformanceMetrics coverage."""
 
-    def test_calculate_win_rate_edge_cases(self):
+
+
+def test_calculate_win_rate_edge_cases(self):
         """Test win rate calculation with edge cases."""
         metrics = PerformanceMetrics()
 
         # Test with empty trades DataFrame
-        empty_df = pd.DataFrame(columns=['pnl'])
+        empty_df = pd.DataFrame(columns=["pnl"])
         win_rate = metrics.calculate_win_rate(empty_df)
         assert win_rate == 0.0
 
         # Test with trades containing zeros
-        trades_df = pd.DataFrame({
-            'pnl': [0, 100, -50, 0]
-        })
+        trades_df = pd.DataFrame({"pnl": [0, 100, -50, 0]})
         win_rate = metrics.calculate_win_rate(trades_df)
         assert win_rate == 0.25  # Only positive counts
 
-    def test_calculate_comprehensive_metrics_with_no_data(self):
+
+
+def test_calculate_comprehensive_metrics_with_no_data(self):
         """Test comprehensive metrics with no data."""
-        from quantchain.backtesting.performance_metrics import MetricsCalculationError
 
         metrics = PerformanceMetrics()
 
         # Test with empty equity curve
         with pytest.raises(MetricsCalculationError):
             metrics.calculate_comprehensive_metrics(
-                equity_curve=pd.Series([]),
-                trades=pd.DataFrame(columns=['pnl'])
+                equity_curve=pd.Series([]), trades=pd.DataFrame(columns=["pnl"])
             )
 
         # Test with minimal equity curve (2 points minimum)
         result = metrics.calculate_comprehensive_metrics(
-            equity_curve=pd.Series([100, 101], index=pd.date_range('2024-01-01', periods=2)),
-            trades=pd.DataFrame(columns=['pnl'])
+            equity_curve=pd.Series(
+                [100, 101], index=pd.date_range("2024-01-01", periods=2)
+            ),
+            trades=pd.DataFrame(columns=["pnl"]),
         )
         # Check that result contains expected nested structure
-        assert 'return_metrics' in result
-        assert 'risk_metrics' in result
-        assert 'trade_metrics' in result
+        assert "return_metrics" in result
+        assert "risk_metrics" in result
+        assert "trade_metrics" in result
 
         # Check return metrics
-        return_metrics = result['return_metrics']
-        assert 'total_return' in return_metrics
-        assert 'annualized_return' in return_metrics
+        return_metrics = result["return_metrics"]
+        assert "total_return" in return_metrics
+        assert "annualized_return" in return_metrics
 
         # Check trade metrics
-        trade_metrics = result['trade_metrics']
-        assert 'win_rate' in trade_metrics
-        assert trade_metrics['win_rate'] == 0.0
+        trade_metrics = result["trade_metrics"]
+        assert "win_rate" in trade_metrics
+        assert trade_metrics["win_rate"] == 0.0
 
-    def test_calculate_trade_statistics_error_cases(self):
+
+
+def test_calculate_trade_statistics_error_cases(self):
         """Test trade statistics with error conditions."""
-        from quantchain.backtesting.performance_metrics import MissingColumnError
 
         metrics = PerformanceMetrics()
 
         # Test with empty trades
         trades = pd.DataFrame()
         stats = metrics._calculate_trade_statistics(trades)
-        assert stats['win_rate'] == 0.0
+        assert stats["win_rate"] == 0.0
 
         # Test with trades missing pnl column
-        trades = pd.DataFrame({'wrong_column': [1, 2]})
+        trades = pd.DataFrame({"wrong_column": [1, 2]})
         with pytest.raises(MissingColumnError):
             metrics._calculate_trade_statistics(trades)
 
-    def test_calculate_all_metrics_minimal_data(self):
+
+
+def test_calculate_all_metrics_minimal_data(self):
         """Test all metrics calculation with minimal data."""
         metrics = PerformanceMetrics()
 
         # Test with minimal equity curve and trades (need more than 2 points for proper calculation)
         result = metrics.calculate_all_metrics(
-            equity_curve=pd.Series([100, 101, 102, 103, 104], index=pd.date_range('2024-01-01', periods=5)),
-            trades=pd.DataFrame({'pnl': [100]})
+            equity_curve=pd.Series(
+                [100, 101, 102, 103, 104], index=pd.date_range("2024-01-01", periods=5)
+            ),
+            trades=pd.DataFrame({"pnl": [100]}),
         )
         assert result is not None
         assert isinstance(result, MetricsResult)

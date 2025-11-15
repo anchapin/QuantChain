@@ -23,9 +23,11 @@ from quantchain.tools.trading_execution import (
 class MockTradingExecutor(TradingExecutionInterface):
     """Mock implementation for testing the abstract interface."""
 
-    def __init__(self):
+
+
+def __init__(self):
         self.orders = {}
-        self.positions: list[float] = []
+        self.positions: list = []
         self.account = AccountInfo(
             account_id="test-account",
             buying_power=100000.0,
@@ -34,7 +36,9 @@ class MockTradingExecutor(TradingExecutionInterface):
             positions=[],
         )
 
-    def place_order(self, order: OrderRequest) -> OrderResult:
+
+
+def place_order(self, order: OrderRequest) -> OrderResult:
         """Mock order placement."""
         order_id = f"order_{len(self.orders)}"
         result = OrderResult(
@@ -54,7 +58,9 @@ class MockTradingExecutor(TradingExecutionInterface):
         self.orders[order_id] = result
         return result
 
-    def cancel_order(self, order_id: str) -> OrderResult:
+
+
+def cancel_order(self, order_id: str) -> OrderResult:
         """Mock order cancellation."""
         if order_id not in self.orders:
             raise OrderNotFoundError(f"Order {order_id} not found")
@@ -64,21 +70,29 @@ class MockTradingExecutor(TradingExecutionInterface):
         order.updated_at = datetime.now()
         return order
 
-    def get_order(self, order_id: str) -> OrderResult:
+
+
+def get_order(self, order_id: str) -> OrderResult:
         """Mock order retrieval."""
         if order_id not in self.orders:
             raise OrderNotFoundError(f"Order {order_id} not found")
         return self.orders[order_id]
 
-    def get_account(self) -> AccountInfo:
+
+
+def get_account(self) -> AccountInfo:
         """Mock account retrieval."""
         return self.account
 
-    def get_positions(self) -> list:
+
+
+def get_positions(self) -> list:
         """Mock positions retrieval."""
         return self.positions
 
-    def get_order_history(
+
+
+def get_order_history(
         self,
         symbol: Optional[str] = None,
         status: Optional[OrderStatus] = None,
@@ -91,19 +105,21 @@ class MockTradingExecutor(TradingExecutionInterface):
 
         # Apply filters
         if symbol:
-            orders: list[float] = [o for o in orders if o.symbol == symbol]
+            orders: list = [o for o in orders if o.symbol == symbol]
         if status:
-            orders: list[float] = [o for o in orders if o.status == status]
+            orders: list = [o for o in orders if o.status == status]
         if start_date:
-            orders: list[float] = [o for o in orders if o.timestamp >= start_date]
+            orders: list = [o for o in orders if o.timestamp >= start_date]
         if end_date:
-            orders: list[float] = [o for o in orders if o.timestamp <= end_date]
+            orders: list = [o for o in orders if o.timestamp <= end_date]
         if limit:
             orders = orders[:limit]
 
         return orders
 
-    def is_market_open(self, symbol: Optional[str] = None) -> bool:
+
+
+def is_market_open(self, symbol: Optional[str] = None) -> bool:
         """Mock market status check."""
         return True
 
@@ -111,7 +127,9 @@ class MockTradingExecutor(TradingExecutionInterface):
 class TestOrderRequest:
     """Test cases for OrderRequest."""
 
-    def test_valid_market_order(self) -> None:
+
+
+def test_valid_market_order(self) -> None:
         """Test creation of a valid market order."""
         order = OrderRequest(
             symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
@@ -123,7 +141,9 @@ class TestOrderRequest:
         assert order.price is None
         assert order.time_in_force == TimeInForce.DAY
 
-    def test_valid_limit_order(self) -> None:
+
+
+def test_valid_limit_order(self) -> None:
         """Test creation of a valid limit order."""
         order = OrderRequest(
             symbol="MSFT",
@@ -135,7 +155,9 @@ class TestOrderRequest:
         assert order.price == 250.0
         assert order.quantity == 50
 
-    def test_valid_stop_order(self) -> None:
+
+
+def test_valid_stop_order(self) -> None:
         """Test creation of a valid stop order."""
         order = OrderRequest(
             symbol="TSLA",
@@ -146,7 +168,9 @@ class TestOrderRequest:
         )
         assert order.stop_price == 800.0
 
-    def test_valid_stop_limit_order(self) -> None:
+
+
+def test_valid_stop_limit_order(self) -> None:
         """Test creation of a valid stop limit order."""
         order = OrderRequest(
             symbol="NVDA",
@@ -159,7 +183,9 @@ class TestOrderRequest:
         assert order.price == 500.0
         assert order.stop_price == 450.0
 
-    def test_invalid_quantity(self) -> None:
+
+
+def test_invalid_quantity(self) -> None:
         """Test that orders with invalid quantity raise ValidationError."""
         with pytest.raises(ValidationError, match="Order quantity must be positive"):
             OrderRequest(
@@ -177,7 +203,9 @@ class TestOrderRequest:
                 quantity=-10,
             )
 
-    def test_limit_order_without_price(self) -> None:
+
+
+def test_limit_order_without_price(self) -> None:
         """Test that limit orders without price raise ValidationError."""
         with pytest.raises(ValidationError, match="Limit orders require a price"):
             OrderRequest(
@@ -187,7 +215,9 @@ class TestOrderRequest:
                 quantity=100,
             )
 
-    def test_stop_order_without_stop_price(self) -> None:
+
+
+def test_stop_order_without_stop_price(self) -> None:
         """Test that stop orders without stop price raise ValidationError."""
         with pytest.raises(ValidationError, match="Stop orders require a stop price"):
             OrderRequest(
@@ -197,7 +227,9 @@ class TestOrderRequest:
                 quantity=100,
             )
 
-    def test_stop_limit_order_missing_prices(self) -> None:
+
+
+def test_stop_limit_order_missing_prices(self) -> None:
         """Test that stop limit orders without required prices raise ValidationError."""
         with pytest.raises(
             ValidationError, match="Stop limit orders require both price and stop_price"
@@ -225,7 +257,9 @@ class TestOrderRequest:
 class TestOrderResult:
     """Test cases for OrderResult."""
 
-    def test_filled_order_properties(self) -> None:
+
+
+def test_filled_order_properties(self) -> None:
         """Test properties of a filled order."""
         timestamp = datetime.now()
         order = OrderResult(
@@ -247,7 +281,9 @@ class TestOrderResult:
         assert order.is_partially_filled is False
         assert order.is_active is False
 
-    def test_partially_filled_order_properties(self) -> None:
+
+
+def test_partially_filled_order_properties(self) -> None:
         """Test properties of a partially filled order."""
         timestamp = datetime.now()
         order = OrderResult(
@@ -269,7 +305,9 @@ class TestOrderResult:
         assert order.is_partially_filled is True
         assert order.is_active is True
 
-    def test_pending_order_properties(self) -> None:
+
+
+def test_pending_order_properties(self) -> None:
         """Test properties of a pending order."""
         timestamp = datetime.now()
         order = OrderResult(
@@ -295,7 +333,9 @@ class TestOrderResult:
 class TestPosition:
     """Test cases for Position."""
 
-    def test_long_position(self) -> None:
+
+
+def test_long_position(self) -> None:
         """Test properties of a long position."""
         position = Position(
             symbol="AAPL",
@@ -311,7 +351,9 @@ class TestPosition:
         assert position.is_short is False
         assert position.is_flat is False
 
-    def test_short_position(self) -> None:
+
+
+def test_short_position(self) -> None:
         """Test properties of a short position."""
         position = Position(
             symbol="AAPL",
@@ -327,7 +369,9 @@ class TestPosition:
         assert position.is_short is True
         assert position.is_flat is False
 
-    def test_flat_position(self) -> None:
+
+
+def test_flat_position(self) -> None:
         """Test properties of a flat position."""
         position = Position(
             symbol="AAPL",
@@ -347,7 +391,9 @@ class TestPosition:
 class TestAccountInfo:
     """Test cases for AccountInfo."""
 
-    def test_account_properties(self) -> None:
+
+
+def test_account_properties(self) -> None:
         """Test account info properties."""
         positions = [
             Position("AAPL", 100, 150.0, 160.0, 16000.0, 1000.0, 6.67),
@@ -382,7 +428,9 @@ class TestAccountInfo:
 class TestTradingExecutionInterface:
     """Test cases for TradingExecutionInterface."""
 
-    def test_interface_methods_exist(self) -> None:
+
+
+def test_interface_methods_exist(self) -> None:
         """Test that all required abstract methods are defined."""
         # This test ensures the interface is properly defined
         abstract_methods = TradingExecutionInterface.__abstractmethods__
@@ -398,7 +446,9 @@ class TestTradingExecutionInterface:
 
         assert abstract_methods == expected_methods
 
-    def test_mock_implementation(self) -> None:
+
+
+def test_mock_implementation(self) -> None:
         """Test that mock implementation works correctly."""
         executor = MockTradingExecutor()
 
@@ -433,7 +483,9 @@ class TestTradingExecutionInterface:
         # Test market status
         assert executor.is_market_open() is True
 
-    def test_order_not_found_error(self) -> None:
+
+
+def test_order_not_found_error(self) -> None:
         """Test OrderNotFoundError is raised for missing orders."""
         executor = MockTradingExecutor()
 
@@ -443,7 +495,9 @@ class TestTradingExecutionInterface:
         with pytest.raises(OrderNotFoundError):
             executor.cancel_order("non-existent-order")
 
-    def test_order_history_filtering(self) -> None:
+
+
+def test_order_history_filtering(self) -> None:
         """Test order history filtering functionality."""
         executor = MockTradingExecutor()
 
@@ -454,7 +508,7 @@ class TestTradingExecutionInterface:
             OrderRequest("AAPL", OrderSide.SELL, OrderType.MARKET, 25),
         ]
 
-        results: list[float] = [executor.place_order(order) for order in orders]
+        results: list = [executor.place_order(order) for order in orders]
 
         # Test symbol filter
         aapl_orders = executor.get_order_history(symbol="AAPL")

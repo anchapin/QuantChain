@@ -1,12 +1,18 @@
 """Integration tests for end-to-end workflows in QuantChain."""
 
+
+
+
 from datetime import datetime
 from unittest.mock import Mock, patch
-
 import pandas as pd
 import pytest
-
 from quantchain.backtesting.engine import (
+from quantchain.backtesting.langgraph_adapter import LangGraphBacktestAdapter
+from quantchain.connectors.dexscreener_connector import DexscreenerDataConnector
+from quantchain.tools.execution import AlpacaExecutionTool
+from quantchain.tools.social_media_scraper import SocialMediaScraper
+
     BacktestConfig,
     BacktestEngine,
     BacktestResult,
@@ -14,13 +20,11 @@ from quantchain.backtesting.engine import (
     filter_data_by_date_range,
     validate_ohlcv_data,
 )
-from quantchain.backtesting.langgraph_adapter import LangGraphBacktestAdapter
-from quantchain.connectors.dexscreener_connector import DexscreenerDataConnector
-from quantchain.tools.execution import AlpacaExecutionTool
-from quantchain.tools.social_media_scraper import SocialMediaScraper
 
 
 @pytest.fixture
+
+
 def sample_ohlcv_data():
     """Create sample OHLCV data for testing."""
     dates = pd.date_range("2023-01-01", periods=10, freq="D")
@@ -93,6 +97,8 @@ def sample_ohlcv_data():
 
 
 @pytest.fixture
+
+
 def sample_strategy_config():
     """Create sample strategy configuration for testing."""
     return {
@@ -109,12 +115,16 @@ def sample_strategy_config():
 class TestDataValidationWorkflow:
     """Test data validation workflow as part of end-to-end process."""
 
-    def test_validate_ohlcv_data_success(self, sample_ohlcv_data) -> None:
+
+
+def test_validate_ohlcv_data_success(self, sample_ohlcv_data) -> None:
         """Test successful validation of OHLCV data."""
         # Should not raise any exceptions
         validate_ohlcv_data(sample_ohlcv_data)
 
-    def test_validate_ohlcv_data_missing_columns(self, sample_ohlcv_data) -> None:
+
+
+def test_validate_ohlcv_data_missing_columns(self, sample_ohlcv_data) -> None:
         """Test validation fails with missing columns."""
         # Remove a required column
         invalid_data = sample_ohlcv_data.drop(columns=["volume"])
@@ -122,7 +132,9 @@ class TestDataValidationWorkflow:
         with pytest.raises(Exception):  # DataValidationError
             validate_ohlcv_data(invalid_data)
 
-    def test_validate_ohlcv_data_invalid_prices(self, sample_ohlcv_data) -> None:
+
+
+def test_validate_ohlcv_data_invalid_prices(self, sample_ohlcv_data) -> None:
         """Test validation fails with invalid price relationships."""
         # Create invalid data where high < low
         invalid_data = sample_ohlcv_data.copy()
@@ -131,7 +143,9 @@ class TestDataValidationWorkflow:
         with pytest.raises(Exception):  # DataValidationError
             validate_ohlcv_data(invalid_data)
 
-    def test_filter_data_by_date_range(self, sample_ohlcv_data) -> None:
+
+
+def test_filter_data_by_date_range(self, sample_ohlcv_data) -> None:
         """Test filtering data by date range."""
         # Filter to middle 5 days
         start_date = datetime(2023, 1, 3)
@@ -151,7 +165,9 @@ class TestDataValidationWorkflow:
 class TestBacktestWorkflow:
     """Test complete backtesting workflow."""
 
-    def test_backtest_config_creation(self) -> None:
+
+
+def test_backtest_config_creation(self) -> None:
         """Test creating backtest configuration."""
         config = BacktestConfig(
             initial_cash=100000.0,
@@ -165,7 +181,9 @@ class TestBacktestWorkflow:
         assert config.slippage_rate == 0.0001
         assert config.data_frequency == "1d"
 
-    def test_langgraph_backtester_initialization(self, sample_strategy_config) -> None:
+
+
+def test_langgraph_backtester_initialization(self, sample_strategy_config) -> None:
         """Test initializing LangGraph backtester."""
         # Create a mock graph
         mock_graph = Mock()
@@ -176,7 +194,9 @@ class TestBacktestWorkflow:
             assert adapter.config == sample_strategy_config
             assert adapter.agent_graph == mock_graph
 
-    def test_simple_backtest_execution(
+
+
+def test_simple_backtest_execution(
         self, sample_ohlcv_data, sample_strategy_config
     ) -> None:
         """Test executing a simple backtest."""
@@ -234,7 +254,9 @@ class TestBacktestWorkflow:
 class TestAgentExecutionWorkflow:
     """Test agent execution workflow from data retrieval to execution."""
 
-    def test_dexscreener_data_retrieval(self) -> None:
+
+
+def test_dexscreener_data_retrieval(self) -> None:
         """Test retrieving data from DexScreener."""
         connector = DexscreenerDataConnector()
 
@@ -279,7 +301,9 @@ class TestAgentExecutionWorkflow:
             assert result[0]["liquidity"] == 50000.0
             assert result[0]["volume_24h"] == 150000.0
 
-    def test_social_media_scraper_workflow(self) -> None:
+
+
+def test_social_media_scraper_workflow(self) -> None:
         """Test social media scraping workflow."""
         scraper = SocialMediaScraper()
 
@@ -301,7 +325,9 @@ class TestAgentExecutionWorkflow:
             assert result["sentiment_score"] == 0.7
             mock_twitter.assert_called_once_with("TOK1", platforms=["twitter"])
 
-    def test_execution_workflow(self) -> None:
+
+
+def test_execution_workflow(self) -> None:
         """Test trade execution workflow."""
         # Mock the connector and executor
         mock_connector = Mock()
@@ -333,7 +359,9 @@ class TestAgentExecutionWorkflow:
 class TestIntegratedWorkflow:
     """Test complete integrated workflow from data to execution."""
 
-    def test_complete_trading_workflow(
+
+
+def test_complete_trading_workflow(
         self, sample_ohlcv_data, sample_strategy_config
     ) -> None:
         """Test complete trading workflow from data retrieval to execution."""
@@ -426,10 +454,14 @@ class TestIntegratedWorkflow:
 
 
 @pytest.mark.integration
+
+
 class TestSystemIntegration:
     """Test system-level integration between components."""
 
-    def test_error_handling_workflow(self, sample_ohlcv_data) -> None:
+
+
+def test_error_handling_workflow(self, sample_ohlcv_data) -> None:
         """Test error handling in integrated workflow."""
         # Test error propagation through the system
         with patch(

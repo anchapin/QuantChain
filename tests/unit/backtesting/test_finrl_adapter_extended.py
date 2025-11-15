@@ -1,5 +1,7 @@
 """Extended tests for FinRL adapter to increase coverage."""
 
+
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -13,7 +15,6 @@ try:
         FinRLDataError,
         get_connector,
     )
-
     FINRL_ADAPTER_AVAILABLE = True
 except ImportError as e:
     FINRL_ADAPTER_AVAILABLE = False
@@ -25,11 +26,15 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.mark.unit
+
+
 class TestFinRLAdapterExtended:
     """Extended test cases for FinRLAdapter class to improve coverage."""
 
     @pytest.fixture
-    def mock_data_connector(self):
+
+
+def mock_data_connector(self):
         """Mock data connector with realistic data."""
         connector = Mock()
 
@@ -52,13 +57,15 @@ class TestFinRLAdapterExtended:
             }
         )
         # Set timestamp as index for proper pandas operations
-        data = data.set_index('timestamp')
+        data = data.set_index("timestamp")
 
         connector.get_historical_data.return_value = data
         return connector
 
     @pytest.fixture
-    def adapter(self, mock_data_connector):
+
+
+def adapter(self, mock_data_connector):
         """Create test adapter with mocked connector."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector",
@@ -75,13 +82,11 @@ class TestFinRLAdapterExtended:
                 reward_strategy="simple_return",
             )
 
-    def test_setup_market_friction_with_config(self, mock_data_connector):
+
+
+def test_setup_market_friction_with_config(self, mock_data_connector):
         """Test market friction setup with custom configuration."""
-        config = {
-            "commission": 0.002,
-            "slippage": 0.001,
-            "latency_ms": 100
-        }
+        config = {"commission": 0.002, "slippage": 0.001, "latency_ms": 100}
 
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector",
@@ -97,7 +102,9 @@ class TestFinRLAdapterExtended:
             assert adapter.market_friction is not None
             assert adapter.market_friction.config.commission_model.rate == 0.002
 
-    def test_setup_market_friction_default_config(self, mock_data_connector):
+
+
+def test_setup_market_friction_default_config(self, mock_data_connector):
         """Test market friction setup with default configuration."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector",
@@ -112,12 +119,16 @@ class TestFinRLAdapterExtended:
 
             assert adapter.market_friction is not None
 
-    def test_setup_performance_metrics(self, adapter):
+
+
+def test_setup_performance_metrics(self, adapter):
         """Test performance metrics setup."""
         assert adapter.performance_metrics is not None
-        assert hasattr(adapter.performance_metrics, 'calculate_all_metrics')
+        assert hasattr(adapter.performance_metrics, "calculate_all_metrics")
 
-    def test_setup_spaces_custom_features(self, mock_data_connector):
+
+
+def test_setup_spaces_custom_features(self, mock_data_connector):
         """Test custom observation spaces setup."""
         custom_features = ["close", "volume", "balance", "position"]
 
@@ -136,7 +147,9 @@ class TestFinRLAdapterExtended:
             assert adapter.observation_space.shape == (4,)
             assert adapter.action_space.shape == (2,)
 
-    def test_add_technical_indicators(self, adapter):
+
+
+def test_add_technical_indicators(self, adapter):
         """Test technical indicators are added correctly."""
         # Check that technical indicators are present
         expected_indicators = [
@@ -152,7 +165,9 @@ class TestFinRLAdapterExtended:
         for indicator in expected_indicators:
             assert indicator in adapter.market_data.columns
 
-    def test_reset_environment(self, adapter):
+
+
+def test_reset_environment(self, adapter):
         """Test environment reset functionality."""
         # Simulate some changes first
         adapter.balance = 50000
@@ -170,7 +185,9 @@ class TestFinRLAdapterExtended:
         assert adapter.done == False
         assert len(observation) == len(adapter.observation_features)
 
-    def test_step_with_buy_action(self, adapter):
+
+
+def test_step_with_buy_action(self, adapter):
         """Test step with buy action."""
         adapter.reset()
 
@@ -188,7 +205,9 @@ class TestFinRLAdapterExtended:
         assert isinstance(done, bool)
         assert isinstance(info, dict)
 
-    def test_step_with_sell_action(self, adapter):
+
+
+def test_step_with_sell_action(self, adapter):
         """Test step with sell action."""
         adapter.reset()
 
@@ -205,7 +224,9 @@ class TestFinRLAdapterExtended:
         assert adapter.position < 10
         assert len(obs) == len(adapter.observation_features)
 
-    def test_step_with_hold_action(self, adapter):
+
+
+def test_step_with_hold_action(self, adapter):
         """Test step with hold action."""
         adapter.reset()
 
@@ -219,7 +240,9 @@ class TestFinRLAdapterExtended:
         assert isinstance(reward, (int, float))
         assert isinstance(done, bool)
 
-    def test_execute_action_buy_insufficient_balance(self, adapter):
+
+
+def test_execute_action_buy_insufficient_balance(self, adapter):
         """Test buy action with insufficient balance."""
         adapter.balance = 100  # Very low balance
         action_type = 1
@@ -230,7 +253,9 @@ class TestFinRLAdapterExtended:
         # Should not have bought anything
         assert adapter.position == 0
 
-    def test_execute_action_sell_no_position(self, adapter):
+
+
+def test_execute_action_sell_no_position(self, adapter):
         """Test sell action with no position."""
         adapter.position = 0
         action_type = 2
@@ -241,7 +266,9 @@ class TestFinRLAdapterExtended:
         # Should remain with no position
         assert adapter.position == 0
 
-    def test_execute_action_invalid_type(self, adapter):
+
+
+def test_execute_action_invalid_type(self, adapter):
         """Test execute action with invalid type."""
         action_type = 99  # Invalid action type
         amount = 0.5
@@ -249,7 +276,9 @@ class TestFinRLAdapterExtended:
         # Should handle gracefully
         adapter._execute_action(action_type, amount)
 
-    def test_get_observation(self, adapter):
+
+
+def test_get_observation(self, adapter):
         """Test observation generation."""
         obs = adapter._get_observation()
 
@@ -257,7 +286,9 @@ class TestFinRLAdapterExtended:
         assert len(obs) == len(adapter.observation_features)
         assert obs.dtype == np.float32
 
-    def test_get_observation_with_nan_values(self, adapter):
+
+
+def test_get_observation_with_nan_values(self, adapter):
         """Test observation generation with NaN values."""
         # Add NaN to market data
         adapter.market_data.iloc[0, 0] = np.nan
@@ -267,7 +298,9 @@ class TestFinRLAdapterExtended:
         # NaN values should be replaced with 0
         assert not np.any(np.isnan(obs))
 
-    def test_calculate_reward_simple_return(self, adapter):
+
+
+def test_calculate_reward_simple_return(self, adapter):
         """Test reward calculation with simple return strategy."""
         adapter.reward_strategy = "simple_return"
         adapter.last_total_value = 100000
@@ -279,7 +312,9 @@ class TestFinRLAdapterExtended:
         # Skip detailed reward calculation verification - just ensure it's a number
         assert isinstance(reward, (int, float))
 
-    def test_calculate_reward_log_return(self, mock_data_connector):
+
+
+def test_calculate_reward_log_return(self, mock_data_connector):
         """Test reward calculation with log return strategy."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector",
@@ -301,7 +336,9 @@ class TestFinRLAdapterExtended:
             expected = np.log(101000 / 100000)
             assert abs(reward - expected) < 0.01  # Loosen tolerance
 
-    def test_calculate_reward_sharpe_ratio(self, mock_data_connector):
+
+
+def test_calculate_reward_sharpe_ratio(self, mock_data_connector):
         """Test reward calculation with Sharpe ratio strategy."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector",
@@ -322,7 +359,9 @@ class TestFinRLAdapterExtended:
             reward = adapter._calculate_reward()
             assert isinstance(reward, float)
 
-    def test_calculate_reward_risk_adjusted(self, mock_data_connector):
+
+
+def test_calculate_reward_risk_adjusted(self, mock_data_connector):
         """Test reward calculation with risk-adjusted return strategy."""
         with patch(
             "quantchain.backtesting.finrl_adapter.get_connector",
@@ -343,7 +382,9 @@ class TestFinRLAdapterExtended:
             reward = adapter._calculate_reward()
             assert isinstance(reward, float)
 
-    def test_render_mode_human(self, adapter, capsys):
+
+
+def test_render_mode_human(self, adapter, capsys):
         """Test environment rendering in human mode."""
         adapter.render(mode="human")
 
@@ -353,7 +394,9 @@ class TestFinRLAdapterExtended:
         assert "Position:" in captured.out
         assert "Total Value:" in captured.out
 
-    def test_get_performance_metrics(self, adapter):
+
+
+def test_get_performance_metrics(self, adapter):
         """Test performance metrics calculation."""
         # Add some portfolio history
         adapter.portfolio_values = [100000, 101000, 102000, 103000]
@@ -368,7 +411,9 @@ class TestFinRLAdapterExtended:
         assert "final_position" in metrics
         assert "total_trades" in metrics
 
-    def test_step_done_condition(self, adapter):
+
+
+def test_step_done_condition(self, adapter):
         """Test step when environment is done."""
         adapter.reset()
         adapter.current_step = adapter.max_steps
@@ -378,12 +423,16 @@ class TestFinRLAdapterExtended:
 
         assert done is True
 
-    def test_close_method(self, adapter):
+
+
+def test_close_method(self, adapter):
         """Test environment close method."""
         # Should not raise
         adapter.close()
 
-    def test_seed_method(self, adapter):
+
+
+def test_seed_method(self, adapter):
         """Test seed method for reproducibility."""
         # Skip this test as seed method doesn't exist in FinRLAdapter
         pytest.skip("seed method not implemented in FinRLAdapter")

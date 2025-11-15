@@ -11,13 +11,13 @@ Requirements:
 - LLM provider API key for code analysis (OpenAI or Anthropic recommended)
 """
 
+import argparse
+import json
 import logging
 import os
 import sys
-import json
-import argparse
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 # Add project root to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
@@ -26,8 +26,8 @@ from quantchain.agents.smart_contract_auditor import (
     SmartContractAuditorAgent,
     SmartContractAuditorConfig,
 )
-from quantchain.core.config import get_config, QuantChainConfig
-from quantchain.core.llm_providers import OpenAIProvider, AnthropicProvider
+from quantchain.core.config import QuantChainConfig, get_config
+from quantchain.core.llm_providers import AnthropicProvider, OpenAIProvider
 
 
 def load_configuration() -> "QuantChainConfig":
@@ -42,7 +42,7 @@ def load_configuration() -> "QuantChainConfig":
     try:
         config = get_config()
     except Exception as e:
-        raise ValueError(f"Failed to load configuration: {e}")
+        raise ValueError(f"Failed to load configuration: {e}") from e
 
     # Validate at least one blockchain explorer API key
     explorer_keys = {
@@ -67,8 +67,9 @@ def load_configuration() -> "QuantChainConfig":
         )
 
     # Log available explorers
+    explorer_names = [network for _, network in available_explorers]
     logging.info(
-        f"Available blockchain explorers: {', '.join([network for _, network in available_explorers])}"
+        f"Available blockchain explorers: {', '.join(explorer_names)}"
     )
 
     # Validate LLM provider configuration
@@ -149,7 +150,7 @@ def initialize_agent(config: "QuantChainConfig") -> SmartContractAuditorAgent:
         return agent
 
     except Exception as e:
-        raise ValueError(f"Failed to initialize agent: {e}")
+        raise ValueError(f"Failed to initialize agent: {e}") from e
 
 
 def get_example_contracts() -> Dict[str, Dict[str, str]]:
@@ -203,16 +204,7 @@ def audit_contract(
         audit_report = agent.audit_contract(contract_address, blockchain)
 
         # Display contract information
-        print("\nCONTRACT INFORMATION")
-        print("-" * 20)
-        print(f"Address: {audit_report['contract_address']}")
-        print(f"Blockchain: {audit_report['chain']}")
-        if "contract_name" in audit_report:
-            print(f"Name: {audit_report['contract_name']}")
-        if "contract_type" in audit_report:
-            print(f"Type: {audit_report['contract_type']}")
-        if "compiler_version" in audit_report:
-            print(f"Compiler: {audit_report['compiler_version']}")
+        _display_contract_info(audit_report)
 
         # Display security assessment
         print("\nSECURITY ASSESSMENT")
@@ -274,7 +266,8 @@ def audit_contract(
 
         # Save report if requested
         if save_output:
-            filename = f"audit_{contract_address[:10]}_{audit_report['scan_date'].strftime('%Y%m%d_%H%M%S')}.json"
+            scan_date = audit_report['scan_date'].strftime('%Y%m%d_%H%M%S')
+            filename = f"audit_{contract_address[:10]}_{scan_date}.json"
             with open(filename, "w") as f:
                 json.dump(audit_report, f, indent=2, default=str)
             print(f"\nFull audit report saved to: {filename}")
@@ -289,6 +282,9 @@ def audit_contract(
 def main() -> None:
     """Main execution function for the Smart Contract Auditor example."""
     # Parse command line arguments
+
+    # Parse command line arguments
+
     parser = argparse.ArgumentParser(description="Smart Contract Auditor Example")
     parser.add_argument(
         "address",
@@ -365,6 +361,20 @@ def main() -> None:
         print("3. Verify the contract address is valid and source code is verified")
         print("4. Ensure the specified blockchain network is supported")
         sys.exit(1)
+
+
+def _display_contract_info(audit_report: Dict[str, Any]) -> None:
+    """Display contract information section of audit report."""
+    print("\nCONTRACT INFORMATION")
+    print("-" * 20)
+    print(f"Address: {audit_report['contract_address']}")
+    print(f"Blockchain: {audit_report['chain']}")
+    if "contract_name" in audit_report:
+        print(f"Name: {audit_report['contract_name']}")
+    if "contract_type" in audit_report:
+        print(f"Type: {audit_report['contract_type']}")
+    if "compiler_version" in audit_report:
+        print(f"Compiler: {audit_report['compiler_version']}")
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 from typing import Any, Optional
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pandas as pd
@@ -11,25 +11,29 @@ import pytest
 from quantchain.backtesting.engine import (
     BacktestConfig,
     BacktestEngine,
+    BacktestExecutionError,
     BacktestResult,
-    MetricsResult,
-    validate_ohlcv_data,
-    filter_data_by_date_range,
-    calculate_basic_statistics,
     ConfigurationError,
     DataValidationError,
-    BacktestExecutionError,
+    MetricsResult,
+    calculate_basic_statistics,
+    filter_data_by_date_range,
+    validate_ohlcv_data,
 )
 
 
 class MockBacktestEngine(BacktestEngine):
     """Mock implementation of BacktestEngine for testing."""
 
-    def __init__(self):
+
+
+def __init__(self):
         self._results = None
         self._equity_curve = None
 
-    def run(
+
+
+def run(
         self, strategy: Any, data: pd.DataFrame, config: BacktestConfig
     ) -> BacktestResult:
         """Mock run method that returns test results."""
@@ -68,20 +72,28 @@ class MockBacktestEngine(BacktestEngine):
 
         return self._results
 
-    def get_results(self) -> Optional[BacktestResult]:
+
+
+def get_results(self) -> Optional[BacktestResult]:
         """Get results of last backtest."""
         return self._results
 
-    def get_equity_curve(self) -> Optional[pd.Series]:
+
+
+def get_equity_curve(self) -> Optional[pd.Series]:
         """Get equity curve from last backtest."""
         return self._equity_curve
 
 
 @pytest.mark.unit
+
+
 class TestBacktestConfig:
     """Test suite for BacktestConfig."""
 
-    def test_default_initialization(self) -> None:
+
+
+def test_default_initialization(self) -> None:
         """Test BacktestConfig with default values."""
         config = BacktestConfig()
 
@@ -96,7 +108,9 @@ class TestBacktestConfig:
         assert config.data_frequency == "1d"
         assert config.additional_params == {}
 
-    def test_custom_initialization(self) -> None:
+
+
+def test_custom_initialization(self) -> None:
         """Test BacktestConfig with custom values."""
         start = datetime(2024, 1, 1, tzinfo=timezone.utc)
         end = datetime(2024, 12, 31, tzinfo=timezone.utc)
@@ -126,7 +140,9 @@ class TestBacktestConfig:
         assert config.data_frequency == "1h"
         assert config.additional_params == params
 
-    def test_post_init_with_none_additional_params(self) -> None:
+
+
+def test_post_init_with_none_additional_params(self) -> None:
         """Test BacktestConfig post_init with None additional_params."""
         config = BacktestConfig()
         config.additional_params = None
@@ -135,10 +151,14 @@ class TestBacktestConfig:
 
 
 @pytest.mark.unit
+
+
 class TestMetricsResult:
     """Test suite for MetricsResult dataclass."""
 
-    def test_metrics_result_creation(self) -> None:
+
+
+def test_metrics_result_creation(self) -> None:
         """Test creating a MetricsResult."""
         metrics = MetricsResult(
             total_return=0.10,
@@ -175,7 +195,9 @@ class TestMetricsResult:
         assert metrics.worst_trade == -250.0
         assert metrics.additional_metrics == {}
 
-    def test_metrics_result_with_minimum_values(self) -> None:
+
+
+def test_metrics_result_with_minimum_values(self) -> None:
         """Test creating a MetricsResult with minimum values."""
         metrics = MetricsResult()
 
@@ -197,10 +219,14 @@ class TestMetricsResult:
 
 
 @pytest.mark.unit
+
+
 class TestBacktestResult:
     """Test suite for BacktestResult dataclass."""
 
-    def test_backtest_result_creation(self) -> None:
+
+
+def test_backtest_result_creation(self) -> None:
         """Test creating a BacktestResult."""
         start = datetime(2024, 1, 1, tzinfo=timezone.utc)
         end = datetime(2024, 6, 30, tzinfo=timezone.utc)
@@ -225,7 +251,9 @@ class TestBacktestResult:
         assert result.execution_time == 5.0
         assert result.config == config
 
-    def test_backtest_result_validation(self) -> None:
+
+
+def test_backtest_result_validation(self) -> None:
         """Test BacktestResult validation."""
         config = BacktestConfig()
         equity_curve = pd.Series([100000], name="equity")
@@ -267,15 +295,21 @@ class TestBacktestResult:
 
 
 @pytest.mark.unit
+
+
 class TestBacktestEngine:
     """Test suite for BacktestEngine abstract class."""
 
-    def test_abstract_class(self) -> None:
+
+
+def test_abstract_class(self) -> None:
         """Test that BacktestEngine cannot be instantiated directly."""
         with pytest.raises(TypeError):
             BacktestEngine()  # type: ignore[abstract]
 
-    def test_mock_implementation(self) -> None:
+
+
+def test_mock_implementation(self) -> None:
         """Test that mock implementation works correctly."""
         engine = MockBacktestEngine()
 
@@ -318,10 +352,14 @@ class TestBacktestEngine:
 
 
 @pytest.mark.unit
+
+
 class TestValidationFunctions:
     """Test suite for validation functions."""
 
-    def test_validate_ohlcv_data_valid(self) -> None:
+
+
+def test_validate_ohlcv_data_valid(self) -> None:
         """Test OHLCV validation with valid data."""
         data = pd.DataFrame(
             {
@@ -336,12 +374,16 @@ class TestValidationFunctions:
         # Should not raise
         validate_ohlcv_data(data)
 
-    def test_validate_ohlcv_data_empty(self) -> None:
+
+
+def test_validate_ohlcv_data_empty(self) -> None:
         """Test OHLCV validation with empty data."""
         with pytest.raises(DataValidationError, match="Data cannot be empty"):
             validate_ohlcv_data(pd.DataFrame())
 
-    def test_validate_ohlcv_data_missing_columns(self) -> None:
+
+
+def test_validate_ohlcv_data_missing_columns(self) -> None:
         """Test OHLCV validation with missing columns."""
         data = pd.DataFrame(
             {
@@ -354,7 +396,9 @@ class TestValidationFunctions:
         with pytest.raises(DataValidationError, match="Missing required columns"):
             validate_ohlcv_data(data)
 
-    def test_validate_ohlcv_data_invalid_types(self) -> None:
+
+
+def test_validate_ohlcv_data_invalid_types(self) -> None:
         """Test OHLCV validation with invalid data types."""
         # String columns instead of numeric
         data = pd.DataFrame(
@@ -370,7 +414,9 @@ class TestValidationFunctions:
         with pytest.raises(DataValidationError, match="OHLC columns must be numeric"):
             validate_ohlcv_data(data)
 
-    def test_validate_ohlcv_data_logical_errors(self) -> None:
+
+
+def test_validate_ohlcv_data_logical_errors(self) -> None:
         """Test OHLCV validation with logical errors."""
         # High lower than low
         data = pd.DataFrame(
@@ -402,7 +448,9 @@ class TestValidationFunctions:
         with pytest.raises(DataValidationError, match="Volume cannot be negative"):
             validate_ohlcv_data(data)
 
-    def test_filter_data_by_date_range(self) -> None:
+
+
+def test_filter_data_by_date_range(self) -> None:
         """Test filtering data by date range."""
         dates = pd.date_range("2024-01-01", periods=10, freq="D")
         data = pd.DataFrame(
@@ -441,7 +489,9 @@ class TestValidationFunctions:
         assert len(filtered) == 10
         assert filtered.equals(data)
 
-    def test_calculate_basic_statistics(self) -> None:
+
+
+def test_calculate_basic_statistics(self) -> None:
         """Test basic statistics calculation."""
         equity_curve = pd.Series([100000, 105000, 110000], name="equity")
         initial_cash = 100000.0
@@ -455,10 +505,14 @@ class TestValidationFunctions:
 
 
 @pytest.mark.unit
+
+
 class TestExceptionClasses:
     """Test suite for custom exception classes."""
 
-    def test_configuration_error(self) -> None:
+
+
+def test_configuration_error(self) -> None:
         """Test ConfigurationError."""
         with pytest.raises(ConfigurationError) as exc_info:
             raise ConfigurationError("Invalid config")
@@ -466,7 +520,9 @@ class TestExceptionClasses:
         assert "Invalid config" in str(exc_info.value)
         assert isinstance(exc_info.value, Exception)
 
-    def test_data_validation_error(self) -> None:
+
+
+def test_data_validation_error(self) -> None:
         """Test DataValidationError."""
         with pytest.raises(DataValidationError) as exc_info:
             raise DataValidationError("Invalid data")
@@ -474,7 +530,9 @@ class TestExceptionClasses:
         assert "Invalid data" in str(exc_info.value)
         assert isinstance(exc_info.value, Exception)
 
-    def test_backtest_execution_error(self) -> None:
+
+
+def test_backtest_execution_error(self) -> None:
         """Test BacktestExecutionError."""
         with pytest.raises(BacktestExecutionError) as exc_info:
             raise BacktestExecutionError("Execution failed")

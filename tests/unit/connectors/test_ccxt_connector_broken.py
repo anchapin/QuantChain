@@ -1,12 +1,13 @@
 """Tests for CCXT data connector."""
 
+# Import all needed modules at top to avoid E402 errors
+
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
 
-# Import all needed modules at top to avoid E402 errors
 from quantchain.connectors.ccxt_connector import CCXT_AVAILABLE, CCXTDataConnector
 from quantchain.core.exceptions import (
     AuthenticationError,
@@ -20,6 +21,8 @@ pytestmark = pytest.mark.skipif(not CCXT_AVAILABLE, reason="CCXT library not ins
 
 
 # Custom exception classes for testing
+
+
 class CCXTAuthenticationError(Exception):
     pass
 
@@ -41,11 +44,15 @@ class CCXTRateLimitExceeded(Exception):
 
 
 @pytest.mark.unit
+
+
 class TestCCXTDataConnector:
     """Test suite for CCXTDataConnector."""
 
     @pytest.fixture
-    def mock_exchange(self):
+
+
+def mock_exchange(self):
         """Create a mock ccxt exchange instance."""
         exchange = MagicMock()
         exchange.markets = {
@@ -93,7 +100,9 @@ class TestCCXTDataConnector:
         return exchange
 
     @pytest.fixture
-    def connector(self, mock_exchange):
+
+
+def connector(self, mock_exchange):
         """Create a test connector instance with mocked exchange."""
         # Create fresh mocks for each test
         binance_mock = MagicMock(return_value=mock_exchange)
@@ -122,7 +131,9 @@ class TestCCXTDataConnector:
                 return connector
 
     @pytest.fixture
-    def sample_ohlcv_data(self):
+
+
+def sample_ohlcv_data(self):
         """Sample OHLCV data for testing."""
         return [
             [
@@ -152,7 +163,9 @@ class TestCCXTDataConnector:
         ]
 
     @pytest.fixture
-    def sample_ticker_data(self):
+
+
+def sample_ticker_data(self):
         """Sample ticker data for testing."""
         return {
             "symbol": "BTC/USDT",
@@ -173,7 +186,9 @@ class TestCCXTDataConnector:
             "info": {"price": 16550.0},
         }
 
-    def test_initialization_success(self, connector, mock_exchange):
+
+
+def test_initialization_success(self, connector, mock_exchange):
         """Test successful connector initialization."""
         assert connector.exchange_name == "binance"
         assert connector.sandbox is False
@@ -181,7 +196,9 @@ class TestCCXTDataConnector:
         assert connector._cache_ttl == 3600  # default
         assert connector.timeout == 30  # default
 
-    def test_initialization_custom_exchange(self, connector):
+
+
+def test_initialization_custom_exchange(self, connector):
         """Test initialization with custom exchange."""
         # Create a new connector with kraken exchange
         with patch("ccxt.kraken") as mock_kraken:
@@ -189,7 +206,9 @@ class TestCCXTDataConnector:
             kraken_connector = CCXTDataConnector(exchange="kraken")
             assert kraken_connector.exchange_name == "kraken"
 
-    def test_initialization_with_credentials(self, connector):
+
+
+def test_initialization_with_credentials(self, connector):
         """Test initialization with API credentials."""
         with patch("ccxt.binance") as mock_binance:
             mock_binance.return_value = MagicMock()
@@ -200,7 +219,9 @@ class TestCCXTDataConnector:
             assert auth_connector._api_key == "test_key"
             assert auth_connector._api_secret == "test_secret"
 
-    def test_initialization_with_kwargs(self, connector):
+
+
+def test_initialization_with_kwargs(self, connector):
         """Test initialization with additional kwargs."""
         with patch("ccxt.binance") as mock_binance:
             mock_binance.return_value = MagicMock()
@@ -216,7 +237,9 @@ class TestCCXTDataConnector:
             assert custom_connector._cache_ttl == 1800
             assert custom_connector.timeout == 60
 
-    def test_initialization_auth_failure(self, connector):
+
+
+def test_initialization_auth_failure(self, connector):
         """Test initialization failure due to authentication error."""
         # Skip this test for now - module mocking makes it complex
         # The get_quote method test covers the same exception handling logic
@@ -225,7 +248,9 @@ class TestCCXTDataConnector:
             "covered by test_authentication_error_handling"
         )
 
-    def test_normalize_symbol(self, connector):
+
+
+def test_normalize_symbol(self, connector):
         """Test symbol normalization."""
         # Already normalized
         assert connector._normalize_symbol("BTC/USDT") == "BTC/USDT"
@@ -234,7 +259,9 @@ class TestCCXTDataConnector:
         assert connector._normalize_symbol("BTCUSDT") == "BTC/USDT"
         assert connector._normalize_symbol("ETH/USD") == "ETH/USD"
 
-    def test_convert_timeframe(self, connector):
+
+
+def test_convert_timeframe(self, connector):
         """Test timeframe conversion."""
         assert connector._convert_timeframe("1Min") == "1m"
         assert connector._convert_timeframe("5Min") == "5m"
@@ -244,7 +271,9 @@ class TestCCXTDataConnector:
         assert connector._convert_timeframe("1D") == "1d"
         assert connector._convert_timeframe("1W") == "1w"
 
-    def test_get_historical_data_success(self, connector, sample_ohlcv_data):
+
+
+def test_get_historical_data_success(self, connector, sample_ohlcv_data):
         """Test successful historical data retrieval."""
         # Mock fetch_ohlcv method
         connector.exchange.fetch_ohlcv = MagicMock(return_value=sample_ohlcv_data)
@@ -272,7 +301,9 @@ class TestCCXTDataConnector:
         assert df.iloc[0]["close"] == 16550.0
         assert df.iloc[0]["volume"] == 100.5
 
-    def test_get_historical_data_with_limit(self, connector, sample_ohlcv_data):
+
+
+def test_get_historical_data_with_limit(self, connector, sample_ohlcv_data):
         """Test historical data retrieval with limit."""
         connector.exchange.fetch_ohlcv = MagicMock(return_value=sample_ohlcv_data)
 
@@ -283,7 +314,9 @@ class TestCCXTDataConnector:
             "BTC/USDT", "1h", since=None, limit=100
         )
 
-    def test_get_historical_data_with_date_range(self, connector, sample_ohlcv_data):
+
+
+def test_get_historical_data_with_date_range(self, connector, sample_ohlcv_data):
         """Test historical data retrieval with date range."""
         connector.exchange.fetch_ohlcv = MagicMock(return_value=sample_ohlcv_data)
 
@@ -299,11 +332,15 @@ class TestCCXTDataConnector:
         # since should be start_date in milliseconds
         assert isinstance(call_args[1]["since"], int)
 
-    def test_get_historical_data_symbol_not_found(self, connector):
+
+
+def test_get_historical_data_symbol_not_found(self, connector):
         """Test historical data with symbol not found."""
 
         # Create a function that raises BadSymbol when called
-        def raise_bad_symbol(*args, **kwargs):
+
+
+def raise_bad_symbol(*args, **kwargs):
             raise CCXTBadSymbol("Symbol not found")
 
         connector.exchange.fetch_ohlcv.side_effect = raise_bad_symbol
@@ -312,11 +349,15 @@ class TestCCXTDataConnector:
         with pytest.raises(SymbolNotFoundError):
             connector.get_historical_data("INVALID/PAIR", "1H", start_date)
 
-    def test_get_historical_data_network_error(self, connector):
+
+
+def test_get_historical_data_network_error(self, connector):
         """Test historical data with network error."""
 
         # Create a function that raises NetworkError when called
-        def raise_network_error(*args, **kwargs):
+
+
+def raise_network_error(*args, **kwargs):
             raise CCXTNetworkError("Network error")
 
         connector.exchange.fetch_ohlcv.side_effect = raise_network_error
@@ -325,11 +366,15 @@ class TestCCXTDataConnector:
         with pytest.raises(DataSourceError):
             connector.get_historical_data("BTC/USDT", "1H", start_date)
 
-    def test_get_historical_data_rate_limit_error(self, connector):
+
+
+def test_get_historical_data_rate_limit_error(self, connector):
         """Test historical data with rate limit error."""
 
         # Create a function that raises RateLimitExceeded when called
-        def raise_rate_limit(*args, **kwargs):
+
+
+def raise_rate_limit(*args, **kwargs):
             raise CCXTRateLimitExceeded("Rate limit exceeded")
 
         connector.exchange.fetch_ohlcv.side_effect = raise_rate_limit
@@ -338,7 +383,9 @@ class TestCCXTDataConnector:
         with pytest.raises(RateLimitError):
             connector.get_historical_data("BTC/USDT", "1H", start_date)
 
-    def test_get_historical_data_empty_response(self, connector):
+
+
+def test_get_historical_data_empty_response(self, connector):
         """Test handling of empty OHLCV response."""
         connector.exchange.fetch_ohlcv.return_value = []
 
@@ -356,7 +403,9 @@ class TestCCXTDataConnector:
             "volume",
         ]
 
-    def test_get_real_time_data_success(self, connector, sample_ticker_data):
+
+
+def test_get_real_time_data_success(self, connector, sample_ticker_data):
         """Test successful real-time data retrieval."""
         connector.exchange.fetch_ticker.return_value = sample_ticker_data
 
@@ -368,7 +417,9 @@ class TestCCXTDataConnector:
         assert data["bid"] == 16548.5
         assert data["ask"] == 16551.5
 
-    def test_get_real_time_data_missing_bid_ask(self, connector):
+
+
+def test_get_real_time_data_missing_bid_ask(self, connector):
         """Test real-time data when bid/ask are missing."""
         ticker = {
             "symbol": "BTC/USDT",
@@ -385,11 +436,15 @@ class TestCCXTDataConnector:
         assert data["ask"] == 0.0
         assert data["price"] == 16550.0
 
-    def test_get_real_time_data_symbol_not_found(self, connector):
+
+
+def test_get_real_time_data_symbol_not_found(self, connector):
         """Test real-time data with symbol not found."""
 
         # Create a function that raises BadSymbol when called
-        def raise_bad_symbol(*args, **kwargs):
+
+
+def raise_bad_symbol(*args, **kwargs):
             raise CCXTBadSymbol("Symbol not found")
 
         connector.exchange.fetch_ticker.side_effect = raise_bad_symbol
@@ -397,7 +452,9 @@ class TestCCXTDataConnector:
         with pytest.raises(SymbolNotFoundError):
             connector.get_real_time_data("INVALID/PAIR")
 
-    def test_get_quote_success(self, connector, sample_ticker_data):
+
+
+def test_get_quote_success(self, connector, sample_ticker_data):
         """Test successful quote retrieval."""
         connector.exchange.fetch_ticker.return_value = sample_ticker_data
 
@@ -413,7 +470,9 @@ class TestCCXTDataConnector:
         assert quote["last_price"] == 16550.0
         assert quote["last_size"] == 100.5
 
-    def test_get_quote_calculates_sizes(self, connector):
+
+
+def test_get_quote_calculates_sizes(self, connector):
         """Test quote calculation when sizes missing."""
         ticker = {
             "symbol": "BTC/USDT",
@@ -432,11 +491,15 @@ class TestCCXTDataConnector:
         assert quote["ask_size"] > 0
         assert quote["last_size"] == 100.5
 
-    def test_get_quote_symbol_not_found(self, connector):
+
+
+def test_get_quote_symbol_not_found(self, connector):
         """Test quote with symbol not found."""
 
         # Create a function that raises BadSymbol when called
-        def raise_bad_symbol(*args, **kwargs):
+
+
+def raise_bad_symbol(*args, **kwargs):
             raise CCXTBadSymbol("Symbol not found")
 
         connector.exchange.fetch_ticker.side_effect = raise_bad_symbol
@@ -444,7 +507,9 @@ class TestCCXTDataConnector:
         with pytest.raises(SymbolNotFoundError):
             connector.get_quote("INVALID/PAIR")
 
-    def test_get_available_symbols_cache_hit(self, connector):
+
+
+def test_get_available_symbols_cache_hit(self, connector):
         """Test getting available symbols from cache."""
         # Ensure cache is populated
         connector._cache_timestamp = datetime.now()
@@ -456,7 +521,9 @@ class TestCCXTDataConnector:
         assert "ETH/USDT" in symbols
         assert connector.exchange.load_markets.call_count == 0
 
-    def test_get_available_symbols_cache_refresh(self, connector):
+
+
+def test_get_available_symbols_cache_refresh(self, connector):
         """Test getting available symbols with cache refresh."""
         # Make cache expired
         connector._cache_timestamp = datetime.now() - timedelta(hours=2)
@@ -470,11 +537,15 @@ class TestCCXTDataConnector:
         assert "BTC/USDT" in symbols
         assert "ETH/USDT" in symbols
 
-    def test_rate_limit_error_handling(self, connector):
+
+
+def test_rate_limit_error_handling(self, connector):
         """Test handling of rate limit errors."""
 
         # Create a function that raises RateLimitExceeded when called
-        def raise_rate_limit(*args, **kwargs):
+
+
+def raise_rate_limit(*args, **kwargs):
             raise CCXTRateLimitExceeded("Rate limit exceeded")
 
         connector.exchange.fetch_ticker.side_effect = raise_rate_limit
@@ -482,11 +553,15 @@ class TestCCXTDataConnector:
         with pytest.raises(RateLimitError):
             connector.get_quote("BTC/USDT")
 
-    def test_authentication_error_handling(self, connector):
+
+
+def test_authentication_error_handling(self, connector):
         """Test handling of authentication errors."""
 
         # Create a function that raises AuthenticationError when called
-        def raise_auth_error(*args, **kwargs):
+
+
+def raise_auth_error(*args, **kwargs):
             raise CCXTAuthenticationError("Invalid API key")
 
         connector.exchange.fetch_ticker.side_effect = raise_auth_error
@@ -494,11 +569,15 @@ class TestCCXTDataConnector:
         with pytest.raises(AuthenticationError):
             connector.get_quote("BTC/USDT")
 
-    def test_exchange_not_available_error(self, connector):
+
+
+def test_exchange_not_available_error(self, connector):
         """Test handling of exchange not available errors."""
 
         # Create a function that raises ExchangeNotAvailable when called
-        def raise_exchange_error(*args, **kwargs):
+
+
+def raise_exchange_error(*args, **kwargs):
             raise CCXTExchangeNotAvailable("Exchange down")
 
         connector.exchange.fetch_ticker.side_effect = raise_exchange_error
@@ -506,7 +585,9 @@ class TestCCXTDataConnector:
         with pytest.raises(DataSourceError):
             connector.get_quote("BTC/USDT")
 
-    def test_sandbox_mode_configuration(self, connector, mock_exchange):
+
+
+def test_sandbox_mode_configuration(self, connector, mock_exchange):
         """Test sandbox mode configuration."""
         # Test that sandbox property is set correctly
         connector.sandbox = True
@@ -518,7 +599,9 @@ class TestCCXTDataConnector:
             sandbox_connector = CCXTDataConnector(exchange="binance", sandbox=True)
             assert sandbox_connector.sandbox is True
 
-    def test_custom_timeout_configuration(self, connector):
+
+
+def test_custom_timeout_configuration(self, connector):
         """Test custom timeout configuration."""
         with patch("ccxt.binance") as mock_binance:
             mock_exchange_with_timeout = MagicMock()
@@ -528,7 +611,9 @@ class TestCCXTDataConnector:
             # Check if timeout was stored correctly
             assert custom_connector.timeout == 60
 
-    def test_rate_limit_configuration(self, connector):
+
+
+def test_rate_limit_configuration(self, connector):
         """Test rate limit configuration."""
         with patch("ccxt.binance") as mock_binance:
             mock_exchange_with_config = MagicMock()
@@ -540,13 +625,17 @@ class TestCCXTDataConnector:
             # Check if rate limit was stored correctly
             assert custom_connector.enable_rate_limit is False
 
-    def test_refresh_market_cache_error(self, connector):
+
+
+def test_refresh_market_cache_error(self, connector):
         """Test handling of market cache refresh errors."""
         # Make cache expired
         connector._cache_timestamp = datetime.now() - timedelta(hours=2)
 
         # Create a function that raises exception when called
-        def raise_error(*args, **kwargs):
+
+
+def raise_error(*args, **kwargs):
             raise CCXTNetworkError("Network error")
 
         connector.exchange.load_markets.side_effect = raise_error

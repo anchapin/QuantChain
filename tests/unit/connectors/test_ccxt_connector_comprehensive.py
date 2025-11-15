@@ -1,15 +1,19 @@
 """Comprehensive tests for CCXT data connector."""
 
-from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, patch, Mock
 
-import pandas as pd
-import pytest
 
 # Handle optional CCXT import
+
+from datetime import datetime, timedelta, timezone
+from unittest.mock import MagicMock, patch, Mock
+import pandas as pd
+import pytest
+from quantchain.connectors.ccxt_connector import CCXTDataConnector, CCXT_AVAILABLE
+from quantchain.core.exceptions import (
+import ccxt
+import ccxt
+
 try:
-    from quantchain.connectors.ccxt_connector import CCXTDataConnector, CCXT_AVAILABLE
-    from quantchain.core.exceptions import (
         AuthenticationError,
         DataSourceError,
         RateLimitError,
@@ -30,15 +34,17 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.mark.unit
+
+
 class TestCCXTDataConnector:
     """Test suite for CCXTDataConnector."""
 
-    def test_initialization_with_credentials(self):
+
+
+def test_initialization_with_credentials(self):
         """Test initialization with API credentials."""
         connector = CCXTDataConnector(
-            api_key="test_key",
-            api_secret="test_secret",
-            exchange="binance"
+            api_key="test_key", api_secret="test_secret", exchange="binance"
         )
         # api_key is passed to parent class and stored in exchange
         assert connector.exchange.apiKey == "test_key"
@@ -48,7 +54,9 @@ class TestCCXTDataConnector:
         assert connector.enable_rate_limit is True
         assert connector.timeout == 30
 
-    def test_initialization_without_credentials(self):
+
+
+def test_initialization_without_credentials(self):
         """Test initialization without API credentials."""
         connector = CCXTDataConnector(exchange="binance")
         # api_key is passed to parent class and stored in exchange
@@ -58,14 +66,16 @@ class TestCCXTDataConnector:
         assert connector.exchange_name == "binance"
         assert connector.sandbox is False
 
-    def test_initialization_with_config(self):
+
+
+def test_initialization_with_config(self):
         """Test initialization with configuration."""
         connector = CCXTDataConnector(
             exchange="binance",
             sandbox=True,
             enableRateLimit=False,
             timeout=60,
-            cache_ttl=7200
+            cache_ttl=7200,
         )
         assert connector.sandbox is True
         assert connector.enable_rate_limit is False
@@ -73,14 +83,18 @@ class TestCCXTDataConnector:
         assert connector._cache_ttl == 7200
 
     @patch("quantchain.connectors.ccxt_connector.ccxt")
-    def test_get_historical_data(self, mock_ccxt):
+
+
+def test_get_historical_data(self, mock_ccxt):
         """Test fetching historical OHLCV data."""
         # Set up mock exchange
         mock_exchange = MagicMock()
-        mock_exchange.fetch_ohlcv = MagicMock(return_value=[
-            [1640995200000, 47000.0, 47500.0, 46800.0, 47200.0, 1000.0],
-            [1640995260000, 47200.0, 48000.0, 47000.0, 47800.0, 1200.0],
-        ])
+        mock_exchange.fetch_ohlcv = MagicMock(
+            return_value=[
+                [1640995200000, 47000.0, 47500.0, 46800.0, 47200.0, 1000.0],
+                [1640995260000, 47200.0, 48000.0, 47000.0, 47800.0, 1200.0],
+            ]
+        )
         mock_ccxt.binance = MagicMock(return_value=mock_exchange)
 
         # Initialize connector with mocked exchange
@@ -92,30 +106,38 @@ class TestCCXTDataConnector:
         start_date = end_date - timedelta(days=7)
 
         data = connector.get_historical_data(
-            symbol="BTC/USDT",
-            start_date=start_date,
-            end_date=end_date,
-            timeframe="1D"
+            symbol="BTC/USDT", start_date=start_date, end_date=end_date, timeframe="1D"
         )
 
         # Verify the data structure - includes timestamp
         assert isinstance(data, pd.DataFrame)
-        assert list(data.columns) == ["timestamp", "open", "high", "low", "close", "volume"]
+        assert list(data.columns) == [
+            "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+        ]
         assert len(data) == 2
 
     @patch("quantchain.connectors.ccxt_connector.ccxt")
-    def test_get_real_time_data(self, mock_ccxt):
+
+
+def test_get_real_time_data(self, mock_ccxt):
         """Test fetching real-time data."""
         # Set up mock exchange
         mock_exchange = MagicMock()
-        mock_exchange.fetch_ticker = MagicMock(return_value={
-            "symbol": "BTC/USDT",
-            "last": 50000.0,
-            "bid": 49999.0,
-            "ask": 50001.0,
-            "baseVolume": 1000000.0,
-            "quoteVolume": 50000000000.0,
-        })
+        mock_exchange.fetch_ticker = MagicMock(
+            return_value={
+                "symbol": "BTC/USDT",
+                "last": 50000.0,
+                "bid": 49999.0,
+                "ask": 50001.0,
+                "baseVolume": 1000000.0,
+                "quoteVolume": 50000000000.0,
+            }
+        )
         mock_ccxt.binance = MagicMock(return_value=mock_exchange)
 
         # Initialize connector with mocked exchange
@@ -135,16 +157,20 @@ class TestCCXTDataConnector:
         assert data["price"] == 50000.0
 
     @patch("quantchain.connectors.ccxt_connector.ccxt")
-    def test_get_quote(self, mock_ccxt):
+
+
+def test_get_quote(self, mock_ccxt):
         """Test fetching quote data."""
         # Set up mock exchange
         mock_exchange = MagicMock()
-        mock_exchange.fetch_order_book = MagicMock(return_value={
-            "symbol": "BTC/USDT",
-            "bids": [[49999.0, 1.5], [49998.0, 2.0]],
-            "asks": [[50001.0, 1.2], [50002.0, 1.8]],
-            "timestamp": 1640995200000,
-        })
+        mock_exchange.fetch_order_book = MagicMock(
+            return_value={
+                "symbol": "BTC/USDT",
+                "bids": [[49999.0, 1.5], [49998.0, 2.0]],
+                "asks": [[50001.0, 1.2], [50002.0, 1.8]],
+                "timestamp": 1640995200000,
+            }
+        )
         mock_ccxt.binance = MagicMock(return_value=mock_exchange)
 
         # Initialize connector with mocked exchange
@@ -161,13 +187,27 @@ class TestCCXTDataConnector:
         assert "timestamp" in quote
 
     @patch("quantchain.connectors.ccxt_connector.ccxt")
-    def test_get_available_symbols(self, mock_ccxt):
+
+
+def test_get_available_symbols(self, mock_ccxt):
         """Test fetching available symbols."""
         # Set up mock exchange
         mock_exchange = MagicMock()
         mock_exchange.markets = {
-            "BTC/USDT": {"symbol": "BTC/USDT", "base": "BTC", "quote": "USDT", "active": True, "type": "spot"},
-            "ETH/USDT": {"symbol": "ETH/USDT", "base": "ETH", "quote": "USDT", "active": True, "type": "spot"},
+            "BTC/USDT": {
+                "symbol": "BTC/USDT",
+                "base": "BTC",
+                "quote": "USDT",
+                "active": True,
+                "type": "spot",
+            },
+            "ETH/USDT": {
+                "symbol": "ETH/USDT",
+                "base": "ETH",
+                "quote": "USDT",
+                "active": True,
+                "type": "spot",
+            },
         }
         mock_exchange.load_markets = MagicMock()
         mock_ccxt.binance = MagicMock(return_value=mock_exchange)
@@ -184,7 +224,9 @@ class TestCCXTDataConnector:
         # With properly mocked markets, we should get symbols
         assert len(symbols) >= 0  # Allow empty list for mocked test
 
-    def test_timeframe_mapping(self):
+
+
+def test_timeframe_mapping(self):
         """Test timeframe mapping from QuantChain to CCXT format."""
         connector = CCXTDataConnector(exchange="binance")
         assert connector.TIMEFRAME_MAPPING["1Min"] == "1m"
@@ -195,44 +237,54 @@ class TestCCXTDataConnector:
         assert connector.TIMEFRAME_MAPPING["1D"] == "1d"
         assert connector.TIMEFRAME_MAPPING["1W"] == "1w"
 
-    def test_authentication_error(self):
+
+
+def test_authentication_error(self):
         """Test handling of authentication errors."""
         # This test simplified due to complexities of mocking CCXT
         # In real implementation, authentication errors are caught in __init__
         connector = CCXTDataConnector(exchange="binance")
 
         # Just verify the method exists and connector was created
-        assert hasattr(connector, 'get_real_time_data')
+        assert hasattr(connector, "get_real_time_data")
         assert connector.exchange_name == "binance"
 
-    def test_symbol_not_found_error(self):
+
+
+def test_symbol_not_found_error(self):
         """Test handling of symbol not found errors."""
         # This test simplified due to complexities of mocking CCXT
         connector = CCXTDataConnector(exchange="binance")
 
         # Just verify the method exists
-        assert hasattr(connector, 'get_real_time_data')
-        assert hasattr(connector, '_normalize_symbol')
+        assert hasattr(connector, "get_real_time_data")
+        assert hasattr(connector, "_normalize_symbol")
 
-    def test_network_error(self):
+
+
+def test_network_error(self):
         """Test handling of network errors."""
         # This test simplified due to complexities of mocking CCXT
         connector = CCXTDataConnector(exchange="binance")
 
         # Just verify the method exists
-        assert hasattr(connector, 'get_real_time_data')
-        assert hasattr(connector, 'get_available_symbols')
+        assert hasattr(connector, "get_real_time_data")
+        assert hasattr(connector, "get_available_symbols")
 
-    def test_rate_limit_error(self):
+
+
+def test_rate_limit_error(self):
         """Test handling of rate limit errors."""
         # This test simplified due to complexities of mocking CCXT
         connector = CCXTDataConnector(exchange="binance")
 
         # Just verify the method exists
-        assert hasattr(connector, 'get_real_time_data')
-        assert hasattr(connector, 'get_historical_data')
+        assert hasattr(connector, "get_real_time_data")
+        assert hasattr(connector, "get_historical_data")
 
-    def test_exchange_not_available(self):
+
+
+def test_exchange_not_available(self):
         """Test handling of exchange not available errors."""
         # This test simplified due to complexities of mocking CCXT
         # Exchange not available errors would occur during initialization
@@ -244,7 +296,9 @@ class TestCCXTDataConnector:
             # This is expected if exchange is not available
             pass
 
-    def test_unsupported_timeframe(self):
+
+
+def test_unsupported_timeframe(self):
         """Test handling of unsupported timeframes."""
         connector = CCXTDataConnector(exchange="binance")
 
@@ -254,11 +308,13 @@ class TestCCXTDataConnector:
                 symbol="BTC/USDT",
                 start_date=datetime.now(timezone.utc) - timedelta(days=1),
                 end_date=datetime.now(timezone.utc),
-                timeframe="1Y"  # Unsupported timeframe
+                timeframe="1Y",  # Unsupported timeframe
             )
 
     @patch("quantchain.connectors.ccxt_connector.ccxt")
-    def test_empty_historical_data(self, mock_ccxt):
+
+
+def test_empty_historical_data(self, mock_ccxt):
         """Test handling of empty historical data."""
         # Set up mock to return empty data
         mock_exchange = MagicMock()
@@ -274,14 +330,16 @@ class TestCCXTDataConnector:
             symbol="BTC/USDT",
             start_date=datetime.now(timezone.utc) - timedelta(days=1),
             end_date=datetime.now(timezone.utc),
-            timeframe="1D"
+            timeframe="1D",
         )
 
         # Verify empty DataFrame is returned
         assert isinstance(data, pd.DataFrame)
         assert len(data) == 0
 
-    def test_symbol_format_validation(self):
+
+
+def test_symbol_format_validation(self):
         """Test symbol format validation."""
         connector = CCXTDataConnector(exchange="binance")
 
@@ -293,7 +351,9 @@ class TestCCXTDataConnector:
         # This test mainly ensures our code doesn't interfere
         assert isinstance(valid_symbol, str)
 
-    def test_get_supported_timeframes(self):
+
+
+def test_get_supported_timeframes(self):
         """Test getting supported timeframes from exchange."""
         connector = CCXTDataConnector(exchange="binance")
 
@@ -306,7 +366,9 @@ class TestCCXTDataConnector:
         assert "1d" in timeframes.values()
 
     @patch("quantchain.connectors.ccxt_connector.ccxt")
-    def test_get_exchange_info(self, mock_ccxt):
+
+
+def test_get_exchange_info(self, mock_ccxt):
         """Test getting exchange information."""
         # Set up mock
         mock_exchange = MagicMock()
@@ -323,14 +385,18 @@ class TestCCXTDataConnector:
         assert hasattr(connector.exchange, "id")
 
     @patch("quantchain.connectors.ccxt_connector.ccxt")
-    def test_custom_exchange_init(self, mock_ccxt):
+
+
+def test_custom_exchange_init(self, mock_ccxt):
         """Test initialization with custom exchange."""
         # Set up mock for a custom exchange
         mock_exchange = MagicMock()
         mock_exchange.id = "coinbase"
         mock_exchange.name = "Coinbase"
         mock_exchange.fetch_ohlcv = MagicMock(return_value=[])
-        mock_exchange.fetch_ticker = MagicMock(return_value={"symbol": "BTC/USD", "last": 50000.0})
+        mock_exchange.fetch_ticker = MagicMock(
+            return_value={"symbol": "BTC/USD", "last": 50000.0}
+        )
         mock_exchange.markets = []
         mock_exchange.load_markets = MagicMock()
 
@@ -345,23 +411,28 @@ class TestCCXTDataConnector:
 
 
 @pytest.mark.unit
+
+
 class TestCCXTIntegration:
     """Integration tests for CCXT availability."""
 
-    def test_ccxt_availability(self):
+
+
+def test_ccxt_availability(self):
         """Test if CCXT library is available."""
         if CCXT_AVAILABLE:
-            import ccxt
+
             assert hasattr(ccxt, "binance")  # Check if a common exchange is available
         else:
             pytest.skip("CCXT library not available")
 
-    def test_real_exchange_list(self):
+
+
+def test_real_exchange_list(self):
         """Test if real exchanges are available in CCXT."""
         if not CCXT_AVAILABLE:
             pytest.skip("CCXT library not available")
 
-        import ccxt
 
         # Check if common exchanges are available
         assert hasattr(ccxt, "binance")
@@ -370,16 +441,22 @@ class TestCCXTIntegration:
 
 
 @pytest.mark.unit
+
+
 class TestCCXTDataConnectorStatic:
     """Test static aspects of CCXTDataConnector."""
 
-    def test_timeframe_mapping_constant(self):
+
+
+def test_timeframe_mapping_constant(self):
         """Test TIMEFRAME_MAPPING constant."""
         mapping = CCXTDataConnector.TIMEFRAME_MAPPING
         assert isinstance(mapping, dict)
         assert "1m" in mapping.values()
         assert "1d" in mapping.values()
 
-    def test_default_exchange_constant(self):
+
+
+def test_default_exchange_constant(self):
         """Test DEFAULT_EXCHANGE constant."""
         assert CCXTDataConnector.DEFAULT_EXCHANGE == "binance"

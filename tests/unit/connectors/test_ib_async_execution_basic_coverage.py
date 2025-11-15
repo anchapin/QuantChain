@@ -1,13 +1,31 @@
 """Basic coverage tests for IB async execution connector."""
 
-import pytest
 
 # Check if ib_async_execution is available
+
+import pytest
+from quantchain.connectors.ib_async_execution import (
+from quantchain.connectors.ib_async_execution import (
+from quantchain.connectors.ib_async_execution import (
+from quantchain.connectors.ib_async_execution import (
+from quantchain.connectors.ib_async_execution import (
+from quantchain.connectors.ib_async_execution import (
+from quantchain.connectors.ib_async_execution import (
+from quantchain.connectors.ib_async_execution import (
+from quantchain.connectors.ib_async_execution import (
+from quantchain.connectors.ib_async_execution import (
+from quantchain.connectors.ib_async_execution import (
+from quantchain.connectors.ib_async_execution import (
+from datetime import datetime, timezone
+from quantchain.connectors.ib_async_execution import (
+from quantchain.connectors.ib_async_execution import (
+from quantchain.connectors.ib_async_execution import (
+
 try:
-    from quantchain.connectors.ib_async_execution import (
         IBExecutionConnector,
         IB_ASYNC_AVAILABLE,
     )
+
     IB_EXECUTION_AVAILABLE = True
 except ImportError as e:
     IB_EXECUTION_AVAILABLE = False
@@ -19,17 +37,22 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.mark.unit
+
+
 class TestIBExecutionBasicCoverage:
     """Basic tests to improve coverage of IB execution connector."""
 
-    def test_ib_async_availability_constant(self):
+
+
+def test_ib_async_availability_constant(self):
         """Test IB_ASYNC_AVAILABLE constant is defined."""
         assert isinstance(IB_ASYNC_AVAILABLE, bool)
 
-    def test_module_imports(self):
+
+
+def test_module_imports(self):
         """Test that key module attributes are imported."""
         # Test that core classes are imported
-        from quantchain.connectors.ib_async_execution import (
             IBExecutionConnector,
             IB_ASYNC_AVAILABLE,
             ExecutionError,
@@ -41,9 +64,10 @@ class TestIBExecutionBasicCoverage:
         assert ExecutionError is not None
         assert ValidationError is not None
 
-    def test_error_classes_creation(self):
+
+
+def test_error_classes_creation(self):
         """Test error classes can be instantiated."""
-        from quantchain.connectors.ib_async_execution import (
             ExecutionError,
             ValidationError,
         )
@@ -56,9 +80,10 @@ class TestIBExecutionBasicCoverage:
         val_error = ValidationError("Invalid data")
         assert str(val_error) == "Invalid data"
 
-    def test_error_inheritance(self):
+
+
+def test_error_inheritance(self):
         """Test that error classes inherit correctly."""
-        from quantchain.connectors.ib_async_execution import (
             ExecutionError,
             ValidationError,
         )
@@ -67,12 +92,13 @@ class TestIBExecutionBasicCoverage:
         assert issubclass(ValidationError, Exception)
         assert issubclass(ExecutionError, Exception)
 
-    def test_constants_and_config(self):
+
+
+def test_constants_and_config(self):
         """Test that configuration constants are defined."""
         # Note: These constants may not exist in the actual implementation
         # This test checks if they're available, and will skip if not
         try:
-            from quantchain.connectors.ib_async_execution import (
                 DEFAULT_HOST,
                 DEFAULT_PORT,
                 DEFAULT_TIMEOUT,
@@ -87,12 +113,13 @@ class TestIBExecutionBasicCoverage:
             # Skip this test if constants don't exist
             pytest.skip("Constants not available in implementation")
 
-    def test_order_type_mapping(self):
+
+
+def test_order_type_mapping(self):
         """Test order type mapping functions."""
         # Note: These functions may not exist in the actual implementation
         # This test checks if they're available, and will skip if not
         try:
-            from quantchain.connectors.ib_async_execution import (
                 map_order_type_to_ib,
                 map_order_type_from_ib,
             )
@@ -112,12 +139,13 @@ class TestIBExecutionBasicCoverage:
             # Skip this test if functions don't exist
             pytest.skip("Order type mapping functions not available in implementation")
 
-    def test_time_in_force_mapping(self):
+
+
+def test_time_in_force_mapping(self):
         """Test time in force mapping functions."""
         # Note: These functions may not exist in the actual implementation
         # This test checks if they're available, and will skip if not
         try:
-            from quantchain.connectors.ib_async_execution import (
                 map_tif_to_ib,
                 map_tif_from_ib,
             )
@@ -135,14 +163,17 @@ class TestIBExecutionBasicCoverage:
             assert map_tif_from_ib("FOK") == "FOK"
         except ImportError:
             # Skip this test if functions don't exist
-            pytest.skip("Time in force mapping functions not available in implementation")
+            pytest.skip(
+                "Time in force mapping functions not available in implementation"
+            )
 
-    def test_contract_creation_helpers(self):
+
+
+def test_contract_creation_helpers(self):
         """Test contract creation helper functions."""
         # Note: These functions may not exist in the actual implementation
         # This test checks if they're available, and will skip if not
         try:
-            from quantchain.connectors.ib_async_execution import (
                 create_stock_contract,
                 create_option_contract,
                 create_future_contract,
@@ -179,14 +210,17 @@ class TestIBExecutionBasicCoverage:
             assert forex["currency"] == "USD"
         except ImportError:
             # Skip this test if functions don't exist
-            pytest.skip("Contract creation helper functions not available in implementation")
+            pytest.skip(
+                "Contract creation helper functions not available in implementation"
+            )
 
-    def test_order_validation_functions(self):
+
+
+def test_order_validation_functions(self):
         """Test order validation functions."""
         # Note: These functions may not exist in the actual implementation
         # This test checks if they're available, and will skip if not
         try:
-            from quantchain.connectors.ib_async_execution import (
                 validate_order_quantity,
                 validate_price,
                 validate_symbol,
@@ -210,12 +244,13 @@ class TestIBExecutionBasicCoverage:
             # Skip this test if functions don't exist
             pytest.skip("Order validation functions not available in implementation")
 
-    def test_connection_parameters(self):
+
+
+def test_connection_parameters(self):
         """Test connection parameter validation."""
         # Note: This function may not exist in the actual implementation
         # This test checks if it's available, and will skip if not
         try:
-            from quantchain.connectors.ib_async_execution import (
                 validate_connection_params,
             )
 
@@ -236,14 +271,17 @@ class TestIBExecutionBasicCoverage:
             assert validate_connection_params("127.0.0.1", 7497, 1, 0) == False
         except ImportError:
             # Skip this test if function doesn't exist
-            pytest.skip("Connection parameter validation function not available in implementation")
+            pytest.skip(
+                "Connection parameter validation function not available in implementation"
+            )
 
-    def test_error_message_parsing(self):
+
+
+def test_error_message_parsing(self):
         """Test error message parsing functions."""
         # Note: These functions may not exist in the actual implementation
         # This test checks if they're available, and will skip if not
         try:
-            from quantchain.connectors.ib_async_execution import (
                 parse_error_code,
                 parse_error_message,
             )
@@ -257,21 +295,23 @@ class TestIBExecutionBasicCoverage:
             assert "Bad Gateway" in msg
         except ImportError:
             # Skip this test if functions don't exist
-            pytest.skip("Error message parsing functions not available in implementation")
+            pytest.skip(
+                "Error message parsing functions not available in implementation"
+            )
 
-    def test_data_type_conversions(self):
+
+
+def test_data_type_conversions(self):
         """Test data type conversion functions."""
         # Note: These functions may not exist in the actual implementation
         # This test checks if they're available, and will skip if not
         try:
-            from quantchain.connectors.ib_async_execution import (
                 convert_datetime_to_ib,
                 format_price,
                 format_quantity,
             )
 
             # Test datetime conversion
-            from datetime import datetime, timezone
 
             dt = datetime(2023, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
             ib_dt = convert_datetime_to_ib(dt)
@@ -286,14 +326,17 @@ class TestIBExecutionBasicCoverage:
             assert format_quantity(100.5) == "100"
         except ImportError:
             # Skip this test if functions don't exist
-            pytest.skip("Data type conversion functions not available in implementation")
+            pytest.skip(
+                "Data type conversion functions not available in implementation"
+            )
 
-    def test_market_data_functions(self):
+
+
+def test_market_data_functions(self):
         """Test market data related functions."""
         # Note: These functions may not exist in the actual implementation
         # This test checks if they're available, and will skip if not
         try:
-            from quantchain.connectors.ib_async_execution import (
                 get_tick_type_string,
                 get_generic_tick_types,
             )
@@ -311,19 +354,24 @@ class TestIBExecutionBasicCoverage:
             # Skip this test if functions don't exist
             pytest.skip("Market data functions not available in implementation")
 
-    def test_account_info_helpers(self):
+
+
+def test_account_info_helpers(self):
         """Test account info helper functions."""
         # Note: These functions may not exist in the actual implementation
         # This test checks if they're available, and will skip if not
         try:
-            from quantchain.connectors.ib_async_execution import (
                 parse_account_value,
                 parse_position,
                 parse_portfolio_value,
             )
 
             # Test account value parsing
-            account_val = {"tag": "NetLiquidation", "value": "100000.0", "currency": "USD"}
+            account_val = {
+                "tag": "NetLiquidation",
+                "value": "100000.0",
+                "currency": "USD",
+            }
             parsed = parse_account_value(account_val)
             assert parsed["tag"] == "NetLiquidation"
             assert parsed["value"] == 100000.0
@@ -356,12 +404,13 @@ class TestIBExecutionBasicCoverage:
             # Skip this test if functions don't exist
             pytest.skip("Account info helper functions not available in implementation")
 
-    def test_contract_utilities(self):
+
+
+def test_contract_utilities(self):
         """Test contract utility functions."""
         # Note: These functions may not exist in the actual implementation
         # This test checks if they're available, and will skip if not
         try:
-            from quantchain.connectors.ib_async_execution import (
                 make_contract_string,
                 contract_to_dict,
             )
@@ -379,12 +428,16 @@ class TestIBExecutionBasicCoverage:
             assert "SMART" in contract_str
 
             # Test contract to dict conversion
-            contract_obj = type("Contract", (), {
-                "symbol": "AAPL",
-                "secType": "STK",
-                "exchange": "SMART",
-                "currency": "USD",
-            })
+            contract_obj = type(
+                "Contract",
+                (),
+                {
+                    "symbol": "AAPL",
+                    "secType": "STK",
+                    "exchange": "SMART",
+                    "currency": "USD",
+                },
+            )
             contract_dict = contract_to_dict(contract_obj)
             assert contract_dict["symbol"] == "AAPL"
             assert contract_dict["secType"] == "STK"

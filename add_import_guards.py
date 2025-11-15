@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
 Utility script to add import guards for optional dependencies across the codebase.
-This helps with Python 3.9 compatibility and graceful degradation when dependencies are missing.
+This helps with Python 3.9 compatibility and graceful degradation when
+dependencies are missing.
 """
 
-import os
-import re
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import Dict, List
 
 # Mapping of problematic imports to their guard patterns
 IMPORT_GUARDS = {
@@ -55,6 +54,8 @@ except ImportError:
 IB_ASYNC_AVAILABLE = False
 try:
     import ib_async
+    from ib_async.client import IB
+    from ib_async.contract import Contract
     IB_ASYNC_AVAILABLE = True
 except ImportError:
     pass
@@ -75,120 +76,135 @@ except ImportError:
 """,
 }
 
+
 def find_files_with_imports(root_dir: Path) -> Dict[str, List[Path]]:
     """Find Python files that contain problematic imports."""
     files_with_imports = {}
-    
-    for import_pattern in IMPORT_GUARDS.keys():
+
+    for import_pattern in IMPORT_GUARDS:
         matching_files = []
-        for py_file in root_dir.rglob("*.py"):
-            # Skip __pycache__ and .git directories
+
+        # Search for Python files containing the import pattern
+        for py_file in root_dir.glob("**/*.py"):
             if "__pycache__" in str(py_file) or ".git" in str(py_file):
                 continue
-                
+
             try:
                 content = py_file.read_text(encoding='utf-8')
                 if import_pattern in content:
                     matching_files.append(py_file)
             except (UnicodeDecodeError, PermissionError):
                 continue
-                
+
         if matching_files:
             files_with_imports[import_pattern] = matching_files
-    
+
     return files_with_imports
+
 
 def has_guard_already(file_path: Path, guard_pattern: str) -> bool:
     """Check if a file already has the import guard."""
     try:
         content = file_path.read_text(encoding='utf-8')
-        # Check for key indicators that the guard is already present
-        if "ALPACA_AVAILABLE" in guard_pattern and "ALPACA_AVAILABLE" in content:
-            return True
-        if "LANGGRAPH_AVAILABLE" in guard_pattern and "LANGGRAPH_AVAILABLE" in content:
-            return True
-        if "GYMNASIUM_AVAILABLE" in guard_pattern and "GYMNASIUM_AVAILABLE" in content:
-            return True
-        if "IB_ASYNC_AVAILABLE" in guard_pattern and "IB_ASYNC_AVAILABLE" in content:
-            return True
+        # Check for availability flag that would be set by our guard
+        availability_flags = [
+            "ALPACA_AVAILABLE",
+            "LANGGRAPH_AVAILABLE",
+            "GYMNASIUM_AVAILABLE",
+            "IB_ASYNC_AVAILABLE",
+        ]
+
+        for flag in availability_flags:
+            if flag in content and guard_pattern in content:
+                return True
+        return False
     except (UnicodeDecodeError, PermissionError):
-        pass
-    return False
+        return True  # Assume guard exists if we can't read the file
+
 
 def add_guard_to_file(file_path: Path, import_pattern: str, guard_code: str) -> bool:
-    """Add import guard to a Python file."""
+    """Add import guard code to a Python file."""
     try:
         content = file_path.read_text(encoding='utf-8')
         lines = content.splitlines()
-        
+
         # Find the docstring end to insert guards after it
         insert_index = 0
         docstring_end = False
-        
+
         for i, line in enumerate(lines):
             insert_index = i + 1
-            if line.strip().startswith('"""') or line.strip().startswith("'''"):
-                # Found docstring start, look for end
-                if line.count('"""') == 2 or line.count("'''") == 2:
-                    # Single line docstring
-                    break
-                else:
-                    # Multi-line docstring, find the end
-                    quote_type = '"""' if '"""' in line else "'''"
-                    for j in range(i + 1, len(lines)):
-                        if quote_type in lines[j]:
-                            insert_index = j + 1
-                            break
-                    break
-            elif line.strip() and not line.strip().startswith('#'):
-                # First non-comment, non-empty line after docstring
-                break
-        
+
+            # Skip if still in module docstring
+            if i == 0 and line.startswith('"""') or line.startswith("'''"):
+                docstring_start = i
+                docstring_quotes = line[:3]
+                docstring_end = False
+                continue
+
+            if (
+                docstring_start is not None
+                and not docstring_end
+                and docstring_quotes in line
+                and i != docstring_start
+            ):
+                docstring_end = True
+                insert_index = i + 1
+                continue
+
+            # Skip comments and empty lines
+            if line.strip() == "" or line.strip().startswith("#"):
+                continue
+
+            # First non-comment, non-empty line after docstring
+            break
+
         # Insert the guard code
         new_lines = lines[:insert_index] + [guard_code] + lines[insert_index:]
         new_content = '\n'.join(new_lines)
-        
+
         # Write back to file
         file_path.write_text(new_content, encoding='utf-8')
         print(f"Added guard to {file_path}")
         return True
-        
     except (UnicodeDecodeError, PermissionError) as e:
         print(f"Error processing {file_path}: {e}")
         return False
 
+
 def main():
     """Main function to add import guards to all necessary files."""
     root_dir = Path(__file__).parent
-    
+
     print("Scanning for files with problematic imports...")
     files_with_imports = find_files_with_imports(root_dir)
-    
+
     total_files_modified = 0
-    
+
     for import_pattern, files in files_with_imports.items():
         print(f"\nProcessing import pattern: {import_pattern}")
         guard_code = IMPORT_GUARDS[import_pattern]
-        
+
         for file_path in files:
             # Skip if guard is already present
             if has_guard_already(file_path, guard_code):
                 print(f"Skipping {file_path} (guard already present)")
                 continue
-            
+
             # Skip certain directories that are already handled
             if "__pycache__" in str(file_path) or ".git" in str(file_path):
                 continue
-                
+
             # Skip test files for now (they have different handling)
             if "test_" in file_path.name:
                 print(f"Skipping test file {file_path}")
                 continue
-                
+
             if add_guard_to_file(file_path, import_pattern, guard_code):
                 total_files_modified += 1
-    
+
     print(f"\nSummary: Added guards to {total_files_modified} files")
+
 
 if __name__ == "__main__":
     main()

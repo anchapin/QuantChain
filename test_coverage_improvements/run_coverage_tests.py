@@ -1,18 +1,22 @@
 """
 Script to run new test files and improve test coverage
 """
+
+# Add project root to path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+
+
+def run_command(cmd, cwd=None):
+    """Run a command and return the result"""
+
 import os
 import sys
 import subprocess
 import json
 from pathlib import Path
 
-# Add project root to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-
-def run_command(cmd, cwd=None):
-    """Run a command and return the result"""
     print(f"Running: {' '.join(cmd)}")
     result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
     print(f"Exit code: {result.returncode}")
@@ -21,6 +25,8 @@ def run_command(cmd, cwd=None):
     if result.stderr:
         print(f"Error:\n{result.stderr}")
     return result
+
+
 
 def run_coverage_tests():
     """Run tests with coverage"""
@@ -45,6 +51,8 @@ def run_coverage_tests():
     ])
 
     return result.returncode == 0
+
+
 
 def show_coverage_report():
     """Display the coverage report"""
@@ -79,6 +87,8 @@ def show_coverage_report():
         print(f"       Missing: {missing} lines")
         print()
 
+
+
 def copy_new_test_files():
     """Copy new test files to the appropriate test directories"""
     print("\n" + "=" * 80)
@@ -112,6 +122,8 @@ def copy_new_test_files():
         run_command(["cp", str(ib_tests_src), str(ib_tests_dst)])
         print(f"Copied IB async execution tests to {ib_tests_dst}")
 
+
+
 def run_all_tests():
     """Run all tests with coverage"""
     print("\n" + "=" * 80)
@@ -133,6 +145,8 @@ def run_all_tests():
     ])
 
     return result.returncode == 0
+
+
 
 def main():
     """Main function"""

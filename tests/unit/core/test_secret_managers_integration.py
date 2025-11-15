@@ -1,12 +1,27 @@
 """Integration tests for secret manager implementations."""
 
+
+
+
 import json
 import os
 from unittest.mock import Mock, patch
-
 import pytest
-
 from quantchain.core.secret_managers import (
+from quantchain.core.secret_managers import VaultSecretManager
+from quantchain.core.secret_managers import AWSSecretsManager
+from quantchain.core.secret_managers import GCPSecretManager
+import tempfile
+import tempfile
+from pathlib import Path
+import tempfile
+import tempfile
+import tempfile
+import tempfile
+import tempfile
+from pathlib import Path
+import tempfile
+
     EnvSecretManager,
     InvalidCredentialFormatError,
     SecurityConfigurationError,
@@ -14,21 +29,18 @@ from quantchain.core.secret_managers import (
 
 # Optional imports for testing
 try:
-    from quantchain.core.secret_managers import VaultSecretManager
 
     _VAULT_AVAILABLE = True
 except ImportError:
     _VAULT_AVAILABLE = False
 
 try:
-    from quantchain.core.secret_managers import AWSSecretsManager
 
     _AWS_AVAILABLE = True
 except ImportError:
     _AWS_AVAILABLE = False
 
 try:
-    from quantchain.core.secret_managers import GCPSecretManager
 
     _GCP_AVAILABLE = True
 except ImportError:
@@ -36,12 +48,15 @@ except ImportError:
 
 
 @pytest.mark.unit
+
+
 class TestSecretManagerEdgeCases:
     """Test edge cases for secret managers."""
 
-    def test_env_manager_empty_credentials(self) -> None:
+
+
+def test_env_manager_empty_credentials(self) -> None:
         """Test handling of empty credentials."""
-        import tempfile
 
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = EnvSecretManager(env_file=os.path.join(tmpdir, "nonexistent.env"))
@@ -54,10 +69,10 @@ class TestSecretManagerEdgeCases:
             assert not manager.validate_service("nonexistent")
             assert not manager.has_credentials("nonexistent")
 
-    def test_env_manager_invalid_json_in_env_file(self) -> None:
+
+
+def test_env_manager_invalid_json_in_env_file(self) -> None:
         """Test handling of malformed .env file."""
-        import tempfile
-        from pathlib import Path
 
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir_path = Path(tmpdir)
@@ -67,9 +82,10 @@ class TestSecretManagerEdgeCases:
             manager = EnvSecretManager(env_file=str(env_file))
             assert manager.get_api_key("alpaca") == "test"
 
-    def test_env_manager_special_characters_in_secrets(self) -> None:
+
+
+def test_env_manager_special_characters_in_secrets(self) -> None:
         """Test handling of special characters in secrets."""
-        import tempfile
 
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = EnvSecretManager(env_file=os.path.join(tmpdir, "test.env"))
@@ -82,9 +98,10 @@ class TestSecretManagerEdgeCases:
             manager.set_api_key("polygon", special_key)
             assert manager.get_api_key("polygon") == special_key
 
-    def test_env_manager_case_sensitivity(self) -> None:
+
+
+def test_env_manager_case_sensitivity(self) -> None:
         """Test case sensitivity handling."""
-        import tempfile
 
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = EnvSecretManager(env_file=os.path.join(tmpdir, "test.env"))
@@ -98,9 +115,10 @@ class TestSecretManagerEdgeCases:
             assert manager.validate_service("polygon")
             assert manager.validate_service("Polygon")
 
-    def test_env_manager_overwrite_credentials(self) -> None:
+
+
+def test_env_manager_overwrite_credentials(self) -> None:
         """Test overwriting existing credentials."""
-        import tempfile
 
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = EnvSecretManager(env_file=os.path.join(tmpdir, "test.env"))
@@ -113,9 +131,10 @@ class TestSecretManagerEdgeCases:
 
             assert manager.get_api_key("polygon") == "POLYGON_NEW_KEY_67890ABCDEFGHIJ"
 
-    def test_env_manager_validate_credentials_with_invalid_format(self) -> None:
+
+
+def test_env_manager_validate_credentials_with_invalid_format(self) -> None:
         """Test credential validation with invalid format."""
-        import tempfile
 
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = EnvSecretManager(env_file=os.path.join(tmpdir, "test.env"))
@@ -128,10 +147,10 @@ class TestSecretManagerEdgeCases:
             with pytest.raises(SecurityConfigurationError):
                 manager.set_api_key("unsupported_service", "key", "secret")
 
-    def test_env_manager_save_to_env_file(self) -> None:
+
+
+def test_env_manager_save_to_env_file(self) -> None:
         """Test saving credentials to .env file."""
-        import tempfile
-        from pathlib import Path
 
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir_path = Path(tmpdir)
@@ -151,10 +170,14 @@ class TestSecretManagerEdgeCases:
 
 @pytest.mark.skipif(not _VAULT_AVAILABLE, reason="hvac not installed")
 @pytest.mark.unit
+
+
 class TestVaultSecretManagerEdgeCases:
     """Test edge cases for Vault secret manager."""
 
-    def test_vault_manager_empty_response(self) -> None:
+
+
+def test_vault_manager_empty_response(self) -> None:
         """Test handling of empty responses from Vault."""
         with patch("hvac.Client") as mock_client:
             mock_instance = Mock()
@@ -172,7 +195,9 @@ class TestVaultSecretManagerEdgeCases:
             assert manager.get_service_credentials("alpaca") == {}
             assert not manager.validate_service("alpaca")
 
-    def test_vault_manager_missing_data_in_response(self) -> None:
+
+
+def test_vault_manager_missing_data_in_response(self) -> None:
         """Test handling of missing data in Vault response."""
         with patch("hvac.Client") as mock_client:
             mock_instance = Mock()
@@ -191,7 +216,9 @@ class TestVaultSecretManagerEdgeCases:
             assert manager.get_secret("test/secret") is None
             assert manager.get_service_credentials("alpaca") == {}
 
-    def test_vault_manager_complex_json_response(self) -> None:
+
+
+def test_vault_manager_complex_json_response(self) -> None:
         """Test handling of complex JSON responses."""
         with patch("hvac.Client") as mock_client:
             mock_instance = Mock()
@@ -227,10 +254,14 @@ class TestVaultSecretManagerEdgeCases:
 
 @pytest.mark.skipif(not _AWS_AVAILABLE, reason="boto3 not installed")
 @pytest.mark.unit
+
+
 class TestAWSSecretsManagerEdgeCases:
     """Test edge cases for AWS Secrets Manager."""
 
-    def test_aws_manager_binary_secret(self) -> None:
+
+
+def test_aws_manager_binary_secret(self) -> None:
         """Test handling of binary secrets."""
         with patch("boto3.Session") as mock_session:
             mock_client = Mock()
@@ -246,7 +277,9 @@ class TestAWSSecretsManagerEdgeCases:
             result = manager.get_secret("binary/secret")
             assert result == str(binary_data)
 
-    def test_aws_manager_invalid_json_response(self) -> None:
+
+
+def test_aws_manager_invalid_json_response(self) -> None:
         """Test handling of invalid JSON in response."""
         with patch("boto3.Session") as mock_session:
             mock_client = Mock()
@@ -263,7 +296,9 @@ class TestAWSSecretsManagerEdgeCases:
             result = manager.get_secret("invalid/json")
             assert result == "invalid json {"
 
-    def test_aws_manager_complex_service_credentials(self) -> None:
+
+
+def test_aws_manager_complex_service_credentials(self) -> None:
         """Test service credentials with complex data."""
         with patch("boto3.Session") as mock_session:
             mock_client = Mock()
@@ -297,10 +332,14 @@ class TestAWSSecretsManagerEdgeCases:
     not _GCP_AVAILABLE, reason="google-cloud-secret-manager not installed"
 )
 @pytest.mark.unit
+
+
 class TestGCPSecretManagerEdgeCases:
     """Test edge cases for GCP Secret Manager."""
 
-    def test_gcp_manager_binary_payload(self) -> None:
+
+
+def test_gcp_manager_binary_payload(self) -> None:
         """Test handling of binary payload."""
         with patch(
             "google.cloud.secretmanager.SecretManagerServiceClient"
@@ -320,7 +359,9 @@ class TestGCPSecretManagerEdgeCases:
             result = manager.get_secret("binary/secret")
             assert result == binary_data.decode("UTF-8")
 
-    def test_gcp_manager_invalid_json_in_payload(self) -> None:
+
+
+def test_gcp_manager_invalid_json_in_payload(self) -> None:
         """Test handling of invalid JSON in payload."""
         with patch(
             "google.cloud.secretmanager.SecretManagerServiceClient"
@@ -339,7 +380,9 @@ class TestGCPSecretManagerEdgeCases:
             result = manager.get_secret("invalid/json")
             assert result == "invalid json {"
 
-    def test_gcp_manager_complex_service_credentials(self) -> None:
+
+
+def test_gcp_manager_complex_service_credentials(self) -> None:
         """Test service credentials with complex data."""
         with patch(
             "google.cloud.secretmanager.SecretManagerServiceClient"
@@ -372,12 +415,15 @@ class TestGCPSecretManagerEdgeCases:
 
 
 @pytest.mark.unit
+
+
 class TestSecretManagerErrorHandling:
     """Test error handling across all secret managers."""
 
-    def test_env_manager_unauthorized_access(self) -> None:
+
+
+def test_env_manager_unauthorized_access(self) -> None:
         """Test handling of unauthorized access scenarios."""
-        import tempfile
 
         with tempfile.TemporaryDirectory() as tmpdir:
             manager = EnvSecretManager(env_file=os.path.join(tmpdir, "test.env"))
@@ -392,7 +438,9 @@ class TestSecretManagerErrorHandling:
             assert manager.get_secret("NONEXISTENT_API_SECRET") is None
 
     @pytest.mark.skipif(not _VAULT_AVAILABLE, reason="hvac not installed")
-    def test_vault_manager_connection_failure(self) -> None:
+
+
+def test_vault_manager_connection_failure(self) -> None:
         """Test handling of connection failures."""
         with patch("hvac.Client") as mock_client:
             mock_instance = Mock()
@@ -405,7 +453,9 @@ class TestSecretManagerErrorHandling:
                 )
 
     @pytest.mark.skipif(not _AWS_AVAILABLE, reason="boto3 not installed")
-    def test_aws_manager_connection_failure(self) -> None:
+
+
+def test_aws_manager_connection_failure(self) -> None:
         """Test handling of AWS connection failures."""
         with patch("boto3.Session") as mock_session:
             mock_instance = Mock()
@@ -422,7 +472,9 @@ class TestSecretManagerErrorHandling:
     @pytest.mark.skipif(
         not _GCP_AVAILABLE, reason="google-cloud-secret-manager not installed"
     )
-    def test_gcp_manager_connection_failure(self) -> None:
+
+
+def test_gcp_manager_connection_failure(self) -> None:
         """Test handling of GCP connection failures."""
         with patch(
             "google.cloud.secretmanager.SecretManagerServiceClient"

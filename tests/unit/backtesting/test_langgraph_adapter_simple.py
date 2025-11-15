@@ -1,12 +1,14 @@
 """Tests for LangGraph adapter."""
 
+
+
+
 from datetime import datetime, timezone
 from unittest.mock import Mock
-
 import pytest
+from quantchain.backtesting.langgraph_adapter import (
 
 try:
-    from quantchain.backtesting.langgraph_adapter import (
         AgentExecutionError,
         AgentState,
         BacktestConfig,
@@ -33,7 +35,9 @@ pytestmark = pytest.mark.skipif(
 class TestBacktestConfig:
     """Test cases for BacktestConfig."""
 
-    def test_initialization_default(self):
+
+
+def test_initialization_default(self):
         """Test default initialization."""
         config = BacktestConfig()
         assert config.start_date is None
@@ -41,7 +45,9 @@ class TestBacktestConfig:
         assert config.initial_balance == 100000
         assert config.commission_rate == 0.001
 
-    def test_initialization_with_values(self):
+
+
+def test_initialization_with_values(self):
         """Test initialization with values."""
         start_date = datetime(2023, 1, 1, tzinfo=timezone.utc)
         end_date = datetime(2023, 12, 31, tzinfo=timezone.utc)
@@ -56,7 +62,9 @@ class TestBacktestConfig:
         assert config.end_date == end_date
         assert config.initial_balance == 500000
 
-    def test_to_dict(self):
+
+
+def test_to_dict(self):
         """Test conversion to dictionary."""
         config = BacktestConfig(
             initial_balance=500000,
@@ -66,7 +74,9 @@ class TestBacktestConfig:
         assert isinstance(result, dict)
         assert result["initial_balance"] == 500000
 
-    def test_from_dict(self):
+
+
+def test_from_dict(self):
         """Test creation from dictionary."""
         data = {
             "initial_balance": 500000,
@@ -79,7 +89,9 @@ class TestBacktestConfig:
 class TestAgentState:
     """Test cases for AgentState."""
 
-    def test_initialization(self):
+
+
+def test_initialization(self):
         """Test state initialization."""
         state = AgentState()
 
@@ -88,7 +100,9 @@ class TestAgentState:
         assert isinstance(state.signals, list)
         assert state.current_step == 0
 
-    def test_initialization_with_values(self):
+
+
+def test_initialization_with_values(self):
         """Test initialization with values."""
         state = AgentState(
             data={"test": "data"},
@@ -102,7 +116,9 @@ class TestAgentState:
         assert state.current_step == 5
         assert state.balance == 100000
 
-    def test_update_position(self):
+
+
+def test_update_position(self):
         """Test position update."""
         state = AgentState()
 
@@ -114,7 +130,9 @@ class TestAgentState:
         state.update_position("AAPL", 150)
         assert state.positions["AAPL"] == 150
 
-    def test_add_signal(self):
+
+
+def test_add_signal(self):
         """Test signal addition."""
         state = AgentState()
 
@@ -124,7 +142,9 @@ class TestAgentState:
         assert len(state.signals) == 1
         assert state.signals[0] == signal
 
-    def test_to_dict(self):
+
+
+def test_to_dict(self):
         """Test conversion to dictionary."""
         state = AgentState(
             balance=100000,
@@ -136,7 +156,9 @@ class TestAgentState:
         assert result["balance"] == 100000
         assert result["equity"] == 105000
 
-    def test_from_dict(self):
+
+
+def test_from_dict(self):
         """Test creation from dictionary."""
         data = {
             "balance": 100000,
@@ -151,7 +173,9 @@ class TestAgentState:
 class TestBacktestResult:
     """Test cases for BacktestResult."""
 
-    def test_initialization(self):
+
+
+def test_initialization(self):
         """Test result initialization."""
         result = BacktestResult(
             initial_balance=100000,
@@ -165,7 +189,9 @@ class TestBacktestResult:
         assert result.total_return == 0.1
         assert result.sharpe_ratio == 1.5
 
-    def test_to_dict(self):
+
+
+def test_to_dict(self):
         """Test conversion to dictionary."""
         result = BacktestResult(
             initial_balance=100000,
@@ -184,11 +210,15 @@ class TestBacktestResult:
 @pytest.mark.skipif(
     not LANGGRAPH_ADAPTER_AVAILABLE, reason="LangGraph adapter not available"
 )
+
+
 class TestLangGraphBacktester:
     """Test cases for LangGraphBacktester."""
 
     @pytest.fixture
-    def mock_config(self):
+
+
+def mock_config(self):
         """Create mock configuration."""
         return BacktestConfig(
             initial_balance=100000,
@@ -196,18 +226,24 @@ class TestLangGraphBacktester:
         )
 
     @pytest.fixture
-    def backtester(self, mock_config):
+
+
+def backtester(self, mock_config):
         """Create backtester instance."""
         return LangGraphBacktester(config=mock_config)
 
-    def test_initialization(self, backtester, mock_config):
+
+
+def test_initialization(self, backtester, mock_config):
         """Test backtester initialization."""
         assert backtester.config == mock_config
         assert isinstance(backtester.nodes, dict)
         assert isinstance(backtester.edges, list)
         assert backtester.state is None
 
-    def test_add_node(self, backtester):
+
+
+def test_add_node(self, backtester):
         """Test adding a node."""
         mock_node = Mock()
         backtester.add_node("test_node", mock_node)
@@ -215,13 +251,17 @@ class TestLangGraphBacktester:
         assert "test_node" in backtester.nodes
         assert backtester.nodes["test_node"] == mock_node
 
-    def test_add_edge(self, backtester):
+
+
+def test_add_edge(self, backtester):
         """Test adding an edge."""
         backtester.add_edge("node1", "node2")
 
         assert ("node1", "node2") in backtester.edges
 
-    def test_remove_node(self, backtester):
+
+
+def test_remove_node(self, backtester):
         """Test removing a node."""
         mock_node = Mock()
         backtester.add_node("test_node", mock_node)
@@ -233,37 +273,51 @@ class TestLangGraphBacktester:
 class TestLangGraphExceptions:
     """Test cases for LangGraph adapter exceptions."""
 
-    def test_agent_execution_error(self):
+
+
+def test_agent_execution_error(self):
         """Test AgentExecutionError."""
         error = AgentExecutionError("Agent failed")
         assert str(error) == "Agent failed"
 
-    def test_timeout_error(self):
+
+
+def test_timeout_error(self):
         """Test TimeoutError."""
         error = TimeoutError("Execution timed out")
         assert str(error) == "Execution timed out"
 
-    def test_state_validation_error(self):
+
+
+def test_state_validation_error(self):
         """Test StateValidationError."""
         error = StateValidationError("Invalid state")
         assert str(error) == "Invalid state"
 
-    def test_signal_conversion_error(self):
+
+
+def test_signal_conversion_error(self):
         """Test SignalConversionError."""
         error = SignalConversionError("Conversion failed")
         assert str(error) == "Conversion failed"
 
-    def test_position_error(self):
+
+
+def test_position_error(self):
         """Test PositionError."""
         error = PositionError("Position error")
         assert str(error) == "Position error"
 
-    def test_deterministic_rule_error(self):
+
+
+def test_deterministic_rule_error(self):
         """Test DeterministicRuleError."""
         error = DeterministicRuleError("Rule error")
         assert str(error) == "Rule error"
 
-    def test_scenario_load_error(self):
+
+
+def test_scenario_load_error(self):
         """Test ScenarioLoadError."""
         error = ScenarioLoadError("Load error")
         assert str(error) == "Load error"

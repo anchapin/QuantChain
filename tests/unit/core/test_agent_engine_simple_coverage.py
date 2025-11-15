@@ -1,23 +1,33 @@
 """Simple coverage tests for agent engine module to reach coverage targets."""
 
+
+
+
+
 import pytest
 from unittest.mock import MagicMock, patch
-
 from quantchain.core.agent_engine import QuantChainAgent
 from quantchain.core.config import QuantChainConfig
+from quantchain.core.agent_engine import create_agent
+from quantchain.core.agent_engine import AgentConfig
+
 
 
 class TestAgentEngineSimpleCoverage:
     """Simple tests focusing on coverage rather than functionality."""
 
     @pytest.mark.coverage
-    def test_agent_exists(self):
+
+
+def test_agent_exists(self):
         """Test that agent engine module can be imported."""
         # This test provides basic coverage for the module
         assert QuantChainAgent is not None
 
     @pytest.mark.coverage
-    def test_config_creation(self):
+
+
+def test_config_creation(self):
         """Test config creation for agent engine."""
         config = QuantChainConfig()
         assert config is not None
@@ -30,7 +40,9 @@ class TestAgentEngineSimpleCoverage:
         assert config is not None
 
     @pytest.mark.coverage
-    def test_agent_initialization_errors(self):
+
+
+def test_agent_initialization_errors(self):
         """Test agent initialization error paths for coverage."""
         config = QuantChainConfig()
 
@@ -43,7 +55,9 @@ class TestAgentEngineSimpleCoverage:
             assert isinstance(e, Exception)
 
     @pytest.mark.coverage
-    def test_agent_with_invalid_config(self):
+
+
+def test_agent_with_invalid_config(self):
         """Test agent with invalid configurations."""
         invalid_configs = [
             {"llm_provider": None},
@@ -66,7 +80,9 @@ class TestAgentEngineSimpleCoverage:
                 pass
 
     @pytest.mark.coverage
-    def test_agent_method_coverage(self):
+
+
+def test_agent_method_coverage(self):
         """Test coverage of agent methods if they exist."""
         config = QuantChainConfig()
 
@@ -102,7 +118,9 @@ class TestAgentEngineSimpleCoverage:
             pass
 
     @pytest.mark.coverage
-    def test_agent_property_access(self):
+
+
+def test_agent_property_access(self):
         """Test agent property access for coverage."""
         config = QuantChainConfig()
 
@@ -131,25 +149,27 @@ class TestAgentEngineSimpleCoverage:
             pass
 
     @pytest.mark.coverage
-    def test_agent_dependency_imports(self):
+
+
+def test_agent_dependency_imports(self):
         """Test agent dependency imports for coverage."""
         # Test various import scenarios
         try:
-            from quantchain.core.agent_engine import create_agent
 
             assert create_agent is not None
         except ImportError:
             pass
 
         try:
-            from quantchain.core.agent_engine import AgentConfig
 
             assert AgentConfig is not None
         except ImportError:
             pass
 
     @pytest.mark.coverage
-    def test_agent_edge_case_inputs(self):
+
+
+def test_agent_edge_case_inputs(self):
         """Test agent with edge case inputs."""
         config = QuantChainConfig()
 
@@ -181,7 +201,9 @@ class TestAgentEngineSimpleCoverage:
             pass
 
     @pytest.mark.coverage
-    def test_agent_string_representation(self):
+
+
+def test_agent_string_representation(self):
         """Test agent string representation methods."""
         config = QuantChainConfig()
 
@@ -198,7 +220,9 @@ class TestAgentEngineSimpleCoverage:
             pass
 
     @pytest.mark.coverage
-    def test_agent_comparison_and_hash(self):
+
+
+def test_agent_comparison_and_hash(self):
         """Test agent comparison and hash methods."""
         config = QuantChainConfig()
 

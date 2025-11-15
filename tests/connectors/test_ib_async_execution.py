@@ -1,12 +1,16 @@
 """Tests for IB async execution connector."""
 
+
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch, PropertyMock
 import asyncio
 from datetime import datetime, timezone
-
 from quantchain.connectors.ib_async_execution import IBExecutionConnector
 from quantchain.tools.trading_execution import (
+from ib_async import RequestError
+from ib_async import MarketOrder, LimitOrder, StopOrder, StopLimitOrder
+
     OrderRequest,
     OrderSide,
     OrderType,
@@ -23,7 +27,9 @@ from quantchain.tools.trading_execution import (
 class TestIBExecutionConnector:
     """Test cases for IBExecutionConnector."""
 
-    def setup_method(self):
+
+
+def setup_method(self):
         """Set up test fixtures."""
         self.config = {
             "host": "127.0.0.1",
@@ -33,10 +39,12 @@ class TestIBExecutionConnector:
             "readonly": True,
         }
 
-    def test_connector_initialization(self):
+
+
+def test_connector_initialization(self):
         """Test connector initialization."""
         with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib:
-            with patch.object(IBExecutionConnector, '_connect'):
+            with patch.object(IBExecutionConnector, "_connect"):
                 connector = IBExecutionConnector(**self.config)
 
                 assert connector.host == "127.0.0.1"
@@ -45,14 +53,16 @@ class TestIBExecutionConnector:
                 assert connector.timeout == 10
                 assert connector.readonly is True
 
-    def test_connect_success(self):
+
+
+def test_connect_success(self):
         """Test successful connection to IB."""
         with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib_class:
             mock_ib = AsyncMock()
             mock_ib_class.return_value = mock_ib
 
             # Mock the _connect method to avoid actual connection
-            with patch.object(IBExecutionConnector, '_connect'):
+            with patch.object(IBExecutionConnector, "_connect"):
                 connector = IBExecutionConnector(**self.config)
 
                 # Verify connection attributes are set correctly
@@ -62,7 +72,9 @@ class TestIBExecutionConnector:
                 assert connector.timeout == 10
                 assert connector.readonly is True
 
-    def test_connect_failure(self):
+
+
+def test_connect_failure(self):
         """Test connection failure handling."""
         # Create a connector instance directly without IB connection
         connector = IBExecutionConnector.__new__(IBExecutionConnector)
@@ -77,7 +89,9 @@ class TestIBExecutionConnector:
         assert connector.timeout == 10
         assert connector.readonly is True
 
-    def test_disconnect(self):
+
+
+def test_disconnect(self):
         """Test disconnection from IB."""
         # Create a connector instance directly without IB connection
         connector = IBExecutionConnector.__new__(IBExecutionConnector)
@@ -97,7 +111,9 @@ class TestIBExecutionConnector:
         # Verify state change
         assert not connector._connected
 
-    def test_is_connected(self):
+
+
+def test_is_connected(self):
         """Test connection status checking."""
         # Create a connector instance directly without IB connection
         connector = IBExecutionConnector.__new__(IBExecutionConnector)
@@ -113,7 +129,9 @@ class TestIBExecutionConnector:
         connector._connected = True
         assert connector._connected
 
-    def test_validate_order_request(self):
+
+
+def test_validate_order_request(self):
         """Test order request validation."""
         with patch("quantchain.connectors.ib_async_execution.Stock") as mock_stock:
             # Create a connector instance directly without IB connection
@@ -141,14 +159,18 @@ class TestIBExecutionConnector:
             invalid_order = object.__new__(OrderRequest)
             invalid_order.symbol = "AAPL"
             invalid_order.side = OrderSide.BUY
-            invalid_order.quantity = 0  # This would normally be validated in __post_init__
+            invalid_order.quantity = (
+                0  # This would normally be validated in __post_init__
+            )
             invalid_order.order_type = OrderType.MARKET
             invalid_order.time_in_force = TimeInForce.DAY
 
             with pytest.raises(ValidationError):
                 connector.validate_order(invalid_order)
 
-    def test_place_order_market(self):
+
+
+def test_place_order_market(self):
         """Test placing a market order."""
         with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib_class:
             mock_ib = AsyncMock()
@@ -191,7 +213,9 @@ class TestIBExecutionConnector:
             assert result.filled_quantity == 100
             assert result.avg_fill_price == 150.0
 
-    def test_place_order_limit(self):
+
+
+def test_place_order_limit(self):
         """Test placing a limit order."""
         with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib_class:
             mock_ib = AsyncMock()
@@ -233,14 +257,16 @@ class TestIBExecutionConnector:
             assert result.order_id == "12346"
             assert result.status == OrderStatus.FILLED
 
-    def test_place_order_not_connected(self):
+
+
+def test_place_order_not_connected(self):
         """Test placing an order when not connected."""
         with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib_class:
             mock_ib = MagicMock()
             mock_ib_class.return_value = mock_ib
 
             # Create connector with connection failure
-            with patch.object(IBExecutionConnector, '_connect') as mock_connect:
+            with patch.object(IBExecutionConnector, "_connect") as mock_connect:
                 mock_connect.side_effect = ExecutionError("Not connected to IB")
 
                 with pytest.raises(ExecutionError, match="Not connected to IB"):
@@ -249,10 +275,12 @@ class TestIBExecutionConnector:
                         port=7497,
                         client_id=1,
                         timeout=10,
-                        readonly=True
+                        readonly=True,
                     )
 
-    def test_cancel_order(self):
+
+
+def test_cancel_order(self):
         """Test canceling an order."""
         with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib_class:
             mock_ib = AsyncMock()
@@ -281,7 +309,9 @@ class TestIBExecutionConnector:
             assert result.status == OrderStatus.CANCELLED
             mock_ib.cancelOrder.assert_called_once_with(mock_trade.order)
 
-    def test_cancel_order_not_found(self):
+
+
+def test_cancel_order_not_found(self):
         """Test canceling an order that doesn't exist."""
         with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib_class:
             mock_ib = AsyncMock()
@@ -289,7 +319,7 @@ class TestIBExecutionConnector:
             mock_ib_class.return_value = mock_ib
 
             # Create connector that bypasses connection
-            with patch.object(IBExecutionConnector, '_connect'):
+            with patch.object(IBExecutionConnector, "_connect"):
                 connector = IBExecutionConnector(**self.config)
                 connector._connected = True
                 connector._order_map = {}
@@ -298,7 +328,9 @@ class TestIBExecutionConnector:
             with pytest.raises(ExecutionError, match="Order not found"):
                 connector.cancel_order("99999")
 
-    def test_get_order_status(self):
+
+
+def test_get_order_status(self):
         """Test getting order status."""
         with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib_class:
             mock_ib = AsyncMock()
@@ -320,7 +352,9 @@ class TestIBExecutionConnector:
             assert result.filled_quantity == 100
             assert result.avg_fill_price == 150.0
 
-    def test_get_positions(self):
+
+
+def test_get_positions(self):
         """Test getting account positions."""
         with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib_class:
             mock_ib = AsyncMock()
@@ -347,7 +381,9 @@ class TestIBExecutionConnector:
             assert positions[0].quantity == 100
             assert positions[0].avg_entry_price == 150.0
 
-    def test_get_account_info(self):
+
+
+def test_get_account_info(self):
         """Test getting account information."""
         with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib_class:
             mock_ib = AsyncMock()
@@ -374,10 +410,11 @@ class TestIBExecutionConnector:
             assert account_info.account_id == "DU123456"
             assert account_info.portfolio_value == 100000.0
 
-    def test_error_handling_ib_request_error(self):
+
+
+def test_error_handling_ib_request_error(self):
         """Test handling IB request errors."""
         with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib_class:
-            from ib_async import RequestError
 
             mock_ib = AsyncMock()
             mock_ib_class.return_value = mock_ib
@@ -402,27 +439,34 @@ class TestIBExecutionConnector:
             with pytest.raises(ExecutionError, match="Unexpected error placing order"):
                 connector.place_order(order)
 
-    def test_side_mapping(self):
+
+
+def test_side_mapping(self):
         """Test order side mapping."""
         assert IBExecutionConnector.SIDE_MAPPING[OrderSide.BUY] == "BUY"
         assert IBExecutionConnector.SIDE_MAPPING[OrderSide.SELL] == "SELL"
 
-    def test_type_mapping(self):
+
+
+def test_type_mapping(self):
         """Test order type mapping."""
-        from ib_async import MarketOrder, LimitOrder, StopOrder, StopLimitOrder
 
         assert IBExecutionConnector.TYPE_MAPPING[OrderType.MARKET] == MarketOrder
         assert IBExecutionConnector.TYPE_MAPPING[OrderType.LIMIT] == LimitOrder
         assert IBExecutionConnector.TYPE_MAPPING[OrderType.STOP] == StopOrder
         assert IBExecutionConnector.TYPE_MAPPING[OrderType.STOP_LIMIT] == StopLimitOrder
 
-    def test_status_mapping(self):
+
+
+def test_status_mapping(self):
         """Test order status mapping."""
         assert IBExecutionConnector.STATUS_MAPPING["Filled"] == OrderStatus.FILLED
         assert IBExecutionConnector.STATUS_MAPPING["Cancelled"] == OrderStatus.CANCELLED
         assert IBExecutionConnector.STATUS_MAPPING["Submitted"] == OrderStatus.PENDING
 
-    def test_contract_creation_stock(self):
+
+
+def test_contract_creation_stock(self):
         """Test stock contract creation."""
         with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib_class:
             mock_ib = AsyncMock()
@@ -440,7 +484,9 @@ class TestIBExecutionConnector:
             assert contract.currency == "USD"
             assert contract.exchange == "SMART"
 
-    def test_contract_creation_forex(self):
+
+
+def test_contract_creation_forex(self):
         """Test forex contract creation."""
         with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib_class:
             mock_ib = AsyncMock()

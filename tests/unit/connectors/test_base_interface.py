@@ -1,19 +1,29 @@
 """Tests for data feed interface."""
 
+
+
+
+
 import pytest
-
 from quantchain.connectors.base_interface import DataFeedInterface
-
+import inspect
+import inspect
 
 @pytest.mark.unit
+
+
 class TestDataFeedInterface:
 
-    def test_data_feed_interface_is_abstract(self) -> None:
+
+
+def test_data_feed_interface_is_abstract(self) -> None:
         """Test that DataFeedInterface cannot be instantiated directly."""
         with pytest.raises(TypeError):
             DataFeedInterface("key", "secret")
 
-    def test_data_feed_interface_abstract_methods(self) -> None:
+
+
+def test_data_feed_interface_abstract_methods(self) -> None:
         """Test that all abstract methods are defined."""
         # Check that the abstract methods exist
         abstract_methods = [
@@ -33,9 +43,10 @@ class TestDataFeedInterface:
             assert hasattr(method_obj, "__isabstractmethod__")
             assert method_obj.__isabstractmethod__
 
-    def test_data_feed_interface_init_signature(self) -> None:
+
+
+def test_data_feed_interface_init_signature(self) -> None:
         """Test that __init__ has the expected signature."""
-        import inspect
 
         sig = inspect.signature(DataFeedInterface.__init__)
         params = list(sig.parameters.keys())
@@ -45,9 +56,10 @@ class TestDataFeedInterface:
         assert "api_secret" in params
         assert "kwargs" in params
 
-    def test_data_feed_interface_method_signatures(self) -> None:
+
+
+def test_data_feed_interface_method_signatures(self) -> None:
         """Test that abstract methods have expected signatures."""
-        import inspect
 
         # Test get_historical_data signature
         sig = inspect.signature(DataFeedInterface.get_historical_data)

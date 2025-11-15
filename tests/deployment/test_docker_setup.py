@@ -13,43 +13,59 @@ class TestDockerConfiguration:
     """Test Docker configuration files and setup."""
 
     @pytest.fixture
-    def project_root(self) -> Path:
+
+
+def project_root(self) -> Path:
         """Get the project root directory."""
         return Path(__file__).parent.parent.parent
 
     @pytest.fixture
-    def dockerfile_gpu_path(self, project_root: Path) -> Path:
+
+
+def dockerfile_gpu_path(self, project_root: Path) -> Path:
         """Path to GPU Dockerfile."""
         return project_root / "Dockerfile.gpu"
 
     @pytest.fixture
-    def docker_compose_gpu_path(self, project_root: Path) -> Path:
+
+
+def docker_compose_gpu_path(self, project_root: Path) -> Path:
         """Path to GPU docker-compose file."""
         return project_root / "docker-compose.gpu.yml"
 
-    def test_gpu_dockerfile_exists(self, dockerfile_gpu_path: Path) -> None:
+
+
+def test_gpu_dockerfile_exists(self, dockerfile_gpu_path: Path) -> None:
         """Test that GPU Dockerfile exists."""
         assert dockerfile_gpu_path.exists(), "GPU Dockerfile should exist"
         assert dockerfile_gpu_path.is_file(), "GPU Dockerfile should be a file"
 
-    def test_docker_compose_gpu_exists(self, docker_compose_gpu_path: Path) -> None:
+
+
+def test_docker_compose_gpu_exists(self, docker_compose_gpu_path: Path) -> None:
         """Test that GPU docker-compose file exists."""
         assert docker_compose_gpu_path.exists(), "GPU docker-compose file should exist"
         assert docker_compose_gpu_path.is_file(), "GPU docker-compose should be a file"
 
-    def test_gpu_dockerfile_cuda_version(self, dockerfile_gpu_path: Path) -> None:
+
+
+def test_gpu_dockerfile_cuda_version(self, dockerfile_gpu_path: Path) -> None:
         """Test that GPU Dockerfile uses appropriate CUDA version."""
         content = dockerfile_gpu_path.read_text()
         assert "nvidia/cuda:12.1" in content, "Should use CUDA 12.1 base image"
         assert "runtime" in content, "Should use runtime variant"
 
-    def test_gpu_dockerfile_pytorch_cuda(self, dockerfile_gpu_path: Path) -> None:
+
+
+def test_gpu_dockerfile_pytorch_cuda(self, dockerfile_gpu_path: Path) -> None:
         """Test that GPU Dockerfile installs CUDA-enabled PyTorch."""
         content = dockerfile_gpu_path.read_text()
         assert "torch==2.1.0+cu121" in content, "Should install CUDA-enabled PyTorch"
         assert "download.pytorch.org/whl/cu121" in content, "Should use CUDA index URL"
 
-    def test_docker_compose_gpu_runtime(self, docker_compose_gpu_path: Path) -> None:
+
+
+def test_docker_compose_gpu_runtime(self, docker_compose_gpu_path: Path) -> None:
         """Test that GPU docker-compose uses NVIDIA runtime."""
         content = docker_compose_gpu_path.read_text()
         assert "runtime: nvidia" in content, "Should specify NVIDIA runtime"
@@ -57,30 +73,38 @@ class TestDockerConfiguration:
             "CUDA_VISIBLE_DEVICES" in content
         ), "Should set CUDA environment variables"
 
-    def test_docker_compose_gpu_resources(self, docker_compose_gpu_path: Path) -> None:
+
+
+def test_docker_compose_gpu_resources(self, docker_compose_gpu_path: Path) -> None:
         """Test GPU resource allocation in docker-compose."""
         content = docker_compose_gpu_path.read_text()
         assert "reservations:" in content, "Should specify resource reservations"
         assert "driver: nvidia" in content, "Should specify NVIDIA driver"
         assert "capabilities: [gpu]" in content, "Should request GPU capabilities"
 
-    def test_docker_compose_services(self, docker_compose_gpu_path: Path) -> None:
+
+
+def test_docker_compose_services(self, docker_compose_gpu_path: Path) -> None:
         """Test required services are defined in docker-compose."""
         with open(docker_compose_gpu_path, "r") as f:
             docker_compose = yaml.safe_load(f)
 
         services = docker_compose.get("services", {})
-        required_services: list[float] = ["quantchain-gpu", "chromadb", "redis"]
+        required_services: list = ["quantchain-gpu", "chromadb", "redis"]
         for service in required_services:
             assert service in services, f"Service {service} should be defined"
 
-    def test_gpu_dockerfile_health_check(self, dockerfile_gpu_path: Path) -> None:
+
+
+def test_gpu_dockerfile_health_check(self, dockerfile_gpu_path: Path) -> None:
         """Test that GPU Dockerfile includes health check."""
         content = dockerfile_gpu_path.read_text()
         assert "HEALTHCHECK" in content, "Should include health check"
         assert "quantchain" in content.lower(), "Health check should verify QuantChain"
 
-    def test_docker_security_config(self, dockerfile_gpu_path: Path) -> None:
+
+
+def test_docker_security_config(self, dockerfile_gpu_path: Path) -> None:
         """Test Docker security configuration."""
         content = dockerfile_gpu_path.read_text()
         assert "useradd" in content, "Should create non-root user"
@@ -91,16 +115,22 @@ class TestDockerConfiguration:
     not os.getenv("RUN_DOCKER_TESTS"),
     reason="Docker tests require RUN_DOCKER_TESTS environment variable",
 )
+
+
 class TestDockerBuild:
     """Test actual Docker build and execution (integration tests)."""
 
     @pytest.fixture
-    def project_root(self) -> Path:
+
+
+def project_root(self) -> Path:
         """Get the project root directory."""
         return Path(__file__).parent.parent.parent
 
     @pytest.fixture(scope="class")
-    def gpu_available(self) -> bool:
+
+
+def gpu_available(self) -> bool:
         """Check if GPU is available for testing."""
         try:
             result = subprocess.run(
@@ -113,7 +143,9 @@ class TestDockerBuild:
         except (subprocess.TimeoutExpired, FileNotFoundError):
             return False
 
-    def test_build_gpu_docker_image(self, project_root: Path) -> None:
+
+
+def test_build_gpu_docker_image(self, project_root: Path) -> None:
         """Test building GPU Docker image."""
         cmd = [
             "docker",
@@ -132,7 +164,9 @@ class TestDockerBuild:
         not os.getenv("RUN_DOCKER_TESTS") or not True,  # GPU check moved to fixture
         reason="Requires GPU and explicit test run",
     )
-    def test_gpu_container_startup(self, gpu_available: bool) -> None:
+
+
+def test_gpu_container_startup(self, gpu_available: bool) -> None:
         """Test GPU container startup and CUDA detection."""
         if not gpu_available:
             pytest.skip("No GPU available for testing")
@@ -155,7 +189,9 @@ class TestDockerBuild:
         assert result.returncode == 0, f"GPU container test failed: {result.stderr}"
         assert "GPU test passed" in result.stdout
 
-    def test_container_import_quantchain(self) -> None:
+
+
+def test_container_import_quantchain(self) -> None:
         """Test that QuantChain can be imported in container."""
         cmd = [
             "docker",
@@ -176,7 +212,9 @@ class TestDockerComposeValidation:
     """Test docker-compose configuration validation."""
 
     @pytest.fixture
-    def docker_compose_config(self) -> Dict[str, Any]:
+
+
+def docker_compose_config(self) -> Dict[str, Any]:
         """Load and parse docker-compose configuration."""
         project_root = Path(__file__).parent.parent.parent
         compose_file = project_root / "docker-compose.gpu.yml"
@@ -186,28 +224,36 @@ class TestDockerComposeValidation:
 
         return config
 
-    def test_version_specified(self, docker_compose_config: Dict[str, Any]) -> None:
+
+
+def test_version_specified(self, docker_compose_config: Dict[str, Any]) -> None:
         """Test that docker-compose version is specified."""
         assert (
             "version" in docker_compose_config
         ), "Should specify docker-compose version"
         assert docker_compose_config["version"] == "3.8", "Should use version 3.8"
 
-    def test_network_configuration(self, docker_compose_config: Dict[str, Any]) -> None:
+
+
+def test_network_configuration(self, docker_compose_config: Dict[str, Any]) -> None:
         """Test network configuration."""
         assert "networks" in docker_compose_config, "Should define networks"
         networks = docker_compose_config["networks"]
         assert "default" in networks, "Should have default network"
         assert networks["default"]["driver"] == "bridge", "Should use bridge driver"
 
-    def test_volume_configuration(self, docker_compose_config: Dict[str, Any]) -> None:
+
+
+def test_volume_configuration(self, docker_compose_config: Dict[str, Any]) -> None:
         """Test volume configuration."""
         assert "volumes" in docker_compose_config, "Should define volumes"
         volumes = docker_compose_config["volumes"]
         assert "chroma_data" in volumes, "Should define chroma_data volume"
         assert "redis_data" in volumes, "Should define redis_data volume"
 
-    def test_environment_variables(self, docker_compose_config: Dict[str, Any]) -> None:
+
+
+def test_environment_variables(self, docker_compose_config: Dict[str, Any]) -> None:
         """Test environment variable configuration."""
         services = docker_compose_config.get("services", {})
         quantchain_service = services.get("quantchain-gpu", {})
@@ -225,7 +271,9 @@ class TestDockerComposeValidation:
             var_found = any(var in str(env_item) for env_item in env_vars)
             assert var_found, f"Should define {var} environment variable"
 
-    def test_port_configuration(self, docker_compose_config: Dict[str, Any]) -> None:
+
+
+def test_port_configuration(self, docker_compose_config: Dict[str, Any]) -> None:
         """Test port configuration."""
         services = docker_compose_config.get("services", {})
 
@@ -243,7 +291,9 @@ class TestDockerComposeValidation:
         assert "8001:8000" in chromadb_ports, "Should expose ChromaDB port"
         assert "6379:6379" in redis_ports, "Should expose Redis port"
 
-    def test_restart_policies(self, docker_compose_config: Dict[str, Any]) -> None:
+
+
+def test_restart_policies(self, docker_compose_config: Dict[str, Any]) -> None:
         """Test restart policies."""
         services = docker_compose_config.get("services", {})
 
@@ -260,11 +310,15 @@ class TestDeploymentDocumentation:
     """Test deployment documentation completeness."""
 
     @pytest.fixture
-    def docs_dir(self) -> Path:
+
+
+def docs_dir(self) -> Path:
         """Get documentation directory."""
         return Path(__file__).parent.parent.parent / "docs"
 
-    def test_hardware_requirements_exists(self, docs_dir: Path) -> None:
+
+
+def test_hardware_requirements_exists(self, docs_dir: Path) -> None:
         """Test that hardware requirements documentation exists."""
         hw_doc = docs_dir / "hardware-requirements.md"
         assert hw_doc.exists(), "Hardware requirements documentation should exist"
@@ -280,7 +334,9 @@ class TestDeploymentDocumentation:
         for section in required_sections:
             assert section in content, f"Should include {section} section"
 
-    def test_environment_setup_exists(self, docs_dir: Path) -> None:
+
+
+def test_environment_setup_exists(self, docs_dir: Path) -> None:
         """Test that environment setup documentation exists."""
         setup_doc = docs_dir / "environment-setup.md"
         assert setup_doc.exists(), "Environment setup documentation should exist"
@@ -296,7 +352,9 @@ class TestDeploymentDocumentation:
         for section in required_sections:
             assert section in content, f"Should include {section} section"
 
-    def test_docker_examples_in_docs(self, docs_dir: Path) -> None:
+
+
+def test_docker_examples_in_docs(self, docs_dir: Path) -> None:
         """Test that documentation includes Docker examples."""
         setup_doc = docs_dir / "environment-setup.md"
         content = setup_doc.read_text()
