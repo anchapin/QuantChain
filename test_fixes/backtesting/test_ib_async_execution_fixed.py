@@ -1,18 +1,15 @@
 """Tests for IB Async Execution module to boost coverage from 28% to 80%."""
 
 from unittest.mock import MagicMock
+
 import numpy as np
 import pandas as pd
 import pytest
 
 try:
     from quantchain.backtesting.langgraph_adapter import (
-        AgentState,
-        AgentStrategy,
-        LangGraphBacktestAdapter,
-        PositionError,
-        PositionManager,
-    )
+        AgentState, AgentStrategy, LangGraphBacktestAdapter, PositionError,
+        PositionManager)
 
     LANGGRAPH_AVAILABLE = True
 except ImportError as e:

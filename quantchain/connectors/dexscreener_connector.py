@@ -1,8 +1,9 @@
 """Dexscreener data connector for QuantChain."""
 
 import time
+from typing import Any, Dict, List, Optional
+
 import requests
-from typing import Dict, List, Optional, Any
 
 from quantchain.core.exceptions import DataSourceError
 

@@ -1,18 +1,17 @@
 """Tests for backtesting engine module."""
 
-import pytest
+from datetime import datetime, timedelta
+from unittest.mock import Mock, patch
+
 import numpy as np
 import pandas as pd
-from unittest.mock import Mock, patch
-from datetime import datetime, timedelta
+import pytest
 
 try:
-    from quantchain.backtesting.engine import (
-        BacktestingEngine,
-        BacktestExecutionError,
-        BacktestConfig,
-        BacktestResult,
-    )
+    from quantchain.backtesting.engine import (BacktestConfig,
+                                               BacktestExecutionError,
+                                               BacktestingEngine,
+                                               BacktestResult)
 
     ENGINE_AVAILABLE = True
 except ImportError as e:

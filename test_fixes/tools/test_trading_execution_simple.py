@@ -1,8 +1,9 @@
 """Simple tests for TradingExecution to improve coverage."""
 
-import pytest
-from unittest.mock import Mock, patch
 from datetime import datetime
+from unittest.mock import Mock, patch
+
+import pytest
 
 try:
     from quantchain.tools.trading_execution import TradingExecution

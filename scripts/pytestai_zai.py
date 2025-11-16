@@ -3,9 +3,10 @@
 PyTestAI with Z.AI GLM-4.6 support
 Drop-in replacement for PyTestAI-Generator using Z.AI API
 """
-import sys
 import os
+import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 from generate_tests import TestGenerator
 

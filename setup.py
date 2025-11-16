@@ -10,7 +10,7 @@ from pathlib import Path
 
 # Try to use setuptools, fallback to distutils
 try:
-    from setuptools import setup, find_packages
+    from setuptools import find_packages, setup
 
     HAS_SETUPTOOLS = True
 except ImportError:

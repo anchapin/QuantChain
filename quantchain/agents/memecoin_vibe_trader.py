@@ -1,9 +1,9 @@
 """MemeCoin Vibe Trader - trades based on social media sentiment and technical indicators."""
 
+import random
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Any, Optional
-import random
+from typing import Any, Dict, List, Optional
 
 from quantchain.tools.social_media_scraper import SentimentScore
 

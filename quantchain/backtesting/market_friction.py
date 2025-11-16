@@ -1,11 +1,12 @@
 """Market friction simulation for backtesting."""
 
 import random
-import numpy as np
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Tuple
-from dataclasses import dataclass
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Tuple
+
+import numpy as np
 
 
 class FrictionCalculationError(Exception):

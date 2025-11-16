@@ -2,8 +2,9 @@
 
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 
 try:
     from backtesting import Backtest, Strategy
@@ -12,7 +13,8 @@ try:
 except ImportError:
     _BACKTESTING_AVAILABLE = False
 
-from quantchain.backtesting.engine import BacktestConfig, BacktestResult, MetricsResult
+from quantchain.backtesting.engine import (BacktestConfig, BacktestResult,
+                                           MetricsResult)
 
 
 class BacktestingPyEngine:

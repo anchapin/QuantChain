@@ -1,9 +1,9 @@
 """Smart Contract Auditor Agent for QuantChain."""
 
-from datetime import datetime
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class AuditStatus(Enum):

@@ -3,13 +3,15 @@
 Script to validate CI fixes and ensure code quality.
 """
 
-import sys
-import os
 import logging
+import os
+import sys
 from pathlib import Path
-from quantchain.core.dependency_manager import get_dependency_manager
+
+from quantchain.core.dependency_manager import (get_dependency_manager,
+                                                import_plotly,
+                                                import_streamlit)
 from quantchain.tools.web_dashboard import create_dashboard
-from quantchain.core.dependency_manager import import_plotly, import_streamlit
 
 
 def validate_dependencies():
@@ -29,7 +31,8 @@ def validate_dependencies():
 def validate_imports():
     """Validate that all imports work correctly."""
     try:
-        from quantchain.tools.web_dashboard import DashboardCharts, WebDashboardApp
+        from quantchain.tools.web_dashboard import (DashboardCharts,
+                                                    WebDashboardApp)
 
         print("Web dashboard imports successful")
         return True

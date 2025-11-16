@@ -3,7 +3,7 @@
 import os
 import time
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 try:
     import pandas as pd
@@ -14,10 +14,8 @@ except ImportError:
 
 try:
     from alpaca.data import TimeFrame
-    from alpaca.data.historical import (
-        StockHistoricalDataClient,
-        CryptoHistoricalDataClient,
-    )
+    from alpaca.data.historical import (CryptoHistoricalDataClient,
+                                        StockHistoricalDataClient)
     from alpaca.trading.client import TradingClient
     from alpaca.trading.enums import AssetClass
 
@@ -25,11 +23,8 @@ try:
 except ImportError:
     _ALPACA_AVAILABLE = False
 
-from quantchain.core.exceptions import (
-    AuthenticationError,
-    DataSourceError,
-    SymbolNotFoundError,
-)
+from quantchain.core.exceptions import (AuthenticationError, DataSourceError,
+                                        SymbolNotFoundError)
 
 
 class AlpacaDataConnector:

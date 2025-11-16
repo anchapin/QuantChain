@@ -1,8 +1,9 @@
 """Simple tests for Alpaca connector to improve coverage."""
 
-import pytest
-from unittest.mock import Mock, patch
 from datetime import datetime
+from unittest.mock import Mock, patch
+
+import pytest
 
 try:
     from quantchain.connectors.alpaca_connector import AlpacaDataConnector

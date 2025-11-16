@@ -1,16 +1,13 @@
 """Trading execution module for QuantChain."""
 
-from datetime import datetime
-from typing import Dict, List, Optional, Any, Union
-from enum import Enum
 import uuid
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
-from quantchain.core.exceptions import (
-    InsufficientFundsError,
-    OrderNotFoundError,
-    ValidationError,
-    TradingError,
-)
+from quantchain.core.exceptions import (InsufficientFundsError,
+                                        OrderNotFoundError, TradingError,
+                                        ValidationError)
 
 
 class OrderSide(Enum):
@@ -227,7 +224,9 @@ class TradingExecutionTool:
         self.config = config or {}
         self.retry_count = retry_count
         self.retry_delay = retry_delay
-        self._orders: dict[str, Union[OrderRequest, OrderResult]] = {}  # Client order ID -> OrderRequest/OrderResult
+        self._orders: dict[str, Union[OrderRequest, OrderResult]] = (
+            {}
+        )  # Client order ID -> OrderRequest/OrderResult
         self._positions: dict[str, Position] = {}  # Symbol -> Position
 
     def place_order(self, order_request: OrderRequest) -> OrderResult:

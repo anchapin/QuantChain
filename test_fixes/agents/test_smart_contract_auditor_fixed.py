@@ -1,19 +1,13 @@
 """Tests for smart contract auditor module."""
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
+
 from quantchain.agents.smart_contract_auditor import (
-    SmartContractAuditorConfig,
-    ContractRetriever,
-    SmartContractAuditorAgent,
-    VulnerabilityScanner,
-    FinancialAnalyzer,
-    ContractSource,
-    VulnerabilityReport,
-    Vulnerability,
-    TokenomicsAnalysis,
-    QuantChainError,
-)
+    ContractRetriever, ContractSource, FinancialAnalyzer, QuantChainError,
+    SmartContractAuditorAgent, SmartContractAuditorConfig, TokenomicsAnalysis,
+    Vulnerability, VulnerabilityReport, VulnerabilityScanner)
 
 
 class TestSmartContractAuditorConfig:

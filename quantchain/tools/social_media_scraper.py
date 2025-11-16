@@ -1,9 +1,9 @@
 """Social media scraper for QuantChain."""
 
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
+from typing import Dict, List, Optional, Tuple
 
 from quantchain.core.config import QuantChainConfig
 

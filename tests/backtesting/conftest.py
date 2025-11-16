@@ -1,8 +1,8 @@
 """
 Pytest configuration and shared fixtures for backtesting tests.
 """
-from datetime import datetime
 
+from datetime import datetime
 from unittest.mock import MagicMock
 
 import numpy as np

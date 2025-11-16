@@ -2,7 +2,7 @@
 
 import os
 from enum import Enum
-from typing import Dict, List, Optional, Any, Union
+from typing import Any, Dict, List, Optional, Union
 
 
 class LogLevel(Enum):

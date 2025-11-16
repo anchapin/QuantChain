@@ -1,9 +1,10 @@
 """Performance metrics calculation for backtesting."""
 
-import pandas as pd
-import numpy as np
-from typing import Dict, Any, Optional, TYPE_CHECKING
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Dict, Optional
+
+import numpy as np
+import pandas as pd
 
 if TYPE_CHECKING:
     from quantchain.backtesting.engine import BacktestResult

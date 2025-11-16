@@ -1,11 +1,13 @@
 """Simple tests for DexScreener connector to improve coverage."""
 
-import pytest
-from unittest.mock import Mock, patch
 from datetime import datetime
+from unittest.mock import Mock, patch
+
+import pytest
 
 try:
-    from quantchain.connectors.dexscreener_connector import DexScreenerDataConnector
+    from quantchain.connectors.dexscreener_connector import \
+        DexScreenerDataConnector
 
     DEXSCREENER_AVAILABLE = True
 except ImportError as e:
