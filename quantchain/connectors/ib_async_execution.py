@@ -2,43 +2,64 @@
 
 import asyncio
 import logging
-import math
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List, Union, Tuple, Callable
+from datetime import datetime
+from typing import Dict, Any, Optional, List
 
-from ib_async import IB, Contract, Order, OrderState, Trade, Position, PortfolioItem, ScanData, BarDataList, TagValue
-from ib_async.contract import ContractDescription, ContractDetails
-from ib_async.objects import BarData
-from pandas import DataFrame, Series
+from ib_async import (
+    IB,
+    Contract,
+    Order,
+    Trade,
+    Position,
+    PortfolioItem,
+)
+from pandas import DataFrame
 
 from quantchain.connectors.base import BaseExecutionConnector
 from quantchain.core.execution import (
-    OrderRequest, OrderResult, OrderSide, OrderType, OrderStatus,
-    AccountInfo, Position as QuantChainPosition, ExecutionError
+    OrderRequest,
+    OrderResult,
+    OrderSide,
+    OrderType,
+    OrderStatus,
+    AccountInfo,
+    Position as QuantChainPosition,
+    ExecutionError,
 )
 
 logger = logging.getLogger(__name__)
 
+
 # Error classes specific to IB async execution
 class IBAsyncExecutionError(ExecutionError):
     """Base exception for IB async execution errors."""
+
     pass
+
 
 class IBAsyncConnectionError(IBAsyncExecutionError):
     """Exception for connection errors."""
+
     pass
+
 
 class IBAsyncContractError(IBAsyncExecutionError):
     """Exception for contract-related errors."""
+
     pass
+
 
 class IBAsyncOrderError(IBAsyncExecutionError):
     """Exception for order-related errors."""
+
     pass
+
 
 class IBAsyncDataError(IBAsyncExecutionError):
     """Exception for data retrieval errors."""
+
     pass
+
 
 class IBAsyncExecutionConnector(BaseExecutionConnector):
     """
@@ -55,7 +76,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         client_id: int = 1,
         account: Optional[str] = None,
         timeout: int = 10,
-        readonly: bool = False
+        readonly: bool = False,
     ):
         """
         Initialize IB async execution connector.
@@ -111,7 +132,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
                 host=self.host,
                 port=self.port,
                 clientId=self.client_id,
-                timeout=self.timeout
+                timeout=self.timeout,
             )
 
             # If account not specified, use the first available one
@@ -123,7 +144,9 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
                     raise IBAsyncConnectionError("No accounts found")
 
             self._connected = True
-            logger.info(f"Connected to IB at {self.host}:{self.port} with account {self.account}")
+            logger.info(
+                f"Connected to IB at {self.host}:{self.port} with account {self.account}"
+            )
             return True
 
         except Exception as e:
@@ -306,7 +329,9 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
                         quantity=pos.position,
                         price=price,
                         market_value=pos.position * price if price else 0.0,
-                        unrealized_pnl=pos.position * (price - pos.avgCost) if price else 0.0
+                        unrealized_pnl=(
+                            pos.position * (price - pos.avgCost) if price else 0.0
+                        ),
                     )
                     positions.append(position)
 
@@ -348,7 +373,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
                 cash=total_cash,
                 portfolio_value=portfolio_value,
                 buying_power=buying_power,
-                total_equity=portfolio_value
+                total_equity=portfolio_value,
             )
 
         except Exception as e:
@@ -358,7 +383,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
                 cash=0.0,
                 portfolio_value=0.0,
                 buying_power=0.0,
-                total_equity=0.0
+                total_equity=0.0,
             )
 
     async def get_historical_data(
@@ -368,7 +393,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         bar_size: str,
         what_to_show: str = "TRADES",
         use_rth: bool = True,
-        end_date_time: Optional[datetime] = None
+        end_date_time: Optional[datetime] = None,
     ) -> DataFrame:
         """
         Get historical market data.
@@ -399,7 +424,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
                 barSizeSetting=bar_size,
                 whatToShow=what_to_show,
                 useRTH=use_rth,
-                formatDate=2
+                formatDate=2,
             )
 
             # Convert to DataFrame
@@ -410,7 +435,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
                     "high": bar.high,
                     "low": bar.low,
                     "close": bar.close,
-                    "volume": bar.volume
+                    "volume": bar.volume,
                 }
                 for bar in bars
             ]
@@ -425,10 +450,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
             return DataFrame()
 
     async def get_market_data(
-        self,
-        symbol: str,
-        tick_type: str = "mid",
-        snapshot: bool = True
+        self, symbol: str, tick_type: str = "mid", snapshot: bool = True
     ) -> Dict[str, Any]:
         """
         Get current market data.
@@ -509,7 +531,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
                 "min_tick": detail.minTick,
                 "price_magnifier": detail.priceMagnifier,
                 "order_types": detail.validExchanges,
-                "valid_exchanges": detail.validExchanges
+                "valid_exchanges": detail.validExchanges,
             }
 
         except Exception as e:
@@ -530,10 +552,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
 
         # Create contract
         contract = Contract(
-            symbol=symbol,
-            secType=sec_type,
-            currency=currency,
-            exchange=exchange
+            symbol=symbol, secType=sec_type, currency=currency, exchange=exchange
         )
 
         # Qualify contract (fill in missing details)
@@ -546,13 +565,12 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
 
         return contract
 
-    def _create_contract_from_symbol(self, symbol: str, sec_type: str = "STK") -> Contract:
+    def _create_contract_from_symbol(
+        self, symbol: str, sec_type: str = "STK"
+    ) -> Contract:
         """Create contract from symbol."""
         return Contract(
-            symbol=symbol,
-            secType=sec_type,
-            currency="USD",
-            exchange="SMART"
+            symbol=symbol, secType=sec_type, currency="USD", exchange="SMART"
         )
 
     def _create_ib_order(self, order_request: OrderRequest) -> Order:
@@ -575,7 +593,10 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
             order.lmtPrice = order_request.price
 
         # Set stop price for stop orders
-        if order_request.order_type in [OrderType.STOP, OrderType.STOP_LIMIT] and order_request.stop_price:
+        if (
+            order_request.order_type in [OrderType.STOP, OrderType.STOP_LIMIT]
+            and order_request.stop_price
+        ):
             order.auxPrice = order_request.stop_price
 
         # Set limit price for stop limit orders
@@ -600,7 +621,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
             OrderType.MARKET: "MKT",
             OrderType.LIMIT: "LMT",
             OrderType.STOP: "STP",
-            OrderType.STOP_LIMIT: "STP LMT"
+            OrderType.STOP_LIMIT: "STP LMT",
         }
         return mapping.get(order_type, "MKT")
 
@@ -613,7 +634,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         price = 0.0
         if trade.orderStatus.filled > 0 and trade.orderStatus.avgFillPrice > 0:
             price = trade.orderStatus.avgFillPrice
-        elif trade.order and hasattr(trade.order, 'lmtPrice') and trade.order.lmtPrice:
+        elif trade.order and hasattr(trade.order, "lmtPrice") and trade.order.lmtPrice:
             price = trade.order.lmtPrice
 
         return OrderResult(
@@ -627,9 +648,13 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
             price=price,
             status=status,
             time_in_force=trade.order.tif,
-            stop_price=trade.order.auxPrice if hasattr(trade.order, 'auxPrice') else None,
+            stop_price=(
+                trade.order.auxPrice if hasattr(trade.order, "auxPrice") else None
+            ),
             create_time=trade.log[0].time if trade.log else datetime.now(),
-            update_time=trade.orderStatus.time if trade.orderStatus.time else datetime.now()
+            update_time=(
+                trade.orderStatus.time if trade.orderStatus.time else datetime.now()
+            ),
         )
 
     def _map_order_status(self, ib_status: str) -> OrderStatus:
@@ -644,7 +669,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
             "Cancelled": OrderStatus.CANCELLED,
             "Filled": OrderStatus.FILLED,
             "Partial": OrderStatus.PARTIALLY_FILLED,
-            "Inactive": OrderStatus.REJECTED
+            "Inactive": OrderStatus.REJECTED,
         }
         return mapping.get(ib_status, OrderStatus.UNKNOWN)
 
@@ -654,7 +679,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
             "MKT": OrderType.MARKET,
             "LMT": OrderType.LIMIT,
             "STP": OrderType.STOP,
-            "STP LMT": OrderType.STOP_LIMIT
+            "STP LMT": OrderType.STOP_LIMIT,
         }
         return mapping.get(ib_type, OrderType.MARKET)
 
@@ -677,7 +702,9 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
 
     def _on_order_status(self, trade: Trade):
         """Handle order status updates."""
-        logger.debug(f"Order status update: {trade.order.permId} - {trade.orderStatus.status}")
+        logger.debug(
+            f"Order status update: {trade.order.permId} - {trade.orderStatus.status}"
+        )
 
     def _on_portfolio_update(self, item: PortfolioItem):
         """Handle portfolio updates."""
@@ -685,7 +712,9 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
 
     def _on_position_update(self, position: Position):
         """Handle position updates."""
-        logger.debug(f"Position update: {position.contract.symbol} - {position.position}")
+        logger.debug(
+            f"Position update: {position.contract.symbol} - {position.position}"
+        )
 
     def _on_account_value(self, value):
         """Handle account value updates."""

@@ -34,42 +34,42 @@ def fix_line_length(file_path: str) -> None:
         print(f"File not found: {full_path}")
         return
 
-    with open(full_path, 'r', encoding='utf-8') as f:
+    with open(full_path, "r", encoding="utf-8") as f:
         content = f.read()
 
-    lines = content.split('\n')
+    lines = content.split("\n")
     modified_lines = []
 
     for line in lines:
         # Skip comment lines that exceed line length
-        if line.strip().startswith('#') and len(line) > 88:
+        if line.strip().startswith("#") and len(line) > 88:
             # For now, we'll just note this but not modify
             modified_lines.append(line)
             continue
 
         # Split long lines at common break points
-        if len(line) > 88 and not line.strip().startswith('#'):
+        if len(line) > 88 and not line.strip().startswith("#"):
             # Try to break at common patterns
-            if ' and ' in line and not line.strip().startswith('#'):
-                parts = line.split(' and ')
+            if " and " in line and not line.strip().startswith("#"):
+                parts = line.split(" and ")
                 if len(parts) > 1:
                     indent = len(line) - len(line.lstrip())
-                    modified_lines.append(parts[0] + ' and')
-                    modified_lines.append(' ' * (indent + 4) + ' and '.join(parts[1:]))
+                    modified_lines.append(parts[0] + " and")
+                    modified_lines.append(" " * (indent + 4) + " and ".join(parts[1:]))
                     continue
-            elif ' or ' in line and not line.strip().startswith('#'):
-                parts = line.split(' or ')
+            elif " or " in line and not line.strip().startswith("#"):
+                parts = line.split(" or ")
                 if len(parts) > 1:
                     indent = len(line) - len(line.lstrip())
-                    modified_lines.append(parts[0] + ' or')
-                    modified_lines.append(' ' * (indent + 4) + ' or '.join(parts[1:]))
+                    modified_lines.append(parts[0] + " or")
+                    modified_lines.append(" " * (indent + 4) + " or ".join(parts[1:]))
                     continue
 
         modified_lines.append(line)
 
     # Write back the file
-    with open(full_path, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(modified_lines))
+    with open(full_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(modified_lines))
 
     print(f"Fixed line length issues in {file_path}")
 
@@ -82,20 +82,20 @@ def fix_whitespace_issues(file_path: str) -> None:
         print(f"File not found: {full_path}")
         return
 
-    with open(full_path, 'r', encoding='utf-8') as f:
+    with open(full_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     # Fix trailing whitespace
-    content = re.sub(r'[ \t]+$', '', content, flags=re.MULTILINE)
+    content = re.sub(r"[ \t]+$", "", content, flags=re.MULTILINE)
 
     # Fix excessive blank lines at end of file
-    content = re.sub(r'\n{3,}$', '\n\n', content)
+    content = re.sub(r"\n{3,}$", "\n\n", content)
 
     # Fix excessive blank lines in the middle (max 2 consecutive blank lines)
-    content = re.sub(r'\n{4,}', '\n\n\n', content)
+    content = re.sub(r"\n{4,}", "\n\n\n", content)
 
     # Write back the file
-    with open(full_path, 'w', encoding='utf-8') as f:
+    with open(full_path, "w", encoding="utf-8") as f:
         f.write(content)
 
     print(f"Fixed whitespace issues in {file_path}")
@@ -109,7 +109,7 @@ def fix_import_organization(file_path: str) -> None:
         print(f"File not found: {full_path}")
         return
 
-    with open(full_path, 'r', encoding='utf-8') as f:
+    with open(full_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
     # Separate imports from non-import lines
@@ -119,9 +119,9 @@ def fix_import_organization(file_path: str) -> None:
 
     for line in lines:
         if in_imports:
-            if line.startswith('import ') or line.startswith('from '):
+            if line.startswith("import ") or line.startswith("from "):
                 import_lines.append(line)
-            elif line.strip() == '':
+            elif line.strip() == "":
                 import_lines.append(line)
             else:
                 in_imports = False
@@ -135,13 +135,13 @@ def fix_import_organization(file_path: str) -> None:
     local_imports = []
 
     for line in import_lines:
-        if line.strip() == '':
+        if line.strip() == "":
             continue
-        if line.startswith('from ..') or line.startswith('from .'):
+        if line.startswith("from ..") or line.startswith("from ."):
             local_imports.append(line)
-        elif line.startswith('import ') and not ('.' in line):
+        elif line.startswith("import ") and not ("." in line):
             standard_lib_imports.append(line)
-        elif line.startswith('from ') and not ('.' in line):
+        elif line.startswith("from ") and not ("." in line):
             standard_lib_imports.append(line)
         else:
             third_party_imports.append(line)
@@ -155,17 +155,17 @@ def fix_import_organization(file_path: str) -> None:
     new_lines = []
     new_lines.extend(standard_lib_imports)
     if standard_lib_imports and third_party_imports:
-        new_lines.append('\n')
+        new_lines.append("\n")
     new_lines.extend(third_party_imports)
     if (standard_lib_imports or third_party_imports) and local_imports:
-        new_lines.append('\n')
+        new_lines.append("\n")
     new_lines.extend(local_imports)
     if import_lines and other_lines:
-        new_lines.append('\n')
+        new_lines.append("\n")
     new_lines.extend(other_lines)
 
     # Write back the file
-    with open(full_path, 'w', encoding='utf-8') as f:
+    with open(full_path, "w", encoding="utf-8") as f:
         f.writelines(new_lines)
 
     print(f"Fixed import organization in {file_path}")
@@ -179,14 +179,14 @@ def fix_blank_lines_after_decorators(file_path: str) -> None:
         print(f"File not found: {full_path}")
         return
 
-    with open(full_path, 'r', encoding='utf-8') as f:
+    with open(full_path, "r", encoding="utf-8") as f:
         content = f.read()
 
     # Fix blank lines after decorators (should not have blank lines)
-    content = re.sub(r'(@\w+.*\n)\n+', r'\1', content)
+    content = re.sub(r"(@\w+.*\n)\n+", r"\1", content)
 
     # Write back the file
-    with open(full_path, 'w', encoding='utf-8') as f:
+    with open(full_path, "w", encoding="utf-8") as f:
         f.write(content)
 
     print(f"Fixed blank lines after decorators in {file_path}")
@@ -199,7 +199,7 @@ def get_python_files() -> List[str]:
     for directory in DIRECTORIES:
         dir_path = BASE_DIR / directory
         if dir_path.exists():
-            for file_path in dir_path.rglob('*.py'):
+            for file_path in dir_path.rglob("*.py"):
                 # Convert to relative path
                 rel_path = str(file_path.relative_to(BASE_DIR))
                 python_files.append(rel_path)
@@ -227,7 +227,9 @@ def main() -> None:
 
     # Run flake8 again to see the remaining issues
     print("\nRunning flake8 to see remaining linting issues...")
-    os.system(f"cd {BASE_DIR} && python -m flake8 --count --statistics quantchain/agents/ quantchain/backtesting/ quantchain/connectors/ quantchain/core/ quantchain/tools/ scripts/")
+    os.system(
+        f"cd {BASE_DIR} && python -m flake8 --count --statistics quantchain/agents/ quantchain/backtesting/ quantchain/connectors/ quantchain/core/ quantchain/tools/ scripts/"
+    )
 
 
 if __name__ == "__main__":

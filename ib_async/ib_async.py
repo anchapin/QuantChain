@@ -3,11 +3,8 @@
 
 class IB:
 
-
     def __init__(self):
         pass
-
-
 
     def connect_async(self, *args, **kwargs):
         # Fake async connect
@@ -20,7 +17,6 @@ class IB:
 
 
 class Contract:
-
 
     def __init__(self, *args, **kwargs):
         pass
@@ -39,7 +35,6 @@ class Stock(Contract):
 
 
 class Order:
-
 
     def __init__(self, *args, **kwargs):
         pass
@@ -63,7 +58,6 @@ class StopLimitOrder(Order):
 
 class Option(Contract):
 
-
     def __init__(self, *args, **kwargs):
         pass
 
@@ -73,7 +67,6 @@ class RequestError(Exception):
 
 
 class Trade:
-
 
     def __init__(self, *args, **kwargs):
         pass

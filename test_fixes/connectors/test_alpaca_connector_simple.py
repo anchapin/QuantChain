@@ -6,6 +6,7 @@ from datetime import datetime
 
 try:
     from quantchain.connectors.alpaca_connector import AlpacaDataConnector
+
     ALPACA_AVAILABLE = True
 except ImportError as e:
     ALPACA_AVAILABLE = False
@@ -33,7 +34,7 @@ class TestAlpacaDataConnector:
         if ALPACA_AVAILABLE:
             connector = AlpacaDataConnector(config)
             assert connector is not None
-            assert hasattr(connector, 'config')
+            assert hasattr(connector, "config")
 
     def test_get_historical_data(self, config):
         """Test historical data retrieval."""
@@ -41,7 +42,7 @@ class TestAlpacaDataConnector:
             connector = AlpacaDataConnector(config)
 
             # Mock the actual API call
-            with patch.object(connector, '_make_request') as mock_request:
+            with patch.object(connector, "_make_request") as mock_request:
                 # Setup mock to return sample data
                 mock_request.return_value = {
                     "symbol": "AAPL",
@@ -52,16 +53,16 @@ class TestAlpacaDataConnector:
                             "h": 105.0,
                             "l": 95.0,
                             "c": 102.0,
-                            "v": 1000000
+                            "v": 1000000,
                         }
-                    ]
+                    ],
                 }
 
                 # Call the method
                 data = connector.get_historical_data(
                     symbol="AAPL",
                     start_date=datetime(2023, 1, 1),
-                    end_date=datetime(2023, 1, 2)
+                    end_date=datetime(2023, 1, 2),
                 )
 
                 # Check the result
@@ -74,7 +75,7 @@ class TestAlpacaDataConnector:
             connector = AlpacaDataConnector(config)
 
             # Mock the actual API call
-            with patch.object(connector, '_make_request') as mock_request:
+            with patch.object(connector, "_make_request") as mock_request:
                 # Setup mock to return sample data
                 mock_request.return_value = {
                     "data": [
@@ -82,7 +83,7 @@ class TestAlpacaDataConnector:
                             "symbol": "AAPL",
                             "name": "Apple Inc.",
                             "exchange": "NASDAQ",
-                            "asset_class": "us_equity"
+                            "asset_class": "us_equity",
                         }
                     ]
                 }
@@ -100,7 +101,7 @@ class TestAlpacaDataConnector:
             connector = AlpacaDataConnector(config)
 
             # Mock the actual API call to raise an exception
-            with patch.object(connector, '_make_request') as mock_request:
+            with patch.object(connector, "_make_request") as mock_request:
                 # Setup mock to raise an exception
                 mock_request.side_effect = Exception("API error")
 
@@ -109,5 +110,5 @@ class TestAlpacaDataConnector:
                     connector.get_historical_data(
                         symbol="AAPL",
                         start_date=datetime(2023, 1, 1),
-                        end_date=datetime(2023, 1, 2)
+                        end_date=datetime(2023, 1, 2),
                     )

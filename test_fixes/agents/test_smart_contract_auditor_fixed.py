@@ -52,7 +52,7 @@ class TestContractRetriever:
             "result": [
                 {
                     "SourceCode": "contract Test {}",
-                    "ABI": '[]',
+                    "ABI": "[]",
                     "ContractName": "Test",
                     "CompilerVersion": "v0.8.0",
                     "OptimizationUsed": "1",
@@ -102,8 +102,9 @@ class TestSmartContractAuditorAgent:
 
     def test_audit_contract_success(self, agent) -> None:
         """Test successful contract audit."""
-        with patch.object(agent, 'get_contract_source') as mock_get_source, \
-             patch.object(agent, 'scan_vulnerabilities') as mock_scan:
+        with patch.object(
+            agent, "get_contract_source"
+        ) as mock_get_source, patch.object(agent, "scan_vulnerabilities") as mock_scan:
 
             # Setup mocks
             mock_contract = ContractSource(

@@ -1,17 +1,14 @@
 """Smart Contract Auditor Agent for QuantChain."""
 
-import json
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Union, Tuple
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
-
-from quantchain.core.config import QuantChainConfig
-from quantchain.core.exceptions import QuantChainError
 
 
 class AuditStatus(Enum):
     """Audit status enumeration."""
+
     SECURE = "secure"
     VULNERABLE = "vulnerable"
     REQUIRES_REVIEW = "requires_review"
@@ -20,6 +17,7 @@ class AuditStatus(Enum):
 
 class VulnerabilitySeverity(Enum):
     """Vulnerability severity enumeration."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -30,6 +28,7 @@ class VulnerabilitySeverity(Enum):
 @dataclass
 class SmartContractAuditorConfig:
     """Configuration for Smart Contract Auditor Agent."""
+
     api_keys: Dict[str, str] = field(default_factory=dict)
     etherscan_api_url: str = "https://api.etherscan.io/api"
     bscscan_api_url: str = "https://api.bscscan.com/api"
@@ -42,6 +41,7 @@ class SmartContractAuditorConfig:
 @dataclass
 class ContractSource:
     """Contract source code information."""
+
     address: str
     source_code: str
     abi: str
@@ -56,6 +56,7 @@ class ContractSource:
 @dataclass
 class Vulnerability:
     """Represents a vulnerability found in a smart contract."""
+
     id: str
     title: str
     description: str
@@ -69,6 +70,7 @@ class Vulnerability:
 @dataclass
 class VulnerabilityReport:
     """Report of vulnerabilities found in a smart contract."""
+
     address: str
     network: str
     vulnerabilities: List[Vulnerability]
@@ -81,6 +83,7 @@ class VulnerabilityReport:
 @dataclass
 class TokenomicsAnalysis:
     """Analysis of tokenomics for a contract."""
+
     address: str
     network: str
     total_supply: Optional[float] = None
@@ -98,6 +101,7 @@ class TokenomicsAnalysis:
 @dataclass
 class ProtocolAnalysis:
     """Analysis of DeFi protocol components."""
+
     address: str
     network: str
     protocol_type: str  # e.g., "dex", "lending", "yield", "liquidity"
@@ -114,6 +118,7 @@ class ProtocolAnalysis:
 @dataclass
 class InvestmentRecommendation:
     """Investment recommendation for a contract."""
+
     address: str
     network: str
     recommendation: str  # "invest", "avoid", "caution"
@@ -141,7 +146,9 @@ class ContractRetriever:
         self.config = config
         self._cache = {}
 
-    def get_contract_source(self, address: str, network: str) -> Optional[ContractSource]:
+    def get_contract_source(
+        self, address: str, network: str
+    ) -> Optional[ContractSource]:
         """
         Get contract source code from blockchain explorer.
 
@@ -180,7 +187,7 @@ class ContractRetriever:
         # For testing purposes, return a mock contract
         mock_source = ContractSource(
             address=address,
-            source_code=f"""
+            source_code="""
             pragma solidity ^0.8.0;
 
             contract MockToken {{
@@ -198,14 +205,11 @@ class ContractRetriever:
             compiler_version="v0.8.0+commit.c7dfd78e",
             optimization_enabled=True,
             constructor_arguments="",
-            network=network
+            network=network,
         )
 
         # Cache the result
-        self._cache[cache_key] = {
-            "source": mock_source,
-            "timestamp": datetime.now()
-        }
+        self._cache[cache_key] = {"source": mock_source, "timestamp": datetime.now()}
 
         return mock_source
 
@@ -242,12 +246,12 @@ class ContractRetriever:
         Returns:
             List of import statements
         """
-        source_lines = contract_source.source_code.split('\n')
+        source_lines = contract_source.source_code.split("\n")
         imports = []
 
         for line in source_lines:
             stripped = line.strip()
-            if stripped.startswith('import '):
+            if stripped.startswith("import "):
                 imports.append(stripped)
 
         return imports
@@ -262,16 +266,16 @@ class ContractRetriever:
         Returns:
             List of parent contracts
         """
-        source_lines = contract_source.source_code.split('\n')
+        source_lines = contract_source.source_code.split("\n")
         inheritance = []
 
         for line in source_lines:
-            if 'is' in line and 'contract' in line:
+            if "is" in line and "contract" in line:
                 # Extract inheritance after "is" and before "{"
-                parts = line.split('is')
+                parts = line.split("is")
                 if len(parts) > 1:
-                    inherit_part = parts[1].split('{')[0].strip()
-                    contracts = [c.strip() for c in inherit_part.split(',')]
+                    inherit_part = parts[1].split("{")[0].strip()
+                    contracts = [c.strip() for c in inherit_part.split(",")]
                     inheritance.extend(contracts)
 
         return inheritance
@@ -294,53 +298,30 @@ class VulnerabilityScanner:
                 "title": "Reentrancy Vulnerability",
                 "description": "Contract may be vulnerable to reentrancy attacks",
                 "severity": VulnerabilitySeverity.CRITICAL,
-                "patterns": [
-                    "call.value",
-                    ".call(",
-                    ".send(",
-                    ".transfer("
-                ],
-                "context": [
-                    ".call(",
-                    "external",
-                    "payable"
-                ]
+                "patterns": ["call.value", ".call(", ".send(", ".transfer("],
+                "context": [".call(", "external", "payable"],
             },
             {
                 "id": "overflow",
                 "title": "Integer Overflow/Underflow",
                 "description": "Contract may be vulnerable to integer overflow/underflow",
                 "severity": VulnerabilitySeverity.HIGH,
-                "patterns": [
-                    "+=",
-                    "-=",
-                    "*=",
-                    "/="
-                ],
-                "context": [
-                    "uint256",
-                    "uint",
-                    "int",
-                    "int256"
-                ]
+                "patterns": ["+=", "-=", "*=", "/="],
+                "context": ["uint256", "uint", "int", "int256"],
             },
             {
                 "id": "access_control",
                 "title": "Access Control Issue",
                 "description": "Contract lacks proper access control",
                 "severity": VulnerabilitySeverity.MEDIUM,
-                "patterns": [
-                    "function",
-                    "modifier"
-                ],
-                "context": [
-                    "public",
-                    "external"
-                ]
-            }
+                "patterns": ["function", "modifier"],
+                "context": ["public", "external"],
+            },
         ]
 
-    def scan_vulnerabilities(self, contract_source: ContractSource) -> VulnerabilityReport:
+    def scan_vulnerabilities(
+        self, contract_source: ContractSource
+    ) -> VulnerabilityReport:
         """
         Scan contract source for vulnerabilities.
 
@@ -351,7 +332,7 @@ class VulnerabilityScanner:
             VulnerabilityReport with found vulnerabilities
         """
         vulnerabilities = []
-        source_lines = contract_source.source_code.split('\n')
+        source_lines = contract_source.source_code.split("\n")
 
         # In a real implementation, use more sophisticated analysis
         # For testing purposes, use simple pattern matching
@@ -367,8 +348,8 @@ class VulnerabilityScanner:
                             title=pattern_info["title"],
                             description=pattern_info["description"],
                             severity=pattern_info["severity"],
-                            line_number=i+1,
-                            code_snippet=line.strip()
+                            line_number=i + 1,
+                            code_snippet=line.strip(),
                         )
                         vulnerabilities.append(vulnerability)
                         break
@@ -377,18 +358,22 @@ class VulnerabilityScanner:
         report = VulnerabilityReport(
             address=contract_source.address,
             network=contract_source.network,
-            vulnerabilities=vulnerabilities
+            vulnerabilities=vulnerabilities,
         )
 
         # Calculate security score
         report.security_score = self.calculate_security_score(vulnerabilities)
 
         # Determine audit status
-        report.audit_status = self.determine_audit_status(report.security_score, vulnerabilities)
+        report.audit_status = self.determine_audit_status(
+            report.security_score, vulnerabilities
+        )
 
         return report
 
-    def check_access_control(self, contract_source: ContractSource) -> List[Vulnerability]:
+    def check_access_control(
+        self, contract_source: ContractSource
+    ) -> List[Vulnerability]:
         """
         Check for access control vulnerabilities.
 
@@ -399,29 +384,37 @@ class VulnerabilityScanner:
             List of access control vulnerabilities
         """
         vulnerabilities = []
-        source_lines = contract_source.source_code.split('\n')
+        source_lines = contract_source.source_code.split("\n")
 
         # Check for public/external functions without access control
         for i, line in enumerate(source_lines):
             stripped = line.strip()
-            if stripped.startswith('function ') and ('public' in stripped or 'external' in stripped):
+            if stripped.startswith("function ") and (
+                "public" in stripped or "external" in stripped
+            ):
                 # Check if function has access control
                 function_def = stripped
-                has_modifier = ' onlyOwner ' in function_def or ' requiresAuth ' in function_def
+                has_modifier = (
+                    " onlyOwner " in function_def or " requiresAuth " in function_def
+                )
 
                 # Look for the opening brace to find the function body
                 j = i + 1
-                while j < len(source_lines) and '{' not in source_lines[j]:
+                while j < len(source_lines) and "{" not in source_lines[j]:
                     j += 1
 
-                if not has_modifier and 'view' not in function_def and 'pure' not in function_def:
+                if (
+                    not has_modifier
+                    and "view" not in function_def
+                    and "pure" not in function_def
+                ):
                     vulnerability = Vulnerability(
                         id="access_control",
                         title="Access Control Issue",
                         description="Function lacks proper access control",
                         severity=VulnerabilitySeverity.MEDIUM,
-                        line_number=i+1,
-                        code_snippet=stripped
+                        line_number=i + 1,
+                        code_snippet=stripped,
                     )
                     vulnerabilities.append(vulnerability)
 
@@ -459,7 +452,9 @@ class VulnerabilityScanner:
         # Ensure score is between 0 and 10
         return max(0.0, min(10.0, score))
 
-    def determine_audit_status(self, security_score: float, vulnerabilities: List[Vulnerability]) -> AuditStatus:
+    def determine_audit_status(
+        self, security_score: float, vulnerabilities: List[Vulnerability]
+    ) -> AuditStatus:
         """
         Determine audit status based on security score and vulnerabilities.
 
@@ -471,7 +466,9 @@ class VulnerabilityScanner:
             AuditStatus enumeration
         """
         # Check for critical vulnerabilities
-        critical_vulns = [v for v in vulnerabilities if v.severity == VulnerabilitySeverity.CRITICAL]
+        critical_vulns = [
+            v for v in vulnerabilities if v.severity == VulnerabilitySeverity.CRITICAL
+        ]
         if critical_vulns:
             return AuditStatus.VULNERABLE
 
@@ -507,8 +504,7 @@ class FinancialAnalyzer:
             TokenomicsAnalysis with token information
         """
         analysis = TokenomicsAnalysis(
-            address=contract_source.address,
-            network=contract_source.network
+            address=contract_source.address, network=contract_source.network
         )
 
         source_code = contract_source.source_code.lower()
@@ -528,18 +524,20 @@ class FinancialAnalyzer:
         analysis.top_holders = [
             {"address": "0x1234567890abcdef", "percentage": 10.5},
             {"address": "0xabcdef1234567890", "percentage": 5.2},
-            {"address": "0x5678901234abcdef", "percentage": 3.1}
+            {"address": "0x5678901234abcdef", "percentage": 3.1},
         ]
         analysis.token_distribution = {
             "team": 15.0,
             "investors": 20.0,
             "public_sale": 25.0,
-            "treasury": 40.0
+            "treasury": 40.0,
         }
 
         return analysis
 
-    def analyze_defi_protocol(self, contract_source: ContractSource) -> ProtocolAnalysis:
+    def analyze_defi_protocol(
+        self, contract_source: ContractSource
+    ) -> ProtocolAnalysis:
         """
         Analyze DeFi protocol components.
 
@@ -552,9 +550,13 @@ class FinancialAnalyzer:
         source_code = contract_source.source_code.lower()
 
         # Determine protocol type
-        if ("swap" in source_code or "exchange" in source_code) and ("liquidity" in source_code):
+        if ("swap" in source_code or "exchange" in source_code) and (
+            "liquidity" in source_code
+        ):
             protocol_type = "dex"
-        elif ("lend" in source_code or "borrow" in source_code) and ("interest" in source_code):
+        elif ("lend" in source_code or "borrow" in source_code) and (
+            "interest" in source_code
+        ):
             protocol_type = "lending"
         elif "reward" in source_code or "yield" in source_code:
             protocol_type = "yield"
@@ -566,7 +568,7 @@ class FinancialAnalyzer:
         analysis = ProtocolAnalysis(
             address=contract_source.address,
             network=contract_source.network,
-            protocol_type=protocol_type
+            protocol_type=protocol_type,
         )
 
         # Mock additional data
@@ -611,7 +613,7 @@ class SmartContractAuditorAgent:
             return {
                 "error": "Could not retrieve contract source",
                 "address": address,
-                "network": network
+                "network": network,
             }
 
         # Detect contract type
@@ -630,7 +632,10 @@ class SmartContractAuditorAgent:
 
         # Generate investment recommendation
         recommendation = self.generate_investment_recommendation(
-            contract_source, vulnerability_report, tokenomics_analysis, protocol_analysis
+            contract_source,
+            vulnerability_report,
+            tokenomics_analysis,
+            protocol_analysis,
         )
 
         return {
@@ -640,7 +645,7 @@ class SmartContractAuditorAgent:
             "vulnerability_report": vulnerability_report,
             "tokenomics_analysis": tokenomics_analysis,
             "protocol_analysis": protocol_analysis,
-            "recommendation": recommendation
+            "recommendation": recommendation,
         }
 
     def generate_investment_recommendation(
@@ -648,7 +653,7 @@ class SmartContractAuditorAgent:
         contract_source: ContractSource,
         vulnerability_report: VulnerabilityReport,
         tokenomics_analysis: Optional[TokenomicsAnalysis] = None,
-        protocol_analysis: Optional[ProtocolAnalysis] = None
+        protocol_analysis: Optional[ProtocolAnalysis] = None,
     ) -> InvestmentRecommendation:
         """
         Generate an investment recommendation based on analysis.
@@ -687,11 +692,18 @@ class SmartContractAuditorAgent:
             if tokenomics_analysis.minting_allowed:
                 risk_factors.append("Unlimited minting possible")
 
-            if tokenomics_analysis.holders_count and tokenomics_analysis.holders_count > 1000:
+            if (
+                tokenomics_analysis.holders_count
+                and tokenomics_analysis.holders_count > 1000
+            ):
                 reasons.append("Wide token distribution")
 
         # Consider protocol
-        if protocol_analysis and protocol_analysis.protocol_type in ["dex", "lending", "yield"]:
+        if protocol_analysis and protocol_analysis.protocol_type in [
+            "dex",
+            "lending",
+            "yield",
+        ]:
             if protocol_analysis.apy and protocol_analysis.apy > 10.0:
                 reasons.append(f"High APY: {protocol_analysis.apy}%")
                 upside_potential = protocol_analysis.apy
@@ -726,5 +738,5 @@ class SmartContractAuditorAgent:
             downside_risk=downside_risk,
             time_horizon="medium",
             expected_apy=upside_potential if protocol_analysis else None,
-            audit_score=vulnerability_report.security_score
+            audit_score=vulnerability_report.security_score,
         )

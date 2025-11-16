@@ -2,12 +2,15 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any, Optional
 import random
+
+from quantchain.tools.social_media_scraper import SentimentScore
 
 
 class AgentState(Enum):
     """Possible states for the agent."""
+
     INITIALIZED = "initialized"
     ACTIVE = "active"
     STOPPED = "stopped"
@@ -89,7 +92,9 @@ class MemecoinVibeTraderConfig:
         self.timeframe = timeframe
 
         if not 0.0 <= min_vibe_score <= 10.0:
-            raise ValueError(f"Vibe score must be between 0 and 10, got {min_vibe_score}")
+            raise ValueError(
+                f"Vibe score must be between 0 and 10, got {min_vibe_score}"
+            )
         self.min_vibe_score = min_vibe_score
 
         self.max_position_size = max_position_size
@@ -99,7 +104,9 @@ class MemecoinVibeTraderConfig:
         # Validate timeframe
         valid_timeframes = ["1m", "5m", "15m", "1h", "4h", "1d"]
         if timeframe not in valid_timeframes:
-            raise ValueError(f"Timeframe '{timeframe}' is not supported. Use one of: {valid_timeframes}")
+            raise ValueError(
+                f"Timeframe '{timeframe}' is not supported. Use one of: {valid_timeframes}"
+            )
 
 
 class MockLLM:
@@ -110,6 +117,7 @@ class MockLLM:
 
     def generate(self, prompt: str):
         """Generate a mock response."""
+
         class MockResponse:
             def __init__(self, text, model):
                 self.text = text
@@ -162,15 +170,15 @@ class MemecoinVibeTrader:
         self.state = AgentState.INITIALIZED
         self.assessments = {}
 
-
-
     def _assess_vibe(self, token_pair: TokenPair) -> VibeAssessment:
         """Assess trading vibe of a token."""
         # Get social metrics
         if self.social_scraper:
             try:
                 print(f"DEBUG: Calling get_metrics with {token_pair.symbol}")
-                social_media_metrics = self.social_scraper.get_metrics(token_pair.symbol)
+                social_media_metrics = self.social_scraper.get_metrics(
+                    token_pair.symbol
+                )
                 print(f"DEBUG: Got metrics: {social_media_metrics}")
                 # Convert SocialMediaMetrics to SocialMetrics expected by the rest of the code
                 # For sentiment and trending, try to extract from SocialMediaMetrics if available
@@ -178,20 +186,25 @@ class MemecoinVibeTrader:
                 trending_score = 50.0  # Default neutral trending
 
                 # Check if sentiment is available in the metrics
-                if hasattr(social_media_metrics, 'sentiment_distribution') and social_media_metrics.sentiment_distribution:
+                if (
+                    hasattr(social_media_metrics, "sentiment_distribution")
+                    and social_media_metrics.sentiment_distribution
+                ):
                     # Calculate average sentiment from distribution
                     sentiment_weights = {
                         SentimentScore.VERY_NEGATIVE: 1,
                         SentimentScore.NEGATIVE: 2,
                         SentimentScore.NEUTRAL: 3,
                         SentimentScore.POSITIVE: 4,
-                        SentimentScore.VERY_POSITIVE: 5
+                        SentimentScore.VERY_POSITIVE: 5,
                     }
                     weighted_sum = sum(
                         count * sentiment_weights.get(sentiment, 3)
                         for sentiment, count in social_media_metrics.sentiment_distribution.items()
                     )
-                    total_count = sum(social_media_metrics.sentiment_distribution.values())
+                    total_count = sum(
+                        social_media_metrics.sentiment_distribution.values()
+                    )
                     if total_count > 0:
                         sentiment_score = weighted_sum / total_count * 2
 
@@ -221,9 +234,11 @@ class MemecoinVibeTrader:
 
         # Calculate vibe score (simplified)
         vibe_score = (
-            social_metrics.sentiment_score * 0.6 +
-            social_metrics.trending_score * 0.3 +
-            (100 - technical_indicators["rsi"]) / 10 * 0.1  # Low RSI is good for buying
+            social_metrics.sentiment_score * 0.6
+            + social_metrics.trending_score * 0.3
+            + (100 - technical_indicators["rsi"])
+            / 10
+            * 0.1  # Low RSI is good for buying
         )
 
         # Clamp vibe score between 0 and 10
@@ -264,9 +279,7 @@ class MemecoinVibeTrader:
             # Calculate position size based on config
             position_size = self.config.max_position_size
             self.execution_tool.place_order(
-                side="BUY",
-                symbol=symbol,
-                quantity=position_size
+                side="BUY", symbol=symbol, quantity=position_size
             )
         elif assessment.recommendation == "SELL":
             # Get current position (simplified)
@@ -274,27 +287,27 @@ class MemecoinVibeTrader:
             # Handle the case where position might be a mock
             if position:
                 # If it's a mock object, check if it has a return_value attribute
-                if hasattr(position, 'return_value'):
+                if hasattr(position, "return_value"):
                     position_value = position.return_value
                 # If it's a mock object that doesn't return anything, check if it's been called with any args
-                elif hasattr(position, 'call_args') and position.call_args is not None:
-                    position_value = position.call_args[0][0]  # First argument of the call
-                elif hasattr(position, '__int__'):
+                elif hasattr(position, "call_args") and position.call_args is not None:
+                    position_value = position.call_args[0][
+                        0
+                    ]  # First argument of the call
+                elif hasattr(position, "__int__"):
                     position_value = int(position)
-                elif hasattr(position, 'side_effect'):
+                elif hasattr(position, "side_effect"):
                     # For mock side_effect returning a value
                     try:
                         position_value = position.side_effect
-                    except:
+                    except Exception:
                         position_value = 1000  # Default for testing
                 else:
                     position_value = position
 
                 if position_value and position_value > 0:
                     self.execution_tool.place_order(
-                        side="SELL",
-                        symbol=symbol,
-                        quantity=position_value
+                        side="SELL", symbol=symbol, quantity=position_value
                     )
 
     def run_cycle(self) -> None:
@@ -315,7 +328,7 @@ class MemecoinVibeTrader:
                 base_token=base,
                 quote_token=quote,
                 address=f"0x{random.randint(1000, 9999)}",  # Mock address
-                chain="ethereum"
+                chain="ethereum",
             )
 
             # Assess the token

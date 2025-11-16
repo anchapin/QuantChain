@@ -21,7 +21,7 @@ def make_file_valid(file_path: str) -> bool:
     Returns True if changes were made, False otherwise.
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
@@ -35,10 +35,10 @@ def make_file_valid(file_path: str) -> bool:
             error_line = e.lineno or 0
 
             # Split content into lines
-            lines = content.split('\n')
+            lines = content.split("\n")
 
             # If error is about an unterminated string, fix it
-            if 'unterminated string literal' in str(e):
+            if "unterminated string literal" in str(e):
                 # Find the line with the error and add the missing quote
                 if error_line > 0 and error_line <= len(lines):
                     line = lines[error_line - 1]
@@ -52,12 +52,14 @@ def make_file_valid(file_path: str) -> bool:
                     elif double_quotes % 2 != 0:
                         lines[error_line - 1] = line + '"'
 
-                    content = '\n'.join(lines)
+                    content = "\n".join(lines)
 
             # If error is about expected except or finally block, add it
-            elif 'expected \'except\' or \'finally\' block' in str(e):
+            elif "expected 'except' or 'finally' block" in str(e):
                 # Find the try block and add an except block
-                lines_with_try = [i for i, line in enumerate(lines) if line.strip().startswith('try:')]
+                lines_with_try = [
+                    i for i, line in enumerate(lines) if line.strip().startswith("try:")
+                ]
 
                 if lines_with_try:
                     try_line = lines_with_try[-1]  # Get the last try block
@@ -67,69 +69,71 @@ def make_file_valid(file_path: str) -> bool:
                     indent = len(try_content) - len(try_content.lstrip())
 
                     # Add an except block after the try block
-                    except_line = ' ' * indent + 'except:\n'
-                    except_line += ' ' * (indent + 4) + 'pass\n'
+                    except_line = " " * indent + "except:\n"
+                    except_line += " " * (indent + 4) + "pass\n"
 
                     # Insert the except block after the try block
                     lines.insert(try_line + 1, except_line)
-                    content = '\n'.join(lines)
+                    content = "\n".join(lines)
 
             # If error is about expected ':', add it
-            elif 'expected \':\'' in str(e):
+            elif "expected ':'" in str(e):
                 if error_line > 0 and error_line <= len(lines):
                     line = lines[error_line - 1]
                     # Add a colon at the end if it's missing
-                    if line.strip() and not line.strip().endswith(':'):
-                        lines[error_line - 1] = line + ':'
-                        content = '\n'.join(lines)
+                    if line.strip() and not line.strip().endswith(":"):
+                        lines[error_line - 1] = line + ":"
+                        content = "\n".join(lines)
 
             # If error is about unmatched parentheses, fix it
-            elif 'unmatched' in str(e):
+            elif "unmatched" in str(e):
                 # Count parentheses
-                open_count = content.count('(')
-                close_count = content.count(')')
+                open_count = content.count("(")
+                close_count = content.count(")")
 
                 if open_count > close_count:
-                    content += ')' * (open_count - close_count)
+                    content += ")" * (open_count - close_count)
                 elif close_count > open_count:
                     # Remove extra closing parentheses
-                    lines = content.split('\n')
+                    lines = content.split("\n")
                     for i in range(len(lines) - 1, -1, -1):
                         if close_count <= open_count:
                             break
 
                         line = lines[i]
-                        line_close = line.count(')')
-                        line_open = line.count('(')
+                        line_close = line.count(")")
+                        line_open = line.count("(")
                         line_diff = line_close - line_open
 
                         if line_diff > 0:
                             # Remove some closing parentheses from this line
                             to_remove = min(line_diff, close_count - open_count)
                             # Find the positions of closing parentheses
-                            positions = [pos for pos, char in enumerate(line) if char == ')']
+                            positions = [
+                                pos for pos, char in enumerate(line) if char == ")"
+                            ]
 
                             # Remove the last 'to_remove' closing parentheses
                             for pos in positions[-to_remove:]:
-                                line = line[:pos] + line[pos+1:]
+                                line = line[:pos] + line[pos + 1 :]
 
                             lines[i] = line
                             close_count -= to_remove
 
-                    content = '\n'.join(lines)
+                    content = "\n".join(lines)
 
         # Try parsing again
         try:
             ast.parse(content)
             # If we get here, the file is now valid
             if content != original_content:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
                 return True
         except SyntaxError:
             # If there are still syntax errors, let's try a more drastic approach
             # We'll try to fix the file by adding minimal content
-            lines = content.split('\n')
+            lines = content.split("\n")
             new_lines = []
             in_try = False
             in_class = False
@@ -145,25 +149,26 @@ def make_file_valid(file_path: str) -> bool:
                     continue
 
                 # Check if this line starts a block
-                if stripped.startswith('try:'):
+                if stripped.startswith("try:"):
                     in_try = True
                     block_indent = len(line) - len(stripped)
                     new_lines.append(line)
-                elif stripped.startswith('class '):
+                elif stripped.startswith("class "):
                     in_class = True
                     block_indent = len(line) - len(stripped)
                     new_lines.append(line)
-                elif stripped.startswith('def '):
+                elif stripped.startswith("def "):
                     in_def = True
                     block_indent = len(line) - len(stripped)
                     new_lines.append(line)
-                elif stripped.startswith('except') or stripped.startswith('finally'):
+                elif stripped.startswith("except") or stripped.startswith("finally"):
                     in_try = False
                     new_lines.append(line)
                 else:
                     # Check if this is an indented line that follows a block starter
-                    if (len(line) - len(stripped) > block_indent and
-                        (in_try or in_class or in_def)):
+                    if len(line) - len(stripped) > block_indent and (
+                        in_try or in_class or in_def
+                    ):
                         new_lines.append(line)
                     else:
                         # This is a regular line
@@ -171,44 +176,54 @@ def make_file_valid(file_path: str) -> bool:
                         # Reset block states if we're at the same or lower indentation
                         if in_try and len(line) - len(stripped) <= block_indent:
                             # Add an except block
-                            new_lines.append(' ' * block_indent + 'except:')
-                            new_lines.append(' ' * (block_indent + 4) + 'pass')
+                            new_lines.append(" " * block_indent + "except:")
+                            new_lines.append(" " * (block_indent + 4) + "pass")
                             in_try = False
-                        elif in_class and len(line) - len(stripped) <= block_indent and i == len(lines) - 1:
+                        elif (
+                            in_class
+                            and len(line) - len(stripped) <= block_indent
+                            and i == len(lines) - 1
+                        ):
                             # Last line and we're still in a class, add pass
-                            new_lines.append(' ' * block_indent + 'pass')
+                            new_lines.append(" " * block_indent + "pass")
                             in_class = False
-                        elif in_def and len(line) - len(stripped) <= block_indent and i == len(lines) - 1:
+                        elif (
+                            in_def
+                            and len(line) - len(stripped) <= block_indent
+                            and i == len(lines) - 1
+                        ):
                             # Last line and we're still in a function, add pass
-                            new_lines.append(' ' * block_indent + 'pass')
+                            new_lines.append(" " * block_indent + "pass")
                             in_def = False
 
             # If we ended in a try block without an except, add one
             if in_try:
-                new_lines.append(' ' * block_indent + 'except:')
-                new_lines.append(' ' * (block_indent + 4) + 'pass')
+                new_lines.append(" " * block_indent + "except:")
+                new_lines.append(" " * (block_indent + 4) + "pass")
 
             # If we ended in a class or function without content, add pass
             if in_class:
-                new_lines.append(' ' * block_indent + 'pass')
+                new_lines.append(" " * block_indent + "pass")
 
             if in_def:
-                new_lines.append(' ' * block_indent + 'pass')
+                new_lines.append(" " * block_indent + "pass")
 
-            content = '\n'.join(new_lines)
+            content = "\n".join(new_lines)
 
             # One final check for syntax
             try:
                 ast.parse(content)
                 if content != original_content:
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    with open(file_path, "w", encoding="utf-8") as f:
                         f.write(content)
                     return True
             except SyntaxError:
                 # If there are still syntax errors, let's add a simpler fix
                 # Replace the content with a simple valid Python file
-                simple_content = '"""Fixed file - original content had syntax errors"""\n\npass\n'
-                with open(file_path, 'w', encoding='utf-8') as f:
+                simple_content = (
+                    '"""Fixed file - original content had syntax errors"""\n\npass\n'
+                )
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(simple_content)
                 return True
 
@@ -288,7 +303,7 @@ def main():
 
         for file_path in python_files:
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
                 ast.parse(content)
             except SyntaxError:

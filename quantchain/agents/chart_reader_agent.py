@@ -1,27 +1,28 @@
 """Chart Reader Agent for analyzing financial charts and patterns."""
 
-import os
 from datetime import datetime
 from enum import Enum
-from typing import List, Dict, Any, Optional, Union, Tuple
+from typing import List, Dict, Any, Optional
 import numpy as np
 
 try:
     import pandas as pd
+
     _PANDAS_AVAILABLE = True
 except ImportError:
     _PANDAS_AVAILABLE = False
 
 try:
-    import matplotlib.pyplot as plt
     import matplotlib
-    matplotlib.use('Agg')  # Use non-interactive backend
+
+    matplotlib.use("Agg")  # Use non-interactive backend
     _MATPLOTLIB_AVAILABLE = True
 except ImportError:
     _MATPLOTLIB_AVAILABLE = False
 
 try:
     import mplfinance as mpf
+
     _MPF_AVAILABLE = True
 except ImportError:
     _MPF_AVAILABLE = False
@@ -29,6 +30,7 @@ except ImportError:
 
 class TimeFrame(Enum):
     """Supported timeframes for chart analysis."""
+
     MINUTE_1 = "1m"
     MINUTE_5 = "5m"
     MINUTE_15 = "15m"
@@ -62,13 +64,23 @@ class ChartReaderAgentConfig:
         self.model_name = model_name
         self.max_tokens = max_tokens
         self.temperature = temperature
-        self.supported_timeframes = supported_timeframes or [tf.value for tf in TimeFrame]
+        self.supported_timeframes = supported_timeframes or [
+            tf.value for tf in TimeFrame
+        ]
         self.enabled_patterns = enabled_patterns or [
-            "head_and_shoulders", "double_top", "double_bottom",
-            "triangle", "wedge", "flag"
+            "head_and_shoulders",
+            "double_top",
+            "double_bottom",
+            "triangle",
+            "wedge",
+            "flag",
         ]
         self.enabled_indicators = enabled_indicators or [
-            "SMA", "EMA", "RSI", "MACD", "BB"
+            "SMA",
+            "EMA",
+            "RSI",
+            "MACD",
+            "BB",
         ]
 
 
@@ -85,7 +97,14 @@ class OHLCVData:
         volumes: List[float],
         symbol: Optional[str] = None,
     ):
-        if not (len(timestamps) == len(opens) == len(highs) == len(lows) == len(closes) == len(volumes)):
+        if not (
+            len(timestamps)
+            == len(opens)
+            == len(highs)
+            == len(lows)
+            == len(closes)
+            == len(volumes)
+        ):
             raise ValueError("All data arrays must have the same length")
 
         self.timestamps = timestamps
@@ -101,14 +120,16 @@ class OHLCVData:
         if not _PANDAS_AVAILABLE:
             return None
 
-        return pd.DataFrame({
-            'timestamp': self.timestamps,
-            'open': self.opens,
-            'high': self.highs,
-            'low': self.lows,
-            'close': self.closes,
-            'volume': self.volumes
-        })
+        return pd.DataFrame(
+            {
+                "timestamp": self.timestamps,
+                "open": self.opens,
+                "high": self.highs,
+                "low": self.lows,
+                "close": self.closes,
+                "volume": self.volumes,
+            }
+        )
 
 
 class TechnicalIndicator:
@@ -140,14 +161,11 @@ class TechnicalIndicatorCalculator:
             if i < period - 1:
                 sma_values.append(None)
             else:
-                window = closes[i-period+1:i+1]
+                window = closes[i - period + 1 : i + 1]
                 sma_values.append(float(np.mean(window)))
 
         return TechnicalIndicator(
-            name="SMA",
-            params={"period": period},
-            values=sma_values,
-            signal=None
+            name="SMA", params={"period": period}, values=sma_values, signal=None
         )
 
     @staticmethod
@@ -170,10 +188,7 @@ class TechnicalIndicatorCalculator:
             ema_values = [None] * len(closes)
 
         return TechnicalIndicator(
-            name="EMA",
-            params={"period": period},
-            values=ema_values,
-            signal=None
+            name="EMA", params={"period": period}, values=ema_values, signal=None
         )
 
     @staticmethod
@@ -200,12 +215,12 @@ class TechnicalIndicatorCalculator:
                 avg_loss[i] = np.mean(losses[:period])
             else:
                 # Subsequent values use Wilder's smoothing
-                prev_avg_gain = avg_gain[i-1]
-                prev_avg_loss = avg_loss[i-1]
+                prev_avg_gain = avg_gain[i - 1]
+                prev_avg_loss = avg_loss[i - 1]
 
                 # gains[i-1] because gains array is one shorter than closes
-                current_gain = gains[i-1] if i-1 < len(gains) else 0
-                current_loss = losses[i-1] if i-1 < len(losses) else 0
+                current_gain = gains[i - 1] if i - 1 < len(gains) else 0
+                current_loss = losses[i - 1] if i - 1 < len(losses) else 0
 
                 avg_gain[i] = (prev_avg_gain * (period - 1) + current_gain) / period
                 avg_loss[i] = (prev_avg_loss * (period - 1) + current_loss) / period
@@ -213,7 +228,7 @@ class TechnicalIndicatorCalculator:
             # Calculate RSI
             if avg_gain[i] is not None and avg_loss[i] is not None:
                 if avg_loss[i] == 0:
-                    rs = float('inf')
+                    rs = float("inf")
                 else:
                     rs = avg_gain[i] / avg_loss[i]
 
@@ -221,10 +236,7 @@ class TechnicalIndicatorCalculator:
                 rsi_values[i] = rsi
 
         return TechnicalIndicator(
-            name="RSI",
-            params={"period": period},
-            values=rsi_values,
-            signal=None
+            name="RSI", params={"period": period}, values=rsi_values, signal=None
         )
 
 
@@ -293,15 +305,17 @@ class ChartRenderer:
     ) -> ChartImage:
         """Render a candlestick chart with optional indicators."""
         if not _MATPLOTLIB_AVAILABLE or not _MPF_AVAILABLE:
-            raise ImportError("matplotlib and mplfinance are required for chart rendering")
+            raise ImportError(
+                "matplotlib and mplfinance are required for chart rendering"
+            )
 
         df = ohlcv_data.to_dataframe()
         if df is None:
             raise ImportError("pandas is required for chart rendering")
 
         # Convert DataFrame for mplfinance
-        df.index = pd.to_datetime(df['timestamp'])
-        df = df[['open', 'high', 'low', 'close', 'volume']]
+        df.index = pd.to_datetime(df["timestamp"])
+        df = df[["open", "high", "low", "close", "volume"]]
 
         # Prepare plots for indicators
         additional_plots = []
@@ -312,37 +326,44 @@ class ChartRenderer:
                 if indicator.name == "SMA" or indicator.name == "EMA":
                     df[indicator.name] = indicator.values
                     additional_plots.append(
-                        mpf.make_addplot(df[indicator.name], type='line', color='orange')
+                        mpf.make_addplot(
+                            df[indicator.name], type="line", color="orange"
+                        )
                     )
-                    indicators_applied.append(f"{indicator.name}({indicator.params.get('period', '?')})")
+                    indicators_applied.append(
+                        f"{indicator.name}({indicator.params.get('period', '?')})"
+                    )
 
                 elif indicator.name == "RSI":
                     # Create a separate panel for RSI
-                    rsi_df = pd.DataFrame({'RSI': indicator.values})
+                    rsi_df = pd.DataFrame({"RSI": indicator.values})
                     rsi_df.index = pd.to_datetime(ohlcv_data.timestamps)
 
                     additional_plots.append(
-                        mpf.make_addplot(rsi_df['RSI'], panel=1, color='purple')
+                        mpf.make_addplot(rsi_df["RSI"], panel=1, color="purple")
                     )
-                    indicators_applied.append(f"RSI({indicator.params.get('period', '?')})")
+                    indicators_applied.append(
+                        f"RSI({indicator.params.get('period', '?')})"
+                    )
 
         # Create the plot
         fig, axes = mpf.plot(
             df,
-            type='candle',
-            style='yahoo',
+            type="candle",
+            style="yahoo",
             title=f"{symbol} - {timeframe}",
-            ylabel='Price',
+            ylabel="Price",
             volume=True,
             addplot=additional_plots,
             figsize=(12, 8),
-            returnfig=True
+            returnfig=True,
         )
 
         # Convert to bytes
         from io import BytesIO
+
         buffer = BytesIO()
-        fig.savefig(buffer, format='png')
+        fig.savefig(buffer, format="png")
         buffer.seek(0)
         image_data = buffer.read()
         buffer.close()
@@ -351,7 +372,7 @@ class ChartRenderer:
             symbol=symbol,
             timeframe=timeframe,
             image_data=image_data,
-            indicators_applied=indicators_applied
+            indicators_applied=indicators_applied,
         )
 
 
@@ -361,7 +382,7 @@ class PatternRecognizer:
     def __init__(
         self,
         config: Optional[ChartReaderAgentConfig] = None,
-        llm_provider: Optional[Any] = None
+        llm_provider: Optional[Any] = None,
     ):
         self.config = config or ChartReaderAgentConfig()
         self.llm_provider = llm_provider
@@ -374,7 +395,7 @@ class PatternRecognizer:
                 "patterns": ["mock_pattern"],
                 "sentiment": "neutral",
                 "confidence": 50,
-                "recommended_action": "HOLD"
+                "recommended_action": "HOLD",
             }
 
         # In a real implementation, this would call the LLM vision API
@@ -383,7 +404,7 @@ class PatternRecognizer:
             "patterns": ["mock_pattern"],
             "sentiment": "neutral",
             "confidence": 50,
-            "recommended_action": "HOLD"
+            "recommended_action": "HOLD",
         }
 
     def analyze_chart(
@@ -403,7 +424,11 @@ class PatternRecognizer:
         # Simple pattern detection based on indicator values
         if indicators:
             for indicator in indicators:
-                if indicator.name == "RSI" and indicator.values and indicator.values[-1] is not None:
+                if (
+                    indicator.name == "RSI"
+                    and indicator.values
+                    and indicator.values[-1] is not None
+                ):
                     rsi = indicator.values[-1]
                     if rsi > 70:
                         patterns.append("RSI Overbought")
@@ -444,7 +469,7 @@ class PatternRecognizer:
             confidence=confidence,
             overall_sentiment=sentiment,
             recommended_action=action,
-            reasoning=f"Detected patterns: {', '.join(patterns)}"
+            reasoning=f"Detected patterns: {', '.join(patterns)}",
         )
 
 
@@ -464,10 +489,7 @@ class ChartReaderAgent:
         self.pattern_recognizer = PatternRecognizer(self.config, self.llm_provider)
 
     def _get_historical_data(
-        self,
-        symbol: str,
-        timeframe: str,
-        limit: int = 100
+        self, symbol: str, timeframe: str, limit: int = 100
     ) -> OHLCVData:
         """Get historical OHLCV data for a symbol."""
         # This is a mock implementation
@@ -514,13 +536,11 @@ class ChartReaderAgent:
             lows=lows,
             closes=closes,
             volumes=volumes,
-            symbol=symbol
+            symbol=symbol,
         )
 
     def _calculate_indicators(
-        self,
-        ohlcv_data: OHLCVData,
-        indicator_types: Optional[List[str]] = None
+        self, ohlcv_data: OHLCVData, indicator_types: Optional[List[str]] = None
     ) -> List[TechnicalIndicator]:
         """Calculate technical indicators for the OHLCV data."""
         indicators = []
@@ -544,7 +564,9 @@ class ChartReaderAgent:
         indicators: List[TechnicalIndicator],
     ) -> PatternAnalysis:
         """Analyze a chart using the pattern recognizer."""
-        return self.pattern_recognizer.analyze_chart(chart_image, ohlcv_data, indicators)
+        return self.pattern_recognizer.analyze_chart(
+            chart_image, ohlcv_data, indicators
+        )
 
     def analyze_symbol(
         self,

@@ -1,12 +1,14 @@
 """
 Pytest configuration and shared fixtures for backtesting tests.
 """
-
 from datetime import datetime
+
 from unittest.mock import MagicMock
+
 import numpy as np
 import pandas as pd
 import pytest
+
 from quantchain.backtesting.engine import BacktestConfig
 
 
@@ -279,6 +281,7 @@ def mock_strategy():
 @pytest.fixture
 def simple_buy_hold_strategy():
     """Simple buy-and-hold strategy for testing."""
+
     class BuyHoldStrategy:
         def __init__(self) -> None:
             self.bought = False
@@ -298,6 +301,7 @@ def simple_buy_hold_strategy():
 @pytest.fixture
 def moving_average_strategy():
     """Simple moving average crossover strategy for testing."""
+
     class MovingAverageStrategy:
         def __init__(self, short_window=10, long_window=20):
             self.short_window = short_window

@@ -62,7 +62,11 @@ class TestDexscreenerDataConnector:
                 "priceNative": "0.0004",
                 "priceUsd": "2500.50",
                 "volume": {"h24": "1000000.0", "h6h": "500000.0", "h1h": "100000.0"},
-                "liquidity": {"usd": "5000000.0", "base": "2000.0", "quote": "5000000.0"},
+                "liquidity": {
+                    "usd": "5000000.0",
+                    "base": "2000.0",
+                    "quote": "5000000.0",
+                },
                 "fdv": "2500000000.0",
                 "marketCap": "2400000000.0",
             }
@@ -143,7 +147,9 @@ class TestDexscreenerDataConnector:
         assert connector.retry_delay == 2.0
 
     @patch("quantchain.connectors.dexscreener_connector.requests.get")
-    def test_make_request_success(self, mock_get, connector: DexscreenerDataConnector) -> None:
+    def test_make_request_success(
+        self, mock_get, connector: DexscreenerDataConnector
+    ) -> None:
         """Test successful API request."""
         mock_response = MagicMock()
         mock_response.json.return_value = {"data": "test"}
@@ -154,18 +160,25 @@ class TestDexscreenerDataConnector:
 
         assert result == {"data": "test"}
         mock_get.assert_called_once_with(
-            "https://api.dexscreener.com/latest/dex/test/endpoint", params={"param": "value"}
+            "https://api.dexscreener.com/latest/dex/test/endpoint",
+            params={"param": "value"},
         )
 
     @patch("quantchain.connectors.dexscreener_connector.requests.get")
     @patch("time.sleep")
-    def test_make_request_retry_on_failure(self, mock_sleep, mock_get, connector: DexscreenerDataConnector) -> None:
+    def test_make_request_retry_on_failure(
+        self, mock_sleep, mock_get, connector: DexscreenerDataConnector
+    ) -> None:
         """Test request retry on failure."""
         mock_response = MagicMock()
-        mock_response.raise_for_status.side_effect = requests.exceptions.RequestException("Network error")
+        mock_response.raise_for_status.side_effect = (
+            requests.exceptions.RequestException("Network error")
+        )
         mock_get.return_value = mock_response
 
-        with pytest.raises(DataSourceError, match="Failed to fetch data from Dexscreener"):
+        with pytest.raises(
+            DataSourceError, match="Failed to fetch data from Dexscreener"
+        ):
             connector._make_request("test/endpoint", {})
 
         # Should have attempted 3 times
@@ -174,7 +187,9 @@ class TestDexscreenerDataConnector:
         assert mock_sleep.call_count == 2
 
     @patch("quantchain.connectors.dexscreener_connector.requests.get")
-    def test_get_token_info(self, mock_get, connector: DexscreenerDataConnector, sample_token_info: dict) -> None:
+    def test_get_token_info(
+        self, mock_get, connector: DexscreenerDataConnector, sample_token_info: dict
+    ) -> None:
         """Test get_token_info method."""
         mock_response = MagicMock()
         mock_response.json.return_value = sample_token_info
@@ -185,11 +200,14 @@ class TestDexscreenerDataConnector:
 
         assert result == sample_token_info
         mock_get.assert_called_once_with(
-            "https://api.dexscreener.com/latest/dex/tokens", params={"address": "0x1234567890abcdef"}
+            "https://api.dexscreener.com/latest/dex/tokens",
+            params={"address": "0x1234567890abcdef"},
         )
 
     @patch("quantchain.connectors.dexscreener_connector.requests.get")
-    def test_get_token_price_with_chain_id(self, mock_get, connector: DexscreenerDataConnector) -> None:
+    def test_get_token_price_with_chain_id(
+        self, mock_get, connector: DexscreenerDataConnector
+    ) -> None:
         """Test get_token_price with chain_id parameter."""
         mock_response = MagicMock()
         mock_response.json.return_value = {"price": "2500.50"}
@@ -205,7 +223,9 @@ class TestDexscreenerDataConnector:
         )
 
     @patch("quantchain.connectors.dexscreener_connector.requests.get")
-    def test_get_token_price_without_chain_id(self, mock_get, connector: DexscreenerDataConnector) -> None:
+    def test_get_token_price_without_chain_id(
+        self, mock_get, connector: DexscreenerDataConnector
+    ) -> None:
         """Test get_token_price without chain_id parameter."""
         mock_response = MagicMock()
         mock_response.json.return_value = {"price": "2500.50"}
@@ -224,7 +244,9 @@ class TestDexscreenerDataConnector:
     def test_search_tokens(self, mock_get, connector: DexscreenerDataConnector) -> None:
         """Test searching tokens."""
         mock_response = MagicMock()
-        mock_response.json.return_value = {"tokens": [{"symbol": "WETH"}, {"symbol": "WBTC"}]}
+        mock_response.json.return_value = {
+            "tokens": [{"symbol": "WETH"}, {"symbol": "WBTC"}]
+        }
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
@@ -239,14 +261,20 @@ class TestDexscreenerDataConnector:
         )
 
     @patch("quantchain.connectors.dexscreener_connector.requests.get")
-    def test_get_pairs_for_token(self, mock_get, connector: DexscreenerDataConnector) -> None:
+    def test_get_pairs_for_token(
+        self, mock_get, connector: DexscreenerDataConnector
+    ) -> None:
         """Test get_pairs_for_token method."""
         mock_response = MagicMock()
-        mock_response.json.return_value = {"pairs": [{"pairAddress": "0x123"}, {"pairAddress": "0x456"}]}
+        mock_response.json.return_value = {
+            "pairs": [{"pairAddress": "0x123"}, {"pairAddress": "0x456"}]
+        }
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
-        result = connector.get_pairs_for_token("0x1234567890abcdef", chain_id="ethereum")
+        result = connector.get_pairs_for_token(
+            "0x1234567890abcdef", chain_id="ethereum"
+        )
 
         assert result == [{"pairAddress": "0x123"}, {"pairAddress": "0x456"}]
         mock_get.assert_called_once_with(
@@ -255,7 +283,9 @@ class TestDexscreenerDataConnector:
         )
 
     @patch("quantchain.connectors.dexscreener_connector.requests.get")
-    def test_get_pair_info(self, mock_get, connector: DexscreenerDataConnector, sample_pair_info: dict) -> None:
+    def test_get_pair_info(
+        self, mock_get, connector: DexscreenerDataConnector, sample_pair_info: dict
+    ) -> None:
         """Test get_pair_info method."""
         mock_response = MagicMock()
         mock_response.json.return_value = sample_pair_info
@@ -267,18 +297,29 @@ class TestDexscreenerDataConnector:
         assert result == sample_pair_info
         mock_get.assert_called_once_with(
             "https://api.dexscreener.com/latest/dex/pair",
-            params={"chainId": "ethereum", "baseTokenAddress": "0x123", "quoteTokenAddress": "0x456"},
+            params={
+                "chainId": "ethereum",
+                "baseTokenAddress": "0x123",
+                "quoteTokenAddress": "0x456",
+            },
         )
 
     @patch("quantchain.connectors.dexscreener_connector.requests.get")
-    def test_get_historical_data(self, mock_get, connector: DexscreenerDataConnector, sample_historical_data: dict) -> None:
+    def test_get_historical_data(
+        self,
+        mock_get,
+        connector: DexscreenerDataConnector,
+        sample_historical_data: dict,
+    ) -> None:
         """Test get_historical_data method."""
         mock_response = MagicMock()
         mock_response.json.return_value = sample_historical_data
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
-        result = connector.get_historical_data("ethereum", "0x123", "0x456", timeframe="1h", limit=100)
+        result = connector.get_historical_data(
+            "ethereum", "0x123", "0x456", timeframe="1h", limit=100
+        )
 
         assert result == [
             {
@@ -310,7 +351,9 @@ class TestDexscreenerDataConnector:
         )
 
     @patch("quantchain.connectors.dexscreener_connector.requests.get")
-    def test_get_historical_data_empty_response(self, mock_get, connector: DexscreenerDataConnector) -> None:
+    def test_get_historical_data_empty_response(
+        self, mock_get, connector: DexscreenerDataConnector
+    ) -> None:
         """Test get_historical_data with empty response."""
         mock_response = MagicMock()
         mock_response.json.return_value = {}
@@ -332,7 +375,9 @@ class TestDexscreenerDataConnector:
         )
 
     @patch("quantchain.connectors.dexscreener_connector.requests.get")
-    def test_get_new_token_pairs_with_filters(self, mock_get, connector: DexscreenerDataConnector, sample_new_tokens: dict) -> None:
+    def test_get_new_token_pairs_with_filters(
+        self, mock_get, connector: DexscreenerDataConnector, sample_new_tokens: dict
+    ) -> None:
         """Test get_new_token_pairs with filters."""
         mock_response = MagicMock()
         mock_response.json.return_value = sample_new_tokens
@@ -375,7 +420,9 @@ class TestDexscreenerDataConnector:
         )
 
     @patch("quantchain.connectors.dexscreener_connector.requests.get")
-    def test_get_new_token_pairs_without_filters(self, mock_get, connector: DexscreenerDataConnector) -> None:
+    def test_get_new_token_pairs_without_filters(
+        self, mock_get, connector: DexscreenerDataConnector
+    ) -> None:
         """Test get_new_token_pairs without filters."""
         mock_response = MagicMock()
         mock_response.json.return_value = {}
@@ -396,7 +443,9 @@ class TestDexscreenerDataConnector:
         )
 
     @patch("quantchain.connectors.dexscreener_connector.requests.get")
-    def test_get_new_token_pairs_empty_response(self, mock_get, connector: DexscreenerDataConnector) -> None:
+    def test_get_new_token_pairs_empty_response(
+        self, mock_get, connector: DexscreenerDataConnector
+    ) -> None:
         """Test get_new_token_pairs with empty response."""
         mock_response = MagicMock()
         mock_response.json.return_value = {}
@@ -408,7 +457,9 @@ class TestDexscreenerDataConnector:
         assert result == []
 
     @patch("quantchain.connectors.dexscreener_connector.requests.get")
-    def test_get_trending_pairs(self, mock_get, connector: DexscreenerDataConnector, sample_trending_pairs: dict) -> None:
+    def test_get_trending_pairs(
+        self, mock_get, connector: DexscreenerDataConnector, sample_trending_pairs: dict
+    ) -> None:
         """Test get_trending_pairs method."""
         mock_response = MagicMock()
         mock_response.json.return_value = sample_trending_pairs
@@ -435,7 +486,9 @@ class TestDexscreenerDataConnector:
         )
 
     @patch("quantchain.connectors.dexscreener_connector.requests.get")
-    def test_get_trending_pairs_empty_response(self, mock_get, connector: DexscreenerDataConnector) -> None:
+    def test_get_trending_pairs_empty_response(
+        self, mock_get, connector: DexscreenerDataConnector
+    ) -> None:
         """Test get_trending_pairs with empty response."""
         mock_response = MagicMock()
         mock_response.json.return_value = {}
@@ -447,7 +500,9 @@ class TestDexscreenerDataConnector:
         assert result == []
 
     @patch("quantchain.connectors.dexscreener_connector.requests.get")
-    def test_get_trending_pairs_zero_limit(self, mock_get, connector: DexscreenerDataConnector) -> None:
+    def test_get_trending_pairs_zero_limit(
+        self, mock_get, connector: DexscreenerDataConnector
+    ) -> None:
         """Test get_trending_pairs with zero limit."""
         mock_response = MagicMock()
         mock_response.json.return_value = {}
@@ -460,12 +515,14 @@ class TestDexscreenerDataConnector:
 
     def test_different_timeframes(self, connector: DexscreenerDataConnector) -> None:
         """Test that different timeframes are accepted."""
-        with patch.object(connector, '_make_request') as mock_request:
+        with patch.object(connector, "_make_request") as mock_request:
             mock_request.return_value = {"candles": []}
 
             # Test valid timeframes
             for timeframe in ["1m", "5m", "15m", "1h", "4h", "1d"]:
-                connector.get_historical_data("ethereum", "0x123", "0x456", timeframe=timeframe)
+                connector.get_historical_data(
+                    "ethereum", "0x123", "0x456", timeframe=timeframe
+                )
                 mock_request.assert_called()
                 args, kwargs = mock_request.call_args
                 assert args[0] == "candles"
@@ -473,7 +530,7 @@ class TestDexscreenerDataConnector:
 
     def test_different_sort_options(self, connector: DexscreenerDataConnector) -> None:
         """Test that different sort options are accepted."""
-        with patch.object(connector, '_make_request') as mock_request:
+        with patch.object(connector, "_make_request") as mock_request:
             mock_request.return_value = {"tokens": []}
 
             # Test valid sort options
@@ -486,7 +543,7 @@ class TestDexscreenerDataConnector:
 
     def test_different_order_options(self, connector: DexscreenerDataConnector) -> None:
         """Test that different order options are accepted."""
-        with patch.object(connector, '_make_request') as mock_request:
+        with patch.object(connector, "_make_request") as mock_request:
             mock_request.return_value = {"tokens": []}
 
             # Test valid order options
@@ -498,22 +555,30 @@ class TestDexscreenerDataConnector:
                 assert args[1]["order"] == order
 
     @patch("quantchain.connectors.dexscreener_connector.requests.get")
-    def test_request_exception_handling(self, mock_get, connector: DexscreenerDataConnector) -> None:
+    def test_request_exception_handling(
+        self, mock_get, connector: DexscreenerDataConnector
+    ) -> None:
         """Test that request exceptions are properly handled."""
         mock_get.side_effect = requests.exceptions.ConnectionError("Connection failed")
 
-        with pytest.raises(DataSourceError, match="Failed to fetch data from Dexscreener"):
+        with pytest.raises(
+            DataSourceError, match="Failed to fetch data from Dexscreener"
+        ):
             connector.get_token_info("0x123")
 
     @patch("quantchain.connectors.dexscreener_connector.requests.get")
-    def test_json_exception_handling(self, mock_get, connector: DexscreenerDataConnector) -> None:
+    def test_json_exception_handling(
+        self, mock_get, connector: DexscreenerDataConnector
+    ) -> None:
         """Test that JSON exceptions are properly handled."""
         mock_response = MagicMock()
         mock_response.raise_for_status.return_value = None
         mock_response.json.side_effect = json.JSONDecodeError("Invalid JSON", "", 0)
         mock_get.return_value = mock_response
 
-        with pytest.raises(DataSourceError, match="Failed to fetch data from Dexscreener"):
+        with pytest.raises(
+            DataSourceError, match="Failed to fetch data from Dexscreener"
+        ):
             connector.get_token_info("0x123")
 
     def test_empty_string_parameters(self, connector: DexscreenerDataConnector) -> None:
@@ -562,10 +627,14 @@ class TestDexscreenerDataConnector:
             assert args[1]["minVolume24h"] == -2000.0
 
     @patch("quantchain.connectors.dexscreener_connector.requests.get")
-    def test_large_number_of_requests(self, mock_get, connector: DexscreenerDataConnector) -> None:
+    def test_large_number_of_requests(
+        self, mock_get, connector: DexscreenerDataConnector
+    ) -> None:
         """Test handling of a large number of requests."""
         mock_response = MagicMock()
-        mock_response.json.return_value = {"tokens": [{"symbol": f"TOKEN{i}"} for i in range(1000)]}
+        mock_response.json.return_value = {
+            "tokens": [{"symbol": f"TOKEN{i}"} for i in range(1000)]
+        }
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
@@ -580,7 +649,9 @@ class TestDexscreenerDataConnector:
         )
 
     @patch("quantchain.connectors.dexscreener_connector.requests.get")
-    def test_special_characters_in_address(self, mock_get, connector: DexscreenerDataConnector) -> None:
+    def test_special_characters_in_address(
+        self, mock_get, connector: DexscreenerDataConnector
+    ) -> None:
         """Test handling of special characters in token addresses."""
         mock_response = MagicMock()
         mock_response.json.return_value = {"price": "2500.50"}

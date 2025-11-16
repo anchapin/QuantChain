@@ -1,17 +1,10 @@
 """Dexscreener data connector for QuantChain."""
 
-import os
 import time
 import requests
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Union, Any
-from enum import Enum
+from typing import Dict, List, Optional, Any
 
-from quantchain.core.exceptions import (
-    AuthenticationError,
-    DataSourceError,
-    SymbolNotFoundError,
-)
+from quantchain.core.exceptions import DataSourceError
 
 
 class DexscreenerDataConnector:
@@ -44,7 +37,9 @@ class DexscreenerDataConnector:
                 return response.json()
             except Exception as e:
                 if attempt == self.retry_count - 1:
-                    raise DataSourceError(f"Failed to fetch data from Dexscreener: {str(e)}")
+                    raise DataSourceError(
+                        f"Failed to fetch data from Dexscreener: {str(e)}"
+                    )
                 time.sleep(self.retry_delay)
 
         return {}  # This line shouldn't be reached
@@ -61,7 +56,9 @@ class DexscreenerDataConnector:
         """
         return self._make_request("tokens", {"address": address})
 
-    def get_token_price(self, address: str, chain_id: str = "ethereum") -> Dict[str, Any]:
+    def get_token_price(
+        self, address: str, chain_id: str = "ethereum"
+    ) -> Dict[str, Any]:
         """
         Get current price of a token.
 
@@ -91,7 +88,9 @@ class DexscreenerDataConnector:
         """
         return self._make_request("tokens/search", {"q": query, "limit": limit})
 
-    def get_pairs_for_token(self, address: str, chain_id: str = "ethereum") -> List[Dict[str, Any]]:
+    def get_pairs_for_token(
+        self, address: str, chain_id: str = "ethereum"
+    ) -> List[Dict[str, Any]]:
         """
         Get all trading pairs for a token.
 
@@ -109,7 +108,9 @@ class DexscreenerDataConnector:
         result = self._make_request("pairs", params)
         return result.get("pairs", [])
 
-    def get_pair_info(self, chain_id: str, base_token_address: str, quote_token_address: str) -> Dict[str, Any]:
+    def get_pair_info(
+        self, chain_id: str, base_token_address: str, quote_token_address: str
+    ) -> Dict[str, Any]:
         """
         Get information about a specific trading pair.
 
@@ -123,7 +124,11 @@ class DexscreenerDataConnector:
         """
         return self._make_request(
             "pair",
-            {"chainId": chain_id, "baseTokenAddress": base_token_address, "quoteTokenAddress": quote_token_address}
+            {
+                "chainId": chain_id,
+                "baseTokenAddress": base_token_address,
+                "quoteTokenAddress": quote_token_address,
+            },
         )
 
     def get_historical_data(
@@ -152,7 +157,7 @@ class DexscreenerDataConnector:
             "baseTokenAddress": base_token_address,
             "quoteTokenAddress": quote_token_address,
             "interval": timeframe,
-            "limit": limit
+            "limit": limit,
         }
 
         result = self._make_request("candles", params)
@@ -181,12 +186,7 @@ class DexscreenerDataConnector:
         Returns:
             List of new token pairs
         """
-        params = {
-            "chainId": chain_id,
-            "sort": sort_by,
-            "order": order,
-            "limit": limit
-        }
+        params = {"chainId": chain_id, "sort": sort_by, "order": order, "limit": limit}
 
         if min_liquidity is not None:
             params["minLiquidity"] = min_liquidity
@@ -211,10 +211,7 @@ class DexscreenerDataConnector:
         Returns:
             List of trending token pairs
         """
-        params = {
-            "chainId": chain_id,
-            "limit": limit
-        }
+        params = {"chainId": chain_id, "limit": limit}
 
         result = self._make_request("trending/pairs", params)
         return result.get("pairs", [])

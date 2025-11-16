@@ -74,7 +74,7 @@ class TestQuantChainConfig:
             agent_type="dict_test",
             temperature=0.6,
             enable_rag=True,
-            log_level=LogLevel.DEBUG
+            log_level=LogLevel.DEBUG,
         )
 
         config_dict = config.to_dict()
@@ -93,7 +93,7 @@ class TestQuantChainConfig:
             temperature=0.7,
             max_tokens=2048,
             max_retries=3,
-            retry_delay=1.0
+            retry_delay=1.0,
         )
 
         errors = config.validate()

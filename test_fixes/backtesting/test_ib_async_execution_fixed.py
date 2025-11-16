@@ -13,6 +13,7 @@ try:
         PositionError,
         PositionManager,
     )
+
     LANGGRAPH_AVAILABLE = True
 except ImportError as e:
     LANGGRAPH_AVAILABLE = False
@@ -101,21 +102,25 @@ class TestIBAsyncExecution:
         manager = PositionManager()
         manager.add_position("AAPL", 100, 150.0)
         with pytest.raises(PositionError):
-            manager.close_position("AAPL", 101, 160.0)  # Selling 101 when only 100 owned
+            manager.close_position(
+                "AAPL", 101, 160.0
+            )  # Selling 101 when only 100 owned
 
     def test_langgraph_adapter_step(self) -> None:
         """Test stepping the LangGraphBacktestAdapter."""
         adapter = LangGraphBacktestAdapter()
 
         # Create mock data
-        data = pd.DataFrame({
-            "date": pd.date_range(start="2023-01-01", periods=5),
-            "open": [100, 101, 102, 103, 104],
-            "high": [101, 102, 103, 104, 105],
-            "low": [99, 100, 101, 102, 103],
-            "close": [101, 102, 103, 104, 105],
-            "volume": [1000, 1100, 1200, 1300, 1400],
-        })
+        data = pd.DataFrame(
+            {
+                "date": pd.date_range(start="2023-01-01", periods=5),
+                "open": [100, 101, 102, 103, 104],
+                "high": [101, 102, 103, 104, 105],
+                "low": [99, 100, 101, 102, 103],
+                "close": [101, 102, 103, 104, 105],
+                "volume": [1000, 1100, 1200, 1300, 1400],
+            }
+        )
 
         # Mock the strategy
         strategy = MagicMock()
@@ -134,14 +139,16 @@ class TestIBAsyncExecution:
         adapter = LangGraphBacktestAdapter()
 
         # Create mock data
-        data = pd.DataFrame({
-            "date": pd.date_range(start="2023-01-01", periods=5),
-            "open": [100, 101, 102, 103, 104],
-            "high": [101, 102, 103, 104, 105],
-            "low": [99, 100, 101, 102, 103],
-            "close": [101, 102, 103, 104, 105],
-            "volume": [1000, 1100, 1200, 1300, 1400],
-        })
+        data = pd.DataFrame(
+            {
+                "date": pd.date_range(start="2023-01-01", periods=5),
+                "open": [100, 101, 102, 103, 104],
+                "high": [101, 102, 103, 104, 105],
+                "low": [99, 100, 101, 102, 103],
+                "close": [101, 102, 103, 104, 105],
+                "volume": [1000, 1100, 1200, 1300, 1400],
+            }
+        )
 
         # Mock the strategy
         strategy = MagicMock()

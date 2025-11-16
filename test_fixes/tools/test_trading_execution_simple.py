@@ -6,6 +6,7 @@ from datetime import datetime
 
 try:
     from quantchain.tools.trading_execution import TradingExecution
+
     TRADING_EXECUTION_AVAILABLE = True
 except ImportError as e:
     TRADING_EXECUTION_AVAILABLE = False
@@ -35,7 +36,7 @@ class TestTradingExecution:
         if TRADING_EXECUTION_AVAILABLE:
             execution = TradingExecution(config)
             assert execution is not None
-            assert hasattr(execution, 'config')
+            assert hasattr(execution, "config")
 
     def test_place_order_buy(self, config):
         """Test placing a BUY order."""
@@ -43,14 +44,14 @@ class TestTradingExecution:
             execution = TradingExecution(config)
 
             # Mock the actual API call
-            with patch.object(execution, '_execute_order') as mock_execute:
+            with patch.object(execution, "_execute_order") as mock_execute:
                 mock_execute.return_value = {
                     "order_id": "12345",
                     "status": "filled",
                     "symbol": "AAPL",
                     "side": "buy",
                     "qty": 100,
-                    "filled_avg_price": 150.0
+                    "filled_avg_price": 150.0,
                 }
 
                 # Place order
@@ -59,7 +60,7 @@ class TestTradingExecution:
                     side="buy",
                     quantity=100,
                     order_type="market",
-                    time_in_force="day"
+                    time_in_force="day",
                 )
 
                 # Check result
@@ -74,14 +75,14 @@ class TestTradingExecution:
             execution = TradingExecution(config)
 
             # Mock the actual API call
-            with patch.object(execution, '_execute_order') as mock_execute:
+            with patch.object(execution, "_execute_order") as mock_execute:
                 mock_execute.return_value = {
                     "order_id": "12345",
                     "status": "filled",
                     "symbol": "AAPL",
                     "side": "sell",
                     "qty": 100,
-                    "filled_avg_price": 150.0
+                    "filled_avg_price": 150.0,
                 }
 
                 # Place order
@@ -90,7 +91,7 @@ class TestTradingExecution:
                     side="sell",
                     quantity=100,
                     order_type="market",
-                    time_in_force="day"
+                    time_in_force="day",
                 )
 
                 # Check result
@@ -105,13 +106,13 @@ class TestTradingExecution:
             execution = TradingExecution(config)
 
             # Mock the actual API call
-            with patch.object(execution, '_get_positions') as mock_get:
+            with patch.object(execution, "_get_positions") as mock_get:
                 mock_get.return_value = [
                     {
                         "symbol": "AAPL",
                         "side": "long",
                         "qty": 100,
-                        "market_value": 15000.0
+                        "market_value": 15000.0,
                     }
                 ]
 
@@ -130,7 +131,7 @@ class TestTradingExecution:
             execution = TradingExecution(config)
 
             # Mock the actual API call to raise an exception
-            with patch.object(execution, '_execute_order') as mock_execute:
+            with patch.object(execution, "_execute_order") as mock_execute:
                 mock_execute.side_effect = Exception("API error")
 
                 # Check that method handles the error
@@ -140,5 +141,5 @@ class TestTradingExecution:
                         side="buy",
                         quantity=100,
                         order_type="market",
-                        time_in_force="day"
+                        time_in_force="day",
                     )

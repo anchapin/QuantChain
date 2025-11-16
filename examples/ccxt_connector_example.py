@@ -1,6 +1,5 @@
 """Example of using the CCXT data connector."""
 
-
 from datetime import datetime, timedelta
 
 from quantchain.connectors.ccxt_connector import CCXTDataConnector

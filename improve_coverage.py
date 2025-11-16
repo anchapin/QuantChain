@@ -9,7 +9,9 @@ from pathlib import Path
 from typing import List, Dict, Tuple
 
 
-def find_uncovered_functions(module_path: str, uncovered_lines: List[int]) -> List[Tuple[str, List[int]]]:
+def find_uncovered_functions(
+    module_path: str, uncovered_lines: List[int]
+) -> List[Tuple[str, List[int]]]:
     """Find functions with uncovered lines."""
     functions = []
 

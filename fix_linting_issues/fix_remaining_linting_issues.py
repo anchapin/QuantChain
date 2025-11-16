@@ -24,7 +24,7 @@ def fix_unused_imports(file_path: str) -> bool:
     Returns True if changes were made, False otherwise.
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Parse the AST to find used names
@@ -66,13 +66,15 @@ def fix_unused_imports(file_path: str) -> bool:
             return False
 
         # Remove unused imports
-        lines = content.split('\n')
+        lines = content.split("\n")
         nodes_by_lineno = {}
 
         # Map nodes to line numbers (handling multi-line imports)
         for node in unused_imports:
             start_line = node.lineno - 1  # Convert to 0-based
-            end_line = node.end_lineno - 1 if hasattr(node, 'end_lineno') else start_line
+            end_line = (
+                node.end_lineno - 1 if hasattr(node, "end_lineno") else start_line
+            )
             nodes_by_lineno[start_line] = (start_line, end_line)
 
         # Remove lines (in reverse order to maintain line numbers)
@@ -81,11 +83,11 @@ def fix_unused_imports(file_path: str) -> bool:
             if '"""' in lines[end] or "'''" in lines[end]:
                 continue  # Don't remove lines with docstrings
 
-            del lines[start:end+1]
+            del lines[start : end + 1]
 
         # Write back the modified content
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write('\n'.join(lines))
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines))
 
         return True
     except Exception as e:
@@ -100,7 +102,7 @@ def fix_e402_imports(file_path: str) -> bool:
     Returns True if changes were made, False otherwise.
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         # Find the first non-import line after docstring
@@ -115,7 +117,9 @@ def fix_e402_imports(file_path: str) -> bool:
 
             # Check for docstring
             if stripped.startswith('"""') or stripped.startswith("'''"):
-                if in_docstring and (stripped.endswith('"""') or stripped.endswith("'''")):
+                if in_docstring and (
+                    stripped.endswith('"""') or stripped.endswith("'''")
+                ):
                     in_docstring = False
                     docstring_end = i
                 else:
@@ -129,16 +133,18 @@ def fix_e402_imports(file_path: str) -> bool:
                 continue
 
             # Skip shebang and encoding
-            if i == 0 and (stripped.startswith('#!') or stripped.startswith('# -*- coding:')):
+            if i == 0 and (
+                stripped.startswith("#!") or stripped.startswith("# -*- coding:")
+            ):
                 docstring_end = i
                 continue
 
             # Skip comments
-            if stripped.startswith('#'):
+            if stripped.startswith("#"):
                 continue
 
             # If we reach here and haven't found imports yet, this is the first code line
-            if not (stripped.startswith('import ') or stripped.startswith('from ')):
+            if not (stripped.startswith("import ") or stripped.startswith("from ")):
                 first_code_line = i
                 break
 
@@ -146,14 +152,14 @@ def fix_e402_imports(file_path: str) -> bool:
         late_imports = []
         for i in range(first_code_line, len(lines)):
             stripped = lines[i].strip()
-            if stripped.startswith('import ') or stripped.startswith('from '):
+            if stripped.startswith("import ") or stripped.startswith("from "):
                 late_imports.append(i)
 
         if not late_imports:
             return False
 
         # Move late imports to the top
-        new_lines = lines[:docstring_end+1].copy()
+        new_lines = lines[: docstring_end + 1].copy()
 
         # Add imports
         for i in sorted(late_imports):
@@ -166,7 +172,7 @@ def fix_e402_imports(file_path: str) -> bool:
                 new_lines.append(lines[i])
 
         # Write back the modified content
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.writelines(new_lines)
 
         return True
@@ -182,7 +188,7 @@ def fix_empty_fstrings(file_path: str) -> bool:
     Returns True if changes were made, False otherwise.
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Find all f-strings
@@ -195,7 +201,7 @@ def fix_empty_fstrings(file_path: str) -> bool:
         content = re.sub(pattern, '""', content)
 
         if content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             return True
 
@@ -212,7 +218,7 @@ def fix_indentation_issues(file_path: str) -> bool:
     Returns True if changes were made, False otherwise.
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         changes_made = False
@@ -229,24 +235,27 @@ def fix_indentation_issues(file_path: str) -> bool:
                 leading_spaces = len(line) - len(stripped)
 
                 # Skip if this is a comment
-                if stripped.startswith('#'):
+                if stripped.startswith("#"):
                     continue
 
                 # Special case: lines that follow a dedent
                 if i > 0:
-                    prev_line = lines[i-1]
+                    prev_line = lines[i - 1]
                     prev_stripped = prev_line.lstrip()
 
                     # If previous line had less indentation and this line starts a new block
-                    if prev_stripped and len(prev_line) - len(prev_stripped) < leading_spaces:
+                    if (
+                        prev_stripped
+                        and len(prev_line) - len(prev_stripped) < leading_spaces
+                    ):
                         # This might be incorrectly indented
-                        new_line = ' ' * (leading_spaces - 4) + stripped
+                        new_line = " " * (leading_spaces - 4) + stripped
                         if new_line != line:
                             new_lines[i] = new_line
                             changes_made = True
 
         if changes_made:
-            with open(file_path, 'w', encoding='utf-8') as fl:
+            with open(file_path, "w", encoding="utf-8") as fl:
                 fl.writelines(new_lines)
             return True
 
@@ -263,7 +272,7 @@ def fix_excess_blank_lines(file_path: str) -> bool:
     Returns True if changes were made, False otherwise.
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         new_lines = []
@@ -280,7 +289,7 @@ def fix_excess_blank_lines(file_path: str) -> bool:
                 new_lines.append(line)
 
         if new_lines != lines:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.writelines(new_lines)
             return True
 

@@ -2,12 +2,12 @@
 
 import os
 from enum import Enum
-from typing import Dict, List, Optional, Union, Any
-from pathlib import Path
+from typing import Dict, List, Optional, Any, Union
 
 
 class LogLevel(Enum):
     """Logging levels for the system."""
+
     DEBUG = "debug"
     INFO = "info"
     WARNING = "warning"
@@ -72,7 +72,9 @@ class QuantChainConfig:
         self.vision_provider = vision_provider
         self.max_retries = max_retries
         self.retry_delay = retry_delay
-        self.log_level = log_level if isinstance(log_level, LogLevel) else LogLevel(log_level)
+        self.log_level = (
+            log_level if isinstance(log_level, LogLevel) else LogLevel(log_level)
+        )
 
         # Create data directories if they don't exist
         os.makedirs(os.path.dirname(self.vector_store_path), exist_ok=True)
@@ -82,7 +84,8 @@ class QuantChainConfig:
         """Load configuration from a file."""
         try:
             import json
-            with open(config_file, 'r') as f:
+
+            with open(config_file, "r") as f:
                 config_data = json.load(f)
 
             # Set attributes from config file
@@ -96,19 +99,22 @@ class QuantChainConfig:
         """Save configuration to a file."""
         try:
             import json
+
             config_data = {}
 
             # Get all serializable attributes
             for key in dir(self):
-                if not key.startswith('_'):
+                if not key.startswith("_"):
                     value = getattr(self, key)
-                    if isinstance(value, (str, int, float, bool, list, dict, type(None))):
+                    if isinstance(
+                        value, (str, int, float, bool, list, dict, type(None))
+                    ):
                         if isinstance(value, Enum):
                             config_data[key] = value.value
                         else:
                             config_data[key] = value
 
-            with open(config_file, 'w') as f:
+            with open(config_file, "w") as f:
                 json.dump(config_data, f, indent=2)
         except Exception as e:
             print(f"Error saving config file: {e}")
@@ -125,7 +131,7 @@ class QuantChainConfig:
         """Convert configuration to a dictionary."""
         config = {}
         for key in dir(self):
-            if not key.startswith('_'):
+            if not key.startswith("_"):
                 value = getattr(self, key)
                 if isinstance(value, (str, int, float, bool, list, dict, type(None))):
                     if isinstance(value, Enum):

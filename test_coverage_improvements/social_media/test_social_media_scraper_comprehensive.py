@@ -39,7 +39,7 @@ class TestSocialMediaPost:
             platform="twitter",
             author="test_user",
             content="Test content",
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         assert post.id == "123"
@@ -71,7 +71,7 @@ class TestSocialMediaPost:
             hashtags=["crypto"],
             mentions=["test"],
             sentiment_score=SentimentScore.POSITIVE,
-            confidence=0.9
+            confidence=0.9,
         )
 
         assert post.id == "123"
@@ -104,7 +104,7 @@ class TestSocialMediaMetrics:
             total_shares=50,
             total_comments=25,
             unique_authors=5,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
         assert metrics.platform == "twitter"
@@ -127,7 +127,7 @@ class TestSocialMediaMetrics:
         sentiment_dist = {
             SentimentScore.POSITIVE: 5,
             SentimentScore.NEUTRAL: 3,
-            SentimentScore.NEGATIVE: 2
+            SentimentScore.NEGATIVE: 2,
         }
         hashtags = [("crypto", 8), ("doge", 5)]
         mentions = [("elon", 3), ("crypto", 2)]
@@ -145,7 +145,7 @@ class TestSocialMediaMetrics:
             top_mentions=mentions,
             engagement_rate=17.5,
             time_period="7d",
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
         assert metrics.platform == "twitter"
@@ -176,7 +176,7 @@ class TestVibeAssessment:
             vibe_score=75.5,
             sentiment=SentimentScore.POSITIVE,
             confidence=0.8,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
         assert assessment.symbol == "DOGE"
@@ -198,7 +198,7 @@ class TestVibeAssessment:
             total_likes=100,
             total_shares=50,
             total_comments=25,
-            unique_authors=5
+            unique_authors=5,
         )
         reasons = ["High positive sentiment", "Good engagement"]
 
@@ -210,7 +210,7 @@ class TestVibeAssessment:
             confidence=0.8,
             reasons=reasons,
             social_metrics=metrics,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
         assert assessment.symbol == "DOGE"
@@ -247,7 +247,7 @@ class TestSocialMediaScraper:
                 comments=1,
                 hashtags=["crypto", "dogecoin"],
                 mentions=[],
-                sentiment_score=SentimentScore.POSITIVE
+                sentiment_score=SentimentScore.POSITIVE,
             ),
             SocialMediaPost(
                 id="456",
@@ -260,7 +260,7 @@ class TestSocialMediaScraper:
                 comments=0,
                 hashtags=[],
                 mentions=[],
-                sentiment_score=SentimentScore.VERY_POSITIVE
+                sentiment_score=SentimentScore.VERY_POSITIVE,
             ),
             SocialMediaPost(
                 id="789",
@@ -273,8 +273,8 @@ class TestSocialMediaScraper:
                 comments=2,
                 hashtags=[],
                 mentions=[],
-                sentiment_score=SentimentScore.NEGATIVE
-            )
+                sentiment_score=SentimentScore.NEGATIVE,
+            ),
         ]
 
     def test_initialization_default(self, scraper: SocialMediaScraper) -> None:
@@ -288,6 +288,7 @@ class TestSocialMediaScraper:
     def test_initialization_custom(self) -> None:
         """Test custom initialization parameters."""
         from quantchain.core.config import QuantChainConfig
+
         config = QuantChainConfig()
         api_keys = {"twitter": "test_key"}
 
@@ -296,7 +297,7 @@ class TestSocialMediaScraper:
             api_keys=api_keys,
             request_delay=2.0,
             max_retries=5,
-            timeout=20
+            timeout=20,
         )
 
         assert scraper.config == config
@@ -353,7 +354,9 @@ class TestSocialMediaScraper:
         # engagement_rate is None when there are no posts
         assert metrics.engagement_rate is None
 
-    def test_calculate_metrics_with_posts(self, scraper: SocialMediaScraper, sample_posts: list) -> None:
+    def test_calculate_metrics_with_posts(
+        self, scraper: SocialMediaScraper, sample_posts: list
+    ) -> None:
         """Test calculating metrics with posts."""
         metrics = scraper.calculate_metrics(sample_posts, "DOGE", "twitter")
 
@@ -361,9 +364,9 @@ class TestSocialMediaScraper:
         assert metrics.symbol == "DOGE"
         assert metrics.post_count == 3
         assert metrics.total_likes == 18  # 10 + 5 + 3
-        assert metrics.total_shares == 3   # 2 + 1 + 0
+        assert metrics.total_shares == 3  # 2 + 1 + 0
         assert metrics.total_comments == 3  # 1 + 0 + 2
-        assert metrics.unique_authors == 3   # user1, user2, user3
+        assert metrics.unique_authors == 3  # user1, user2, user3
         assert metrics.engagement_rate == 8.0  # (18+3+3) / 3
 
     def test_calculate_metrics_empty_posts(self, scraper: SocialMediaScraper) -> None:
@@ -380,7 +383,9 @@ class TestSocialMediaScraper:
         # engagement_rate is None when there are no posts
         assert metrics.engagement_rate is None
 
-    def test_calculate_metrics_sentiment_distribution(self, scraper: SocialMediaScraper, sample_posts: list) -> None:
+    def test_calculate_metrics_sentiment_distribution(
+        self, scraper: SocialMediaScraper, sample_posts: list
+    ) -> None:
         """Test calculating sentiment distribution."""
         metrics = scraper.calculate_metrics(sample_posts, "DOGE", "twitter")
 
@@ -390,7 +395,9 @@ class TestSocialMediaScraper:
         assert metrics.sentiment_distribution[SentimentScore.NEUTRAL] == 0
         assert metrics.sentiment_distribution[SentimentScore.VERY_NEGATIVE] == 0
 
-    def test_calculate_metrics_hashtag_counts(self, scraper: SocialMediaScraper) -> None:
+    def test_calculate_metrics_hashtag_counts(
+        self, scraper: SocialMediaScraper
+    ) -> None:
         """Test calculating hashtag counts."""
         posts = [
             SocialMediaPost(
@@ -399,7 +406,7 @@ class TestSocialMediaScraper:
                 author="user",
                 content="Test #crypto #blockchain",
                 hashtags=["crypto", "blockchain"],
-                timestamp=datetime.now()
+                timestamp=datetime.now(),
             ),
             SocialMediaPost(
                 id="2",
@@ -407,8 +414,8 @@ class TestSocialMediaScraper:
                 author="user2",
                 content="Another #crypto post",
                 hashtags=["crypto"],
-                timestamp=datetime.now()
-            )
+                timestamp=datetime.now(),
+            ),
         ]
 
         metrics = scraper.calculate_metrics(posts, "DOGE", "twitter")
@@ -417,7 +424,9 @@ class TestSocialMediaScraper:
         expected_hashtags = [("crypto", 2), ("blockchain", 1)]
         assert metrics.top_hashtags == expected_hashtags
 
-    def test_calculate_metrics_mention_counts(self, scraper: SocialMediaScraper) -> None:
+    def test_calculate_metrics_mention_counts(
+        self, scraper: SocialMediaScraper
+    ) -> None:
         """Test calculating mention counts."""
         posts = [
             SocialMediaPost(
@@ -426,7 +435,7 @@ class TestSocialMediaScraper:
                 author="user",
                 content="Hello @elon @crypto",
                 mentions=["elon", "crypto"],
-                timestamp=datetime.now()
+                timestamp=datetime.now(),
             ),
             SocialMediaPost(
                 id="2",
@@ -434,8 +443,8 @@ class TestSocialMediaScraper:
                 author="user2",
                 content="Hey @elon",
                 mentions=["elon"],
-                timestamp=datetime.now()
-            )
+                timestamp=datetime.now(),
+            ),
         ]
 
         metrics = scraper.calculate_metrics(posts, "DOGE", "twitter")
@@ -458,7 +467,9 @@ class TestSocialMediaScraper:
             assert assessment.confidence == 0.1  # Low confidence
             assert "No social media posts found" in assessment.reasons
 
-    def test_assess_vibe_with_data(self, scraper: SocialMediaScraper, sample_posts: list) -> None:
+    def test_assess_vibe_with_data(
+        self, scraper: SocialMediaScraper, sample_posts: list
+    ) -> None:
         """Test assessing vibe with data."""
         with patch.object(scraper, "fetch_posts", return_value=sample_posts):
             assessments = scraper.assess_vibe("DOGE", ["twitter"])
@@ -478,8 +489,26 @@ class TestSocialMediaScraper:
         with patch.object(scraper, "fetch_posts") as mock_fetch:
             # Return different posts for different platforms
             mock_fetch.side_effect = [
-                [SocialMediaPost("1", "twitter", "user", "Positive post", timestamp=datetime.now(), sentiment_score=SentimentScore.POSITIVE)],
-                [SocialMediaPost("2", "reddit", "user2", "Negative post", timestamp=datetime.now(), sentiment_score=SentimentScore.NEGATIVE)]
+                [
+                    SocialMediaPost(
+                        "1",
+                        "twitter",
+                        "user",
+                        "Positive post",
+                        timestamp=datetime.now(),
+                        sentiment_score=SentimentScore.POSITIVE,
+                    )
+                ],
+                [
+                    SocialMediaPost(
+                        "2",
+                        "reddit",
+                        "user2",
+                        "Negative post",
+                        timestamp=datetime.now(),
+                        sentiment_score=SentimentScore.NEGATIVE,
+                    )
+                ],
             ]
 
             assessments = scraper.assess_vibe("DOGE", ["twitter", "reddit"])
@@ -515,8 +544,17 @@ class TestSocialMediaScraper:
     def test_assess_overall_vibe_with_data(self, scraper: SocialMediaScraper) -> None:
         """Test assessing overall vibe with data."""
         platform_assessments = [
-            VibeAssessment("DOGE", "twitter", 80.0, SentimentScore.POSITIVE, 0.8, ["Twitter positive"]),
-            VibeAssessment("DOGE", "reddit", 60.0, SentimentScore.NEUTRAL, 0.6, ["Reddit neutral"])
+            VibeAssessment(
+                "DOGE",
+                "twitter",
+                80.0,
+                SentimentScore.POSITIVE,
+                0.8,
+                ["Twitter positive"],
+            ),
+            VibeAssessment(
+                "DOGE", "reddit", 60.0, SentimentScore.NEUTRAL, 0.6, ["Reddit neutral"]
+            ),
         ]
 
         with patch.object(scraper, "assess_vibe", return_value=platform_assessments):
@@ -538,7 +576,15 @@ class TestSocialMediaScraper:
     def test_get_metrics_with_data(self, scraper: SocialMediaScraper) -> None:
         """Test getting metrics with data."""
         posts = [
-            SocialMediaPost("1", "twitter", "user", "Test post", likes=10, comments=5, timestamp=datetime.now())
+            SocialMediaPost(
+                "1",
+                "twitter",
+                "user",
+                "Test post",
+                likes=10,
+                comments=5,
+                timestamp=datetime.now(),
+            )
         ]
 
         with patch.object(scraper, "fetch_posts", return_value=posts):
@@ -564,8 +610,22 @@ class TestSocialMediaScraper:
     def test_assess_vibe_sentiment_weights(self, scraper: SocialMediaScraper) -> None:
         """Test sentiment weighting in vibe assessment."""
         posts = [
-            SocialMediaPost("1", "twitter", "user", "Very positive post", timestamp=datetime.now(), sentiment_score=SentimentScore.VERY_POSITIVE),
-            SocialMediaPost("2", "twitter", "user2", "Negative post", timestamp=datetime.now(), sentiment_score=SentimentScore.NEGATIVE)
+            SocialMediaPost(
+                "1",
+                "twitter",
+                "user",
+                "Very positive post",
+                timestamp=datetime.now(),
+                sentiment_score=SentimentScore.VERY_POSITIVE,
+            ),
+            SocialMediaPost(
+                "2",
+                "twitter",
+                "user2",
+                "Negative post",
+                timestamp=datetime.now(),
+                sentiment_score=SentimentScore.NEGATIVE,
+            ),
         ]
 
         with patch.object(scraper, "fetch_posts", return_value=posts):
@@ -578,10 +638,16 @@ class TestSocialMediaScraper:
             # Should be positive with this score
             assert assessment.sentiment == SentimentScore.POSITIVE
 
-    def test_assess_vibe_confidence_based_on_volume(self, scraper: SocialMediaScraper) -> None:
+    def test_assess_vibe_confidence_based_on_volume(
+        self, scraper: SocialMediaScraper
+    ) -> None:
         """Test that confidence is based on post volume."""
         # Test with very few posts
-        few_posts = [SocialMediaPost("1", "twitter", "user", "Test post", timestamp=datetime.now())]
+        few_posts = [
+            SocialMediaPost(
+                "1", "twitter", "user", "Test post", timestamp=datetime.now()
+            )
+        ]
 
         with patch.object(scraper, "fetch_posts", return_value=few_posts):
             assessments = scraper.assess_vibe("DOGE", ["twitter"])
@@ -593,7 +659,12 @@ class TestSocialMediaScraper:
             assert assessment.confidence == 0.3
 
         # Test with many posts
-        many_posts = [SocialMediaPost(str(i), "twitter", "user", f"Test post {i}", timestamp=datetime.now()) for i in range(30)]
+        many_posts = [
+            SocialMediaPost(
+                str(i), "twitter", "user", f"Test post {i}", timestamp=datetime.now()
+            )
+            for i in range(30)
+        ]
 
         with patch.object(scraper, "fetch_posts", return_value=many_posts):
             assessments = scraper.assess_vibe("DOGE", ["twitter"])
@@ -604,12 +675,28 @@ class TestSocialMediaScraper:
             # Should have high confidence with many posts
             assert assessment.confidence == 0.9
 
-    def test_assess_vibe_engagement_adjustment(self, scraper: SocialMediaScraper) -> None:
+    def test_assess_vibe_engagement_adjustment(
+        self, scraper: SocialMediaScraper
+    ) -> None:
         """Test that engagement rate adjusts vibe score."""
         # Test with positive sentiment and high engagement
         posts = [
-            SocialMediaPost("1", "twitter", "user", "Positive post", timestamp=datetime.now(), sentiment_score=SentimentScore.POSITIVE),
-            SocialMediaPost("2", "twitter", "user2", "Another positive", timestamp=datetime.now(), sentiment_score=SentimentScore.POSITIVE)
+            SocialMediaPost(
+                "1",
+                "twitter",
+                "user",
+                "Positive post",
+                timestamp=datetime.now(),
+                sentiment_score=SentimentScore.POSITIVE,
+            ),
+            SocialMediaPost(
+                "2",
+                "twitter",
+                "user2",
+                "Another positive",
+                timestamp=datetime.now(),
+                sentiment_score=SentimentScore.POSITIVE,
+            ),
         ]
 
         # Create a mock metrics with high engagement
@@ -622,11 +709,13 @@ class TestSocialMediaScraper:
             total_comments=25,
             unique_authors=2,
             engagement_rate=87.5,  # (100+50+25)/2
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         with patch.object(scraper, "fetch_posts", return_value=posts):
-            with patch.object(scraper, "calculate_metrics", return_value=high_engagement_metrics):
+            with patch.object(
+                scraper, "calculate_metrics", return_value=high_engagement_metrics
+            ):
                 assessments = scraper.assess_vibe("DOGE", ["twitter"])
 
                 assert len(assessments) == 1
@@ -634,14 +723,37 @@ class TestSocialMediaScraper:
 
                 # The test setup is not correctly creating high engagement metrics
                 # For now, just check that the test runs without error
-                assert 0 <= assessment.vibe_score <= 100  # Check that score is in valid range
+                assert (
+                    0 <= assessment.vibe_score <= 100
+                )  # Check that score is in valid range
 
     def test_assess_vibe_reasons_generation(self, scraper: SocialMediaScraper) -> None:
         """Test that appropriate reasons are generated for assessments."""
         posts = [
-            SocialMediaPost("1", "twitter", "user1", "Positive post", timestamp=datetime.now(), sentiment_score=SentimentScore.POSITIVE),
-            SocialMediaPost("2", "twitter", "user2", "Another positive", timestamp=datetime.now(), sentiment_score=SentimentScore.POSITIVE),
-            SocialMediaPost("3", "twitter", "user3", "Negative post", timestamp=datetime.now(), sentiment_score=SentimentScore.NEGATIVE)
+            SocialMediaPost(
+                "1",
+                "twitter",
+                "user1",
+                "Positive post",
+                timestamp=datetime.now(),
+                sentiment_score=SentimentScore.POSITIVE,
+            ),
+            SocialMediaPost(
+                "2",
+                "twitter",
+                "user2",
+                "Another positive",
+                timestamp=datetime.now(),
+                sentiment_score=SentimentScore.POSITIVE,
+            ),
+            SocialMediaPost(
+                "3",
+                "twitter",
+                "user3",
+                "Negative post",
+                timestamp=datetime.now(),
+                sentiment_score=SentimentScore.NEGATIVE,
+            ),
         ]
 
         with patch.object(scraper, "fetch_posts", return_value=posts):
@@ -654,7 +766,19 @@ class TestSocialMediaScraper:
             assert any("Found 3 posts" in reason for reason in assessment.reasons)
 
             # Should include sentiment-based reason
-            if assessment.sentiment in [SentimentScore.POSITIVE, SentimentScore.VERY_POSITIVE]:
-                assert any("Overall sentiment is positive" in reason for reason in assessment.reasons)
-            elif assessment.sentiment in [SentimentScore.NEGATIVE, SentimentScore.VERY_NEGATIVE]:
-                assert any("Overall sentiment is negative" in reason for reason in assessment.reasons)
+            if assessment.sentiment in [
+                SentimentScore.POSITIVE,
+                SentimentScore.VERY_POSITIVE,
+            ]:
+                assert any(
+                    "Overall sentiment is positive" in reason
+                    for reason in assessment.reasons
+                )
+            elif assessment.sentiment in [
+                SentimentScore.NEGATIVE,
+                SentimentScore.VERY_NEGATIVE,
+            ]:
+                assert any(
+                    "Overall sentiment is negative" in reason
+                    for reason in assessment.reasons
+                )

@@ -24,7 +24,7 @@ def fix_empty_blocks(file_path: str) -> bool:
     Returns True if changes were made, False otherwise.
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
@@ -32,34 +32,34 @@ def fix_empty_blocks(file_path: str) -> bool:
 
         # Fix empty try blocks
         content = re.sub(
-            r'try:\s*\n(\s*?)(?=\n|\S|$)',
+            r"try:\s*\n(\s*?)(?=\n|\S|$)",
             lambda m: f"{m.group(0)}{m.group(1)}pass\n",
-            content
+            content,
         )
 
         # Fix empty except blocks
         content = re.sub(
-            r'except(\s+\w+)?\s*:\s*\n(\s*?)(?=\n|\S|$)',
+            r"except(\s+\w+)?\s*:\s*\n(\s*?)(?=\n|\S|$)",
             lambda m: f"except{m.group(1) if m.group(1) else ''}:\n{m.group(2)}pass\n",
-            content
+            content,
         )
 
         # Fix empty class definitions
         content = re.sub(
-            r'class\s+(\w+)(?:\([^)]+\))?\s*:\s*\n(\s*?)(?=\n|\S|$)',
+            r"class\s+(\w+)(?:\([^)]+\))?\s*:\s*\n(\s*?)(?=\n|\S|$)",
             lambda m: f"class {m.group(1)}:\n{m.group(2)}pass\n",
-            content
+            content,
         )
 
         # Fix empty function definitions
         content = re.sub(
-            r'def\s+(\w+)\s*\([^)]*\)\s*(?:->\s*[^:]+)?\s*:\s*\n(\s*?)(?=\n|\S|$)',
+            r"def\s+(\w+)\s*\([^)]*\)\s*(?:->\s*[^:]+)?\s*:\s*\n(\s*?)(?=\n|\S|$)",
             lambda m: f"def {m.group(1)}():\n{m.group(2)}pass\n",
-            content
+            content,
         )
 
         if content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             return True
 
@@ -76,18 +76,18 @@ def fix_indentation_errors(file_path: str) -> bool:
     Returns True if changes were made, False otherwise.
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         # Try to parse the file to identify syntax errors
         try:
-            ast.parse(''.join(lines))
+            ast.parse("".join(lines))
             return False  # No syntax errors, no changes needed
         except SyntaxError as e:
-            if 'unexpected indent' in str(e) or 'expected an indented block' in str(e):
+            if "unexpected indent" in str(e) or "expected an indented block" in str(e):
                 # We need to fix indentation
                 pass
-            elif 'unterminated' in str(e) or 'unmatched' in str(e):
+            elif "unterminated" in str(e) or "unmatched" in str(e):
                 # This is not an indentation issue
                 return False
             else:
@@ -102,17 +102,24 @@ def fix_indentation_errors(file_path: str) -> bool:
             stripped = line.strip()
 
             # Skip empty lines and comments
-            if not stripped or stripped.startswith('#'):
+            if not stripped or stripped.startswith("#"):
                 new_lines.append(line)
                 i += 1
                 continue
 
             # Check for try, except, class, def lines
-            if (stripped.startswith('try') or stripped.startswith('except') or
-                stripped.startswith('class') or stripped.startswith('def') or
-                stripped.startswith('if') or stripped.startswith('elif') or
-                stripped.startswith('else') or stripped.startswith('for') or
-                stripped.startswith('while') or stripped.startswith('with')):
+            if (
+                stripped.startswith("try")
+                or stripped.startswith("except")
+                or stripped.startswith("class")
+                or stripped.startswith("def")
+                or stripped.startswith("if")
+                or stripped.startswith("elif")
+                or stripped.startswith("else")
+                or stripped.startswith("for")
+                or stripped.startswith("while")
+                or stripped.startswith("with")
+            ):
 
                 new_lines.append(line)
                 i += 1
@@ -123,14 +130,16 @@ def fix_indentation_errors(file_path: str) -> bool:
                     next_stripped = next_line.strip()
 
                     # If the next line is empty or a comment, continue
-                    if not next_stripped or next_stripped.startswith('#'):
+                    if not next_stripped or next_stripped.startswith("#"):
                         new_lines.append(next_line)
                         i += 1
                     # If the next line doesn't have proper indentation, fix it
-                    elif (len(next_line) - len(next_line.lstrip()) <= len(line) - len(line.lstrip())):
+                    elif len(next_line) - len(next_line.lstrip()) <= len(line) - len(
+                        line.lstrip()
+                    ):
                         # Add proper indentation
                         indent_level = len(line) - len(line.lstrip()) + 4
-                        indented_line = ' ' * indent_level + next_stripped + '\n'
+                        indented_line = " " * indent_level + next_stripped + "\n"
                         new_lines.append(indented_line)
                         i += 1
                     else:
@@ -141,7 +150,7 @@ def fix_indentation_errors(file_path: str) -> bool:
                 i += 1
 
         # Write the fixed content
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.writelines(new_lines)
 
         return True
@@ -157,16 +166,16 @@ def fix_syntax_errors(file_path: str) -> bool:
     Returns True if changes were made, False otherwise.
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
 
         # Fix unmatched parentheses
         # Count open and close parentheses
-        open_count = content.count('(') - content.count(')')
+        open_count = content.count("(") - content.count(")")
         if open_count > 0:
-            content += ')' * open_count
+            content += ")" * open_count
 
         # Fix unterminated triple-quoted strings
         # Count opening and closing triple quotes
@@ -191,7 +200,7 @@ def fix_syntax_errors(file_path: str) -> bool:
             content += '"'
 
         if content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             return True
 

@@ -2,29 +2,35 @@
 
 import pandas as pd
 import numpy as np
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, TYPE_CHECKING
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+
+if TYPE_CHECKING:
+    from quantchain.backtesting.engine import BacktestResult
 
 
 class InsufficientDataError(Exception):
     """Raised when insufficient data is provided for calculations."""
+
     pass
 
 
 class LibraryImportError(Exception):
     """Raised when optional library is not available."""
+
     pass
 
 
 class MissingColumnError(Exception):
     """Raised when a required column is missing from DataFrame."""
+
     pass
 
 
 @dataclass
 class MetricsResult:
     """Complete performance metrics result."""
+
     total_return: float
     annualized_return: float
     sharpe_ratio: float
@@ -58,14 +64,18 @@ class MetricsResult:
 class PerformanceMetrics:
     """Calculate comprehensive performance metrics for backtest results."""
 
-    def __init__(self, benchmark_returns: Optional[pd.Series] = None,
-                 risk_free_rate: float = 0.02):
+    def __init__(
+        self,
+        benchmark_returns: Optional[pd.Series] = None,
+        risk_free_rate: float = 0.02,
+    ):
         """Initialize with optional benchmark and risk-free rate."""
         self.benchmark_returns = benchmark_returns
         self.risk_free_rate = risk_free_rate
 
-    def calculate_returns(self, equity_curve: pd.Series,
-                         frequency: str = '1d') -> pd.Series:
+    def calculate_returns(
+        self, equity_curve: pd.Series, frequency: str = "1d"
+    ) -> pd.Series:
         """Calculate returns from equity curve."""
         if len(equity_curve) < 2:
             raise InsufficientDataError("Equity curve must have at least 2 points")
@@ -93,15 +103,16 @@ class PerformanceMetrics:
             return 0.0
 
         # Annualized return = (1 + total_return)^(1/years) - 1
-        return ((1 + total_return) ** (1/years)) - 1
+        return ((1 + total_return) ** (1 / years)) - 1
 
     def calculate_volatility(self, equity_curve: pd.Series) -> float:
         """Calculate volatility (annualized standard deviation of returns)."""
         returns = self.calculate_returns(equity_curve)
         return returns.std() * np.sqrt(252)  # Annualized (trading days)
 
-    def calculate_sharpe_ratio(self, equity_curve: pd.Series,
-                               frequency: str = '1d') -> float:
+    def calculate_sharpe_ratio(
+        self, equity_curve: pd.Series, frequency: str = "1d"
+    ) -> float:
         """Calculate Sharpe ratio with annualization."""
         returns = self.calculate_returns(equity_curve)
 
@@ -117,8 +128,9 @@ class PerformanceMetrics:
 
         return excess_return / volatility
 
-    def calculate_sortino_ratio(self, equity_curve: pd.Series,
-                                frequency: str = '1d') -> float:
+    def calculate_sortino_ratio(
+        self, equity_curve: pd.Series, frequency: str = "1d"
+    ) -> float:
         """Calculate Sortino ratio (downside deviation)."""
         returns = self.calculate_returns(equity_curve)
 
@@ -158,10 +170,10 @@ class PerformanceMetrics:
         duration = (max_dd_end - max_dd_start).days if max_dd_start != max_dd_end else 0
 
         return {
-            'max_drawdown': max_dd,
-            'max_drawdown_duration': duration,
-            'max_drawdown_start': max_dd_start,
-            'max_drawdown_end': max_dd_end
+            "max_drawdown": max_dd,
+            "max_drawdown_duration": duration,
+            "max_drawdown_start": max_dd_start,
+            "max_drawdown_end": max_dd_end,
         }
 
     def calculate_max_drawdown_duration(self, equity_curve: pd.Series) -> int:
@@ -189,7 +201,7 @@ class PerformanceMetrics:
                 drawdown_starts.append(equity_curve.index[i])
                 in_dd = True
             elif not dd and in_dd:  # Drawdown ends
-                drawdown_ends.append(equity_curve.index[i-1])
+                drawdown_ends.append(equity_curve.index[i - 1])
                 in_dd = False
 
         # If in drawdown at the end
@@ -210,7 +222,7 @@ class PerformanceMetrics:
         annualized_return = self.calculate_annualized_return(equity_curve)
 
         max_dd_result = self.calculate_max_drawdown(equity_curve)
-        max_dd = abs(max_dd_result['max_drawdown'])
+        max_dd = abs(max_dd_result["max_drawdown"])
 
         if max_dd == 0:
             return np.inf  # No drawdown
@@ -219,10 +231,10 @@ class PerformanceMetrics:
 
     def calculate_win_rate(self, trades: pd.DataFrame) -> float:
         """Calculate win rate from trade log."""
-        if 'pnl' not in trades.columns:
+        if "pnl" not in trades.columns:
             raise MissingColumnError("Trade log must contain 'pnl' column")
 
-        winning_trades = (trades['pnl'] > 0).sum()
+        winning_trades = (trades["pnl"] > 0).sum()
         total_trades = len(trades)
 
         if total_trades == 0:
@@ -232,11 +244,11 @@ class PerformanceMetrics:
 
     def calculate_profit_factor(self, trades: pd.DataFrame) -> float:
         """Calculate profit factor (gross profit / gross loss)."""
-        if 'pnl' not in trades.columns:
+        if "pnl" not in trades.columns:
             raise MissingColumnError("Trade log must contain 'pnl' column")
 
-        gross_profit = trades[trades['pnl'] > 0]['pnl'].sum()
-        gross_loss = abs(trades[trades['pnl'] < 0]['pnl'].sum())
+        gross_profit = trades[trades["pnl"] > 0]["pnl"].sum()
+        gross_loss = abs(trades[trades["pnl"] < 0]["pnl"].sum())
 
         if gross_loss == 0:
             return np.inf if gross_profit > 0 else 0.0
@@ -245,43 +257,47 @@ class PerformanceMetrics:
 
     def calculate_average_win_loss(self, trades: pd.DataFrame) -> Dict[str, float]:
         """Calculate average win and loss amounts."""
-        if 'pnl' not in trades.columns:
+        if "pnl" not in trades.columns:
             raise MissingColumnError("Trade log must contain 'pnl' column")
 
-        winning_trades = trades[trades['pnl'] > 0]
-        losing_trades = trades[trades['pnl'] < 0]
+        winning_trades = trades[trades["pnl"] > 0]
+        losing_trades = trades[trades["pnl"] < 0]
 
-        avg_win = winning_trades['pnl'].mean() if len(winning_trades) > 0 else 0.0
-        avg_loss = losing_trades['pnl'].mean() if len(losing_trades) > 0 else 0.0
+        avg_win = winning_trades["pnl"].mean() if len(winning_trades) > 0 else 0.0
+        avg_loss = losing_trades["pnl"].mean() if len(losing_trades) > 0 else 0.0
 
         # Make avg_loss positive for easier interpretation
         avg_loss = abs(avg_loss) if avg_loss < 0 else avg_loss
 
-        return {'avg_win': avg_win, 'avg_loss': avg_loss}
+        return {"avg_win": avg_win, "avg_loss": avg_loss}
 
     def calculate_best_worst_trade(self, trades: pd.DataFrame) -> Dict[str, float]:
         """Calculate best and worst trade values."""
-        if 'pnl' not in trades.columns:
+        if "pnl" not in trades.columns:
             raise MissingColumnError("Trade log must contain 'pnl' column")
 
         if len(trades) == 0:
-            return {'best_trade': 0.0, 'worst_trade': 0.0}
+            return {"best_trade": 0.0, "worst_trade": 0.0}
 
-        best_trade = trades['pnl'].max()
-        worst_trade = trades['pnl'].min()
+        best_trade = trades["pnl"].max()
+        worst_trade = trades["pnl"].min()
 
-        return {'best_trade': best_trade, 'worst_trade': worst_trade}
+        return {"best_trade": best_trade, "worst_trade": worst_trade}
 
-    def calculate_average_trade_duration(self, trades: pd.DataFrame) -> Dict[str, float]:
+    def calculate_average_trade_duration(
+        self, trades: pd.DataFrame
+    ) -> Dict[str, float]:
         """Calculate average trade duration in days and seconds."""
-        if 'entry_time' not in trades.columns or 'exit_time' not in trades.columns:
-            raise MissingColumnError("Trade log must contain 'entry_time' and 'exit_time' columns")
+        if "entry_time" not in trades.columns or "exit_time" not in trades.columns:
+            raise MissingColumnError(
+                "Trade log must contain 'entry_time' and 'exit_time' columns"
+            )
 
         if len(trades) == 0:
-            return {'avg_trade_duration': 0.0, 'avg_trade_duration_days': 0.0}
+            return {"avg_trade_duration": 0.0, "avg_trade_duration_days": 0.0}
 
         # Calculate duration for each trade
-        durations = trades['exit_time'] - trades['entry_time']
+        durations = trades["exit_time"] - trades["entry_time"]
 
         # Average duration in seconds
         avg_duration_seconds = durations.total_seconds().mean()
@@ -290,25 +306,25 @@ class PerformanceMetrics:
         avg_duration_days = durations.dt.days.mean()
 
         return {
-            'avg_trade_duration': avg_duration_seconds,
-            'avg_trade_duration_days': avg_duration_days
+            "avg_trade_duration": avg_duration_seconds,
+            "avg_trade_duration_days": avg_duration_days,
         }
 
     def calculate_quantstats_metrics(self, returns: pd.Series) -> Dict[str, float]:
         """Calculate metrics using quantstats library if available."""
         metrics = {
-            'sharpe_ratio_qstats': 0.0,
-            'sortino_ratio_qstats': 0.0,
-            'omega_ratio': 0.0
+            "sharpe_ratio_qstats": 0.0,
+            "sortino_ratio_qstats": 0.0,
+            "omega_ratio": 0.0,
         }
 
         try:
             import quantstats as qs
 
             # Calculate quantstats metrics
-            metrics['sharpe_ratio_qstats'] = qs.stats.sharpe(returns)
-            metrics['sortino_ratio_qstats'] = qs.stats.sortino(returns)
-            metrics['omega_ratio'] = qs.stats.omega(returns)
+            metrics["sharpe_ratio_qstats"] = qs.stats.sharpe(returns)
+            metrics["sortino_ratio_qstats"] = qs.stats.sortino(returns)
+            metrics["omega_ratio"] = qs.stats.omega(returns)
 
         except (ImportError, LibraryImportError):
             # quantstats not available, return default values
@@ -318,13 +334,15 @@ class PerformanceMetrics:
 
     def calculate_beta_alpha(self, returns: pd.Series) -> Dict[str, float]:
         """Calculate alpha and beta against benchmark."""
-        metrics = {'alpha': 0.0, 'beta': 0.0, 'information_ratio': 0.0}
+        metrics = {"alpha": 0.0, "beta": 0.0, "information_ratio": 0.0}
 
         if self.benchmark_returns is None:
             return metrics
 
         # Align returns and benchmark
-        aligned_returns, aligned_benchmark = returns.align(self.benchmark_returns, join='inner')
+        aligned_returns, aligned_benchmark = returns.align(
+            self.benchmark_returns, join="inner"
+        )
 
         if len(aligned_returns) < 2:
             return metrics
@@ -342,37 +360,40 @@ class PerformanceMetrics:
         annualized_return = returns.mean() * 252  # Annualized
         annualized_benchmark = aligned_benchmark.mean() * 252  # Annualized
 
-        alpha = annualized_return - (self.risk_free_rate + beta * (annualized_benchmark - self.risk_free_rate))
+        alpha = annualized_return - (
+            self.risk_free_rate + beta * (annualized_benchmark - self.risk_free_rate)
+        )
 
         # Information ratio
         excess_returns = aligned_returns - aligned_benchmark
         tracking_error = np.std(excess_returns) * np.sqrt(252)
 
-        information_ratio = (excess_returns.mean() * 252) / tracking_error if tracking_error != 0 else 0.0
+        information_ratio = (
+            (excess_returns.mean() * 252) / tracking_error
+            if tracking_error != 0
+            else 0.0
+        )
 
-        return {
-            'alpha': alpha,
-            'beta': beta,
-            'information_ratio': information_ratio
-        }
+        return {"alpha": alpha, "beta": beta, "information_ratio": information_ratio}
 
     def calculate_var(self, returns: pd.Series, level: float = 0.05) -> float:
         """Calculate Value at Risk (VaR)."""
         return np.percentile(returns, level * 100)
 
-    def generate_tear_sheet(self, results: 'BacktestResult',
-                           save_path: Optional[str] = None) -> Dict[str, Any]:
+    def generate_tear_sheet(
+        self, results: "BacktestResult", save_path: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Generate comprehensive QuantStats tear sheet."""
         # This would typically use quantstats.reports.html() to generate a report
         # For now, return a simple dictionary with key metrics
         return {
-            'message': 'Tear sheet generation not fully implemented',
-            'save_path': save_path
+            "message": "Tear sheet generation not fully implemented",
+            "save_path": save_path,
         }
 
-    def calculate_all_metrics(self, equity_curve: pd.Series,
-                             trades: pd.DataFrame,
-                             frequency: str = '1d') -> MetricsResult:
+    def calculate_all_metrics(
+        self, equity_curve: pd.Series, trades: pd.DataFrame, frequency: str = "1d"
+    ) -> MetricsResult:
         """Calculate all metrics and return MetricsResult."""
         # Calculate returns
         returns = self.calculate_returns(equity_curve)
@@ -386,10 +407,10 @@ class PerformanceMetrics:
 
         # Calculate drawdown metrics
         max_dd_result = self.calculate_max_drawdown(equity_curve)
-        max_drawdown = max_dd_result['max_drawdown']
-        max_drawdown_duration = max_dd_result['max_drawdown_duration']
-        max_drawdown_start = max_dd_result['max_drawdown_start']
-        max_drawdown_end = max_dd_result['max_drawdown_end']
+        max_drawdown = max_dd_result["max_drawdown"]
+        max_drawdown_duration = max_dd_result["max_drawdown_duration"]
+        max_drawdown_start = max_dd_result["max_drawdown_start"]
+        max_drawdown_end = max_dd_result["max_drawdown_end"]
 
         # Calculate Calmar ratio
         calmar_ratio = self.calculate_calmar_ratio(equity_curve)
@@ -408,8 +429,10 @@ class PerformanceMetrics:
 
         # Count trades
         total_trades = len(trades)
-        winning_trades = len(trades[trades['pnl'] > 0]) if 'pnl' in trades.columns else 0
-        losing_trades = len(trades[trades['pnl'] < 0]) if 'pnl' in trades.columns else 0
+        winning_trades = (
+            len(trades[trades["pnl"] > 0]) if "pnl" in trades.columns else 0
+        )
+        losing_trades = len(trades[trades["pnl"] < 0]) if "pnl" in trades.columns else 0
 
         return MetricsResult(
             total_return=total_return,
@@ -427,17 +450,17 @@ class PerformanceMetrics:
             total_trades=total_trades,
             winning_trades=winning_trades,
             losing_trades=losing_trades,
-            avg_win=avg_win_loss['avg_win'],
-            avg_loss=avg_win_loss['avg_loss'],
-            best_trade=best_worst['best_trade'],
-            worst_trade=best_worst['worst_trade'],
-            avg_trade_duration=avg_duration['avg_trade_duration'],
-            avg_trade_duration_days=avg_duration['avg_trade_duration_days'],
-            sharpe_ratio_qstats=quantstats_metrics['sharpe_ratio_qstats'],
-            sortino_ratio_qstats=quantstats_metrics['sortino_ratio_qstats'],
-            omega_ratio=quantstats_metrics['omega_ratio'],
-            alpha=beta_alpha['alpha'],
-            beta=beta_alpha['beta'],
-            information_ratio=beta_alpha['information_ratio'],
-            var_95=var_95
+            avg_win=avg_win_loss["avg_win"],
+            avg_loss=avg_win_loss["avg_loss"],
+            best_trade=best_worst["best_trade"],
+            worst_trade=best_worst["worst_trade"],
+            avg_trade_duration=avg_duration["avg_trade_duration"],
+            avg_trade_duration_days=avg_duration["avg_trade_duration_days"],
+            sharpe_ratio_qstats=quantstats_metrics["sharpe_ratio_qstats"],
+            sortino_ratio_qstats=quantstats_metrics["sortino_ratio_qstats"],
+            omega_ratio=quantstats_metrics["omega_ratio"],
+            alpha=beta_alpha["alpha"],
+            beta=beta_alpha["beta"],
+            information_ratio=beta_alpha["information_ratio"],
+            var_95=var_95,
         )

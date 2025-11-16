@@ -8,15 +8,15 @@ import sys
 import os
 from pathlib import Path
 
+
 def run_test_file(test_file_path):
     """Run a single test file directly"""
     print(f"Running: {test_file_path}")
-    result = subprocess.run([
-        sys.executable, "-m", "pytest",
-        test_file_path,
-        "-v",
-        "--tb=short"
-    ], capture_output=True, text=True)
+    result = subprocess.run(
+        [sys.executable, "-m", "pytest", test_file_path, "-v", "--tb=short"],
+        capture_output=True,
+        text=True,
+    )
 
     if result.stdout:
         print(result.stdout)
@@ -24,6 +24,7 @@ def run_test_file(test_file_path):
         print("STDERR:", result.stderr)
 
     return result.returncode == 0
+
 
 def main():
     """Main function"""
@@ -39,7 +40,7 @@ def main():
         "security_tests.py",
         "ib_async_execution_tests.py",
         "../tests/unit/backtesting/test_performance_metrics.py",
-        "../tests/unit/backtesting/test_market_friction.py"
+        "../tests/unit/backtesting/test_market_friction.py",
     ]
 
     success_count = 0
@@ -65,6 +66,7 @@ def main():
     else:
         print(f"\n{total_count - success_count} test files failed! ❌")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

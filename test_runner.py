@@ -1,28 +1,36 @@
 """
 Test runner script to check test coverage for QuantChain
 """
+
 import os
 import sys
 import json
 from pathlib import Path
+
 
 def run_test_file(test_file_path):
     """Run a single test file and check if it passes"""
     print(f"Running: {test_file_path}")
     try:
         # Import the test module
-        module_name = test_file_path.replace('/', '.').replace('\\', '.').replace('.py', '')
+        module_name = (
+            test_file_path.replace("/", ".").replace("\\", ".").replace(".py", "")
+        )
 
         # Add the project root to the path
         project_root = Path(__file__).parent
         sys.path.insert(0, str(project_root))
 
         # Import the module
-        test_module = __import__(module_name, fromlist=[''])
+        test_module = __import__(module_name, fromlist=[""])
 
         # Find test classes
-        test_classes = [getattr(test_module, name) for name in dir(test_module)
-                        if name.startswith('Test') and hasattr(getattr(test_module, name), '__bases__')]
+        test_classes = [
+            getattr(test_module, name)
+            for name in dir(test_module)
+            if name.startswith("Test")
+            and hasattr(getattr(test_module, name), "__bases__")
+        ]
 
         # Run test methods
         passed = 0
@@ -33,7 +41,9 @@ def run_test_file(test_file_path):
             test_instance = test_class()
 
             # Find test methods
-            test_methods = [name for name in dir(test_instance) if name.startswith('test_')]
+            test_methods = [
+                name for name in dir(test_instance) if name.startswith("test_")
+            ]
 
             for method_name in test_methods:
                 total += 1
@@ -52,6 +62,7 @@ def run_test_file(test_file_path):
         print(f"Error running {test_file_path}: {e}")
         return False
 
+
 def check_coverage():
     """Check current test coverage"""
     print("Checking test coverage for QuantChain modules with low coverage...")
@@ -62,7 +73,7 @@ def check_coverage():
         "tests/unit/backtesting/test_market_friction.py",
         "tests/unit/backtesting/test_finrl_adapter_comprehensive.py",
         "tests/unit/tools/test_web_dashboard.py",
-        "tests/unit/core/test_security.py"
+        "tests/unit/core/test_security.py",
     ]
 
     all_passed = True
@@ -79,6 +90,7 @@ def check_coverage():
         print("Some tests failed! ❌")
 
     return all_passed
+
 
 if __name__ == "__main__":
     success = check_coverage()

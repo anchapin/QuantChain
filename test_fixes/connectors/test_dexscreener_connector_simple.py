@@ -6,6 +6,7 @@ from datetime import datetime
 
 try:
     from quantchain.connectors.dexscreener_connector import DexScreenerDataConnector
+
     DEXSCREENER_AVAILABLE = True
 except ImportError as e:
     DEXSCREENER_AVAILABLE = False
@@ -32,7 +33,7 @@ class TestDexScreenerDataConnector:
         if DEXSCREENER_AVAILABLE:
             connector = DexScreenerDataConnector(config)
             assert connector is not None
-            assert hasattr(connector, 'config')
+            assert hasattr(connector, "config")
 
     def test_get_token_info(self, config):
         """Test getting token information."""
@@ -40,7 +41,7 @@ class TestDexScreenerDataConnector:
             connector = DexScreenerDataConnector(config)
 
             # Mock the actual API call
-            with patch.object(connector, '_make_request') as mock_request:
+            with patch.object(connector, "_make_request") as mock_request:
                 # Setup mock to return sample data
                 mock_request.return_value = {
                     "pairs": [
@@ -52,13 +53,13 @@ class TestDexScreenerDataConnector:
                             "baseToken": {
                                 "address": "0x456",
                                 "name": "Wrapped Ether",
-                                "symbol": "WETH"
+                                "symbol": "WETH",
                             },
                             "quoteToken": {
                                 "address": "0x789",
                                 "name": "USD Coin",
-                                "symbol": "USDC"
-                            }
+                                "symbol": "USDC",
+                            },
                         }
                     ]
                 }
@@ -78,21 +79,22 @@ class TestDexScreenerDataConnector:
             connector = DexScreenerDataConnector(config)
 
             # Mock the actual API call
-            with patch.object(connector, '_make_request') as mock_request:
+            with patch.object(connector, "_make_request") as mock_request:
                 # Setup mock to return sample data
                 mock_request.return_value = {
                     "prices": [
                         {"price": "3000.50", "timestamp": 1641024000},
                         {"price": "3050.75", "timestamp": 1641110400},
-                        {"price": "3100.25", "timestamp": 1641196800}
+                        {"price": "3100.25", "timestamp": 1641196800},
                     ]
                 }
 
                 # Call method
                 result = connector.get_token_price_history(
-                    "0x123", "ethereum",
+                    "0x123",
+                    "ethereum",
                     start_date=datetime(2023, 1, 1),
-                    end_date=datetime(2023, 1, 3)
+                    end_date=datetime(2023, 1, 3),
                 )
 
                 # Check result
@@ -107,7 +109,7 @@ class TestDexScreenerDataConnector:
             connector = DexScreenerDataConnector(config)
 
             # Mock the actual API call to raise an exception
-            with patch.object(connector, '_make_request') as mock_request:
+            with patch.object(connector, "_make_request") as mock_request:
                 # Setup mock to raise an exception
                 mock_request.side_effect = Exception("API error")
 
@@ -121,7 +123,7 @@ class TestDexScreenerDataConnector:
             connector = DexScreenerDataConnector(config)
 
             # Mock the actual API call
-            with patch.object(connector, '_make_request') as mock_request:
+            with patch.object(connector, "_make_request") as mock_request:
                 # Setup mock to return sample data
                 mock_request.return_value = {
                     "pairs": [
@@ -133,13 +135,13 @@ class TestDexScreenerDataConnector:
                             "baseToken": {
                                 "address": "0x456",
                                 "name": "Wrapped Ether",
-                                "symbol": "WETH"
+                                "symbol": "WETH",
                             },
                             "quoteToken": {
                                 "address": "0x789",
                                 "name": "USD Coin",
-                                "symbol": "USDC"
-                            }
+                                "symbol": "USDC",
+                            },
                         }
                     ]
                 }

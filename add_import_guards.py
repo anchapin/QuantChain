@@ -90,7 +90,7 @@ def find_files_with_imports(root_dir: Path) -> Dict[str, List[Path]]:
                 continue
 
             try:
-                content = py_file.read_text(encoding='utf-8')
+                content = py_file.read_text(encoding="utf-8")
                 if import_pattern in content:
                     matching_files.append(py_file)
             except (UnicodeDecodeError, PermissionError):
@@ -105,7 +105,7 @@ def find_files_with_imports(root_dir: Path) -> Dict[str, List[Path]]:
 def has_guard_already(file_path: Path, guard_pattern: str) -> bool:
     """Check if a file already has the import guard."""
     try:
-        content = file_path.read_text(encoding='utf-8')
+        content = file_path.read_text(encoding="utf-8")
         # Check for availability flag that would be set by our guard
         availability_flags = [
             "ALPACA_AVAILABLE",
@@ -125,7 +125,7 @@ def has_guard_already(file_path: Path, guard_pattern: str) -> bool:
 def add_guard_to_file(file_path: Path, import_pattern: str, guard_code: str) -> bool:
     """Add import guard code to a Python file."""
     try:
-        content = file_path.read_text(encoding='utf-8')
+        content = file_path.read_text(encoding="utf-8")
         lines = content.splitlines()
 
         # Find the docstring end to insert guards after it
@@ -161,10 +161,10 @@ def add_guard_to_file(file_path: Path, import_pattern: str, guard_code: str) -> 
 
         # Insert the guard code
         new_lines = lines[:insert_index] + [guard_code] + lines[insert_index:]
-        new_content = '\n'.join(new_lines)
+        new_content = "\n".join(new_lines)
 
         # Write back to file
-        file_path.write_text(new_content, encoding='utf-8')
+        file_path.write_text(new_content, encoding="utf-8")
         print(f"Added guard to {file_path}")
         return True
     except (UnicodeDecodeError, PermissionError) as e:

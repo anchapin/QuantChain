@@ -15,6 +15,7 @@ try:
     )
     from quantchain.backtesting.market_friction import MarketFrictionSimulator
     from quantchain.backtesting.performance_metrics import PerformanceMetrics
+
     FINRL_ADAPTER_AVAILABLE = True
 except ImportError as e:
     FINRL_ADAPTER_AVAILABLE = False
@@ -105,9 +106,7 @@ class TestFinRLAdapter:
         assert max_drawdown > 0  # Should have some drawdown
 
     @patch("quantchain.backtesting.finrl_adapter.get_connector")
-    def test_finrl_adapter_init_minimal(
-        self, mock_get_connector
-    ) -> None:
+    def test_finrl_adapter_init_minimal(self, mock_get_connector) -> None:
         """Test FinRL adapter minimal initialization."""
         mock_connector = Mock()
         mock_get_connector.return_value = mock_connector

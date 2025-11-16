@@ -7,10 +7,11 @@ import os
 import ast
 import sys
 
+
 def check_file_syntax(file_path):
     """Check if a Python file has valid syntax."""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
         ast.parse(content)
         return True, None
@@ -18,6 +19,7 @@ def check_file_syntax(file_path):
         return False, str(e)
     except Exception as e:
         return False, f"Error reading file: {str(e)}"
+
 
 def find_python_files(directory):
     """Find all Python files in a directory recursively."""
@@ -27,6 +29,7 @@ def find_python_files(directory):
             if file.endswith(".py"):
                 python_files.append(os.path.join(root, file))
     return python_files
+
 
 def main():
     """Main function."""
@@ -53,6 +56,7 @@ def main():
     print(f"Found {error_count} files with syntax errors")
 
     return error_count
+
 
 if __name__ == "__main__":
     sys.exit(main())

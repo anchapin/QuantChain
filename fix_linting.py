@@ -19,7 +19,6 @@ def run_command(cmd: List[str]) -> str:
         return ""
 
 
-
 def main():
     """Main function."""
     print("Running code formatting and linting tools...")
@@ -39,7 +38,7 @@ def main():
     output = run_command(["flake8", "quantchain/", "tests/"])
 
     # Check for unused imports
-    f401_lines = [line for line in output.split('\n') if 'F401' in line]
+    f401_lines = [line for line in output.split("\n") if "F401" in line]
     if f401_lines:
         print(f"Found {len(f401_lines)} unused import issues (F401).")
         print("These should be fixed manually by removing unused imports.")
@@ -50,7 +49,7 @@ def main():
             print(f"  ... and {len(f401_lines) - 5} more.")
 
     # Check for comparison to True/False
-    e712_lines = [line for line in output.split('\n') if 'E712' in line]
+    e712_lines = [line for line in output.split("\n") if "E712" in line]
     if e712_lines:
         print(f"Found {len(e712_lines)} comparison to True/False issues (E712).")
         print("These should be fixed manually by using 'is' or 'not' instead of ==/!=.")
@@ -68,7 +67,7 @@ def main():
         print("Type checking issues found.")
         print("These should be fixed manually by adding proper type annotations.")
         # Print first 10 lines of mypy output
-        lines = output.split('\n')
+        lines = output.split("\n")
         for i, line in enumerate(lines[:10]):
             if line:
                 print(f"  {i + 1}. {line}")

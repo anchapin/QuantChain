@@ -21,7 +21,7 @@ def fix_import_indentation(file_path: str) -> bool:
     Returns True if changes were made, False otherwise.
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         new_lines = []
@@ -31,16 +31,18 @@ def fix_import_indentation(file_path: str) -> bool:
             stripped = line.strip()
 
             # Check if this is an import statement with incorrect indentation
-            if (stripped.startswith('import ') or stripped.startswith('from ')) and line != stripped:
+            if (
+                stripped.startswith("import ") or stripped.startswith("from ")
+            ) and line != stripped:
                 # Fix the indentation
-                new_line = stripped + '\n'
+                new_line = stripped + "\n"
                 new_lines.append(new_line)
                 changes_made = True
             else:
                 new_lines.append(line)
 
         if changes_made:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.writelines(new_lines)
             return True
 
@@ -57,13 +59,13 @@ def fix_empty_try_blocks(file_path: str) -> bool:
     Returns True if changes were made, False otherwise.
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
 
         # Pattern to match empty try blocks
-        pattern = r'try:\s*\n(\s*?)(?=\n|\S)'
+        pattern = r"try:\s*\n(\s*?)(?=\n|\S)"
 
         def replace_empty_try(match):
             indent = match.group(1)
@@ -72,7 +74,7 @@ def fix_empty_try_blocks(file_path: str) -> bool:
         content = re.sub(pattern, replace_empty_try, content)
 
         if content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             return True
 
@@ -89,13 +91,13 @@ def fix_empty_except_blocks(file_path: str) -> bool:
     Returns True if changes were made, False otherwise.
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
 
         # Pattern to match empty except blocks
-        pattern = r'except(\s+\w+)?\s*:\s*\n(\s*?)(?=\n|\S)'
+        pattern = r"except(\s+\w+)?\s*:\s*\n(\s*?)(?=\n|\S)"
 
         def replace_empty_except(match):
             exception = match.group(1) if match.group(1) else ""
@@ -105,7 +107,7 @@ def fix_empty_except_blocks(file_path: str) -> bool:
         content = re.sub(pattern, replace_empty_except, content)
 
         if content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             return True
 
@@ -122,12 +124,12 @@ def fix_malformed_syntax(file_path: str) -> bool:
     Returns True if changes were made, False otherwise.
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         # First, try to parse the file to check for syntax errors
         try:
-            ast.parse(''.join(lines))
+            ast.parse("".join(lines))
             return False  # No syntax errors
         except SyntaxError:
             pass  # Continue to fix the issues
@@ -139,21 +141,21 @@ def fix_malformed_syntax(file_path: str) -> bool:
         changes_made = False
 
         for line in lines:
-            line_content = line.rstrip('\n')
+            line_content = line.rstrip("\n")
 
             # Fix unmatched parentheses
-            open_count = line_content.count('(')
-            close_count = line_content.count(')')
+            open_count = line_content.count("(")
+            close_count = line_content.count(")")
             paren_diff = open_count - close_count
 
             if paren_diff > 0:
-                line_content += ')' * paren_diff
+                line_content += ")" * paren_diff
                 changes_made = True
 
-            new_content += line_content + '\n'
+            new_content += line_content + "\n"
 
         if changes_made:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(new_content)
             return True
 
@@ -170,12 +172,12 @@ def fix_try_except_syntax(file_path: str) -> bool:
     Returns True if changes were made, False otherwise.
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         # First, try to parse the file to check for syntax errors
         try:
-            ast.parse(''.join(lines))
+            ast.parse("".join(lines))
             return False  # No syntax errors
         except SyntaxError:
             pass  # Continue to fix the issues
@@ -191,13 +193,15 @@ def fix_try_except_syntax(file_path: str) -> bool:
             line = lines[i]
             stripped = line.strip()
 
-            if stripped.startswith('try:'):
+            if stripped.startswith("try:"):
                 in_try = True
                 try_indent = len(line) - len(stripped)
                 new_lines.append(line)
                 i += 1
                 continue
-            elif in_try and (stripped.startswith('except') or stripped.startswith('finally')):
+            elif in_try and (
+                stripped.startswith("except") or stripped.startswith("finally")
+            ):
                 in_try = False
                 new_lines.append(line)
                 i += 1
@@ -205,8 +209,8 @@ def fix_try_except_syntax(file_path: str) -> bool:
             elif in_try and (len(line) - len(stripped) <= try_indent):
                 # We've reached a line at the same or lower indentation as the try
                 # without finding an except or finally, add one
-                except_line = ' ' * try_indent + 'except:\n'
-                except_line += ' ' * (try_indent + 4) + 'pass\n'
+                except_line = " " * try_indent + "except:\n"
+                except_line += " " * (try_indent + 4) + "pass\n"
                 new_lines.append(except_line)
                 in_try = False
                 changes_made = True
@@ -219,13 +223,13 @@ def fix_try_except_syntax(file_path: str) -> bool:
 
         # If we ended with an unclosed try, add an except block
         if in_try:
-            except_line = ' ' * try_indent + 'except:\n'
-            except_line += ' ' * (try_indent + 4) + 'pass\n'
+            except_line = " " * try_indent + "except:\n"
+            except_line += " " * (try_indent + 4) + "pass\n"
             new_lines.append(except_line)
             changes_made = True
 
         if changes_made:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.writelines(new_lines)
             return True
 
@@ -242,12 +246,12 @@ def fix_unmatched_indentation(file_path: str) -> bool:
     Returns True if changes were made, False otherwise.
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         # First, try to parse the file to check for syntax errors
         try:
-            ast.parse(''.join(lines))
+            ast.parse("".join(lines))
             return False  # No syntax errors
         except SyntaxError:
             pass  # Continue to fix the issues
@@ -261,34 +265,38 @@ def fix_unmatched_indentation(file_path: str) -> bool:
             stripped = line.strip()
 
             # Skip empty lines and comments
-            if not stripped or stripped.startswith('#'):
+            if not stripped or stripped.startswith("#"):
                 new_lines.append(line)
                 i += 1
                 continue
 
             # Check for unexpected indent
             if i > 0:
-                prev_line = lines[i-1]
+                prev_line = lines[i - 1]
                 prev_stripped = prev_line.strip()
 
                 # If the previous line was not a block starter, this line should not be indented
-                if (not prev_stripped.endswith(':') and
-                    not prev_stripped.startswith('try') and
-                    not prev_stripped.startswith('except') and
-                    not prev_stripped.startswith('finally') and
-                    len(line) - len(stripped) > 0):
+                if (
+                    not prev_stripped.endswith(":")
+                    and not prev_stripped.startswith("try")
+                    and not prev_stripped.startswith("except")
+                    and not prev_stripped.startswith("finally")
+                    and len(line) - len(stripped) > 0
+                ):
 
                     # This might be incorrectly indented
                     # Check if it's a regular line that shouldn't be indented
-                    if not (stripped.startswith('def') or
-                           stripped.startswith('class') or
-                           stripped.startswith('if') or
-                           stripped.startswith('for') or
-                           stripped.startswith('while') or
-                           stripped.startswith('with')):
+                    if not (
+                        stripped.startswith("def")
+                        or stripped.startswith("class")
+                        or stripped.startswith("if")
+                        or stripped.startswith("for")
+                        or stripped.startswith("while")
+                        or stripped.startswith("with")
+                    ):
 
                         # Fix the indentation
-                        new_line = stripped + '\n'
+                        new_line = stripped + "\n"
                         new_lines.append(new_line)
                         changes_made = True
                         i += 1
@@ -298,7 +306,7 @@ def fix_unmatched_indentation(file_path: str) -> bool:
             i += 1
 
         if changes_made:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.writelines(new_lines)
             return True
 

@@ -3,20 +3,24 @@
 import os
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Union, Any
-from enum import Enum
+from typing import Optional, Dict, Any
 
 try:
     import pandas as pd
+
     _PANDAS_AVAILABLE = True
 except ImportError:
     _PANDAS_AVAILABLE = False
 
 try:
     from alpaca.data import TimeFrame
-    from alpaca.data.historical import StockHistoricalDataClient, CryptoHistoricalDataClient
+    from alpaca.data.historical import (
+        StockHistoricalDataClient,
+        CryptoHistoricalDataClient,
+    )
     from alpaca.trading.client import TradingClient
     from alpaca.trading.enums import AssetClass
+
     _ALPACA_AVAILABLE = True
 except ImportError:
     _ALPACA_AVAILABLE = False
@@ -26,6 +30,7 @@ from quantchain.core.exceptions import (
     DataSourceError,
     SymbolNotFoundError,
 )
+
 
 class AlpacaDataConnector:
     """Connector for Alpaca data API."""
@@ -51,8 +56,8 @@ class AlpacaDataConnector:
             retry_delay: Delay between retries in seconds
         """
         # Get credentials from environment if not provided
-        self.api_key = api_key or os.environ.get('ALPACA_API_KEY')
-        self.secret_key = secret_key or os.environ.get('ALPACA_SECRET_KEY')
+        self.api_key = api_key or os.environ.get("ALPACA_API_KEY")
+        self.secret_key = secret_key or os.environ.get("ALPACA_SECRET_KEY")
         self.paper_trading = paper_trading
         self.symbol_limit = symbol_limit
         self.retry_count = retry_count
@@ -62,7 +67,7 @@ class AlpacaDataConnector:
         self.stock_client = None
         self.crypto_client = None
         self.trading_client = None
-        self._symbol_cache = {}
+        self._symbol_cache: Dict[str, Any] = {}
 
         # Validate credentials
         if not self.api_key or not self.secret_key:
@@ -75,9 +80,7 @@ class AlpacaDataConnector:
     def _initialize_clients(self) -> None:
         """Initialize Alpaca clients."""
         try:
-            self.stock_client = StockHistoricalDataClient(
-                self.api_key, self.secret_key
-            )
+            self.stock_client = StockHistoricalDataClient(self.api_key, self.secret_key)
             self.crypto_client = CryptoHistoricalDataClient(
                 self.api_key, self.secret_key
             )
@@ -98,7 +101,7 @@ class AlpacaDataConnector:
         # Convert "-" to "/"
         return symbol.replace("-", "/")
 
-    def _convert_timeframe(self, timeframe: str):
+    def _convert_timeframe(self, timeframe: str) -> str:
         """Convert timeframe string to Alpaca TimeFrame."""
         timeframe_map = {
             "1Min": TimeFrame.Minute,
@@ -126,14 +129,20 @@ class AlpacaDataConnector:
 
             # Update cache
             for asset in assets:
-                if hasattr(asset, 'symbol') and hasattr(asset, 'asset_class'):
+                if hasattr(asset, "symbol") and hasattr(asset, "asset_class"):
                     self._symbol_cache[asset.symbol] = {
-                        "market": "equity" if asset.asset_class == AssetClass.US_EQUITY else "crypto"
+                        "market": (
+                            "equity"
+                            if asset.asset_class == AssetClass.US_EQUITY
+                            else "crypto"
+                        )
                     }
 
             # Limit cache size
             if len(self._symbol_cache) > self.symbol_limit:
-                self._symbol_cache = dict(list(self._symbol_cache.items())[:self.symbol_limit])
+                self._symbol_cache = dict(
+                    list(self._symbol_cache.items())[: self.symbol_limit]
+                )
 
         except Exception as e:
             # Log error but continue with empty cache
@@ -212,7 +221,7 @@ class AlpacaDataConnector:
                 if not _PANDAS_AVAILABLE:
                     raise DataSourceError("pandas is required for data handling")
 
-                df = bars.df if hasattr(bars, 'df') else pd.DataFrame()
+                df = bars.df if hasattr(bars, "df") else pd.DataFrame()
                 return df
 
             except Exception as e:
@@ -221,7 +230,7 @@ class AlpacaDataConnector:
 
                 time.sleep(self.retry_delay)
 
-    def get_real_time_data(self, symbol: str):
+    def get_real_time_data(self, symbol: str) -> Optional[pd.DataFrame]:
         """
         Get real-time quote data for a symbol.
 
@@ -265,7 +274,8 @@ class AlpacaDataConnector:
                     "symbol": symbol,
                     "bid": quote.bid_price,
                     "ask": quote.ask_price,
-                    "price": (quote.bid_price + quote.ask_price) / 2,  # Mid-price for stocks
+                    "price": (quote.bid_price + quote.ask_price)
+                    / 2,  # Mid-price for stocks
                     "timestamp": quote.timestamp,
                 }
 
@@ -281,7 +291,7 @@ class AlpacaDataConnector:
 
                 time.sleep(self.retry_delay)
 
-    def get_quote(self, symbol: str):
+    def get_quote(self, symbol: str) -> Optional[Dict[str, Any]]:
         """
         Get detailed quote information for a symbol.
 
@@ -295,15 +305,19 @@ class AlpacaDataConnector:
         data = self.get_real_time_data(symbol)
 
         # Add additional fields
-        data.update({
-            "last_price": data["price"],
-            "bid_size": getattr(data, "bid_size", 0),
-            "ask_size": getattr(data, "ask_size", 0),
-        })
+        data.update(
+            {
+                "last_price": data["price"],
+                "bid_size": getattr(data, "bid_size", 0),
+                "ask_size": getattr(data, "ask_size", 0),
+            }
+        )
 
         return data
 
-    def get_available_symbols(self, market: Optional[str] = None, limit: Optional[int] = None):
+    def get_available_symbols(
+        self, market: Optional[str] = None, limit: Optional[int] = None
+    ):
         """
         Get list of available trading symbols.
 
@@ -321,7 +335,8 @@ class AlpacaDataConnector:
         # Filter by market
         if market:
             symbols = [
-                symbol for symbol, info in self._symbol_cache.items()
+                symbol
+                for symbol, info in self._symbol_cache.items()
                 if info.get("market") == market
             ]
         else:
@@ -333,7 +348,7 @@ class AlpacaDataConnector:
 
         return symbols
 
-    def get_symbol_info(self, symbol: str):
+    def get_symbol_info(self, symbol: str) -> Optional[Dict[str, Any]]:
         """
         Get detailed information about a symbol.
 
@@ -358,19 +373,21 @@ class AlpacaDataConnector:
         info["symbol"] = symbol
 
         # Add additional fields
-        info.update({
-            "name": info.get("name", symbol),
-            "market": info.get("market"),
-            "currency": "USD",  # Default currency
-            "price_precision": 2,  # Default precision
-            "size_precision": 0,  # Default precision
-            "tradable": True,  # Assume tradable
-            "fractionable": info.get("fractionable", False),
-        })
+        info.update(
+            {
+                "name": info.get("name", symbol),
+                "market": info.get("market"),
+                "currency": "USD",  # Default currency
+                "price_precision": 2,  # Default precision
+                "size_precision": 0,  # Default precision
+                "tradable": True,  # Assume tradable
+                "fractionable": info.get("fractionable", False),
+            }
+        )
 
         return info
 
-    def is_market_open(self, market: Optional[str] = None):
+    def is_market_open(self, market: Optional[str] = None) -> bool:
         """
         Check if market is open.
 
@@ -391,6 +408,6 @@ class AlpacaDataConnector:
 
         try:
             clock = self.trading_client.get_clock()
-            return clock.is_open if hasattr(clock, 'is_open') else True
+            return clock.is_open if hasattr(clock, "is_open") else True
         except Exception as e:
             raise DataSourceError(f"Failed to get market status: {str(e)}")

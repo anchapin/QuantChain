@@ -59,7 +59,7 @@ class TestOrderRequest:
             symbol="AAPL",
             side=OrderSide.BUY,
             order_type=OrderType.MARKET,
-            quantity=100.0
+            quantity=100.0,
         )
 
         assert order.symbol == "AAPL"
@@ -79,7 +79,7 @@ class TestOrderRequest:
             side=OrderSide.SELL,
             order_type=OrderType.LIMIT,
             quantity=50.0,
-            price=250.0
+            price=250.0,
         )
 
         assert order.symbol == "MSFT"
@@ -96,7 +96,7 @@ class TestOrderRequest:
             side=OrderSide.BUY,
             order_type=OrderType.STOP,
             quantity=75.0,
-            stop_price=150.0
+            stop_price=150.0,
         )
 
         assert order.symbol == "GOOGL"
@@ -114,7 +114,7 @@ class TestOrderRequest:
             order_type=OrderType.STOP_LIMIT,
             quantity=25.0,
             price=800.0,
-            stop_price=850.0
+            stop_price=850.0,
         )
 
         assert order.symbol == "TSLA"
@@ -132,7 +132,7 @@ class TestOrderRequest:
             order_type=OrderType.LIMIT,
             quantity=10.0,
             price=3200.0,
-            time_in_force="IOC"  # Immediate or Cancel
+            time_in_force="IOC",  # Immediate or Cancel
         )
 
         assert order.time_in_force == "IOC"
@@ -145,7 +145,7 @@ class TestOrderRequest:
             side=OrderSide.BUY,
             order_type=OrderType.MARKET,
             quantity=30.0,
-            client_order_id=custom_id
+            client_order_id=custom_id,
         )
 
         assert order.client_order_id == custom_id
@@ -157,7 +157,7 @@ class TestOrderRequest:
                 symbol="AAPL",
                 side=OrderSide.BUY,
                 order_type=OrderType.LIMIT,
-                quantity=100.0
+                quantity=100.0,
             )
 
         assert "Price is required for limit order" in str(excinfo.value)
@@ -169,7 +169,7 @@ class TestOrderRequest:
                 symbol="AAPL",
                 side=OrderSide.BUY,
                 order_type=OrderType.STOP,
-                quantity=100.0
+                quantity=100.0,
             )
 
         assert "Stop price is required for stop order" in str(excinfo.value)
@@ -182,7 +182,7 @@ class TestOrderRequest:
                 side=OrderSide.BUY,
                 order_type=OrderType.STOP_LIMIT,
                 quantity=100.0,
-                price=150.0
+                price=150.0,
                 # Missing stop_price
             )
 
@@ -205,7 +205,7 @@ class TestOrderResult:
             price=None,
             average_price=150.0,
             status=OrderStatus.FILLED,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
         assert result.order_id == "order_123"
@@ -235,7 +235,7 @@ class TestOrderResult:
             average_price=None,
             status=OrderStatus.REJECTED,
             timestamp=timestamp,
-            error_message=error_msg
+            error_message=error_msg,
         )
 
         assert result.error_message == error_msg
@@ -253,7 +253,7 @@ class TestOrderResult:
             price=1500.0,
             average_price=1500.0,
             status=OrderStatus.PARTIALLY_FILLED,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
         assert result.quantity == 100.0
@@ -274,7 +274,7 @@ class TestAccountInfo:
             day_trading_profit_loss=1250.0,
             maintenance_margin=15000.0,
             day_trades_count=5,
-            leverage=2.0
+            leverage=2.0,
         )
 
         assert account.account_id == "acc_123"
@@ -299,7 +299,7 @@ class TestPosition:
             market_value=15000.0,
             cost_basis=14000.0,
             unrealized_pl=1000.0,
-            unrealized_pl_pct=7.14
+            unrealized_pl_pct=7.14,
         )
 
         assert position.symbol == "AAPL"
@@ -319,7 +319,7 @@ class TestPosition:
             market_value=20000.0,
             cost_basis=21000.0,
             unrealized_pl=-1000.0,
-            unrealized_pl_pct=-4.76
+            unrealized_pl_pct=-4.76,
         )
 
         assert position.symbol == "TSLA"
@@ -339,7 +339,7 @@ class TestPosition:
             market_value=0.0,
             cost_basis=5000.0,
             unrealized_pl=-500.0,
-            unrealized_pl_pct=-10.0
+            unrealized_pl_pct=-10.0,
         )
 
         assert position.quantity == 0.0
@@ -357,8 +357,8 @@ class TestTradingExecutionTool:
     def test_initialization(self, tool: TradingExecutionTool) -> None:
         """Test trading execution tool initialization."""
         assert tool is not None
-        assert hasattr(tool, '_positions')
-        assert hasattr(tool, '_orders')
+        assert hasattr(tool, "_positions")
+        assert hasattr(tool, "_orders")
 
     def test_place_order_market_buy(self, tool: TradingExecutionTool) -> None:
         """Test placing a market buy order."""
@@ -366,7 +366,7 @@ class TestTradingExecutionTool:
             symbol="AAPL",
             side=OrderSide.BUY,
             order_type=OrderType.MARKET,
-            quantity=100.0
+            quantity=100.0,
         )
 
         result = tool.place_order(order_request)
@@ -390,14 +390,14 @@ class TestTradingExecutionTool:
             market_value=30000.0,
             cost_basis=28000.0,
             unrealized_pl=2000.0,
-            unrealized_pl_pct=7.14
+            unrealized_pl_pct=7.14,
         )
 
         order_request = OrderRequest(
             symbol="AAPL",
             side=OrderSide.SELL,
             order_type=OrderType.MARKET,
-            quantity=50.0
+            quantity=50.0,
         )
 
         result = tool.place_order(order_request)
@@ -420,7 +420,7 @@ class TestTradingExecutionTool:
             side=OrderSide.BUY,
             order_type=OrderType.LIMIT,
             quantity=75.0,
-            price=250.0
+            price=250.0,
         )
 
         result = tool.place_order(order_request)
@@ -440,7 +440,7 @@ class TestTradingExecutionTool:
             side=OrderSide.SELL,
             order_type=OrderType.STOP,
             quantity=30.0,
-            stop_price=1400.0
+            stop_price=1400.0,
         )
 
         result = tool.place_order(order_request)
@@ -461,7 +461,7 @@ class TestTradingExecutionTool:
             order_type=OrderType.STOP_LIMIT,
             quantity=25.0,
             price=800.0,
-            stop_price=850.0
+            stop_price=850.0,
         )
 
         result = tool.place_order(order_request)
@@ -475,13 +475,15 @@ class TestTradingExecutionTool:
         assert result.price == 800.0
         assert result.stop_price == 850.0
 
-    def test_place_order_insufficient_position(self, tool: TradingExecutionTool) -> None:
+    def test_place_order_insufficient_position(
+        self, tool: TradingExecutionTool
+    ) -> None:
         """Test placing a sell order without sufficient position."""
         order_request = OrderRequest(
             symbol="AAPL",
             side=OrderSide.SELL,
             order_type=OrderType.MARKET,
-            quantity=100.0
+            quantity=100.0,
         )
 
         # Should raise an error when trying to sell without position
@@ -496,7 +498,7 @@ class TestTradingExecutionTool:
             side=OrderSide.BUY,
             order_type=OrderType.LIMIT,
             quantity=100.0,
-            price=150.0
+            price=150.0,
         )
 
         result = tool.place_order(order_request)
@@ -523,7 +525,7 @@ class TestTradingExecutionTool:
             symbol="AAPL",
             side=OrderSide.BUY,
             order_type=OrderType.MARKET,
-            quantity=100.0
+            quantity=100.0,
         )
 
         result = tool.place_order(order_request)
@@ -540,7 +542,7 @@ class TestTradingExecutionTool:
             symbol="AAPL",
             side=OrderSide.BUY,
             order_type=OrderType.MARKET,
-            quantity=100.0
+            quantity=100.0,
         )
 
         placed_order = tool.place_order(order_request)
@@ -570,7 +572,7 @@ class TestTradingExecutionTool:
             symbol="AAPL",
             side=OrderSide.BUY,
             order_type=OrderType.MARKET,
-            quantity=100.0
+            quantity=100.0,
         )
 
         tool.place_order(order_request)
@@ -588,7 +590,7 @@ class TestTradingExecutionTool:
             symbol="AAPL",
             side=OrderSide.BUY,
             order_type=OrderType.MARKET,
-            quantity=100.0
+            quantity=100.0,
         )
 
         tool.place_order(order_request)
@@ -625,7 +627,7 @@ class TestTradingExecutionTool:
             symbol="AAPL",
             side=OrderSide.BUY,
             order_type=OrderType.MARKET,
-            quantity=100.0
+            quantity=100.0,
         )
 
         order_request2 = OrderRequest(
@@ -633,12 +635,13 @@ class TestTradingExecutionTool:
             side=OrderSide.BUY,
             order_type=OrderType.LIMIT,
             quantity=50.0,
-            price=250.0
+            price=250.0,
         )
 
         tool.place_order(order_request1)
         # Add small delay to ensure different timestamps
         import time
+
         time.sleep(0.01)
         tool.place_order(order_request2)
 

@@ -1,9 +1,7 @@
 """Trading execution module for QuantChain."""
 
-import os
-import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Union, Any
+from datetime import datetime
+from typing import Dict, List, Optional, Any, Union
 from enum import Enum
 import uuid
 
@@ -14,20 +12,26 @@ from quantchain.core.exceptions import (
     TradingError,
 )
 
+
 class OrderSide(Enum):
     """Order side types."""
+
     BUY = "buy"
     SELL = "sell"
 
+
 class OrderType(Enum):
     """Order type types."""
+
     MARKET = "market"
     LIMIT = "limit"
     STOP = "stop"
     STOP_LIMIT = "stop_limit"
 
+
 class OrderStatus(Enum):
     """Order status types."""
+
     NEW = "new"
     SUBMITTED = "submitted"
     FILLED = "filled"
@@ -35,6 +39,7 @@ class OrderStatus(Enum):
     REJECTED = "rejected"
     CANCELLED = "cancelled"
     EXPIRED = "expired"
+
 
 class OrderRequest:
     """Request to place an order."""
@@ -80,6 +85,7 @@ class OrderRequest:
 
         if order_type in [OrderType.STOP, OrderType.STOP_LIMIT] and stop_price is None:
             raise ValidationError("Stop price is required for stop order")
+
 
 class OrderResult:
     """Result of an order placement or modification."""
@@ -129,6 +135,7 @@ class OrderResult:
         self.error_message = error_message
         self.stop_price = stop_price
 
+
 class AccountInfo:
     """Account information."""
 
@@ -165,6 +172,7 @@ class AccountInfo:
         self.day_trades_count = day_trades_count
         self.leverage = leverage
 
+
 class Position:
     """Open position."""
 
@@ -198,6 +206,7 @@ class Position:
         self.unrealized_pl = unrealized_pl
         self.unrealized_pl_pct = unrealized_pl_pct
 
+
 class TradingExecutionTool:
     """Base class for trading execution tools."""
 
@@ -218,8 +227,8 @@ class TradingExecutionTool:
         self.config = config or {}
         self.retry_count = retry_count
         self.retry_delay = retry_delay
-        self._orders = {}  # Client order ID -> OrderResult
-        self._positions = {}  # Symbol -> Position
+        self._orders: dict[str, Union[OrderRequest, OrderResult]] = {}  # Client order ID -> OrderRequest/OrderResult
+        self._positions: dict[str, Position] = {}  # Symbol -> Position
 
     def place_order(self, order_request: OrderRequest) -> OrderResult:
         """
@@ -247,7 +256,9 @@ class TradingExecutionTool:
                     # Add to existing position
                     position = self._positions[order_request.symbol]
                     new_quantity = position.quantity + order_request.quantity
-                    new_cost_basis = position.cost_basis + (order_request.quantity * mock_price)
+                    new_cost_basis = position.cost_basis + (
+                        order_request.quantity * mock_price
+                    )
                     position.quantity = new_quantity
                     position.cost_basis = new_cost_basis
                 else:
@@ -259,20 +270,30 @@ class TradingExecutionTool:
                         market_value=order_request.quantity * mock_price,
                         cost_basis=order_request.quantity * mock_price,
                         unrealized_pl=0.0,
-                        unrealized_pl_pct=0.0
+                        unrealized_pl_pct=0.0,
                     )
             elif order_request.side == OrderSide.SELL:
-                if order_request.symbol in self._positions and self._positions[order_request.symbol].quantity >= order_request.quantity:
+                if (
+                    order_request.symbol in self._positions
+                    and self._positions[order_request.symbol].quantity
+                    >= order_request.quantity
+                ):
                     # Reduce existing position
                     position = self._positions[order_request.symbol]
                     position.quantity -= order_request.quantity
                     if position.quantity <= 0:
                         # Close position entirely
-                        position.unrealized_pl = position.quantity * mock_price - position.cost_basis
-                        position.unrealized_pl_pct = position.unrealized_pl / position.cost_basis * 100
+                        position.unrealized_pl = (
+                            position.quantity * mock_price - position.cost_basis
+                        )
+                        position.unrealized_pl_pct = (
+                            position.unrealized_pl / position.cost_basis * 100
+                        )
                 else:
                     # No position to sell from
-                    raise InsufficientFundsError(f"No position for {order_request.symbol}")
+                    raise InsufficientFundsError(
+                        f"No position for {order_request.symbol}"
+                    )
 
             # Create result
             result = OrderResult(
@@ -286,7 +307,7 @@ class TradingExecutionTool:
                 average_price=mock_price,
                 status=OrderStatus.FILLED,
                 timestamp=datetime.now(),
-                stop_price=order_request.stop_price
+                stop_price=order_request.stop_price,
             )
 
             self._orders[order_request.client_order_id] = result
@@ -305,7 +326,7 @@ class TradingExecutionTool:
                 average_price=None,
                 status=OrderStatus.SUBMITTED,
                 timestamp=datetime.now(),
-                stop_price=order_request.stop_price
+                stop_price=order_request.stop_price,
             )
 
             self._orders[order_request.client_order_id] = result
@@ -395,13 +416,17 @@ class TradingExecutionTool:
             buying_power=portfolio_value * 2.0,  # Mock 2x leverage
             cash=portfolio_value * 0.5,  # Mock 50% cash available
             portfolio_value=portfolio_value,
-            day_trading_profit_loss=sum(pos.unrealized_pl for pos in self._positions.values()),
+            day_trading_profit_loss=sum(
+                pos.unrealized_pl for pos in self._positions.values()
+            ),
             maintenance_margin=portfolio_value * 0.1,  # Mock 10% maintenance
             day_trades_count=len(self._orders),
-            leverage=2.0
+            leverage=2.0,
         )
 
-    def get_order_history(self, symbol: Optional[str] = None, limit: int = 100) -> List[OrderResult]:
+    def get_order_history(
+        self, symbol: Optional[str] = None, limit: int = 100
+    ) -> List[OrderResult]:
         """
         Get order history.
 

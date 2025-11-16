@@ -68,9 +68,7 @@ def load_configuration() -> "QuantChainConfig":
 
     # Log available explorers
     explorer_names = [network for _, network in available_explorers]
-    logging.info(
-        f"Available blockchain explorers: {', '.join(explorer_names)}"
-    )
+    logging.info(f"Available blockchain explorers: {', '.join(explorer_names)}")
 
     # Validate LLM provider configuration
     if not hasattr(config, "llm") or not config.llm:
@@ -266,7 +264,7 @@ def audit_contract(
 
         # Save report if requested
         if save_output:
-            scan_date = audit_report['scan_date'].strftime('%Y%m%d_%H%M%S')
+            scan_date = audit_report["scan_date"].strftime("%Y%m%d_%H%M%S")
             filename = f"audit_{contract_address[:10]}_{scan_date}.json"
             with open(filename, "w") as f:
                 json.dump(audit_report, f, indent=2, default=str)

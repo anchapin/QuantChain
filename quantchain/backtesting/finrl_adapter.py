@@ -1,48 +1,30 @@
 """FinRL adapter for QuantChain backtesting."""
 
-import os
-import sys
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union, Tuple
+from typing import Any, Dict, Optional
 import pandas as pd
-import numpy as np
-
-try:
-    import gymnasium
-    _GYMNASIUM_AVAILABLE = True
-except ImportError:
-    _GYMNASIUM_AVAILABLE = False
-
-try:
-    import stable_baselines3
-    _SB3_AVAILABLE = True
-except ImportError:
-    _SB3_AVAILABLE = False
-
-try:
-    import quantchain.backtesting.engine as engine
-    _ENGINE_AVAILABLE = True
-except ImportError:
-    _ENGINE_AVAILABLE = False
 
 
 class FinRLError(Exception):
     """Base exception for FinRL adapter."""
+
     pass
 
 
 class FinRLAdapterError(FinRLError):
     """Base adapter error for FinRL."""
+
     pass
 
 
 class FinRLConnectionError(FinRLError):
     """Exception for connection errors."""
+
     pass
 
 
 class FinRLDataError(FinRLError):
     """Exception for data errors."""
+
     pass
 
 
@@ -82,11 +64,7 @@ class FinRLPortfolio:
         self.positions = dict(self.initial_position)
 
     def buy_stock(
-        self,
-        symbol: str,
-        amount: int,
-        price: float,
-        cost_pct: float = 0.001
+        self, symbol: str, amount: int, price: float, cost_pct: float = 0.001
     ) -> bool:
         """Buy stocks and update portfolio."""
         cost = amount * price * (1 + cost_pct)
@@ -101,11 +79,7 @@ class FinRLPortfolio:
         return True
 
     def sell_stock(
-        self,
-        symbol: str,
-        amount: int,
-        price: float,
-        cost_pct: float = 0.001
+        self, symbol: str, amount: int, price: float, cost_pct: float = 0.001
     ) -> bool:
         """Sell stocks and update portfolio."""
         if symbol not in self.positions or self.positions[symbol] < amount:
@@ -174,8 +148,7 @@ class FinRLAdapter:
     def __init__(self, config: Optional[FinRLConfig] = None):
         self.config = config or FinRLConfig()
         self.portfolio = FinRLPortfolio(
-            self.config.initial_cash,
-            self.config.initial_position
+            self.config.initial_cash, self.config.initial_position
         )
         self.strategy = None
 
@@ -186,10 +159,10 @@ class FinRLAdapter:
     def trade(self, state: pd.DataFrame, action: Dict[str, Any]) -> Dict[str, Any]:
         """Execute trade based on action."""
         # Default price (in a real scenario, this would be from market data)
-        price = state.iloc[-1]['close'] if len(state) > 0 else 100
+        price = state.iloc[-1]["close"] if len(state) > 0 else 100
         symbol = "SYMBOL"  # Default symbol
 
-        action_type = action.get('action', 0)  # 0=HOLD, 1=BUY, 2=SELL
+        action_type = action.get("action", 0)  # 0=HOLD, 1=BUY, 2=SELL
 
         if action_type == 1:  # BUY
             # Buy 10% of current cash worth of stock
@@ -200,7 +173,7 @@ class FinRLAdapter:
                 return {
                     "status": "buy",
                     "amount": amount,
-                    "cost": amount * price * (1 + self.config.buy_cost_pct)
+                    "cost": amount * price * (1 + self.config.buy_cost_pct),
                 }
         elif action_type == 2:  # SELL
             # Sell all position
@@ -212,22 +185,18 @@ class FinRLAdapter:
                     return {
                         "status": "sell",
                         "amount": amount,
-                        "cost": amount * price * self.config.sell_cost_pct
+                        "cost": amount * price * self.config.sell_cost_pct,
                     }
 
         # Default to HOLD
-        return {
-            "status": "hold",
-            "amount": 0,
-            "cost": 0
-        }
+        return {"status": "hold", "amount": 0, "cost": 0}
 
     def get_state(self) -> Dict[str, Any]:
         """Get current state."""
         return {
             "portfolio_value": self.portfolio.portfolio_value,
             "cash": self.portfolio.cash,
-            "positions": dict(self.portfolio.positions)
+            "positions": dict(self.portfolio.positions),
         }
 
 

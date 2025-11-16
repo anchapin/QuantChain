@@ -1,14 +1,13 @@
 """Backtesting.py Engine adapter for QuantChain."""
 
-import os
-import sys
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union, Tuple
+from typing import Any, Dict, Optional
 import pandas as pd
 import numpy as np
 
 try:
     from backtesting import Backtest, Strategy
+
     _BACKTESTING_AVAILABLE = True
 except ImportError:
     _BACKTESTING_AVAILABLE = False
@@ -26,7 +25,9 @@ class BacktestingPyEngine:
             config: Configuration for backtesting
         """
         if not _BACKTESTING_AVAILABLE:
-            raise ImportError("backtesting.py library not installed. Install with: pip install backtesting")
+            raise ImportError(
+                "backtesting.py library not installed. Install with: pip install backtesting"
+            )
 
         self.config = config or BacktestConfig()
         self._backtest = None
@@ -38,18 +39,21 @@ class BacktestingPyEngine:
 
     def _initialize_backtest(self) -> None:
         """Initialize the backtesting.py engine with the configuration."""
+
         # Create a temporary strategy for initialization
         class TempStrategy(Strategy):
             pass
 
         # Create a dummy DataFrame to initialize Backtest
-        dummy_data = pd.DataFrame({
-            'Open': [100.0],
-            'High': [101.0],
-            'Low': [99.0],
-            'Close': [100.5],
-            'Volume': [1000.0]
-        })
+        dummy_data = pd.DataFrame(
+            {
+                "Open": [100.0],
+                "High": [101.0],
+                "Low": [99.0],
+                "Close": [100.5],
+                "Volume": [1000.0],
+            }
+        )
 
         try:
             self._backtest = Backtest(
@@ -57,7 +61,7 @@ class BacktestingPyEngine:
                 TempStrategy,
                 cash=self.config.initial_capital,
                 commission=self.config.commission,
-                exclusive_orders=True
+                exclusive_orders=True,
             )
         except Exception as e:
             raise ImportError(f"Failed to initialize backtesting.py engine: {str(e)}")
@@ -75,7 +79,7 @@ class BacktestingPyEngine:
         data = data.copy()
 
         # Check for required columns
-        required_columns = ['open', 'high', 'low', 'close', 'volume']
+        required_columns = ["open", "high", "low", "close", "volume"]
 
         # Convert to lowercase for case-insensitive comparison
         data.columns = [col.lower() for col in data.columns]
@@ -87,27 +91,27 @@ class BacktestingPyEngine:
 
         # Convert to proper case for backtesting.py
         column_mapping = {
-            'open': 'Open',
-            'high': 'High',
-            'low': 'Low',
-            'close': 'Close',
-            'volume': 'Volume'
+            "open": "Open",
+            "high": "High",
+            "low": "Low",
+            "close": "Close",
+            "volume": "Volume",
         }
 
         data = data.rename(columns=column_mapping)
 
         # Ensure datetime index
         if not isinstance(data.index, pd.DatetimeIndex):
-            if 'timestamp' in data.columns:
-                data.index = pd.to_datetime(data['timestamp'])
-                data = data.drop(columns=['timestamp'])
-            elif 'date' in data.columns:
-                data.index = pd.to_datetime(data['date'])
-                data = data.drop(columns=['date'])
+            if "timestamp" in data.columns:
+                data.index = pd.to_datetime(data["timestamp"])
+                data = data.drop(columns=["timestamp"])
+            elif "date" in data.columns:
+                data.index = pd.to_datetime(data["date"])
+                data = data.drop(columns=["date"])
             else:
                 # Create a default date range
                 start_date = datetime.now() - timedelta(days=len(data))
-                dates = pd.date_range(start=start_date, periods=len(data), freq='D')
+                dates = pd.date_range(start=start_date, periods=len(data), freq="D")
                 data.index = dates
 
         return data
@@ -123,34 +127,36 @@ class BacktestingPyEngine:
         """
         # Map backtesting.py stat names to our metrics
         return MetricsResult(
-            total_return=stats.get('Return [%]', 0) / 100,
-            return_pct=stats.get('Return [%]', 0),
-            annualized_return=stats.get('Return (Ann.) [%]', 0) / 100,
-            sharpe_ratio=stats.get('Sharpe Ratio', 0),
-            sortino_ratio=stats.get('Sortino Ratio', 0),
-            calmar_ratio=stats.get('Calmar Ratio', 0),
-            max_drawdown=stats.get('Max Drawdown [%]', 0) / 100,
-            max_drawdown_pct=stats.get('Max Drawdown [%]', 0),
-            max_drawdown_duration=stats.get('Max Drawdown Duration', 0),
-            win_rate=stats.get('Win Rate [%]', 0) / 100,
-            win_rate_pct=stats.get('Win Rate [%]', 0),
-            profit_factor=stats.get('Profit Factor', 0),
-            recovery_factor=stats.get('Recovery Factor', 0),
-            total_trades=stats.get('# Trades', 0),
-            avg_trade=stats.get('Avg. Trade [%]', 0) / 100,
-            avg_win_pct=stats.get('Avg. Winning Trade [%]', 0),
-            avg_loss_pct=stats.get('Avg. Losing Trade [%]', 0),
-            largest_win=stats.get('Best Trade [%]', 0) / 100,
-            largest_loss=stats.get('Worst Trade [%]', 0) / 100,
-            avg_drawdown=stats.get('Avg. Drawdown [%]', 0) / 100,
-            avg_drawdown_pct=stats.get('Avg. Drawdown [%]', 0),
+            total_return=stats.get("Return [%]", 0) / 100,
+            return_pct=stats.get("Return [%]", 0),
+            annualized_return=stats.get("Return (Ann.) [%]", 0) / 100,
+            sharpe_ratio=stats.get("Sharpe Ratio", 0),
+            sortino_ratio=stats.get("Sortino Ratio", 0),
+            calmar_ratio=stats.get("Calmar Ratio", 0),
+            max_drawdown=stats.get("Max Drawdown [%]", 0) / 100,
+            max_drawdown_pct=stats.get("Max Drawdown [%]", 0),
+            max_drawdown_duration=stats.get("Max Drawdown Duration", 0),
+            win_rate=stats.get("Win Rate [%]", 0) / 100,
+            win_rate_pct=stats.get("Win Rate [%]", 0),
+            profit_factor=stats.get("Profit Factor", 0),
+            recovery_factor=stats.get("Recovery Factor", 0),
+            total_trades=stats.get("# Trades", 0),
+            avg_trade=stats.get("Avg. Trade [%]", 0) / 100,
+            avg_win_pct=stats.get("Avg. Winning Trade [%]", 0),
+            avg_loss_pct=stats.get("Avg. Losing Trade [%]", 0),
+            largest_win=stats.get("Best Trade [%]", 0) / 100,
+            largest_loss=stats.get("Worst Trade [%]", 0) / 100,
+            avg_drawdown=stats.get("Avg. Drawdown [%]", 0) / 100,
+            avg_drawdown_pct=stats.get("Avg. Drawdown [%]", 0),
             var_95=0.0,  # Not directly provided by backtesting.py
             var_99=0.0,  # Not directly provided by backtesting.py
             skewness=0.0,  # Not directly provided by backtesting.py
             kurtosis=0.0,  # Not directly provided by backtesting.py
         )
 
-    def _analyze_portfolio_composition(self, portfolio: Dict[str, float]) -> Dict[str, float]:
+    def _analyze_portfolio_composition(
+        self, portfolio: Dict[str, float]
+    ) -> Dict[str, float]:
         """Analyze portfolio composition.
 
         Args:
@@ -181,11 +187,11 @@ class BacktestingPyEngine:
 
         if len(returns) == 0:
             return {
-                'volatility': 0.0,
-                'var_95': 0.0,
-                'var_99': 0.0,
-                'skewness': 0.0,
-                'kurtosis': 0.0
+                "volatility": 0.0,
+                "var_95": 0.0,
+                "var_99": 0.0,
+                "skewness": 0.0,
+                "kurtosis": 0.0,
             }
 
         # Calculate metrics
@@ -196,11 +202,11 @@ class BacktestingPyEngine:
         kurtosis = returns.kurtosis()
 
         return {
-            'volatility': volatility,
-            'var_95': var_95,
-            'var_99': var_99,
-            'skewness': skewness,
-            'kurtosis': kurtosis
+            "volatility": volatility,
+            "var_95": var_95,
+            "var_99": var_99,
+            "skewness": skewness,
+            "kurtosis": kurtosis,
         }
 
     def run_backtest(self, data: pd.DataFrame, strategy: Any) -> BacktestResult:
@@ -220,7 +226,7 @@ class BacktestingPyEngine:
             raise ValueError(f"Failed to convert data format: {str(e)}")
 
         # Check if strategy has required methods
-        required_methods = ['init', 'next']
+        required_methods = ["init", "next"]
         for method in required_methods:
             if not hasattr(strategy, method):
                 raise AttributeError(f"Strategy must have '{method}' method")
@@ -235,7 +241,7 @@ class BacktestingPyEngine:
                 cash=self.config.initial_capital,
                 commission=self.config.commission,
                 slippage=self.config.slippage,
-                exclusive_orders=True
+                exclusive_orders=True,
             )
 
             stats = bt.run()
@@ -256,7 +262,7 @@ class BacktestingPyEngine:
                 summary_stats=stats,
                 metrics=metrics,
                 execution_time=execution_time,
-                config=self.config
+                config=self.config,
             )
 
         except Exception as e:

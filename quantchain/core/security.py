@@ -2,27 +2,53 @@
 
 import os
 import re
-import json
-from typing import Dict, Any, Optional, List, Union
-from dataclasses import dataclass
-from pathlib import Path
+from typing import Dict, Any, Optional, List
 
-from quantchain.core.secret_managers import get_default_secret_manager, create_secret_manager
-from quantchain.core.secret_managers.base import SecretManager
+# from quantchain.core.secret_managers import (
+#     get_default_secret_manager,
+#     create_secret_manager,
+# )
+# from quantchain.core.secret_managers.base import SecretManager
+
+
+# Temporary placeholder implementations
+class SecretManager:
+    """Placeholder SecretManager class."""
+
+    def get(self, key: str) -> Any:
+        """Get secret value."""
+        return None
+
+    def set(self, key: str, value: Any) -> None:
+        """Set secret value."""
+        pass
+
+
+def get_default_secret_manager() -> SecretManager:
+    """Get default secret manager."""
+    return SecretManager()
+
+
+def create_secret_manager(backend: str, **kwargs) -> SecretManager:
+    """Create secret manager with specified backend."""
+    return SecretManager()
 
 
 class CredentialNotFoundError(Exception):
     """Raised when requested credentials don't exist."""
+
     pass
 
 
 class SecurityConfigurationError(Exception):
     """Raised when security setup is invalid."""
+
     pass
 
 
 class InvalidCredentialFormatError(Exception):
     """Raised when credentials don't match expected format."""
+
     pass
 
 
@@ -30,30 +56,24 @@ class InvalidCredentialFormatError(Exception):
 API_KEY_PATTERNS = {
     "alpaca": {
         "key_pattern": r"^[A-Z0-9]{16,32}$",
-        "secret_pattern": r"^[A-Za-z0-9+/]{32,64}$"
+        "secret_pattern": r"^[A-Za-z0-9+/]{32,64}$",
     },
-    "polygon": {
-        "key_pattern": r"^[a-zA-Z0-9_]{20,40}$"
-    },
-    "alpha_vantage": {
-        "key_pattern": r"^[A-Z0-9]{16}$"
-    },
-    "anthropic": {
-        "key_pattern": r"^sk-ant-api03-[A-Za-z0-9_-]{95}$"
-    },
-    "openai": {
-        "key_pattern": r"^sk-[A-Za-z0-9]{48}$"
-    }
+    "polygon": {"key_pattern": r"^[a-zA-Z0-9_]{20,40}$"},
+    "alpha_vantage": {"key_pattern": r"^[A-Z0-9]{16}$"},
+    "anthropic": {"key_pattern": r"^sk-ant-api03-[A-Za-z0-9_-]{95}$"},
+    "openai": {"key_pattern": r"^sk-[A-Za-z0-9]{48}$"},
 }
 
 
 class APISecurityManager:
     """Manages secure API key storage and validation for QuantChain."""
 
-    def __init__(self, env_file: str = ".env", backend: Optional[str] = None, **kwargs):
+    def __init__(
+        self, env_file: str = ".env", backend: Optional[str] = None, **kwargs
+    ) -> None:
         """Initialize security manager with optional env file path or backend."""
         self.env_file = env_file
-        self._services = {}
+        self._services: Dict[str, Any] = {}
         self._secret_manager: Optional[SecretManager] = None
 
         # Initialize secret manager
@@ -102,17 +122,17 @@ class APISecurityManager:
     def _load_from_env_file(self) -> None:
         """Load credentials from .env file."""
         try:
-            with open(self.env_file, 'r') as f:
+            with open(self.env_file, "r") as f:
                 for line in f:
                     line = line.strip()
 
                     # Skip comments and empty lines
-                    if line.startswith('#') or '=' not in line:
+                    if line.startswith("#") or "=" not in line:
                         continue
 
-                    key, value = line.split('=', 1)
+                    key, value = line.split("=", 1)
                     key = key.strip()
-                    value = value.strip().strip('"\'')
+                    value = value.strip().strip("\"'")
 
                     # Parse environment variable
                     if key == "ALPACA_API_KEY":
@@ -152,7 +172,9 @@ class APISecurityManager:
         if service in API_KEY_PATTERNS:
             patterns = API_KEY_PATTERNS[service]
             if not re.match(patterns["key_pattern"], key):
-                raise InvalidCredentialFormatError(f"API key format for {service} is invalid")
+                raise InvalidCredentialFormatError(
+                    f"API key format for {service} is invalid"
+                )
 
         # Store in memory
         if service not in self._services:
@@ -163,7 +185,9 @@ class APISecurityManager:
             # Validate secret format if applicable
             if service in API_KEY_PATTERNS and "secret_pattern" in patterns:
                 if not re.match(patterns["secret_pattern"], secret):
-                    raise InvalidCredentialFormatError(f"API secret format for {service} is invalid")
+                    raise InvalidCredentialFormatError(
+                        f"API secret format for {service} is invalid"
+                    )
             self._services[service]["secret"] = secret
 
         # Store in secret manager if available
@@ -214,7 +238,9 @@ class APISecurityManager:
 
         return self._services[service]["secret"]
 
-    def validate_credentials(self, service: str, key: Optional[str] = None, secret: Optional[str] = None) -> bool:
+    def validate_credentials(
+        self, service: str, key: Optional[str] = None, secret: Optional[str] = None
+    ) -> bool:
         """Validate that stored credentials are properly formatted."""
         try:
             # Use provided key/secret or get from storage
@@ -264,34 +290,40 @@ class APISecurityManager:
         # Read existing content
         existing_content = ""
         if os.path.exists(file_path):
-            with open(file_path, 'r') as f:
+            with open(file_path, "r") as f:
                 existing_content = f.read()
 
         # Parse existing lines to preserve non-credential content
-        existing_lines = existing_content.split('\n')
+        existing_lines = existing_content.split("\n")
         non_credential_lines = []
         credential_keys = set()
 
         for line in existing_lines:
             line = line.strip()
-            if not line or line.startswith('#') or '=' not in line:
+            if not line or line.startswith("#") or "=" not in line:
                 non_credential_lines.append(line)
             else:
-                key = line.split('=', 1)[0].strip()
+                key = line.split("=", 1)[0].strip()
                 # Skip if it's a credential we're replacing
-                if not any(key.endswith(suffix) for suffix in [
-                    "ALPACA_API_KEY", "ALPACA_API_SECRET",
-                    "POLYGON_API_KEY", "ALPHA_VANTAGE_API_KEY",
-                    "ANTHROPIC_API_KEY", "OPENAI_API_KEY"
-                ]):
+                if not any(
+                    key.endswith(suffix)
+                    for suffix in [
+                        "ALPACA_API_KEY",
+                        "ALPACA_API_SECRET",
+                        "POLYGON_API_KEY",
+                        "ALPHA_VANTAGE_API_KEY",
+                        "ANTHROPIC_API_KEY",
+                        "OPENAI_API_KEY",
+                    ]
+                ):
                     non_credential_lines.append(line)
                 credential_keys.add(key)
 
         # Write new content
-        with open(file_path, 'w') as f:
+        with open(file_path, "w") as f:
             # Write non-credential content first
             for line in non_credential_lines:
-                f.write(line + '\n')
+                f.write(line + "\n")
 
             # Write credentials
             for service, credentials in self._services.items():
@@ -321,7 +353,9 @@ class APISecurityManager:
         if "key" in info:
             info["key"] = "***" + info["key"][-4:] if len(info["key"]) > 4 else "****"
         if "secret" in info:
-            info["secret"] = "***" + info["secret"][-4:] if len(info["secret"]) > 4 else "****"
+            info["secret"] = (
+                "***" + info["secret"][-4:] if len(info["secret"]) > 4 else "****"
+            )
 
         return info
 

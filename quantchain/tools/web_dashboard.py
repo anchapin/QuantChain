@@ -6,7 +6,6 @@ trading agents, visualizing their reasoning processes, and managing their
 configurations.
 """
 
-import json
 import os
 import sys
 from dataclasses import dataclass
@@ -18,6 +17,7 @@ import pandas as pd
 # Optional imports for web dashboard
 try:
     import plotly.graph_objects as go
+
     HAS_PLOTLY = True
 except ImportError:
     go = None
@@ -25,6 +25,7 @@ except ImportError:
 
 try:
     import streamlit as st
+
     HAS_STREAMLIT = True
 except ImportError:
     st = None
@@ -105,8 +106,7 @@ class DashboardCharts:
 
     @staticmethod
     def create_equity_curve(
-        data: List[Dict[str, Any]],
-        title: str = "Portfolio Equity Curve"
+        data: List[Dict[str, Any]], title: str = "Portfolio Equity Curve"
     ) -> Any:
         """
         Create an equity curve chart.
@@ -123,34 +123,33 @@ class DashboardCharts:
 
         # Convert to DataFrame for easier plotting
         df = pd.DataFrame(data)
-        if 'timestamp' not in df.columns or 'value' not in df.columns:
+        if "timestamp" not in df.columns or "value" not in df.columns:
             return None
 
         # Create figure
         fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=df['timestamp'],
-            y=df['value'],
-            mode='lines',
-            name='Portfolio Value',
-            line=dict(color='royalblue', width=2)
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=df["timestamp"],
+                y=df["value"],
+                mode="lines",
+                name="Portfolio Value",
+                line=dict(color="royalblue", width=2),
+            )
+        )
 
         # Add layout
         fig.update_layout(
             title=title,
-            xaxis_title='Time',
-            yaxis_title='Portfolio Value ($)',
-            template='plotly_white'
+            xaxis_title="Time",
+            yaxis_title="Portfolio Value ($)",
+            template="plotly_white",
         )
 
         return fig
 
     @staticmethod
-    def create_candlestick_chart(
-        data: pd.DataFrame,
-        title: str = "Price Chart"
-    ) -> Any:
+    def create_candlestick_chart(data: pd.DataFrame, title: str = "Price Chart") -> Any:
         """
         Create a candlestick chart for price data.
 
@@ -164,33 +163,34 @@ class DashboardCharts:
         if not HAS_PLOTLY or data.empty:
             return None
 
-        required_columns = ['open', 'high', 'low', 'close']
+        required_columns = ["open", "high", "low", "close"]
         if not all(col in data.columns for col in required_columns):
             return None
 
         # Create figure
-        fig = go.Figure(data=go.Candlestick(
-            x=data.index,
-            open=data['open'],
-            high=data['high'],
-            low=data['low'],
-            close=data['close']
-        ))
+        fig = go.Figure(
+            data=go.Candlestick(
+                x=data.index,
+                open=data["open"],
+                high=data["high"],
+                low=data["low"],
+                close=data["close"],
+            )
+        )
 
         # Add layout
         fig.update_layout(
             title=title,
-            xaxis_title='Time',
-            yaxis_title='Price',
-            template='plotly_white'
+            xaxis_title="Time",
+            yaxis_title="Price",
+            template="plotly_white",
         )
 
         return fig
 
     @staticmethod
     def create_performance_chart(
-        metrics: Dict[str, float],
-        title: str = "Performance Metrics"
+        metrics: Dict[str, float], title: str = "Performance Metrics"
     ) -> Any:
         """
         Create a performance metrics bar chart.
@@ -206,20 +206,24 @@ class DashboardCharts:
             return None
 
         # Create figure
-        fig = go.Figure(data=[
-            go.Bar(
-                x=list(metrics.keys()),
-                y=list(metrics.values()),
-                marker_color=['royalblue', 'crimson', 'green', 'orange', 'purple'][:len(metrics)]
-            )
-        ])
+        fig = go.Figure(
+            data=[
+                go.Bar(
+                    x=list(metrics.keys()),
+                    y=list(metrics.values()),
+                    marker_color=["royalblue", "crimson", "green", "orange", "purple"][
+                        : len(metrics)
+                    ],
+                )
+            ]
+        )
 
         # Add layout
         fig.update_layout(
             title=title,
-            xaxis_title='Metric',
-            yaxis_title='Value',
-            template='plotly_white'
+            xaxis_title="Metric",
+            yaxis_title="Value",
+            template="plotly_white",
         )
 
         return fig
@@ -255,7 +259,7 @@ class MonitoringService:
             current_positions=[],
             recent_trades=[],
             error_count=0,
-            uptime=timedelta(0)
+            uptime=timedelta(0),
         )
 
     def get_portfolio_metrics(self, agent_id: str) -> PortfolioMetrics:
@@ -280,7 +284,7 @@ class MonitoringService:
             max_drawdown=0.05,
             sharpe_ratio=1.2,
             trade_count=100,
-            last_updated=datetime.now()
+            last_updated=datetime.now(),
         )
 
     def get_system_health(self) -> SystemHealth:
@@ -299,7 +303,7 @@ class MonitoringService:
             cpu_usage_percent=35.0,
             memory_usage_percent=60.0,
             disk_space_gb=100.0,
-            uptime_hours=24.5
+            uptime_hours=24.5,
         )
 
     def list_agents(self) -> List[str]:
@@ -348,7 +352,7 @@ class ConfigurationService:
             agent_id=agent_id,
             agent_type="QuantTrader",
             name=f"Agent {agent_id}",
-            description="A quantitative trading agent"
+            description="A quantitative trading agent",
         )
 
     def update_agent_config(self, config: AgentConfig) -> None:
@@ -423,23 +427,23 @@ class WebDashboardApp:
             agent_id = st.selectbox(
                 "Select Agent",
                 agents,
-                index=0 if not self.config.default_agent_id else agents.index(self.config.default_agent_id)
+                index=(
+                    0
+                    if not self.config.default_agent_id
+                    else agents.index(self.config.default_agent_id)
+                ),
             )
 
             # Page selection
             page = st.selectbox(
-                "Select Page",
-                ["Overview", "Portfolio", "Reasoning", "Configuration"]
+                "Select Page", ["Overview", "Portfolio", "Reasoning", "Configuration"]
             )
 
             # Refresh button
             if st.button("Refresh Data"):
                 st.experimental_rerun()
 
-            return {
-                "agent_id": agent_id,
-                "page": page
-            }
+            return {"agent_id": agent_id, "page": page}
 
     def _render_overview_page(self, agent_id: str) -> None:
         """
@@ -467,22 +471,36 @@ class WebDashboardApp:
 
             with col2:
                 st.subheader("Performance")
-                st.info(f"Total Return: {metrics.total_pnl:.2f} ({metrics.pnl_percentage:.2f}%)")
+                st.info(
+                    f"Total Return: {metrics.total_pnl:.2f} ({metrics.pnl_percentage:.2f}%)"
+                )
                 st.info(f"Sharpe Ratio: {metrics.sharpe_ratio:.2f}")
 
         # System health
         st.subheader("System Health")
         health = self.monitoring_service.get_system_health()
-        health_df = pd.DataFrame({
-            "Metric": ["API Status", "LLM Response Time", "Error Rate", "CPU Usage", "Memory Usage"],
-            "Value": [
-                "All APIs Up" if all(health.api_status.values()) else "Some APIs Down",
-                f"{health.llm_response_time_ms:.0f}ms",
-                f"{health.error_rate_24h * 100:.2f}%",
-                f"{health.cpu_usage_percent:.1f}%",
-                f"{health.memory_usage_percent:.1f}%"
-            ]
-        })
+        health_df = pd.DataFrame(
+            {
+                "Metric": [
+                    "API Status",
+                    "LLM Response Time",
+                    "Error Rate",
+                    "CPU Usage",
+                    "Memory Usage",
+                ],
+                "Value": [
+                    (
+                        "All APIs Up"
+                        if all(health.api_status.values())
+                        else "Some APIs Down"
+                    ),
+                    f"{health.llm_response_time_ms:.0f}ms",
+                    f"{health.error_rate_24h * 100:.2f}%",
+                    f"{health.cpu_usage_percent:.1f}%",
+                    f"{health.memory_usage_percent:.1f}%",
+                ],
+            }
+        )
         st.dataframe(health_df)
 
     def _render_portfolio_page(self, agent_id: str) -> None:
@@ -519,11 +537,16 @@ class WebDashboardApp:
         # Create equity curve chart
         if HAS_PLOTLY:
             # Generate sample data for demonstration
-            dates = pd.date_range(end=datetime.now(), periods=30, freq='D')
+            dates = pd.date_range(end=datetime.now(), periods=30, freq="D")
             values = [100000 * (1 + i * 0.001) for i in range(30)]
-            data = [{"timestamp": date, "value": value} for date, value in zip(dates, values)]
+            data = [
+                {"timestamp": date, "value": value}
+                for date, value in zip(dates, values)
+            ]
 
-            equity_fig = self.charts.create_equity_curve(data, f"Equity Curve - {agent_id}")
+            equity_fig = self.charts.create_equity_curve(
+                data, f"Equity Curve - {agent_id}"
+            )
             if equity_fig:
                 st.plotly_chart(equity_fig, use_container_width=True)
 
@@ -595,7 +618,7 @@ class WebDashboardApp:
                     agent_id=agent_id,
                     agent_type=config.agent_type,
                     name=name,
-                    description=description
+                    description=description,
                 )
                 self.config_service.update_agent_config(updated_config)
                 self.config_service.save_config(agent_id)
@@ -663,22 +686,14 @@ def create_line_chart(data: List[Dict[str, Any]], title: str = "Chart") -> Any:
         return None
 
     df = pd.DataFrame(data)
-    x_col = df.columns[0] if len(df.columns) > 0 else 'x'
-    y_col = df.columns[1] if len(df.columns) > 1 else 'y'
+    x_col = df.columns[0] if len(df.columns) > 0 else "x"
+    y_col = df.columns[1] if len(df.columns) > 1 else "y"
 
     fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=df[x_col],
-        y=df[y_col],
-        mode='lines',
-        name=y_col
-    ))
+    fig.add_trace(go.Scatter(x=df[x_col], y=df[y_col], mode="lines", name=y_col))
 
     fig.update_layout(
-        title=title,
-        xaxis_title=x_col,
-        yaxis_title=y_col,
-        template='plotly_white'
+        title=title, xaxis_title=x_col, yaxis_title=y_col, template="plotly_white"
     )
 
     return fig
@@ -699,6 +714,7 @@ def calculate_max_drawdown(equity_curve: List[float]) -> float:
 
     # Convert to numpy array for easier calculation
     import numpy as np
+
     values = np.array(equity_curve)
 
     # Calculate running maximum
@@ -716,6 +732,7 @@ def main():
     """Main function to run the dashboard directly."""
     # Parse command line arguments
     import argparse
+
     parser = argparse.ArgumentParser(description="QuantChain Web Dashboard")
     parser.add_argument("--host", default="localhost", help="Host address to bind to")
     parser.add_argument("--port", type=int, default=8501, help="Port number to run on")
@@ -724,9 +741,7 @@ def main():
 
     # Create configuration
     config = DashboardConfig(
-        host=args.host,
-        port=args.port,
-        default_agent_id=args.agent_id
+        host=args.host, port=args.port, default_agent_id=args.agent_id
     )
 
     # Create and run the app

@@ -1,16 +1,15 @@
 """Core backtesting engine for QuantChain."""
 
-import os
-import sys
 import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Union, Any, Tuple
+from datetime import datetime
+from typing import Dict, List, Optional, Any
 import pandas as pd
 import numpy as np
 
 
 class BacktestExecutionError(Exception):
     """Exception raised when backtesting execution fails."""
+
     pass
 
 
@@ -62,6 +61,7 @@ class BacktestConfig:
             raise ValueError("Take profit percentage must be positive")
         if max_open_positions <= 0:
             raise ValueError("Max open positions must be positive")
+
 
 class MetricsResult:
     """Result of performance metrics calculation."""
@@ -150,6 +150,7 @@ class MetricsResult:
         self.skewness = skewness
         self.kurtosis = kurtosis
 
+
 class BacktestResult:
     """Result of a backtest run."""
 
@@ -180,6 +181,7 @@ class BacktestResult:
         self.execution_time = execution_time
         self.config = config
 
+
 class BacktestEngine:
     """Core backtesting engine for QuantChain."""
 
@@ -207,7 +209,7 @@ class BacktestEngine:
             return 0.0
 
         position = self.open_positions[symbol]
-        return position['quantity'] * price
+        return position["quantity"] * price
 
     def _get_total_portfolio_value(self, prices: Dict[str, float]) -> float:
         """Calculate total portfolio value including cash and open positions."""
@@ -215,17 +217,12 @@ class BacktestEngine:
 
         for symbol, position in self.open_positions.items():
             if symbol in prices:
-                total_value += position['quantity'] * prices[symbol]
+                total_value += position["quantity"] * prices[symbol]
 
         return total_value
 
     def _execute_trade(
-        self,
-        symbol: str,
-        side: str,
-        quantity: float,
-        price: float,
-        timestamp: datetime
+        self, symbol: str, side: str, quantity: float, price: float, timestamp: datetime
     ) -> Dict[str, Any]:
         """Execute a trade and update positions."""
         # Calculate commission and slippage
@@ -246,12 +243,12 @@ class BacktestEngine:
 
             # Update or create position
             if symbol in self.open_positions:
-                self.open_positions[symbol]['quantity'] += quantity
+                self.open_positions[symbol]["quantity"] += quantity
                 # Calculate average price
-                total_cost = self.open_positions[symbol]['total_cost'] + cost
-                total_quantity = self.open_positions[symbol]['quantity'] + quantity
-                self.open_positions[symbol]['avg_price'] = total_cost / total_quantity
-                self.open_positions[symbol]['total_cost'] = total_cost
+                total_cost = self.open_positions[symbol]["total_cost"] + cost
+                total_quantity = self.open_positions[symbol]["quantity"] + quantity
+                self.open_positions[symbol]["avg_price"] = total_cost / total_quantity
+                self.open_positions[symbol]["total_cost"] = total_cost
             else:
                 self.open_positions[symbol] = {
                     "quantity": quantity,
@@ -259,7 +256,7 @@ class BacktestEngine:
                     "total_cost": cost,
                     "stop_loss": price * (1 - self.config.stop_loss_pct),
                     "take_profit": price * (1 + self.config.take_profit_pct),
-                    "open_time": timestamp
+                    "open_time": timestamp,
                 }
 
             return {
@@ -269,7 +266,7 @@ class BacktestEngine:
                 "quantity": quantity,
                 "price": adjusted_price,
                 "commission": commission,
-                "timestamp": timestamp
+                "timestamp": timestamp,
             }
 
         elif side == "sell":
@@ -278,24 +275,34 @@ class BacktestEngine:
             proceeds = quantity * adjusted_price - commission
 
             # Check if position exists and has enough quantity
-            if symbol not in self.open_positions or self.open_positions[symbol]['quantity'] < quantity:
-                return {"success": False, "error": "No position or insufficient quantity"}
+            if (
+                symbol not in self.open_positions
+                or self.open_positions[symbol]["quantity"] < quantity
+            ):
+                return {
+                    "success": False,
+                    "error": "No position or insufficient quantity",
+                }
 
             # Update state
             self.current_capital += proceeds
-            self.open_positions[symbol]['quantity'] -= quantity
-            realized_pnl = (adjusted_price - self.open_positions[symbol]['avg_price']) * quantity
+            self.open_positions[symbol]["quantity"] -= quantity
+            realized_pnl = (
+                adjusted_price - self.open_positions[symbol]["avg_price"]
+            ) * quantity
 
             # Close position if quantity is now zero
-            if self.open_positions[symbol]['quantity'] == 0:
+            if self.open_positions[symbol]["quantity"] == 0:
                 closed_position = self.open_positions.pop(symbol)
-                closed_position.update({
-                    "close_time": timestamp,
-                    "close_price": adjusted_price,
-                    "realized_pnl": realized_pnl,
-                    "commission": commission,
-                    "slippage": quantity * price * self.config.slippage
-                })
+                closed_position.update(
+                    {
+                        "close_time": timestamp,
+                        "close_price": adjusted_price,
+                        "realized_pnl": realized_pnl,
+                        "commission": commission,
+                        "slippage": quantity * price * self.config.slippage,
+                    }
+                )
                 self.closed_trades.append(closed_position)
 
             return {
@@ -306,13 +313,15 @@ class BacktestEngine:
                 "price": adjusted_price,
                 "commission": commission,
                 "timestamp": timestamp,
-                "realized_pnl": realized_pnl if 'realized_pnl' in locals() else 0
+                "realized_pnl": realized_pnl if "realized_pnl" in locals() else 0,
             }
 
         else:
             return {"success": False, "error": "Invalid side"}
 
-    def _check_stops(self, current_prices: Dict[str, float], timestamp: datetime) -> List[Dict[str, Any]]:
+    def _check_stops(
+        self, current_prices: Dict[str, float], timestamp: datetime
+    ) -> List[Dict[str, Any]]:
         """Check for stop loss or take profit conditions."""
         trades_to_close = []
 
@@ -321,21 +330,27 @@ class BacktestEngine:
                 current_price = current_prices[symbol]
 
                 # Check stop loss
-                if current_price <= position['stop_loss']:
+                if current_price <= position["stop_loss"]:
                     trade = self._execute_trade(
-                        symbol, "sell", position['quantity'],
-                        position['stop_loss'], timestamp
+                        symbol,
+                        "sell",
+                        position["quantity"],
+                        position["stop_loss"],
+                        timestamp,
                     )
-                    trade['reason'] = "stop_loss"
+                    trade["reason"] = "stop_loss"
                     trades_to_close.append(trade)
 
                 # Check take profit
-                elif current_price >= position['take_profit']:
+                elif current_price >= position["take_profit"]:
                     trade = self._execute_trade(
-                        symbol, "sell", position['quantity'],
-                        position['take_profit'], timestamp
+                        symbol,
+                        "sell",
+                        position["quantity"],
+                        position["take_profit"],
+                        timestamp,
                     )
-                    trade['reason'] = "take_profit"
+                    trade["reason"] = "take_profit"
                     trades_to_close.append(trade)
 
         return trades_to_close
@@ -345,7 +360,7 @@ class BacktestEngine:
         data: pd.DataFrame,
         strategy: Any,
         start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None
+        end_date: Optional[datetime] = None,
     ) -> BacktestResult:
         """
         Run a backtest with the provided data and strategy.
@@ -372,7 +387,7 @@ class BacktestEngine:
         data = data.sort_index()
 
         # Initialize strategy
-        if hasattr(strategy, 'initialize'):
+        if hasattr(strategy, "initialize"):
             strategy.initialize(self.config)
 
         # Run through each bar
@@ -382,14 +397,14 @@ class BacktestEngine:
             # Update current prices dictionary
             current_prices = {}
             for symbol in self.open_positions:
-                if 'close' in row:
-                    current_prices[symbol] = row['close']
+                if "close" in row:
+                    current_prices[symbol] = row["close"]
 
             # Check for stops
             closed_trades = self._check_stops(current_prices, timestamp)
 
             # Get strategy signal
-            if hasattr(strategy, 'process_bar'):
+            if hasattr(strategy, "process_bar"):
                 signal = strategy.process_bar(timestamp, row)
             else:
                 # Default to no signal
@@ -397,44 +412,52 @@ class BacktestEngine:
 
             # Execute trades based on signal
             if signal is not None:
-                symbol = signal.get('symbol')
-                side = signal.get('side')
-                quantity = signal.get('quantity')
+                symbol = signal.get("symbol")
+                side = signal.get("side")
+                quantity = signal.get("quantity")
 
                 # Limit open positions
-                if side == 'buy' and len(self.open_positions) >= self.config.max_open_positions:
+                if (
+                    side == "buy"
+                    and len(self.open_positions) >= self.config.max_open_positions
+                ):
                     continue
 
                 if symbol in row:
                     trade = self._execute_trade(
-                        symbol, side, quantity, row['close'], timestamp
+                        symbol, side, quantity, row["close"], timestamp
                     )
-                    if trade.get('success'):
+                    if trade.get("success"):
                         self.closed_trades.append(trade)
 
             # Update equity curve
             portfolio_value = self._get_total_portfolio_value(current_prices)
-            self.equity_curve.append({
-                'timestamp': timestamp,
-                'portfolio_value': portfolio_value,
-                'cash': self.current_capital,
-                'open_positions': len(self.open_positions)
-            })
+            self.equity_curve.append(
+                {
+                    "timestamp": timestamp,
+                    "portfolio_value": portfolio_value,
+                    "cash": self.current_capital,
+                    "open_positions": len(self.open_positions),
+                }
+            )
 
         # Close any remaining positions
         for symbol in list(self.open_positions.keys()):
-            if 'close' in row:
+            if "close" in row:
                 trade = self._execute_trade(
-                    symbol, "sell", self.open_positions[symbol]['quantity'],
-                    row['close'], timestamp
+                    symbol,
+                    "sell",
+                    self.open_positions[symbol]["quantity"],
+                    row["close"],
+                    timestamp,
                 )
-                if trade.get('success'):
-                    trade['reason'] = "end_of_backtest"
+                if trade.get("success"):
+                    trade["reason"] = "end_of_backtest"
                     self.closed_trades.append(trade)
 
         # Create DataFrames for results
         equity_curve_df = pd.DataFrame(self.equity_curve)
-        equity_curve_df.set_index('timestamp', inplace=True)
+        equity_curve_df.set_index("timestamp", inplace=True)
 
         trade_log_df = pd.DataFrame(self.closed_trades)
 
@@ -446,8 +469,12 @@ class BacktestEngine:
             "initial_capital": self.config.initial_capital,
             "final_capital": self.current_capital,
             "total_trades": len(self.closed_trades),
-            "winning_trades": len([t for t in self.closed_trades if t.get('realized_pnl', 0) > 0]),
-            "losing_trades": len([t for t in self.closed_trades if t.get('realized_pnl', 0) < 0]),
+            "winning_trades": len(
+                [t for t in self.closed_trades if t.get("realized_pnl", 0) > 0]
+            ),
+            "losing_trades": len(
+                [t for t in self.closed_trades if t.get("realized_pnl", 0) < 0]
+            ),
         }
 
         return BacktestResult(
@@ -456,7 +483,7 @@ class BacktestEngine:
             summary_stats=summary_stats,
             metrics=metrics,
             execution_time=time.time(),
-            config=self.config
+            config=self.config,
         )
 
     def _calculate_metrics(self) -> MetricsResult:
@@ -467,13 +494,15 @@ class BacktestEngine:
         equity_curve_df = pd.DataFrame(self.equity_curve)
 
         # Extract portfolio values
-        portfolio_values = equity_curve_df['portfolio_value'].values
+        portfolio_values = equity_curve_df["portfolio_value"].values
 
         # Calculate returns
         returns = np.diff(portfolio_values) / portfolio_values[:-1]
 
         # Basic metrics
-        total_return = (portfolio_values[-1] - self.config.initial_capital) / self.config.initial_capital
+        total_return = (
+            portfolio_values[-1] - self.config.initial_capital
+        ) / self.config.initial_capital
         return_pct = total_return * 100
 
         # Annualized return (assuming daily data)
@@ -516,27 +545,51 @@ class BacktestEngine:
 
         # Win rate
         if self.closed_trades:
-            winning_trades = [t for t in self.closed_trades if t.get('realized_pnl', 0) > 0]
+            winning_trades = [
+                t for t in self.closed_trades if t.get("realized_pnl", 0) > 0
+            ]
             win_rate = len(winning_trades) / len(self.closed_trades)
             win_rate_pct = win_rate * 100
 
             # Profit factor
-            total_profit = sum(t.get('realized_pnl', 0) for t in winning_trades)
-            losing_trades = [t for t in self.closed_trades if t.get('realized_pnl', 0) < 0]
-            total_loss = abs(sum(t.get('realized_pnl', 0) for t in losing_trades))
+            total_profit = sum(t.get("realized_pnl", 0) for t in winning_trades)
+            losing_trades = [
+                t for t in self.closed_trades if t.get("realized_pnl", 0) < 0
+            ]
+            total_loss = abs(sum(t.get("realized_pnl", 0) for t in losing_trades))
 
-            profit_factor = total_profit / total_loss if total_loss > 0 else float('inf')
+            profit_factor = (
+                total_profit / total_loss if total_loss > 0 else float("inf")
+            )
 
             # Recovery factor
-            recovery_factor = total_return / max_drawdown if max_drawdown < 0 else float('inf')
+            recovery_factor = (
+                total_return / max_drawdown if max_drawdown < 0 else float("inf")
+            )
 
             # Average win/loss percentages
-            avg_win_pct = np.mean([t.get('realized_pnl', 0) for t in winning_trades]) * 100 if winning_trades else 0
-            avg_loss_pct = np.mean([t.get('realized_pnl', 0) for t in losing_trades]) * 100 if losing_trades else 0
+            avg_win_pct = (
+                np.mean([t.get("realized_pnl", 0) for t in winning_trades]) * 100
+                if winning_trades
+                else 0
+            )
+            avg_loss_pct = (
+                np.mean([t.get("realized_pnl", 0) for t in losing_trades]) * 100
+                if losing_trades
+                else 0
+            )
 
             # Largest win/loss
-            largest_win = max([t.get('realized_pnl', 0) for t in winning_trades]) if winning_trades else 0
-            largest_loss = min([t.get('realized_pnl', 0) for t in losing_trades]) if losing_trades else 0
+            largest_win = (
+                max([t.get("realized_pnl", 0) for t in winning_trades])
+                if winning_trades
+                else 0
+            )
+            largest_loss = (
+                min([t.get("realized_pnl", 0) for t in losing_trades])
+                if losing_trades
+                else 0
+            )
         else:
             win_rate = 0
             win_rate_pct = 0
@@ -574,13 +627,25 @@ class BacktestEngine:
             profit_factor=profit_factor,
             recovery_factor=recovery_factor,
             total_trades=len(self.closed_trades),
-            avg_trade=np.mean([t.get('realized_pnl', 0) for t in self.closed_trades]) if self.closed_trades else 0,
+            avg_trade=(
+                np.mean([t.get("realized_pnl", 0) for t in self.closed_trades])
+                if self.closed_trades
+                else 0
+            ),
             avg_win_pct=avg_win_pct,
             avg_loss_pct=avg_loss_pct,
             largest_win=largest_win,
             largest_loss=largest_loss,
-            avg_drawdown=np.mean([draw for draw in drawdown if draw < 0]) if any(draw < 0 for draw in drawdown) else 0,
-            avg_drawdown_pct=np.mean([draw * 100 for draw in drawdown if draw < 0]) if any(draw < 0 for draw in drawdown) else 0,
+            avg_drawdown=(
+                np.mean([draw for draw in drawdown if draw < 0])
+                if any(draw < 0 for draw in drawdown)
+                else 0
+            ),
+            avg_drawdown_pct=(
+                np.mean([draw * 100 for draw in drawdown if draw < 0])
+                if any(draw < 0 for draw in drawdown)
+                else 0
+            ),
             var_95=var_95,
             var_99=var_99,
             skewness=skewness,

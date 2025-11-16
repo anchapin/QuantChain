@@ -1,22 +1,16 @@
 """Social media scraper for QuantChain."""
 
-import json
-import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union, Tuple
+from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
-import re
-import urllib.request
-import urllib.parse
-from urllib.error import URLError, HTTPError
 
 from quantchain.core.config import QuantChainConfig
-from quantchain.core.exceptions import QuantChainError
 
 
 class SentimentScore(Enum):
     """Sentiment score enumeration."""
+
     VERY_NEGATIVE = "very_negative"
     NEGATIVE = "negative"
     NEUTRAL = "neutral"
@@ -27,6 +21,7 @@ class SentimentScore(Enum):
 @dataclass
 class SocialMediaPost:
     """Represents a social media post."""
+
     id: str
     platform: str  # twitter, reddit, telegram, etc.
     author: str
@@ -45,6 +40,7 @@ class SocialMediaPost:
 @dataclass
 class SocialMediaMetrics:
     """Aggregated metrics for social media data."""
+
     platform: str
     symbol: str
     post_count: int
@@ -63,6 +59,7 @@ class SocialMediaMetrics:
 @dataclass
 class VibeAssessment:
     """Overall vibe assessment for a token/meme."""
+
     symbol: str
     platform: str
     vibe_score: float  # 0.0 to 100.0
@@ -115,7 +112,7 @@ class SocialMediaScraper:
                         comments=8,
                         url="https://twitter.com/crypto_enthusiast/status/1234567890",
                         hashtags=["memecoin", "crypto"],
-                        sentiment_score=SentimentScore.POSITIVE
+                        sentiment_score=SentimentScore.POSITIVE,
                     ),
                     SocialMediaPost(
                         id="1234567891",
@@ -128,7 +125,7 @@ class SocialMediaScraper:
                         comments=12,
                         url="https://twitter.com/skeptic_trader/status/1234567891",
                         hashtags=["cryptowarning"],
-                        sentiment_score=SentimentScore.NEGATIVE
+                        sentiment_score=SentimentScore.NEGATIVE,
                     ),
                 ]
             },
@@ -144,7 +141,7 @@ class SocialMediaScraper:
                         shares=0,  # Reddit doesn't have shares
                         comments=43,
                         url="https://reddit.com/r/cryptocurrency/comments/abc123",
-                        sentiment_score=SentimentScore.VERY_POSITIVE
+                        sentiment_score=SentimentScore.VERY_POSITIVE,
                     ),
                     SocialMediaPost(
                         id="def456",
@@ -156,18 +153,14 @@ class SocialMediaScraper:
                         shares=0,
                         comments=67,
                         url="https://reddit.com/r/cryptocurrency/comments/def456",
-                        sentiment_score=SentimentScore.NEUTRAL
+                        sentiment_score=SentimentScore.NEUTRAL,
                     ),
                 ]
-            }
+            },
         }
 
     def fetch_posts(
-        self,
-        symbol: str,
-        platform: str,
-        max_posts: int = 100,
-        time_period: str = "24h"
+        self, symbol: str, platform: str, max_posts: int = 100, time_period: str = "24h"
     ) -> List[SocialMediaPost]:
         """
         Fetch posts mentioning a symbol from a specific platform.
@@ -190,10 +183,7 @@ class SocialMediaScraper:
         return []
 
     def calculate_metrics(
-        self,
-        posts: List[SocialMediaPost],
-        symbol: str,
-        platform: str
+        self, posts: List[SocialMediaPost], symbol: str, platform: str
     ) -> SocialMediaMetrics:
         """
         Calculate aggregated metrics from social media posts.
@@ -214,7 +204,7 @@ class SocialMediaScraper:
                 total_likes=0,
                 total_shares=0,
                 total_comments=0,
-                unique_authors=0
+                unique_authors=0,
             )
 
         # Calculate basic metrics
@@ -237,15 +227,21 @@ class SocialMediaScraper:
             for tag in post.hashtags:
                 hashtag_counts[tag.lower()] = hashtag_counts.get(tag.lower(), 0) + 1
 
-        top_hashtags = sorted(hashtag_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+        top_hashtags = sorted(hashtag_counts.items(), key=lambda x: x[1], reverse=True)[
+            :5
+        ]
 
         # Calculate top mentions
         mention_counts = {}
         for post in posts:
             for mention in post.mentions:
-                mention_counts[mention.lower()] = mention_counts.get(mention.lower(), 0) + 1
+                mention_counts[mention.lower()] = (
+                    mention_counts.get(mention.lower(), 0) + 1
+                )
 
-        top_mentions = sorted(mention_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+        top_mentions = sorted(mention_counts.items(), key=lambda x: x[1], reverse=True)[
+            :5
+        ]
 
         # Calculate engagement rate (likes + comments + shares) / post_count
         total_engagement = total_likes + total_comments + total_shares
@@ -262,14 +258,11 @@ class SocialMediaScraper:
             sentiment_distribution=sentiment_distribution,
             top_hashtags=top_hashtags,
             top_mentions=top_mentions,
-            engagement_rate=engagement_rate
+            engagement_rate=engagement_rate,
         )
 
     def assess_vibe(
-        self,
-        symbol: str,
-        platforms: List[str] = None,
-        time_period: str = "24h"
+        self, symbol: str, platforms: List[str] = None, time_period: str = "24h"
     ) -> List[VibeAssessment]:
         """
         Assess the overall vibe for a symbol across platforms.
@@ -293,14 +286,16 @@ class SocialMediaScraper:
 
             if not posts:
                 # Create a neutral assessment if no posts found
-                assessments.append(VibeAssessment(
-                    symbol=symbol,
-                    platform=platform,
-                    vibe_score=50.0,  # Neutral
-                    sentiment=SentimentScore.NEUTRAL,
-                    confidence=0.1,  # Low confidence due to no data
-                    reasons=["No social media posts found"]
-                ))
+                assessments.append(
+                    VibeAssessment(
+                        symbol=symbol,
+                        platform=platform,
+                        vibe_score=50.0,  # Neutral
+                        sentiment=SentimentScore.NEUTRAL,
+                        confidence=0.1,  # Low confidence due to no data
+                        reasons=["No social media posts found"],
+                    )
+                )
                 continue
 
             # Calculate metrics
@@ -317,13 +312,17 @@ class SocialMediaScraper:
                     SentimentScore.POSITIVE: 1,
                     SentimentScore.NEUTRAL: 0,
                     SentimentScore.NEGATIVE: -1,
-                    SentimentScore.VERY_NEGATIVE: -2
+                    SentimentScore.VERY_NEGATIVE: -2,
                 }
 
-                weighted_score = sum(
-                    metrics.sentiment_distribution[sentiment] * sentiment_weights[sentiment]
-                    for sentiment in SentimentScore
-                ) / total_posts
+                weighted_score = (
+                    sum(
+                        metrics.sentiment_distribution[sentiment]
+                        * sentiment_weights[sentiment]
+                        for sentiment in SentimentScore
+                    )
+                    / total_posts
+                )
 
                 # Convert weighted score back to sentiment
                 if weighted_score >= 1:
@@ -344,7 +343,7 @@ class SocialMediaScraper:
                 SentimentScore.POSITIVE: 70,
                 SentimentScore.NEUTRAL: 50,
                 SentimentScore.NEGATIVE: 30,
-                SentimentScore.VERY_NEGATIVE: 15
+                SentimentScore.VERY_NEGATIVE: 15,
             }
             vibe_score = base_scores[overall_sentiment]
 
@@ -352,9 +351,15 @@ class SocialMediaScraper:
             if metrics.engagement_rate:
                 # Higher engagement increases the score if sentiment is positive
                 # or decreases it if sentiment is negative
-                if overall_sentiment in [SentimentScore.POSITIVE, SentimentScore.VERY_POSITIVE]:
+                if overall_sentiment in [
+                    SentimentScore.POSITIVE,
+                    SentimentScore.VERY_POSITIVE,
+                ]:
                     vibe_score += min(10, metrics.engagement_rate / 10)
-                elif overall_sentiment in [SentimentScore.NEGATIVE, SentimentScore.VERY_NEGATIVE]:
+                elif overall_sentiment in [
+                    SentimentScore.NEGATIVE,
+                    SentimentScore.VERY_NEGATIVE,
+                ]:
                     vibe_score -= min(10, metrics.engagement_rate / 10)
 
             # Ensure score is within bounds
@@ -378,9 +383,15 @@ class SocialMediaScraper:
             elif metrics.engagement_rate and metrics.engagement_rate < 2:
                 reasons.append("Low engagement rate might indicate lack of interest")
 
-            if overall_sentiment in [SentimentScore.POSITIVE, SentimentScore.VERY_POSITIVE]:
+            if overall_sentiment in [
+                SentimentScore.POSITIVE,
+                SentimentScore.VERY_POSITIVE,
+            ]:
                 reasons.append("Overall sentiment is positive")
-            elif overall_sentiment in [SentimentScore.NEGATIVE, SentimentScore.VERY_NEGATIVE]:
+            elif overall_sentiment in [
+                SentimentScore.NEGATIVE,
+                SentimentScore.VERY_NEGATIVE,
+            ]:
                 reasons.append("Overall sentiment is negative")
 
             if metrics.unique_authors > 50:
@@ -396,7 +407,7 @@ class SocialMediaScraper:
                 sentiment=overall_sentiment,
                 confidence=confidence,
                 reasons=reasons,
-                social_metrics=metrics
+                social_metrics=metrics,
             )
 
             assessments.append(assessment)
@@ -404,10 +415,7 @@ class SocialMediaScraper:
         return assessments
 
     def assess_overall_vibe(
-        self,
-        symbol: str,
-        platforms: List[str] = None,
-        time_period: str = "24h"
+        self, symbol: str, platforms: List[str] = None, time_period: str = "24h"
     ) -> VibeAssessment:
         """
         Assess the overall vibe for a symbol across all platforms.
@@ -429,7 +437,7 @@ class SocialMediaScraper:
                 vibe_score=50.0,  # Neutral
                 sentiment=SentimentScore.NEUTRAL,
                 confidence=0.1,  # Low confidence due to no data
-                reasons=["No social media posts found on any platform"]
+                reasons=["No social media posts found on any platform"],
             )
 
         # Calculate weighted average vibe score based on confidence
@@ -438,8 +446,15 @@ class SocialMediaScraper:
             weighted_vibe_score = 50.0
             overall_confidence = 0.1
         else:
-            weighted_vibe_score = sum(a.vibe_score * a.confidence for a in platform_assessments) / total_weight
-            overall_confidence = min(0.9, sum(a.confidence for a in platform_assessments) / len(platform_assessments))
+            weighted_vibe_score = (
+                sum(a.vibe_score * a.confidence for a in platform_assessments)
+                / total_weight
+            )
+            overall_confidence = min(
+                0.9,
+                sum(a.confidence for a in platform_assessments)
+                / len(platform_assessments),
+            )
 
         # Determine overall sentiment (simple majority)
         sentiment_counts = {}
@@ -447,7 +462,9 @@ class SocialMediaScraper:
             sentiment_counts[a.sentiment] = sentiment_counts.get(a.sentiment, 0) + 1
 
         if sentiment_counts:
-            overall_sentiment = max(sentiment_counts.keys(), key=lambda s: sentiment_counts[s])
+            overall_sentiment = max(
+                sentiment_counts.keys(), key=lambda s: sentiment_counts[s]
+            )
         else:
             overall_sentiment = SentimentScore.NEUTRAL
 
@@ -462,7 +479,7 @@ class SocialMediaScraper:
             vibe_score=weighted_vibe_score,
             sentiment=overall_sentiment,
             confidence=overall_confidence,
-            reasons=all_reasons
+            reasons=all_reasons,
         )
 
     def get_metrics(self, symbol: str) -> SocialMediaMetrics:
@@ -493,5 +510,5 @@ class SocialMediaScraper:
                 total_likes=0,
                 total_shares=0,
                 total_comments=0,
-                unique_authors=0
+                unique_authors=0,
             )

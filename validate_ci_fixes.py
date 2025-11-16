@@ -12,7 +12,6 @@ from quantchain.tools.web_dashboard import create_dashboard
 from quantchain.core.dependency_manager import import_plotly, import_streamlit
 
 
-
 def validate_dependencies():
     """Validate that all dependencies are properly handled."""
     dep_manager = get_dependency_manager()
@@ -27,17 +26,16 @@ def validate_dependencies():
     return True
 
 
-
 def validate_imports():
     """Validate that all imports work correctly."""
     try:
         from quantchain.tools.web_dashboard import DashboardCharts, WebDashboardApp
+
         print("Web dashboard imports successful")
         return True
     except ImportError as e:
         print(f"Import error: {e}")
         return False
-
 
 
 def main():
@@ -53,6 +51,7 @@ def main():
     else:
         print("Some validations failed!")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

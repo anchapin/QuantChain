@@ -26,21 +26,16 @@ def get_flake8_errors(error_codes: List[str]) -> List[Tuple[str, int, str]]:
     try:
         # Build flake8 command with specified error codes
         cmd = ["flake8", "--select=" + ",".join(error_codes), "quantchain/", "tests/"]
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            check=False
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, check=False)
 
-        for line in result.stdout.strip().split('\n'):
+        for line in result.stdout.strip().split("\n"):
             if line and any(code in line for code in error_codes):
                 # Parse the flake8 output format: file:line:column: code message
-                parts = line.split(':')
+                parts = line.split(":")
                 if len(parts) >= 4:
                     file_path = parts[0]
                     line_num = int(parts[1])
-                    message = ':'.join(parts[3:]).strip()
+                    message = ":".join(parts[3:]).strip()
                     errors.append((file_path, line_num, message))
     except Exception as e:
         print(f"Error running flake8: {e}")
@@ -65,7 +60,7 @@ def fix_unused_imports(errors: List[Tuple[str, int, str]]) -> None:
 
     for file_path, line_errors in files_to_fix.items():
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path, "r") as f:
                 lines = f.readlines()
 
             # Sort by line number in reverse order to avoid shifting indices
@@ -89,31 +84,46 @@ def fix_unused_imports(errors: List[Tuple[str, int, str]]) -> None:
                             del lines[idx]
                         else:
                             # Try to match module parts (e.g., "module.submodule" in "from module import submodule")
-                            module_parts = import_name.split('.')
+                            module_parts = import_name.split(".")
                             if len(module_parts) > 1:
                                 base_module = module_parts[0]
-                                if line.startswith(f"from {base_module} ") and module_parts[1] in line:
+                                if (
+                                    line.startswith(f"from {base_module} ")
+                                    and module_parts[1] in line
+                                ):
                                     # This is a more complex case, need to modify the import line
-                                    import_parts = line[len(f"from {base_module} "):].split(' import ')
+                                    import_parts = line[
+                                        len(f"from {base_module} ") :
+                                    ].split(" import ")
                                     if len(import_parts) == 2:
                                         imports = import_parts[1].strip()
-                                        if imports.startswith('(') and imports.endswith(')'):
+                                        if imports.startswith("(") and imports.endswith(
+                                            ")"
+                                        ):
                                             # Multi-line import with parentheses
                                             imports = imports[1:-1].strip()
 
-                                        import_list = [imp.strip() for imp in imports.split(',')]
+                                        import_list = [
+                                            imp.strip() for imp in imports.split(",")
+                                        ]
                                         # Remove the unused import
-                                        import_list = [imp for imp in import_list if module_parts[1] not in imp]
+                                        import_list = [
+                                            imp
+                                            for imp in import_list
+                                            if module_parts[1] not in imp
+                                        ]
 
                                         if import_list:
-                                            new_imports = ', '.join(import_list)
-                                            lines[idx] = f"from {base_module} import {new_imports}\n"
+                                            new_imports = ", ".join(import_list)
+                                            lines[idx] = (
+                                                f"from {base_module} import {new_imports}\n"
+                                            )
                                         else:
                                             # No imports left, remove the line
                                             del lines[idx]
 
             # Write the fixed content back
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.writelines(lines)
 
             print(f"Fixed unused imports in {file_path}")
@@ -138,22 +148,22 @@ def fix_true_false_comparisons(errors: List[Tuple[str, int, str]]) -> None:
 
     for file_path, line_errors in files_to_fix.items():
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path, "r") as f:
                 content = f.read()
 
             # Common patterns to fix
-            content = re.sub(r'([^\s]+)\s+==\s+True', r'\1 is True', content)
-            content = re.sub(r'([^\s]+)\s+==\s+False', r'\1 is False', content)
-            content = re.sub(r'([^\s]+)\s+!=\s+True', r'\1 is not True', content)
-            content = re.sub(r'([^\s]+)\s+!=\s+False', r'\1 is not False', content)
+            content = re.sub(r"([^\s]+)\s+==\s+True", r"\1 is True", content)
+            content = re.sub(r"([^\s]+)\s+==\s+False", r"\1 is False", content)
+            content = re.sub(r"([^\s]+)\s+!=\s+True", r"\1 is not True", content)
+            content = re.sub(r"([^\s]+)\s+!=\s+False", r"\1 is not False", content)
 
             # Also replace with simpler forms where appropriate
-            content = re.sub(r'([^\s]+)\s+is\s+True', r'\1', content)
-            content = re.sub(r'([^\s]+)\s+is not\s+True', r'not \1', content)
-            content = re.sub(r'([^\s]+)\s+is\s+False', r'not \1', content)
-            content = re.sub(r'([^\s]+)\s+is not\s+False', r'\1', content)
+            content = re.sub(r"([^\s]+)\s+is\s+True", r"\1", content)
+            content = re.sub(r"([^\s]+)\s+is not\s+True", r"not \1", content)
+            content = re.sub(r"([^\s]+)\s+is\s+False", r"not \1", content)
+            content = re.sub(r"([^\s]+)\s+is not\s+False", r"\1", content)
 
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.write(content)
 
             print(f"Fixed True/False comparisons in {file_path}")
@@ -178,30 +188,32 @@ def add_type_annotations(errors: List[Tuple[str, int, str]]) -> None:
 
     for file_path, line_errors in files_to_fix.items():
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path, "r") as f:
                 lines = f.readlines()
 
             # Process each error
-            for line_num, message in sorted(line_errors, key=lambda x: x[0], reverse=True):
+            for line_num, message in sorted(
+                line_errors, key=lambda x: x[0], reverse=True
+            ):
                 idx = line_num - 1
                 if idx < len(lines):
                     line = lines[idx].strip()
 
                     # Check if it's a function definition
-                    match = re.match(r'^(\s*)def\s+(\w+)\s*\((.*)\)\s*[:]', line)
+                    match = re.match(r"^(\s*)def\s+(\w+)\s*\((.*)\)\s*[:]", line)
                     if match:
                         indent, func_name, params = match.groups()
 
                         # Skip if already has a return type annotation
-                        if '->' in line:
+                        if "->" in line:
                             continue
 
                         # Add "-> None" for functions that don't return a value
-                        if "Use \"-> None\"" in message:
+                        if 'Use "-> None"' in message:
                             new_line = f"{indent}def {func_name}({params}) -> None:\n"
                             lines[idx] = new_line
 
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.writelines(lines)
 
             print(f"Added type annotations in {file_path}")

@@ -13,6 +13,7 @@ try:
         BacktestConfig,
         BacktestResult,
     )
+
     ENGINE_AVAILABLE = True
 except ImportError as e:
     ENGINE_AVAILABLE = False
@@ -42,14 +43,16 @@ class TestBacktestingEngine:
         np.random.seed(42)
         prices = 100 + np.cumsum(np.random.randn(100) * 0.01)
 
-        return pd.DataFrame({
-            "date": dates,
-            "open": prices,
-            "high": prices * 1.01,
-            "low": prices * 0.99,
-            "close": prices,
-            "volume": np.random.randint(1000, 10000, 100),
-        })
+        return pd.DataFrame(
+            {
+                "date": dates,
+                "open": prices,
+                "high": prices * 1.01,
+                "low": prices * 0.99,
+                "close": prices,
+                "volume": np.random.randint(1000, 10000, 100),
+            }
+        )
 
     def test_backtesting_engine_initialization(self, mock_config) -> None:
         """Test backtesting engine initialization."""
@@ -81,7 +84,7 @@ class TestBacktestingEngine:
                     "symbol": "TEST",
                     "quantity": 10,
                     "price": data.iloc[1]["close"],
-                }
+                },
             ]
 
         result = engine.run_backtest(sample_data, strategy)
@@ -89,7 +92,9 @@ class TestBacktestingEngine:
         assert result.initial_capital == mock_config.initial_capital
         assert len(result.trades) >= 2
 
-    def test_backtesting_engine_invalid_strategy(self, mock_config, sample_data) -> None:
+    def test_backtesting_engine_invalid_strategy(
+        self, mock_config, sample_data
+    ) -> None:
         """Test backtesting with invalid strategy."""
         engine = BacktestingEngine(mock_config)
 
@@ -100,7 +105,9 @@ class TestBacktestingEngine:
         with pytest.raises(BacktestExecutionError):
             engine.run_backtest(sample_data, invalid_strategy)
 
-    def test_backtesting_engine_insufficient_capital(self, mock_config, sample_data) -> None:
+    def test_backtesting_engine_insufficient_capital(
+        self, mock_config, sample_data
+    ) -> None:
         """Test backtesting with insufficient capital for a trade."""
         engine = BacktestingEngine(mock_config)
 
@@ -167,14 +174,17 @@ class TestBacktestResult:
                 "symbol": "TEST",
                 "quantity": 10,
                 "price": 105.0,
-            }
+            },
         ]
 
-        equity_curve = pd.Series([
-            10000.0,  # Initial
-            9000.0,   # After buying 10 shares at 100
-            10050.0,  # After selling 10 shares at 105
-        ], index=pd.date_range(start="2023-01-01", periods=3))
+        equity_curve = pd.Series(
+            [
+                10000.0,  # Initial
+                9000.0,  # After buying 10 shares at 100
+                10050.0,  # After selling 10 shares at 105
+            ],
+            index=pd.date_range(start="2023-01-01", periods=3),
+        )
 
         return BacktestResult(
             initial_capital=10000.0,

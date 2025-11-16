@@ -191,9 +191,7 @@ def initialize_agent(config: "QuantChainConfig") -> ChartReaderAgent:
 
 
 def analyze_symbol(
-    agent: ChartReaderAgent,
-    symbol: str,
-    save_output: bool = False
+    agent: ChartReaderAgent, symbol: str, save_output: bool = False
 ) -> Dict[str, Any]:
     """Analyze a symbol and display the results.
 
@@ -223,7 +221,7 @@ def analyze_symbol(
 
         # Save results if requested
         if save_output:
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{symbol}_analysis_{timestamp}.json"
             with open(filename, "w") as f:
                 json.dump(results, f, indent=2)

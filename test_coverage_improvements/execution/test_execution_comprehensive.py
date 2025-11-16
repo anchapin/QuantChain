@@ -70,10 +70,7 @@ class TestOrderRequest:
     def test_order_request_creation_market(self) -> None:
         """Test creating a market order request."""
         request = OrderRequest(
-            symbol="AAPL",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100
+            symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
         )
 
         assert request.symbol == "AAPL"
@@ -93,7 +90,7 @@ class TestOrderRequest:
             side=OrderSide.BUY,
             order_type=OrderType.LIMIT,
             quantity=100,
-            price=150.0
+            price=150.0,
         )
 
         assert request.symbol == "AAPL"
@@ -110,7 +107,7 @@ class TestOrderRequest:
             side=OrderSide.SELL,
             order_type=OrderType.STOP,
             quantity=100,
-            stop_price=140.0
+            stop_price=140.0,
         )
 
         assert request.symbol == "AAPL"
@@ -128,7 +125,7 @@ class TestOrderRequest:
             order_type=OrderType.STOP_LIMIT,
             quantity=100,
             price=145.0,
-            stop_price=140.0
+            stop_price=140.0,
         )
 
         assert request.symbol == "AAPL"
@@ -146,7 +143,7 @@ class TestOrderRequest:
             side=OrderSide.BUY,
             order_type=OrderType.MARKET,
             quantity=100,
-            client_order_id=client_order_id
+            client_order_id=client_order_id,
         )
 
         assert request.client_order_id == client_order_id
@@ -158,7 +155,7 @@ class TestOrderRequest:
             side=OrderSide.BUY,
             order_type=OrderType.MARKET,
             quantity=100,
-            time_in_force="DAY"
+            time_in_force="DAY",
         )
 
         assert request.time_in_force == "DAY"
@@ -170,7 +167,7 @@ class TestOrderRequest:
                 symbol="AAPL",
                 side=OrderSide.BUY,
                 order_type=OrderType.LIMIT,
-                quantity=100
+                quantity=100,
             )
 
     def test_order_request_validation_stop_limit_without_price(self) -> None:
@@ -181,28 +178,32 @@ class TestOrderRequest:
                 side=OrderSide.BUY,
                 order_type=OrderType.STOP_LIMIT,
                 quantity=100,
-                stop_price=140.0
+                stop_price=140.0,
             )
 
     def test_order_request_validation_stop_without_stop_price(self) -> None:
         """Test that stop order without stop price raises ValidationError."""
-        with pytest.raises(ValidationError, match="Stop price is required for stop order"):
+        with pytest.raises(
+            ValidationError, match="Stop price is required for stop order"
+        ):
             OrderRequest(
                 symbol="AAPL",
                 side=OrderSide.SELL,
                 order_type=OrderType.STOP,
-                quantity=100
+                quantity=100,
             )
 
     def test_order_request_validation_stop_limit_without_stop_price(self) -> None:
         """Test that stop-limit order without stop price raises ValidationError."""
-        with pytest.raises(ValidationError, match="Stop price is required for stop order"):
+        with pytest.raises(
+            ValidationError, match="Stop price is required for stop order"
+        ):
             OrderRequest(
                 symbol="AAPL",
                 side=OrderSide.SELL,
                 order_type=OrderType.STOP_LIMIT,
                 quantity=100,
-                price=145.0
+                price=145.0,
             )
 
 
@@ -223,7 +224,7 @@ class TestOrderResult:
             price=150.0,
             average_price=150.5,
             status=OrderStatus.FILLED,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
         assert result.order_id == "order_123"
@@ -252,7 +253,7 @@ class TestOrderResult:
             average_price=None,
             status=OrderStatus.REJECTED,
             timestamp=timestamp,
-            error_message="Insufficient funds"
+            error_message="Insufficient funds",
         )
 
         assert result.error_message == "Insufficient funds"
@@ -272,7 +273,7 @@ class TestOrderResult:
             price=150.0,
             average_price=150.1,
             status=OrderStatus.PARTIALLY_FILLED,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
         assert result.quantity == 100
@@ -294,7 +295,7 @@ class TestAccountInfo:
             day_trading_profit_loss=1500.0,
             maintenance_margin=7500.0,
             day_trades_count=5,
-            leverage=2.0
+            leverage=2.0,
         )
 
         assert account.account_id == "account_123"
@@ -320,7 +321,7 @@ class TestPosition:
             market_value=15000.0,
             cost_basis=14000.0,
             unrealized_pl=1000.0,
-            unrealized_pl_pct=7.14
+            unrealized_pl_pct=7.14,
         )
 
         assert position.symbol == "AAPL"
@@ -340,7 +341,7 @@ class TestPosition:
             market_value=-15000.0,
             cost_basis=-14000.0,
             unrealized_pl=-1000.0,
-            unrealized_pl_pct=-7.14
+            unrealized_pl_pct=-7.14,
         )
 
         assert position.symbol == "AAPL"
@@ -360,7 +361,7 @@ class TestPosition:
             market_value=0.0,
             cost_basis=0.0,
             unrealized_pl=0.0,
-            unrealized_pl_pct=0.0
+            unrealized_pl_pct=0.0,
         )
 
         assert position.quantity == 0
@@ -376,9 +377,7 @@ class TestAlpacaExecutionTool:
     def tool(self) -> AlpacaExecutionTool:
         """Create a test execution tool instance."""
         return AlpacaExecutionTool(
-            api_key="test_key",
-            api_secret="test_secret",
-            paper=True
+            api_key="test_key", api_secret="test_secret", paper=True
         )
 
     def test_initialization_default(self) -> None:
@@ -405,7 +404,7 @@ class TestAlpacaExecutionTool:
             paper=False,
             config=config,
             retry_count=5,
-            retry_delay=2.0
+            retry_delay=2.0,
         )
 
         assert tool.api_key == "custom_key"
@@ -427,9 +426,7 @@ class TestAlpacaExecutionTool:
     def test_from_credentials(self) -> None:
         """Test creating tool from credentials."""
         tool = AlpacaExecutionTool.from_credentials(
-            api_key="cred_key",
-            api_secret="cred_secret",
-            paper=False
+            api_key="cred_key", api_secret="cred_secret", paper=False
         )
 
         assert tool.api_key == "cred_key"
@@ -440,8 +437,7 @@ class TestAlpacaExecutionTool:
     def test_from_credentials_default_paper(self) -> None:
         """Test creating tool from credentials with default paper trading."""
         tool = AlpacaExecutionTool.from_credentials(
-            api_key="cred_key",
-            api_secret="cred_secret"
+            api_key="cred_key", api_secret="cred_secret"
         )
 
         assert tool.api_key == "cred_key"
@@ -478,7 +474,7 @@ class TestAlpacaExecutionTool:
             market_value=30000.0,
             cost_basis=28000.0,
             unrealized_pl=2000.0,
-            unrealized_pl_pct=7.14
+            unrealized_pl_pct=7.14,
         )
 
         result = tool.execute_market_order("AAPL", "sell", 50)
@@ -492,7 +488,9 @@ class TestAlpacaExecutionTool:
         position = tool._positions["AAPL"]
         assert position.quantity == 150  # 200 - 50
 
-    def test_execute_market_order_sell_insufficient_position(self, tool: AlpacaExecutionTool) -> None:
+    def test_execute_market_order_sell_insufficient_position(
+        self, tool: AlpacaExecutionTool
+    ) -> None:
         """Test executing a sell order without sufficient position."""
         # Create a smaller position
         tool._positions["AAPL"] = Position(
@@ -502,18 +500,22 @@ class TestAlpacaExecutionTool:
             market_value=3750.0,
             cost_basis=3500.0,
             unrealized_pl=250.0,
-            unrealized_pl_pct=7.14
+            unrealized_pl_pct=7.14,
         )
 
         with pytest.raises(InsufficientFundsError, match="No position for AAPL"):
             tool.execute_market_order("AAPL", "sell", 50)
 
-    def test_execute_market_order_sell_no_position(self, tool: AlpacaExecutionTool) -> None:
+    def test_execute_market_order_sell_no_position(
+        self, tool: AlpacaExecutionTool
+    ) -> None:
         """Test executing a sell order without any position."""
         with pytest.raises(InsufficientFundsError, match="No position for AAPL"):
             tool.execute_market_order("AAPL", "sell", 50)
 
-    def test_execute_market_order_case_insensitivity(self, tool: AlpacaExecutionTool) -> None:
+    def test_execute_market_order_case_insensitivity(
+        self, tool: AlpacaExecutionTool
+    ) -> None:
         """Test that side is case insensitive."""
         # Test uppercase
         result_buy = tool.execute_market_order("AAPL", "BUY", 100)
@@ -533,14 +535,16 @@ class TestAlpacaExecutionTool:
             market_value=30000.0,
             cost_basis=28000.0,
             unrealized_pl=2000.0,
-            unrealized_pl_pct=7.14
+            unrealized_pl_pct=7.14,
         )
 
         # This will default to sell due to else branch
         result = tool.execute_market_order("AAPL", "invalid", 100)
         assert result["side"] == "sell"
 
-    def test_execute_market_order_custom_time_in_force(self, tool: AlpacaExecutionTool) -> None:
+    def test_execute_market_order_custom_time_in_force(
+        self, tool: AlpacaExecutionTool
+    ) -> None:
         """Test executing a market order with custom time in force."""
         result = tool.execute_market_order("AAPL", "buy", 100, time_in_force="IOC")
 
@@ -553,10 +557,7 @@ class TestAlpacaExecutionTool:
     def test_place_order_market(self, tool: AlpacaExecutionTool) -> None:
         """Test placing a market order."""
         order_request = OrderRequest(
-            symbol="AAPL",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100
+            symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
         )
 
         result = tool.place_order(order_request)
@@ -583,7 +584,7 @@ class TestAlpacaExecutionTool:
             side=OrderSide.BUY,
             order_type=OrderType.LIMIT,
             quantity=100,
-            price=150.0
+            price=150.0,
         )
 
         result = tool.place_order(order_request)
@@ -608,7 +609,7 @@ class TestAlpacaExecutionTool:
             side=OrderSide.SELL,
             order_type=OrderType.STOP,
             quantity=100,
-            stop_price=140.0
+            stop_price=140.0,
         )
 
         result = tool.place_order(order_request)
@@ -630,7 +631,7 @@ class TestAlpacaExecutionTool:
             order_type=OrderType.STOP_LIMIT,
             quantity=100,
             price=145.0,
-            stop_price=140.0
+            stop_price=140.0,
         )
 
         result = tool.place_order(order_request)
@@ -643,7 +644,9 @@ class TestAlpacaExecutionTool:
         assert result.status == OrderStatus.SUBMITTED
         assert result.price == 145.0
 
-    def test_place_order_add_to_existing_position(self, tool: AlpacaExecutionTool) -> None:
+    def test_place_order_add_to_existing_position(
+        self, tool: AlpacaExecutionTool
+    ) -> None:
         """Test placing an order that adds to an existing position."""
         # Create an existing position
         tool._positions["AAPL"] = Position(
@@ -653,14 +656,11 @@ class TestAlpacaExecutionTool:
             market_value=15000.0,
             cost_basis=14000.0,
             unrealized_pl=1000.0,
-            unrealized_pl_pct=7.14
+            unrealized_pl_pct=7.14,
         )
 
         order_request = OrderRequest(
-            symbol="AAPL",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=50
+            symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=50
         )
 
         result = tool.place_order(order_request)
@@ -683,14 +683,14 @@ class TestAlpacaExecutionTool:
             market_value=15000.0,
             cost_basis=14000.0,
             unrealized_pl=1000.0,
-            unrealized_pl_pct=7.14
+            unrealized_pl_pct=7.14,
         )
 
         order_request = OrderRequest(
             symbol="AAPL",
             side=OrderSide.SELL,
             order_type=OrderType.MARKET,
-            quantity=100
+            quantity=100,
         )
 
         result = tool.place_order(order_request)
@@ -710,7 +710,7 @@ class TestAlpacaExecutionTool:
             side=OrderSide.BUY,
             order_type=OrderType.LIMIT,
             quantity=100,
-            price=150.0
+            price=150.0,
         )
 
         order_result = tool.place_order(order_request)
@@ -733,10 +733,7 @@ class TestAlpacaExecutionTool:
         """Test cancelling an order that is already filled."""
         # First place a market order (will be filled)
         order_request = OrderRequest(
-            symbol="AAPL",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100
+            symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
         )
 
         order_result = tool.place_order(order_request)
@@ -753,7 +750,7 @@ class TestAlpacaExecutionTool:
             side=OrderSide.BUY,
             order_type=OrderType.LIMIT,
             quantity=100,
-            price=150.0
+            price=150.0,
         )
 
         order_result = tool.place_order(order_request)
@@ -783,7 +780,7 @@ class TestAlpacaExecutionTool:
             market_value=15000.0,
             cost_basis=14000.0,
             unrealized_pl=1000.0,
-            unrealized_pl_pct=7.14
+            unrealized_pl_pct=7.14,
         )
 
         tool._positions["MSFT"] = Position(
@@ -793,7 +790,7 @@ class TestAlpacaExecutionTool:
             market_value=10000.0,
             cost_basis=9500.0,
             unrealized_pl=500.0,
-            unrealized_pl_pct=5.26
+            unrealized_pl_pct=5.26,
         )
 
         positions = tool.get_positions()
@@ -823,7 +820,7 @@ class TestAlpacaExecutionTool:
             market_value=15000.0,
             cost_basis=14000.0,
             unrealized_pl=1000.0,
-            unrealized_pl_pct=7.14
+            unrealized_pl_pct=7.14,
         )
 
         position = tool.get_position("AAPL")
@@ -847,7 +844,7 @@ class TestAlpacaExecutionTool:
             market_value=15000.0,
             cost_basis=14000.0,
             unrealized_pl=1000.0,
-            unrealized_pl_pct=7.14
+            unrealized_pl_pct=7.14,
         )
 
         tool._positions["MSFT"] = Position(
@@ -857,7 +854,7 @@ class TestAlpacaExecutionTool:
             market_value=10000.0,
             cost_basis=9500.0,
             unrealized_pl=500.0,
-            unrealized_pl_pct=5.26
+            unrealized_pl_pct=5.26,
         )
 
         # Create some orders
@@ -871,7 +868,7 @@ class TestAlpacaExecutionTool:
             price=150.0,
             average_price=150.0,
             status=OrderStatus.FILLED,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         account_info = tool.get_account_info()
@@ -915,7 +912,7 @@ class TestAlpacaExecutionTool:
             price=150.0,
             average_price=150.0,
             status=OrderStatus.FILLED,
-            timestamp=now
+            timestamp=now,
         )
 
         order2 = OrderResult(
@@ -928,7 +925,7 @@ class TestAlpacaExecutionTool:
             price=200.0,
             average_price=None,
             status=OrderStatus.SUBMITTED,
-            timestamp=earlier
+            timestamp=earlier,
         )
 
         order3 = OrderResult(
@@ -942,7 +939,7 @@ class TestAlpacaExecutionTool:
             stop_price=140.0,
             average_price=None,
             status=OrderStatus.CANCELLED,
-            timestamp=even_earlier
+            timestamp=even_earlier,
         )
 
         # Store orders using client_order_id as key
@@ -960,7 +957,9 @@ class TestAlpacaExecutionTool:
         assert all_orders[1].order_id == "order_2"
         assert all_orders[2].order_id == "order_3"  # Oldest
 
-    def test_get_order_history_with_symbol_filter(self, tool: AlpacaExecutionTool) -> None:
+    def test_get_order_history_with_symbol_filter(
+        self, tool: AlpacaExecutionTool
+    ) -> None:
         """Test getting order history with symbol filter."""
         # Create some orders
         order1 = OrderResult(
@@ -973,7 +972,7 @@ class TestAlpacaExecutionTool:
             price=150.0,
             average_price=150.0,
             status=OrderStatus.FILLED,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         order2 = OrderResult(
@@ -986,7 +985,7 @@ class TestAlpacaExecutionTool:
             price=200.0,
             average_price=None,
             status=OrderStatus.SUBMITTED,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         order3 = OrderResult(
@@ -999,7 +998,7 @@ class TestAlpacaExecutionTool:
             price=None,
             average_price=None,
             status=OrderStatus.CANCELLED,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         # Store orders
@@ -1027,7 +1026,7 @@ class TestAlpacaExecutionTool:
                 price=150.0,
                 average_price=150.0,
                 status=OrderStatus.FILLED,
-                timestamp=datetime.now() - timedelta(minutes=i)
+                timestamp=datetime.now() - timedelta(minutes=i),
             )
 
             tool._orders[f"client_{i}"] = order
@@ -1052,7 +1051,7 @@ class TestAlpacaExecutionTool:
             market_value=15000.0,
             cost_basis=14000.0,
             unrealized_pl=1000.0,
-            unrealized_pl_pct=7.14
+            unrealized_pl_pct=7.14,
         )
 
         balance = tool.get_account_balance()
@@ -1069,7 +1068,9 @@ class TestAlpacaExecutionTool:
         assert balance["cash"] == 0.0
         assert balance["buying_power"] == 0.0
 
-    @patch.dict(os.environ, {"ALPACA_API_KEY": "env_key", "ALPACA_API_SECRET": "env_secret"})
+    @patch.dict(
+        os.environ, {"ALPACA_API_KEY": "env_key", "ALPACA_API_SECRET": "env_secret"}
+    )
     def test_initialization_from_environment(self) -> None:
         """Test initialization from environment variables."""
         # Remove the tools from the test scope so it uses the real one
@@ -1082,17 +1083,11 @@ class TestAlpacaExecutionTool:
         """Test that mock prices are generated consistently for the same symbol."""
         # Place orders for the same symbol multiple times
         order1 = OrderRequest(
-            symbol="AAPL",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100
+            symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
         )
 
         order2 = OrderRequest(
-            symbol="AAPL",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100
+            symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
         )
 
         result1 = tool.place_order(order1)
@@ -1103,10 +1098,7 @@ class TestAlpacaExecutionTool:
 
         # But different for different symbols
         order3 = OrderRequest(
-            symbol="MSFT",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100
+            symbol="MSFT", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
         )
 
         result3 = tool.place_order(order3)
@@ -1116,10 +1108,7 @@ class TestAlpacaExecutionTool:
         """Test that positions are correctly updated after a buy."""
         # Place a buy order
         order = OrderRequest(
-            symbol="AAPL",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100
+            symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
         )
 
         result = tool.place_order(order)
@@ -1133,7 +1122,9 @@ class TestAlpacaExecutionTool:
         assert position.unrealized_pl == 0.0  # Just created, so no P&L
         assert position.unrealized_pl_pct == 0.0
 
-    def test_position_updates_after_sell_exact_quantity(self, tool: AlpacaExecutionTool) -> None:
+    def test_position_updates_after_sell_exact_quantity(
+        self, tool: AlpacaExecutionTool
+    ) -> None:
         """Test that positions are correctly updated after a sell of exact quantity."""
         # First create a position
         tool._positions["AAPL"] = Position(
@@ -1143,7 +1134,7 @@ class TestAlpacaExecutionTool:
             market_value=15000.0,
             cost_basis=14000.0,
             unrealized_pl=1000.0,
-            unrealized_pl_pct=7.14
+            unrealized_pl_pct=7.14,
         )
 
         # Sell the exact quantity
@@ -1151,7 +1142,7 @@ class TestAlpacaExecutionTool:
             symbol="AAPL",
             side=OrderSide.SELL,
             order_type=OrderType.MARKET,
-            quantity=100
+            quantity=100,
         )
 
         result = tool.place_order(order)
@@ -1160,7 +1151,9 @@ class TestAlpacaExecutionTool:
         position = tool._positions["AAPL"]
         assert position.quantity == 0
 
-    def test_position_updates_after_sell_partial_quantity(self, tool: AlpacaExecutionTool) -> None:
+    def test_position_updates_after_sell_partial_quantity(
+        self, tool: AlpacaExecutionTool
+    ) -> None:
         """Test that positions are correctly updated after a partial sell."""
         # First create a position
         tool._positions["AAPL"] = Position(
@@ -1170,15 +1163,12 @@ class TestAlpacaExecutionTool:
             market_value=15000.0,
             cost_basis=14000.0,
             unrealized_pl=1000.0,
-            unrealized_pl_pct=7.14
+            unrealized_pl_pct=7.14,
         )
 
         # Sell part of the position
         order = OrderRequest(
-            symbol="AAPL",
-            side=OrderSide.SELL,
-            order_type=OrderType.MARKET,
-            quantity=50
+            symbol="AAPL", side=OrderSide.SELL, order_type=OrderType.MARKET, quantity=50
         )
 
         result = tool.place_order(order)
