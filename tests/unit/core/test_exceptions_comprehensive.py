@@ -6,23 +6,23 @@ These tests are designed to achieve high test coverage for the exceptions module
 import pytest
 
 from quantchain.core.exceptions import (
-    QuantChainError,
-    ConfigurationError,
-    AuthenticationError,
-    DataSourceError,
-    SymbolNotFoundError,
-    ValidationError,
-    InsufficientFundsError,
-    OrderNotFoundError,
-    TradingError,
-    ConnectorError,
     AgentError,
-    BacktestError,
-    RiskManagementError,
-    PortfolioError,
     APIError,
-    RateLimitError,
+    AuthenticationError,
+    BacktestError,
+    ConfigurationError,
+    ConnectorError,
+    DataSourceError,
+    InsufficientFundsError,
     NetworkError,
+    OrderNotFoundError,
+    PortfolioError,
+    QuantChainError,
+    RateLimitError,
+    RiskManagementError,
+    SymbolNotFoundError,
+    TradingError,
+    ValidationError,
 )
 
 
@@ -64,10 +64,14 @@ class TestQuantChainExceptions:
 
         for exc_class in exceptions_to_test:
             # Test that they inherit from QuantChainError
-            assert issubclass(exc_class, QuantChainError), f"{exc_class.__name__} should inherit from QuantChainError"
+            assert issubclass(
+                exc_class, QuantChainError
+            ), f"{exc_class.__name__} should inherit from QuantChainError"
 
             # Test that they inherit from Exception
-            assert issubclass(exc_class, Exception), f"{exc_class.__name__} should inherit from Exception"
+            assert issubclass(
+                exc_class, Exception
+            ), f"{exc_class.__name__} should inherit from Exception"
 
     def test_configuration_error(self) -> None:
         """Test ConfigurationError exception."""

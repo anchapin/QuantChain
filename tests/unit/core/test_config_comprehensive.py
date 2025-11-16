@@ -10,7 +10,7 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
-from quantchain.core.config import QuantChainConfig, LogLevel
+from quantchain.core.config import LogLevel, QuantChainConfig
 
 
 class TestLogLevel:
@@ -104,10 +104,7 @@ class TestQuantChainConfig:
             vector_path = os.path.join(temp_dir, "vectors", "store")
             db_path = os.path.join(temp_dir, "data", "test.db")
 
-            config = QuantChainConfig(
-                vector_store_path=vector_path,
-                db_path=db_path
-            )
+            config = QuantChainConfig(vector_store_path=vector_path, db_path=db_path)
 
             # Parent directories should be created
             assert os.path.exists(os.path.dirname(vector_path))
@@ -146,7 +143,7 @@ class TestQuantChainConfig:
             llm_provider="test_provider",
             temperature=0.5,
             enable_rag=True,
-            log_level=LogLevel.DEBUG
+            log_level=LogLevel.DEBUG,
         )
 
         config_dict = config.to_dict()
@@ -169,9 +166,7 @@ class TestQuantChainConfig:
     def test_config_save_to_file(self) -> None:
         """Test saving configuration to file."""
         config = QuantChainConfig(
-            llm_provider="test_provider",
-            temperature=0.5,
-            enable_rag=True
+            llm_provider="test_provider", temperature=0.5, enable_rag=True
         )
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -204,7 +199,7 @@ class TestQuantChainConfig:
             "llm_provider": "anthropic",
             "temperature": 0.3,
             "enable_rag": True,
-            "custom_attribute": "custom_value"
+            "custom_attribute": "custom_value",
         }
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -246,7 +241,7 @@ class TestQuantChainConfig:
             temperature=0.7,
             max_tokens=2048,
             max_retries=3,
-            retry_delay=1.0
+            retry_delay=1.0,
         )
 
         errors = config.validate()
@@ -297,7 +292,7 @@ class TestQuantChainConfig:
             temperature=3.0,
             max_tokens=-1,
             max_retries=-1,
-            retry_delay=-1.0
+            retry_delay=-1.0,
         )
 
         errors = config.validate()
@@ -310,10 +305,7 @@ class TestQuantChainConfig:
 
     def test_config_with_none_values(self) -> None:
         """Test configuration with None values."""
-        config = QuantChainConfig(
-            vector_store_path=None,
-            db_path=None
-        )
+        config = QuantChainConfig(vector_store_path=None, db_path=None)
 
         assert config.vector_store_path == "./data/vector_store"  # Should use default
         assert config.db_path == "./data/quantchain.db"  # Should use default
@@ -347,7 +339,9 @@ class TestQuantChainConfig:
     def test_config_directory_creation_with_nested_paths(self) -> None:
         """Test directory creation with deeply nested paths."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            deep_path = os.path.join(temp_dir, "level1", "level2", "level3", "vector_store")
+            deep_path = os.path.join(
+                temp_dir, "level1", "level2", "level3", "vector_store"
+            )
             config = QuantChainConfig(vector_store_path=deep_path)
 
             # All parent directories should be created
@@ -360,7 +354,9 @@ class TestConfigEdgeCases:
     def test_config_with_special_characters_in_paths(self) -> None:
         """Test configuration with special characters in paths."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            special_path = os.path.join(temp_dir, "path with spaces", "special-chars_123")
+            special_path = os.path.join(
+                temp_dir, "path with spaces", "special-chars_123"
+            )
             config = QuantChainConfig(vector_store_path=special_path)
 
             assert config.vector_store_path == special_path
@@ -368,10 +364,7 @@ class TestConfigEdgeCases:
 
     def test_config_load_file_with_partial_config(self) -> None:
         """Test loading file with only partial configuration."""
-        partial_config = {
-            "llm_provider": "anthropic",
-            "temperature": 0.1
-        }
+        partial_config = {"llm_provider": "anthropic", "temperature": 0.1}
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(partial_config, f)
@@ -395,8 +388,8 @@ class TestConfigEdgeCases:
         invalid_config = {
             "llm_provider": "test",
             "temperature": "not_a_number",  # Invalid type
-            "enable_rag": "not_a_bool",     # Invalid type
-            "max_tokens": "not_a_number"
+            "enable_rag": "not_a_bool",  # Invalid type
+            "max_tokens": "not_a_number",
         }
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -408,17 +401,14 @@ class TestConfigEdgeCases:
 
             # Should load what it can, even if types are wrong
             # The actual behavior depends on the implementation
-            assert hasattr(config, 'llm_provider')
+            assert hasattr(config, "llm_provider")
         finally:
             os.unlink(temp_file)
 
     def test_config_serialization_roundtrip(self) -> None:
         """Test that configuration survives save/load roundtrip."""
         original_config = QuantChainConfig(
-            llm_provider="anthropic",
-            temperature=0.5,
-            enable_rag=True,
-            max_retries=5
+            llm_provider="anthropic", temperature=0.5, enable_rag=True, max_retries=5
         )
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
