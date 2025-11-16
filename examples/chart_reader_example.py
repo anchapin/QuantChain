@@ -26,8 +26,10 @@ from typing import Any, Dict
 # Add project root to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
-from quantchain.agents.chart_reader_agent import (ChartReaderAgent,
-                                                  ChartReaderAgentConfig)
+from quantchain.agents.chart_reader_agent import (
+    ChartReaderAgent,
+    ChartReaderAgentConfig,
+)
 from quantchain.connectors.alpaca_connector import AlpacaDataConnector
 from quantchain.core.config import QuantChainConfig, get_config
 from quantchain.core.llm_providers import AnthropicProvider, OpenAIProvider

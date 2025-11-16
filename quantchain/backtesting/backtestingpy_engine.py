@@ -13,8 +13,7 @@ try:
 except ImportError:
     _BACKTESTING_AVAILABLE = False
 
-from quantchain.backtesting.engine import (BacktestConfig, BacktestResult,
-                                           MetricsResult)
+from quantchain.backtesting.engine import BacktestConfig, BacktestResult, MetricsResult
 
 
 class BacktestingPyEngine:

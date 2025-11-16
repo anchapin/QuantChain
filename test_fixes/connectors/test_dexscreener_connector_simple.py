@@ -6,8 +6,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 try:
-    from quantchain.connectors.dexscreener_connector import \
-        DexScreenerDataConnector
+    from quantchain.connectors.dexscreener_connector import DexScreenerDataConnector
 
     DEXSCREENER_AVAILABLE = True
 except ImportError as e:

@@ -8,10 +8,12 @@ import pandas as pd
 import pytest
 
 try:
-    from quantchain.backtesting.engine import (BacktestConfig,
-                                               BacktestExecutionError,
-                                               BacktestingEngine,
-                                               BacktestResult)
+    from quantchain.backtesting.engine import (
+        BacktestConfig,
+        BacktestExecutionError,
+        BacktestingEngine,
+        BacktestResult,
+    )
 
     ENGINE_AVAILABLE = True
 except ImportError as e:

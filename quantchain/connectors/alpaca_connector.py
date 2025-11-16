@@ -14,8 +14,10 @@ except ImportError:
 
 try:
     from alpaca.data import TimeFrame
-    from alpaca.data.historical import (CryptoHistoricalDataClient,
-                                        StockHistoricalDataClient)
+    from alpaca.data.historical import (
+        CryptoHistoricalDataClient,
+        StockHistoricalDataClient,
+    )
     from alpaca.trading.client import TradingClient
     from alpaca.trading.enums import AssetClass
 
@@ -23,8 +25,11 @@ try:
 except ImportError:
     _ALPACA_AVAILABLE = False
 
-from quantchain.core.exceptions import (AuthenticationError, DataSourceError,
-                                        SymbolNotFoundError)
+from quantchain.core.exceptions import (
+    AuthenticationError,
+    DataSourceError,
+    SymbolNotFoundError,
+)
 
 
 class AlpacaDataConnector:

@@ -7,11 +7,13 @@ import pandas as pd
 import pytest
 
 try:
-    from quantchain.backtesting.finrl_adapter import (FinRLAdapter,
-                                                      FinRLAdapterError,
-                                                      FinRLConnectionError,
-                                                      FinRLDataError,
-                                                      get_connector)
+    from quantchain.backtesting.finrl_adapter import (
+        FinRLAdapter,
+        FinRLAdapterError,
+        FinRLConnectionError,
+        FinRLDataError,
+        get_connector,
+    )
     from quantchain.backtesting.market_friction import MarketFrictionSimulator
     from quantchain.backtesting.performance_metrics import PerformanceMetrics
 

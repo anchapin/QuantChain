@@ -5,9 +5,17 @@ from unittest.mock import Mock, patch
 import pytest
 
 from quantchain.agents.smart_contract_auditor import (
-    ContractRetriever, ContractSource, FinancialAnalyzer, QuantChainError,
-    SmartContractAuditorAgent, SmartContractAuditorConfig, TokenomicsAnalysis,
-    Vulnerability, VulnerabilityReport, VulnerabilityScanner)
+    ContractRetriever,
+    ContractSource,
+    FinancialAnalyzer,
+    QuantChainError,
+    SmartContractAuditorAgent,
+    SmartContractAuditorConfig,
+    TokenomicsAnalysis,
+    Vulnerability,
+    VulnerabilityReport,
+    VulnerabilityScanner,
+)
 
 
 class TestSmartContractAuditorConfig:

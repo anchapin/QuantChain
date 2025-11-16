@@ -8,8 +8,12 @@ import pytest
 
 try:
     from quantchain.backtesting.langgraph_adapter import (
-        AgentState, AgentStrategy, LangGraphBacktestAdapter, PositionError,
-        PositionManager)
+        AgentState,
+        AgentStrategy,
+        LangGraphBacktestAdapter,
+        PositionError,
+        PositionManager,
+    )
 
     LANGGRAPH_AVAILABLE = True
 except ImportError as e:

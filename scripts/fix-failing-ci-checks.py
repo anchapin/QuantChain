@@ -18,18 +18,10 @@ def run_command(cmd: list[str], capture: bool = True) -> subprocess.CompletedPro
     try:
         if capture:
             result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=300
+                cmd, capture_output=True, text=True, check=True, timeout=300
             )
         else:
-            result = subprocess.run(
-                cmd,
-                check=True,
-                timeout=300
-            )
+            result = subprocess.run(cmd, check=True, timeout=300)
         return result
     except subprocess.TimeoutExpired:
         print(f"Command timed out: {' '.join(cmd)}")
@@ -65,7 +57,16 @@ def run_linting(repo_path: str) -> None:
 
     # Run flake8 for syntax issues
     try:
-        run_command(["flake8", ".", "--count", "--select=E9,F63,F7,F82", "--show-source", "--statistics"])
+        run_command(
+            [
+                "flake8",
+                ".",
+                "--count",
+                "--select=E9,F63,F7,F82",
+                "--show-source",
+                "--statistics",
+            ]
+        )
         print("✅ No syntax errors found!")
     except subprocess.CalledProcessError:
         print("❌ Syntax errors found!")
@@ -80,11 +81,9 @@ def run_tests(repo_path: str, coverage: bool = True) -> None:
     cmd = ["pytest", "tests/unit", "-v", "-m", "unit", "--tb=short"]
 
     if coverage:
-        cmd.extend([
-            "--cov=quantchain",
-            "--cov-report=term-missing",
-            "--cov-fail-under=80"
-        ])
+        cmd.extend(
+            ["--cov=quantchain", "--cov-report=term-missing", "--cov-fail-under=80"]
+        )
 
     run_command(cmd, capture=False)
     print("✅ Tests passed!")
@@ -95,14 +94,7 @@ def check_dependencies(repo_path: str) -> None:
     print("Checking dependencies...")
     os.chdir(repo_path)
 
-    required_packages = [
-        "pytest",
-        "pytest-cov",
-        "black",
-        "isort",
-        "flake8",
-        "mypy"
-    ]
+    required_packages = ["pytest", "pytest-cov", "black", "isort", "flake8", "mypy"]
 
     missing_packages = []
 
@@ -129,8 +121,12 @@ def main() -> None:
     parser.add_argument("--formatting", action="store_true", help="Fix code formatting")
     parser.add_argument("--lint", action="store_true", help="Run linting checks")
     parser.add_argument("--test", action="store_true", help="Run tests")
-    parser.add_argument("--coverage", action="store_true", default=True, help="Include coverage check")
-    parser.add_argument("--deps", action="store_true", help="Check and install dependencies")
+    parser.add_argument(
+        "--coverage", action="store_true", default=True, help="Include coverage check"
+    )
+    parser.add_argument(
+        "--deps", action="store_true", help="Check and install dependencies"
+    )
     parser.add_argument("--all", action="store_true", help="Run all fixes")
 
     args = parser.parse_args()

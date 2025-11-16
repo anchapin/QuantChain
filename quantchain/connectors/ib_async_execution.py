@@ -9,9 +9,15 @@ from pandas import DataFrame
 
 from ib_async import IB, Contract, Order, PortfolioItem, Position, Trade
 from quantchain.connectors.base import BaseExecutionConnector
-from quantchain.core.execution import (AccountInfo, ExecutionError,
-                                       OrderRequest, OrderResult, OrderSide,
-                                       OrderStatus, OrderType)
+from quantchain.core.execution import (
+    AccountInfo,
+    ExecutionError,
+    OrderRequest,
+    OrderResult,
+    OrderSide,
+    OrderStatus,
+    OrderType,
+)
 from quantchain.core.execution import Position as QuantChainPosition
 
 logger = logging.getLogger(__name__)

@@ -23,7 +23,9 @@ from typing import Any, Dict, List, Optional
 sys.path.append(str(Path(__file__).parent.parent))
 
 from quantchain.agents.smart_contract_auditor import (
-    SmartContractAuditorAgent, SmartContractAuditorConfig)
+    SmartContractAuditorAgent,
+    SmartContractAuditorConfig,
+)
 from quantchain.core.config import QuantChainConfig, get_config
 from quantchain.core.llm_providers import AnthropicProvider, OpenAIProvider
 

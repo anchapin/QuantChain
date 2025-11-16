@@ -8,9 +8,11 @@ import os
 import sys
 from pathlib import Path
 
-from quantchain.core.dependency_manager import (get_dependency_manager,
-                                                import_plotly,
-                                                import_streamlit)
+from quantchain.core.dependency_manager import (
+    get_dependency_manager,
+    import_plotly,
+    import_streamlit,
+)
 from quantchain.tools.web_dashboard import create_dashboard
 
 
@@ -31,8 +33,7 @@ def validate_dependencies():
 def validate_imports():
     """Validate that all imports work correctly."""
     try:
-        from quantchain.tools.web_dashboard import (DashboardCharts,
-                                                    WebDashboardApp)
+        from quantchain.tools.web_dashboard import DashboardCharts, WebDashboardApp
 
         print("Web dashboard imports successful")
         return True

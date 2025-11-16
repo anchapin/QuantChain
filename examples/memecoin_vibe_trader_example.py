@@ -21,13 +21,17 @@ from pathlib import Path
 # Add project root to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
-from quantchain.agents.memecoin_vibe_trader import (MemecoinVibeTrader,
-                                                    MemecoinVibeTraderConfig)
-from quantchain.connectors.dexscreener_connector import \
-    DexscreenerDataConnector
+from quantchain.agents.memecoin_vibe_trader import (
+    MemecoinVibeTrader,
+    MemecoinVibeTraderConfig,
+)
+from quantchain.connectors.dexscreener_connector import DexscreenerDataConnector
 from quantchain.core.config import QuantChainConfig, get_config
-from quantchain.core.llm_providers import (AnthropicProvider, OllamaProvider,
-                                           OpenAIProvider)
+from quantchain.core.llm_providers import (
+    AnthropicProvider,
+    OllamaProvider,
+    OpenAIProvider,
+)
 from quantchain.tools.execution import AlpacaExecutionTool
 from quantchain.tools.social_media_scraper import SocialMediaScraper
 

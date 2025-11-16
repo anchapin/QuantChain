@@ -6,9 +6,12 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from quantchain.core.exceptions import (InsufficientFundsError,
-                                        OrderNotFoundError, TradingError,
-                                        ValidationError)
+from quantchain.core.exceptions import (
+    InsufficientFundsError,
+    OrderNotFoundError,
+    TradingError,
+    ValidationError,
+)
 
 
 class OrderSide(Enum):
