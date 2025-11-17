@@ -121,7 +121,10 @@ class SentimentExpertAgent(BaseSpecializedAgent):
                     confidence_score=30.0,
                     reasoning="No sentiment data available for analysis",
                     data_sources=["news", "social_media"],
-                    metadata={"sentiment_available": False},
+                    metadata={
+                        "sentiment_available": False,
+                        "sentiment_score": 0.0,
+                    },
                 )
 
             # Calculate sentiment metrics
