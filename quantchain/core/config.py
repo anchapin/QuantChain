@@ -85,13 +85,34 @@ class QuantChainConfig:
         try:
             import json
 
+            # Set default values first
+            self.agent_type = "default"
+            self.llm_provider = "openai"
+            self.llm_model = "gpt-4"
+            self.temperature = 0.7
+            self.max_tokens = 2048
+            self.enable_rag = False
+            self.enable_reflection = False
+            self.vector_store_path = "./data/vector_store"
+            self.db_path = "./data/quantchain.db"
+            self.vision_provider = "gpt-4-vision-preview"
+            self.max_retries = 3
+            self.retry_delay = 1.0
+            self.log_level = LogLevel.INFO
+
             with open(config_file, "r") as f:
                 config_data = json.load(f)
 
-            # Set attributes from config file
+            # Override with values from config file
             for key, value in config_data.items():
-                if hasattr(self, key):
+                if key == "log_level" and isinstance(value, str):
+                    setattr(self, key, LogLevel(value))
+                else:
                     setattr(self, key, value)
+
+            # Create data directories if they don't exist
+            os.makedirs(os.path.dirname(self.vector_store_path), exist_ok=True)
+            os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         except Exception as e:
             print(f"Error loading config file: {e}")
 
@@ -106,13 +127,10 @@ class QuantChainConfig:
             for key in dir(self):
                 if not key.startswith("_"):
                     value = getattr(self, key)
-                    if isinstance(
-                        value, (str, int, float, bool, list, dict, type(None))
-                    ):
-                        if isinstance(value, Enum):
-                            config_data[key] = value.value
-                        else:
-                            config_data[key] = value
+                    if isinstance(value, (str, int, float, bool, list, dict, type(None))):
+                        config_data[key] = value
+                    elif isinstance(value, Enum):
+                        config_data[key] = value.value
 
             with open(config_file, "w") as f:
                 json.dump(config_data, f, indent=2)
@@ -134,10 +152,9 @@ class QuantChainConfig:
             if not key.startswith("_"):
                 value = getattr(self, key)
                 if isinstance(value, (str, int, float, bool, list, dict, type(None))):
-                    if isinstance(value, Enum):
-                        config[key] = value.value
-                    else:
-                        config[key] = value
+                    config[key] = value
+                elif isinstance(value, Enum):
+                    config[key] = value.value
         return config
 
     def validate(self) -> List[str]:

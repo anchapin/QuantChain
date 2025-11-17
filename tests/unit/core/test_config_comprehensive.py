@@ -31,8 +31,8 @@ class TestLogLevel:
 
     def test_log_level_string_conversion(self) -> None:
         """Test LogLevel to string conversion."""
-        assert str(LogLevel.DEBUG) == "debug"
-        assert str(LogLevel.INFO) == "info"
+        assert LogLevel.DEBUG.value == "debug"
+        assert LogLevel.INFO.value == "info"
 
 
 class TestQuantChainConfig:
@@ -58,35 +58,36 @@ class TestQuantChainConfig:
 
     def test_config_init_with_parameters(self) -> None:
         """Test QuantChainConfig initialization with custom parameters."""
-        config = QuantChainConfig(
-            agent_type="chart_reader",
-            llm_provider="anthropic",
-            llm_model="claude-3",
-            temperature=0.5,
-            max_tokens=1024,
-            enable_rag=True,
-            enable_reflection=True,
-            vector_store_path="/custom/vector_store",
-            db_path="/custom/database.db",
-            vision_provider="claude-3-vision",
-            max_retries=5,
-            retry_delay=2.0,
-            log_level=LogLevel.DEBUG,
-        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = QuantChainConfig(
+                agent_type="chart_reader",
+                llm_provider="anthropic",
+                llm_model="claude-3",
+                temperature=0.5,
+                max_tokens=1024,
+                enable_rag=True,
+                enable_reflection=True,
+                vector_store_path=f"{temp_dir}/vector_store",
+                db_path=f"{temp_dir}/database.db",
+                vision_provider="claude-3-vision",
+                max_retries=5,
+                retry_delay=2.0,
+                log_level=LogLevel.DEBUG,
+            )
 
-        assert config.agent_type == "chart_reader"
-        assert config.llm_provider == "anthropic"
-        assert config.llm_model == "claude-3"
-        assert config.temperature == 0.5
-        assert config.max_tokens == 1024
-        assert config.enable_rag is True
-        assert config.enable_reflection is True
-        assert config.vector_store_path == "/custom/vector_store"
-        assert config.db_path == "/custom/database.db"
-        assert config.vision_provider == "claude-3-vision"
-        assert config.max_retries == 5
-        assert config.retry_delay == 2.0
-        assert config.log_level == LogLevel.DEBUG
+            assert config.agent_type == "chart_reader"
+            assert config.llm_provider == "anthropic"
+            assert config.llm_model == "claude-3"
+            assert config.temperature == 0.5
+            assert config.max_tokens == 1024
+            assert config.enable_rag is True
+            assert config.enable_reflection is True
+            assert config.vector_store_path == f"{temp_dir}/vector_store"
+            assert config.db_path == f"{temp_dir}/database.db"
+            assert config.vision_provider == "claude-3-vision"
+            assert config.max_retries == 5
+            assert config.retry_delay == 2.0
+            assert config.log_level == LogLevel.DEBUG
 
     def test_config_init_with_string_log_level(self) -> None:
         """Test QuantChainConfig with string log level."""
