@@ -5,17 +5,17 @@ These tests are designed to achieve high test coverage for the security module.
 
 import os
 import tempfile
-from unittest.mock import Mock, patch, mock_open
+from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
 from quantchain.core.security import (
-    APISecurityManager,
     API_KEY_PATTERNS,
+    APISecurityManager,
     CredentialNotFoundError,
     InvalidCredentialFormatError,
-    SecurityConfigurationError,
     SecretManager,
+    SecurityConfigurationError,
     create_secret_manager,
     get_default_secret_manager,
 )
@@ -34,7 +34,9 @@ class TestSecretManagerPlaceholder:
         manager = SecretManager()
         # Should not raise any exceptions
         manager.set("test_key", "test_value")
-        assert manager.get("test_key") is None  # Still returns None as it's a placeholder
+        assert (
+            manager.get("test_key") is None
+        )  # Still returns None as it's a placeholder
 
     def test_get_default_secret_manager(self) -> None:
         """Test getting default secret manager."""
@@ -55,7 +57,13 @@ class TestAPIKeyPatterns:
         assert isinstance(API_KEY_PATTERNS, dict)
 
         # Check that all required services are present
-        required_services = ["alpaca", "polygon", "alpha_vantage", "anthropic", "openai"]
+        required_services = [
+            "alpaca",
+            "polygon",
+            "alpha_vantage",
+            "anthropic",
+            "openai",
+        ]
         for service in required_services:
             assert service in API_KEY_PATTERNS
             assert "key_pattern" in API_KEY_PATTERNS[service]
@@ -69,6 +77,7 @@ class TestAPIKeyPatterns:
 
         # Test valid key pattern
         import re
+
         assert re.match(patterns["key_pattern"], "ABCDEFGHIJKLMNOP")
 
         # Test valid secret pattern
@@ -79,11 +88,16 @@ class TestAPIKeyPatterns:
         import re
 
         # Test OpenAI pattern
-        assert re.match(API_KEY_PATTERNS["openai"]["key_pattern"], "sk-1234567890abcdef1234567890abcdef1234567890abcdef")
+        assert re.match(
+            API_KEY_PATTERNS["openai"]["key_pattern"],
+            "sk-1234567890abcdef1234567890abcdef1234567890abcdef",
+        )
 
         # Test Anthropic pattern - note this needs 95 characters after the prefix
         anthropic_test_key = "sk-ant-api03-" + "a" * 95
-        assert re.match(API_KEY_PATTERNS["anthropic"]["key_pattern"], anthropic_test_key)
+        assert re.match(
+            API_KEY_PATTERNS["anthropic"]["key_pattern"], anthropic_test_key
+        )
 
 
 class TestAPISecurityManager:
@@ -108,17 +122,22 @@ class TestAPISecurityManager:
             mock_secret_manager = Mock()
             mock_create.return_value = mock_secret_manager
 
-            manager = APISecurityManager(backend="test_backend", test_param="test_value")
+            manager = APISecurityManager(
+                backend="test_backend", test_param="test_value"
+            )
 
             mock_create.assert_called_once_with("test_backend", test_param="test_value")
             assert manager._secret_manager == mock_secret_manager
 
-    @patch.dict(os.environ, {
-        "ALPACA_API_KEY": "TEST_ALPACA_KEY_123456",
-        "ALPACA_API_SECRET": "test_alpaca_secret_123456",
-        "POLYGON_API_KEY": "test_polygon_key_12345",
-        "OPENAI_API_KEY": "sk-1234567890abcdef1234567890abcdef1234567890abcdef"
-    })
+    @patch.dict(
+        os.environ,
+        {
+            "ALPACA_API_KEY": "TEST_ALPACA_KEY_123456",
+            "ALPACA_API_SECRET": "test_alpaca_secret_123456",
+            "POLYGON_API_KEY": "test_polygon_key_12345",
+            "OPENAI_API_KEY": "sk-1234567890abcdef1234567890abcdef1234567890abcdef",
+        },
+    )
     def test_load_from_environment(self) -> None:
         """Test loading credentials from environment variables."""
         manager = APISecurityManager()
@@ -132,7 +151,10 @@ class TestAPISecurityManager:
         assert manager._services["alpaca"]["key"] == "TEST_ALPACA_KEY_123456"
         assert manager._services["alpaca"]["secret"] == "test_alpaca_secret_123456"
         assert manager._services["polygon"]["key"] == "test_polygon_key_12345"
-        assert manager._services["openai"]["key"] == "sk-1234567890abcdef1234567890abcdef1234567890abcdef"
+        assert (
+            manager._services["openai"]["key"]
+            == "sk-1234567890abcdef1234567890abcdef1234567890abcdef"
+        )
 
     def test_load_from_env_file(self) -> None:
         """Test loading credentials from .env file."""
@@ -151,9 +173,17 @@ ANTHROPIC_API_KEY=test_anthropic_key_from_file
                 manager = APISecurityManager()
 
                 assert manager._services["alpaca"]["key"] == "test_alpaca_key_from_file"
-                assert manager._services["alpaca"]["secret"] == "test_alpaca_secret_from_file"
-                assert manager._services["polygon"]["key"] == "test_polygon_key_from_file"
-                assert manager._services["anthropic"]["key"] == "test_anthropic_key_from_file"
+                assert (
+                    manager._services["alpaca"]["secret"]
+                    == "test_alpaca_secret_from_file"
+                )
+                assert (
+                    manager._services["polygon"]["key"] == "test_polygon_key_from_file"
+                )
+                assert (
+                    manager._services["anthropic"]["key"]
+                    == "test_anthropic_key_from_file"
+                )
 
     def test_load_from_env_file_error_handling(self) -> None:
         """Test error handling when loading .env file."""
@@ -169,30 +199,44 @@ ANTHROPIC_API_KEY=test_anthropic_key_from_file
 
         # Test with a service that has pattern validation
         # Use valid patterns for Alpaca
-        manager.set_api_key("alpaca", "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz12345678901234567890123456789012")
+        manager.set_api_key(
+            "alpaca",
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            "abcdefghijklmnopqrstuvwxyz12345678901234567890123456789012",
+        )
 
         assert manager._services["alpaca"]["key"] == "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        assert manager._services["alpaca"]["secret"] == "abcdefghijklmnopqrstuvwxyz12345678901234567890123456789012"
+        assert (
+            manager._services["alpaca"]["secret"]
+            == "abcdefghijklmnopqrstuvwxyz12345678901234567890123456789012"
+        )
 
     def test_set_api_key_empty(self) -> None:
         """Test setting an empty API key raises error."""
         manager = APISecurityManager()
 
-        with pytest.raises(SecurityConfigurationError, match="API key for alpaca cannot be empty"):
+        with pytest.raises(
+            SecurityConfigurationError, match="API key for alpaca cannot be empty"
+        ):
             manager.set_api_key("alpaca", "")
 
     def test_set_api_key_invalid_format(self) -> None:
         """Test setting an invalid API key format raises error."""
         manager = APISecurityManager()
 
-        with pytest.raises(InvalidCredentialFormatError, match="API key format for alpaca is invalid"):
+        with pytest.raises(
+            InvalidCredentialFormatError, match="API key format for alpaca is invalid"
+        ):
             manager.set_api_key("alpaca", "invalid_key")
 
     def test_set_api_key_invalid_secret_format(self) -> None:
         """Test setting an invalid API secret format raises error."""
         manager = APISecurityManager()
 
-        with pytest.raises(InvalidCredentialFormatError, match="API secret format for alpaca is invalid"):
+        with pytest.raises(
+            InvalidCredentialFormatError,
+            match="API secret format for alpaca is invalid",
+        ):
             manager.set_api_key("alpaca", "ABCDEFGHIJKLMNOP", "invalid_secret")
 
     def test_set_api_key_no_validation(self) -> None:
@@ -215,7 +259,9 @@ ANTHROPIC_API_KEY=test_anthropic_key_from_file
         """Test getting a non-existent API key raises error."""
         manager = APISecurityManager()
 
-        with pytest.raises(CredentialNotFoundError, match="API key for nonexistent not found"):
+        with pytest.raises(
+            CredentialNotFoundError, match="API key for nonexistent not found"
+        ):
             manager.get_api_key("nonexistent")
 
     def test_get_api_key_from_secret_manager(self) -> None:
@@ -264,7 +310,9 @@ ANTHROPIC_API_KEY=test_anthropic_key_from_file
         manager = APISecurityManager()
 
         # Test with valid OpenAI key
-        assert manager.validate_credentials("openai", "sk-1234567890abcdef1234567890abcdef1234567890abcdef")
+        assert manager.validate_credentials(
+            "openai", "sk-1234567890abcdef1234567890abcdef1234567890abcdef"
+        )
 
         # Test with service that has no validation
         assert manager.validate_credentials("unknown_service", "any_key")
@@ -284,14 +332,12 @@ ANTHROPIC_API_KEY=test_anthropic_key_from_file
         assert manager.validate_credentials(
             "alpaca",
             "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-            "abcdefghijklmnopqrstuvwxyz12345678901234567890123456789012"
+            "abcdefghijklmnopqrstuvwxyz12345678901234567890123456789012",
         )
 
         # Test with valid key but invalid secret
         assert not manager.validate_credentials(
-            "alpaca",
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-            "invalid_secret"
+            "alpaca", "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "invalid_secret"
         )
 
     def test_validate_credentials_not_found(self) -> None:
@@ -328,7 +374,7 @@ ANTHROPIC_API_KEY=test_anthropic_key_from_file
         manager = APISecurityManager()
         manager._services = {
             "alpaca": {"key": "test_alpaca_key", "secret": "test_alpaca_secret"},
-            "polygon": {"key": "test_polygon_key"}
+            "polygon": {"key": "test_polygon_key"},
         }
 
         with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
@@ -349,9 +395,7 @@ ANTHROPIC_API_KEY=test_anthropic_key_from_file
     def test_save_to_env_file_existing(self) -> None:
         """Test saving credentials to existing env file preserves other content."""
         manager = APISecurityManager()
-        manager._services = {
-            "alpaca": {"key": "new_alpaca_key"}
-        }
+        manager._services = {"alpaca": {"key": "new_alpaca_key"}}
 
         existing_content = """
 # This is a comment
@@ -378,7 +422,9 @@ POLYGON_API_KEY=old_polygon_key
 
             # Should update credential lines
             assert "ALPACA_API_KEY=new_alpaca_key" in content
-            assert "ALPACA_API_SECRET=old_alpaca_secret" not in content  # Should be removed
+            assert (
+                "ALPACA_API_SECRET=old_alpaca_secret" not in content
+            )  # Should be removed
 
             # Note: POLYGON_API_KEY gets removed because the logic removes all known credential keys
             # when any alpaca credentials are saved, even if we're not managing them
@@ -389,8 +435,11 @@ POLYGON_API_KEY=old_polygon_key
         """Test getting service information with masked credentials."""
         manager = APISecurityManager()
         manager._services = {
-            "alpaca": {"key": "test_alpaca_key_1234", "secret": "test_alpaca_secret_5678"},
-            "polygon": {"key": "test_polygon_key"}
+            "alpaca": {
+                "key": "test_alpaca_key_1234",
+                "secret": "test_alpaca_secret_5678",
+            },
+            "polygon": {"key": "test_polygon_key"},
         }
 
         alpaca_info = manager.get_service_info("alpaca")
@@ -398,7 +447,9 @@ POLYGON_API_KEY=old_polygon_key
         assert alpaca_info["secret"] == "***5678"
 
         polygon_info = manager.get_service_info("polygon")
-        assert polygon_info["key"] == "***_key"  # Note: it takes last 4 chars, which is "_key"
+        assert (
+            polygon_info["key"] == "***_key"
+        )  # Note: it takes last 4 chars, which is "_key"
 
         # Test non-existent service
         empty_info = manager.get_service_info("nonexistent")
@@ -407,9 +458,7 @@ POLYGON_API_KEY=old_polygon_key
     def test_get_service_info_short_credentials(self) -> None:
         """Test getting service info with short credentials."""
         manager = APISecurityManager()
-        manager._services = {
-            "test": {"key": "key", "secret": "sec"}
-        }
+        manager._services = {"test": {"key": "key", "secret": "sec"}}
 
         info = manager.get_service_info("test")
         assert info["key"] == "****"
@@ -446,8 +495,12 @@ POLYGON_API_KEY=old_polygon_key
         assert manager._services["test_service"]["secret"] == "test_secret"
 
         # Should store in secret manager
-        mock_secret_manager.set_secret.assert_any_call("test_service_api_key", "test_key")
-        mock_secret_manager.set_secret.assert_any_call("test_service_api_secret", "test_secret")
+        mock_secret_manager.set_secret.assert_any_call(
+            "test_service_api_key", "test_key"
+        )
+        mock_secret_manager.set_secret.assert_any_call(
+            "test_service_api_secret", "test_secret"
+        )
 
     def test_set_api_key_secret_manager_error(self) -> None:
         """Test setting API key when secret manager fails."""
@@ -479,7 +532,9 @@ POLYGON_API_KEY=old_polygon_key
     def test_remove_service_secret_manager_error(self) -> None:
         """Test removing service when secret manager fails."""
         mock_secret_manager = Mock()
-        mock_secret_manager.delete_secret.side_effect = Exception("Secret manager error")
+        mock_secret_manager.delete_secret.side_effect = Exception(
+            "Secret manager error"
+        )
 
         manager = APISecurityManager()
         manager._secret_manager = mock_secret_manager
@@ -546,7 +601,9 @@ class TestEdgeCases:
 
         for service, patterns in API_KEY_PATTERNS.items():
             assert "key_pattern" in patterns, f"{service} missing key_pattern"
-            assert isinstance(patterns["key_pattern"], str), f"{service} key_pattern not a string"
+            assert isinstance(
+                patterns["key_pattern"], str
+            ), f"{service} key_pattern not a string"
 
             # Try to compile the pattern to ensure it's valid regex
             try:
@@ -556,7 +613,9 @@ class TestEdgeCases:
 
             # If secret_pattern exists, validate it too
             if "secret_pattern" in patterns:
-                assert isinstance(patterns["secret_pattern"], str), f"{service} secret_pattern not a string"
+                assert isinstance(
+                    patterns["secret_pattern"], str
+                ), f"{service} secret_pattern not a string"
                 try:
                     re.compile(patterns["secret_pattern"])
                 except re.error as e:

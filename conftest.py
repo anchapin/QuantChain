@@ -7,7 +7,11 @@ import os
 from datetime import datetime
 from typing import Any
 
-import psutil
+# Optional psutil import for resource monitoring
+try:
+    import psutil
+except ImportError:
+    psutil = None
 
 # Pytest configuration
 pytest_plugins: list[str] = []
@@ -50,6 +54,9 @@ def pytest_runtest_makereport(item: Any, call: Any) -> None:
 
 def log_resources(context: str) -> None:
     """Log system resources to a JSON file."""
+    if psutil is None:
+        return  # Skip resource logging if psutil is not available
+
     try:
         # Create logs directory if it doesn't exist
         os.makedirs("logs", exist_ok=True)

@@ -59,5 +59,13 @@ class Trade:
     pass
 
 
+class PortfolioItem:
+    pass
+
+
+class Position:
+    pass
+
+
 # Prevent real ib_async from being imported
 sys.modules["ib_async"] = sys.modules[__name__]
