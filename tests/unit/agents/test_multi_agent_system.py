@@ -67,7 +67,8 @@ class TestFundamentalsAnalystAgent:
         """Test analysis with mock data."""
         config = QuantChainConfig()
         llm_provider = MockLLMProvider()
-        agent = FundamentalsAnalystAgent(config, llm_provider, data_connector=None)
+        # Provide a mock data connector to get mock data
+        agent = FundamentalsAnalystAgent(config, llm_provider, data_connector=Mock())
 
         # Set mock data quality to pass threshold
         agent.min_data_quality_score = 50.0
