@@ -2,7 +2,6 @@
 Minimal test file for test_market_friction.
 """
 
-
 import pytest
 
 

@@ -2,7 +2,6 @@
 Minimal test file for test_ccxt_connector_coverage.
 """
 
-
 import pytest
 
 

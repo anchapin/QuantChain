@@ -2,7 +2,6 @@
 Minimal test file for test_config_additional_coverage.
 """
 
-
 import pytest
 
 

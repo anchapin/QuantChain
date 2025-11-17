@@ -2,7 +2,6 @@
 Minimal test file for test_finrl_adapter_simple.
 """
 
-
 import pytest
 
 

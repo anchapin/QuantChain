@@ -2,7 +2,6 @@
 Minimal test file for test_vault_coverage.
 """
 
-
 import pytest
 
 

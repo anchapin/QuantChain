@@ -2,7 +2,6 @@
 Minimal test file for test_trading_execution_simple.
 """
 
-
 import pytest
 
 

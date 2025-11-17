@@ -2,7 +2,6 @@
 Minimal test file for test_alpaca_connector_simple.
 """
 
-
 import pytest
 
 

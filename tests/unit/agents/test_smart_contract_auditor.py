@@ -2,7 +2,6 @@
 Minimal test file for test_smart_contract_auditor.
 """
 
-
 import pytest
 
 

@@ -2,7 +2,6 @@
 Minimal test file for test_polygon_connector.
 """
 
-
 import pytest
 
 

@@ -2,7 +2,6 @@
 Minimal test file for test_backtestingpy_engine.
 """
 
-
 import pytest
 
 

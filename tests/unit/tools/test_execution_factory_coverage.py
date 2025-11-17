@@ -2,7 +2,6 @@
 Minimal test file for test_execution_factory_coverage.
 """
 
-
 import pytest
 
 

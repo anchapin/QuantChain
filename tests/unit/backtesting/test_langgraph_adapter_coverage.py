@@ -2,7 +2,6 @@
 Minimal test file for test_langgraph_adapter_coverage.
 """
 
-
 import pytest
 
 

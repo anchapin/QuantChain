@@ -2,7 +2,6 @@
 Minimal test file for test_alpha_vantage_connector.
 """
 
-
 import pytest
 
 

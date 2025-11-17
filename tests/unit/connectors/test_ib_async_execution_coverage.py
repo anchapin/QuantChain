@@ -2,7 +2,6 @@
 Minimal test file for test_ib_async_execution_coverage.
 """
 
-
 import pytest
 
 

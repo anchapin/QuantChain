@@ -2,7 +2,6 @@
 Minimal test file for test_paper_trading.
 """
 
-
 import pytest
 
 

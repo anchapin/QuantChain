@@ -2,7 +2,6 @@
 Minimal test file for test_social_media_scraper.
 """
 
-
 import pytest
 
 

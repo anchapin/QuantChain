@@ -2,7 +2,6 @@
 Minimal test file for test_metrics_result.
 """
 
-
 import pytest
 
 

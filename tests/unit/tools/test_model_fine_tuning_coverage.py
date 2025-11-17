@@ -2,7 +2,6 @@
 Minimal test file for test_model_fine_tuning_coverage.
 """
 
-
 import pytest
 
 

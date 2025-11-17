@@ -2,7 +2,6 @@
 Minimal test file for test_performance_metrics_smoke.
 """
 
-
 import pytest
 
 

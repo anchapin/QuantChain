@@ -2,7 +2,6 @@
 Minimal test file for test_config_coverage.
 """
 
-
 import pytest
 
 

@@ -2,7 +2,6 @@
 Minimal test file for test_vector_backtester_coverage.
 """
 
-
 import pytest
 
 

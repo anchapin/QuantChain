@@ -2,7 +2,6 @@
 Minimal test file for test_gcp_coverage.
 """
 
-
 import pytest
 
 

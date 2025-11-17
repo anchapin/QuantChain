@@ -2,7 +2,6 @@
 Minimal test file for test_training_mode.
 """
 
-
 import pytest
 
 

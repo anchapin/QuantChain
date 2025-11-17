@@ -2,7 +2,6 @@
 Minimal test file for test_ib_async_simple_execution.
 """
 
-
 import pytest
 
 

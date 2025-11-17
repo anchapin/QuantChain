@@ -2,7 +2,6 @@
 Minimal test file for test_web_dashboard_basic_coverage.
 """
 
-
 import pytest
 
 
