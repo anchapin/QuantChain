@@ -15,6 +15,7 @@ from quantchain.agents import (
     TechnicalAnalystAgent,
 )
 from quantchain.core.config import QuantChainConfig
+from quantchain.core.llm_providers import LLMResponse
 
 
 class MockLLMProvider:
@@ -23,17 +24,17 @@ class MockLLMProvider:
     def __init__(self, response_text="Mock response"):
         self.response_text = response_text
 
-    def generate(self, prompt: str, max_tokens: int = None):
-        """Mock generate method."""
-        mock_response = Mock()
-        mock_response.text = self.response_text
-        return mock_response
+    def generate(self, prompt: str, **kwargs):
+        """Mock generate method returning LLMResponse."""
+        return LLMResponse(text=self.response_text)
 
     def generate_vision(self, image_data: bytes, prompt: str):
         """Mock generate_vision method."""
-        mock_response = Mock()
-        mock_response.text = "Mock vision analysis"
-        return mock_response
+        return LLMResponse(text="Mock vision analysis")
+
+    def get_model_name(self) -> str:
+        """Mock get_model_name method."""
+        return "mock-model"
 
 
 class TestFundamentalsAnalystAgent:
