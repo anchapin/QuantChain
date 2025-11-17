@@ -40,11 +40,19 @@ class TestSmartContractAuditorPlaceholder:
 
     def test_placeholder_enum_completeness(self) -> None:
         """Test that enums are properly defined."""
-        from quantchain.agents.smart_contract_auditor import AuditStatus, VulnerabilitySeverity
+        from quantchain.agents.smart_contract_auditor import (
+            AuditStatus,
+            VulnerabilitySeverity,
+        )
 
         # Verify audit status values
         status_values = [status.value for status in AuditStatus]
-        expected_statuses = ["secure", "vulnerable", "requires_review", "insufficient_data"]
+        expected_statuses = [
+            "secure",
+            "vulnerable",
+            "requires_review",
+            "insufficient_data",
+        ]
         for expected in expected_statuses:
             assert expected in status_values
 
@@ -63,25 +71,31 @@ class TestSmartContractAuditorPlaceholder:
 
     def test_placeholder_agent_structure(self) -> None:
         """Test that SmartContractAuditorAgent has expected structure."""
-        from quantchain.agents.smart_contract_auditor import SmartContractAuditorAgent, SmartContractAuditorConfig
+        from quantchain.agents.smart_contract_auditor import (
+            SmartContractAuditorAgent,
+            SmartContractAuditorConfig,
+        )
 
         config = SmartContractAuditorConfig()
         agent = SmartContractAuditorAgent(config)
 
         # Verify agent exists and has basic attributes
         assert agent is not None
-        assert hasattr(agent, 'config')
+        assert hasattr(agent, "config")
 
     def test_placeholder_vulnerability_creation(self) -> None:
         """Test that Vulnerability can be created with correct signature."""
-        from quantchain.agents.smart_contract_auditor import Vulnerability, VulnerabilitySeverity
+        from quantchain.agents.smart_contract_auditor import (
+            Vulnerability,
+            VulnerabilitySeverity,
+        )
 
         # Test with minimal required arguments (adjust based on actual signature)
         try:
             vuln = Vulnerability(
                 vulnerability_type="test",
                 severity=VulnerabilitySeverity.LOW,
-                description="Test vulnerability"
+                description="Test vulnerability",
             )
             assert vuln is not None
         except Exception:
@@ -95,9 +109,7 @@ class TestSmartContractAuditorPlaceholder:
         # Test with appropriate arguments based on actual signature
         try:
             source = ContractSource(
-                source_code="test code",
-                constructor_arguments=[],
-                network="ethereum"
+                source_code="test code", constructor_arguments=[], network="ethereum"
             )
             assert source is not None
         except Exception:
@@ -110,9 +122,7 @@ class TestSmartContractAuditorPlaceholder:
 
         try:
             report = VulnerabilityReport(
-                vulnerabilities=[],
-                security_score=1.0,
-                audit_status="secure"
+                vulnerabilities=[], security_score=1.0, audit_status="secure"
             )
             assert report is not None
         except Exception:
@@ -124,8 +134,7 @@ class TestSmartContractAuditorPlaceholder:
 
         try:
             analysis = TokenomicsAnalysis(
-                total_supply=1000000,
-                circulating_supply=500000
+                total_supply=1000000, circulating_supply=500000
             )
             assert analysis is not None
         except Exception:
@@ -136,10 +145,7 @@ class TestSmartContractAuditorPlaceholder:
         from quantchain.agents.smart_contract_auditor import ProtocolAnalysis
 
         try:
-            analysis = ProtocolAnalysis(
-                tvl=1000000,
-                apy=5.0
-            )
+            analysis = ProtocolAnalysis(tvl=1000000, apy=5.0)
             assert analysis is not None
         except Exception:
             assert ProtocolAnalysis is not None
@@ -150,4 +156,4 @@ class TestSmartContractAuditorPlaceholder:
         from quantchain.agents import smart_contract_auditor
 
         assert smart_contract_auditor is not None
-        assert hasattr(smart_contract_auditor, 'SmartContractAuditorAgent')
+        assert hasattr(smart_contract_auditor, "SmartContractAuditorAgent")

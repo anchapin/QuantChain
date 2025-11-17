@@ -42,7 +42,7 @@ class TestTradingExecutionModule:
                 symbol="AAPL",
                 side=OrderSide.BUY,
                 order_type=OrderType.MARKET,
-                quantity=100.0
+                quantity=100.0,
             )
             assert order.symbol == "AAPL"
             assert order.side == OrderSide.BUY
@@ -64,7 +64,7 @@ class TestTradingExecutionModule:
                 price=150.25,
                 average_price=150.25,
                 status=OrderStatus.FILLED,
-                timestamp="2023-01-01T00:00:00Z"
+                timestamp="2023-01-01T00:00:00Z",
             )
             assert result.order_id == "test-123"
             assert result.symbol == "AAPL"
@@ -79,7 +79,7 @@ class TestTradingExecutionModule:
                 account_id="ACC123",
                 buying_power=10000.0,
                 cash=5000.0,
-                portfolio_value=15000.0
+                portfolio_value=15000.0,
             )
             assert account.account_id == "ACC123"
         except Exception:
@@ -95,7 +95,7 @@ class TestTradingExecutionModule:
                 side=OrderSide.BUY,
                 cost_basis=15000.0,
                 unrealized_pl=1000.0,
-                unrealized_pl_pct=0.067
+                unrealized_pl_pct=0.067,
             )
             assert position.symbol == "AAPL"
         except Exception:
@@ -128,12 +128,12 @@ class TestTradingExecutionModule:
     def test_class_attributes(self) -> None:
         """Test that classes have expected attributes."""
         # Test that classes exist and have some structure
-        assert hasattr(OrderSide, 'BUY')
-        assert hasattr(OrderSide, 'SELL')
-        assert hasattr(OrderType, 'MARKET')
-        assert hasattr(OrderType, 'LIMIT')
-        assert hasattr(OrderStatus, 'NEW')
-        assert hasattr(OrderStatus, 'FILLED')
+        assert hasattr(OrderSide, "BUY")
+        assert hasattr(OrderSide, "SELL")
+        assert hasattr(OrderType, "MARKET")
+        assert hasattr(OrderType, "LIMIT")
+        assert hasattr(OrderStatus, "NEW")
+        assert hasattr(OrderStatus, "FILLED")
 
     def test_module_import(self) -> None:
         """Test that module can be imported as expected."""
@@ -164,5 +164,9 @@ class TestTradingExecutionModule:
     def test_string_representations(self) -> None:
         """Test enum string representations."""
         assert str(OrderSide.BUY) == "OrderSide.BUY" or "buy" in str(OrderSide.BUY)
-        assert str(OrderType.MARKET) == "OrderType.MARKET" or "market" in str(OrderType.MARKET)
-        assert str(OrderStatus.FILLED) == "OrderStatus.FILLED" or "filled" in str(OrderStatus.FILLED)
+        assert str(OrderType.MARKET) == "OrderType.MARKET" or "market" in str(
+            OrderType.MARKET
+        )
+        assert str(OrderStatus.FILLED) == "OrderStatus.FILLED" or "filled" in str(
+            OrderStatus.FILLED
+        )
