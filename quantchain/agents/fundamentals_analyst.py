@@ -218,9 +218,7 @@ class FundamentalsAnalystAgent(BaseSpecializedAgent):
         try:
             # In a real implementation, this would fetch from financial data provider
             # For now, return mock data
-            self.logger.info(
-                f"Returning mock financial metrics for {symbol}"
-            )
+            self.logger.info(f"Returning mock financial metrics for {symbol}")
             return FinancialMetrics(
                 revenue=1000000.0,
                 revenue_growth=15.0,
@@ -253,9 +251,7 @@ class FundamentalsAnalystAgent(BaseSpecializedAgent):
             # In a real implementation, this would fetch from earnings data provider
             # For now, return mock data
             current_quarter = (datetime.now().month - 1) // 3 + 1
-            self.logger.info(
-                f"Returning mock earnings data for {symbol}"
-            )
+            self.logger.info(f"Returning mock earnings data for {symbol}")
             return [
                 EarningsData(
                     quarter=f"Q{current_quarter}",
