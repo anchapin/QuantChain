@@ -230,12 +230,14 @@ class TestDashboardCharts:
         mock_go.Figure.return_value = mock_fig
         mock_go.Candlestick.return_value = Mock()
 
-        df = pd.DataFrame({
-            "open": [100.0, 101.0, 102.0],
-            "high": [102.0, 103.0, 104.0],
-            "low": [99.0, 100.0, 101.0],
-            "close": [101.0, 102.0, 103.0],
-        })
+        df = pd.DataFrame(
+            {
+                "open": [100.0, 101.0, 102.0],
+                "high": [102.0, 103.0, 104.0],
+                "low": [99.0, 100.0, 101.0],
+                "close": [101.0, 102.0, 103.0],
+            }
+        )
 
         with patch("quantchain.tools.web_dashboard.go", mock_go):
             with patch("quantchain.tools.web_dashboard.HAS_PLOTLY", True):
@@ -279,7 +281,7 @@ class TestMonitoringService:
         """Test MonitoringService initialization."""
         service = MonitoringService()
 
-        assert hasattr(service, 'agents')
+        assert hasattr(service, "agents")
         assert service.agents == {}
 
     def test_get_agent_status_nonexistent(self) -> None:
@@ -386,7 +388,7 @@ class TestConfigurationService:
         """Test ConfigurationService initialization."""
         service = MonitoringService()
 
-        assert hasattr(service, 'agents')
+        assert hasattr(service, "agents")
         assert service.agents == {}
 
     def test_get_agent_config_nonexistent(self) -> None:
@@ -394,21 +396,21 @@ class TestConfigurationService:
         service = MonitoringService()
 
         # This method doesn't exist in the current implementation
-        assert not hasattr(service, 'get_agent_config')
+        assert not hasattr(service, "get_agent_config")
 
     def test_update_agent_config(self) -> None:
         """Test updating agent configuration - method doesn't exist."""
         service = MonitoringService()
 
         # This method doesn't exist in the current implementation
-        assert not hasattr(service, 'update_agent_config')
+        assert not hasattr(service, "update_agent_config")
 
     def test_save_config(self) -> None:
         """Test saving configuration - method doesn't exist."""
         service = MonitoringService()
 
         # This method doesn't exist in the current implementation
-        assert not hasattr(service, 'save_config')
+        assert not hasattr(service, "save_config")
 
 
 @pytest.mark.unit
@@ -421,8 +423,8 @@ class TestWebDashboardApp:
         app = WebDashboardApp(dashboard_config)
 
         assert app.config == dashboard_config
-        assert hasattr(app, 'monitoring_service')
-        assert hasattr(app, 'config_service')
+        assert hasattr(app, "monitoring_service")
+        assert hasattr(app, "config_service")
 
     def test_run_method(self) -> None:
         """Test WebDashboardApp run method."""
@@ -501,7 +503,13 @@ class TestUtilityFunctions:
 
     def test_calculate_max_drawdown_with_decline(self) -> None:
         """Test calculate_max_drawdown with decline from peak."""
-        data = [100000, 105000, 103000, 102000, 104000]  # Peak: 105000, Max drawdown: 102000
+        data = [
+            100000,
+            105000,
+            103000,
+            102000,
+            104000,
+        ]  # Peak: 105000, Max drawdown: 102000
         result = calculate_max_drawdown(data)
         # Max drawdown = (105000 - 102000) / 105000 = 0.02857...
         expected = (105000 - 102000) / 105000
@@ -509,7 +517,15 @@ class TestUtilityFunctions:
 
     def test_calculate_max_drawdown_complex_scenario(self) -> None:
         """Test calculate_max_drawdown with complex scenario."""
-        data = [100000, 95000, 110000, 98000, 105000, 90000, 115000]  # Peak: 110000, Max drawdown: 90000
+        data = [
+            100000,
+            95000,
+            110000,
+            98000,
+            105000,
+            90000,
+            115000,
+        ]  # Peak: 110000, Max drawdown: 90000
         result = calculate_max_drawdown(data)
         # Max drawdown should be from 110000 to 90000 = 18.18%
         expected = (110000 - 90000) / 110000
@@ -531,8 +547,8 @@ class TestModuleImports:
             PortfolioMetrics,
             SystemHealth,
             WebDashboardApp,
-            create_line_chart,
             calculate_max_drawdown,
+            create_line_chart,
         )
 
         # If we get here, all imports succeeded
@@ -547,7 +563,7 @@ class TestModuleImports:
         assert create_line_chart is not None
         assert calculate_max_drawdown is not None
         # Test that create_equity_curve is available as static method
-        assert hasattr(DashboardCharts, 'create_equity_curve')
+        assert hasattr(DashboardCharts, "create_equity_curve")
 
     def test_has_optional_imports_flags(self) -> None:
         """Test that optional import flags are properly set."""

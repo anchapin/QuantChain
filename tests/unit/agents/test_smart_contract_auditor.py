@@ -110,7 +110,9 @@ class TestDataClasses:
 
         assert source.address == "0x1234567890123456789012345678901234567890"
         assert source.source_code == "contract Foo { function bar() public {} }"
-        assert source.abi == '[{"type":"function","name":"bar","inputs":[],"outputs":[]}]'
+        assert (
+            source.abi == '[{"type":"function","name":"bar","inputs":[],"outputs":[]}]'
+        )
         assert source.contract_name == "Foo"
         assert source.compiler_version == "0.8.0"
         assert source.optimization_enabled is True
@@ -128,7 +130,9 @@ class TestDataClasses:
         )
 
         assert vulnerability.title == "Reentrancy Vulnerability"
-        assert vulnerability.description == "Contract is vulnerable to reentrancy attacks"
+        assert (
+            vulnerability.description == "Contract is vulnerable to reentrancy attacks"
+        )
         assert vulnerability.severity == VulnerabilitySeverity.CRITICAL
         assert vulnerability.location == "withdraw() function"
         assert vulnerability.recommendation == "Add reentrancy guards"
@@ -226,8 +230,8 @@ class TestContractRetriever:
         retriever = ContractRetriever(config)
 
         assert retriever.config == config
-        assert hasattr(retriever, '_cache')
-        assert hasattr(retriever, '_session')
+        assert hasattr(retriever, "_cache")
+        assert hasattr(retriever, "_session")
 
     def test_init_custom_config(self) -> None:
         """Test ContractRetriever initialization with custom config."""
@@ -336,7 +340,7 @@ class TestVulnerabilityScanner:
     def test_init(self) -> None:
         """Test VulnerabilityScanner initialization."""
         scanner = VulnerabilityScanner()
-        assert hasattr(scanner, 'vulnerability_patterns')
+        assert hasattr(scanner, "vulnerability_patterns")
 
     def test_scan_vulnerabilities_empty_code(self) -> None:
         """Test scanning empty contract code."""
@@ -368,7 +372,8 @@ class TestVulnerabilityScanner:
 
         # Check if any reentrancy-related vulnerability was found
         reentrancy_found = any(
-            "reentrancy" in vuln.title.lower() or "external call" in vuln.description.lower()
+            "reentrancy" in vuln.title.lower()
+            or "external call" in vuln.description.lower()
             for vuln in vulnerabilities
         )
 
@@ -390,7 +395,8 @@ class TestVulnerabilityScanner:
 
         # Check if any access control vulnerability was found
         access_control_found = any(
-            "access control" in vuln.title.lower() or "public" in vuln.description.lower()
+            "access control" in vuln.title.lower()
+            or "public" in vuln.description.lower()
             for vuln in vulnerabilities
         )
 
@@ -478,7 +484,7 @@ class TestFinancialAnalyzer:
     def test_init(self) -> None:
         """Test FinancialAnalyzer initialization."""
         analyzer = FinancialAnalyzer()
-        assert hasattr(analyzer, '_price_cache')
+        assert hasattr(analyzer, "_price_cache")
 
     def test_analyze_tokenomics_basic(self) -> None:
         """Test basic tokenomics analysis."""
@@ -542,9 +548,9 @@ class TestSmartContractAuditorAgent:
         agent = SmartContractAuditorAgent(config)
 
         assert agent.config == config
-        assert hasattr(agent, 'contract_retriever')
-        assert hasattr(agent, 'vulnerability_scanner')
-        assert hasattr(agent, 'financial_analyzer')
+        assert hasattr(agent, "contract_retriever")
+        assert hasattr(agent, "vulnerability_scanner")
+        assert hasattr(agent, "financial_analyzer")
 
     def test_init_with_default_config(self) -> None:
         """Test SmartContractAuditorAgent initialization with default config."""
@@ -569,7 +575,7 @@ class TestSmartContractAuditorAgent:
 
         # Test that the method exists and returns expected type
         # The actual implementation may require network access
-        assert hasattr(agent, 'audit_contract')
+        assert hasattr(agent, "audit_contract")
 
     def test_generate_investment_recommendation_basic(self) -> None:
         """Test basic investment recommendation generation."""
@@ -587,7 +593,7 @@ class TestSmartContractAuditorAgent:
         )
 
         # Test that the method exists
-        assert hasattr(agent, 'generate_investment_recommendation')
+        assert hasattr(agent, "generate_investment_recommendation")
 
         # The actual implementation should analyze the report and return recommendations
         # This test mainly verifies the method exists and can be called
