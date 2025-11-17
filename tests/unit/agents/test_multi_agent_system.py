@@ -1,7 +1,7 @@
 """Tests for the multi-agent trading system."""
 
-from unittest.mock import Mock
 from datetime import datetime
+from unittest.mock import Mock
 
 from quantchain.agents import (
     AgentAnalysis,

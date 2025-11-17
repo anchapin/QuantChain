@@ -6,7 +6,7 @@ to enhance decision quality through diverse expert perspectives and structured c
 """
 
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
 
 from quantchain.agents import (
     AgentRole,
