@@ -127,7 +127,9 @@ class QuantChainConfig:
             for key in dir(self):
                 if not key.startswith("_"):
                     value = getattr(self, key)
-                    if isinstance(value, (str, int, float, bool, list, dict, type(None))):
+                    if isinstance(
+                        value, (str, int, float, bool, list, dict, type(None))
+                    ):
                         config_data[key] = value
                     elif isinstance(value, Enum):
                         config_data[key] = value.value
