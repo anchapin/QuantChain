@@ -216,7 +216,9 @@ class FundamentalsAnalystAgent(BaseSpecializedAgent):
         """
         # If no data connector, return empty metrics (insufficient data)
         if not self.data_connector:
-            self.logger.info(f"No data connector available for {symbol}, returning empty metrics")
+            self.logger.info(
+                f"No data connector available for {symbol}, returning empty metrics"
+            )
             return FinancialMetrics()
 
         # Return mock data for testing (when connector available but no real implementation)
@@ -252,7 +254,9 @@ class FundamentalsAnalystAgent(BaseSpecializedAgent):
         """
         # If no data connector, return empty list (insufficient data)
         if not self.data_connector:
-            self.logger.info(f"No data connector available for {symbol}, returning empty earnings data")
+            self.logger.info(
+                f"No data connector available for {symbol}, returning empty earnings data"
+            )
             return []
 
         # Return mock data for testing (when connector available but no real implementation)

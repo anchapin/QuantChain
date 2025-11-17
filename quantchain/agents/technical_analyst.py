@@ -659,6 +659,7 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
         # Try to use scipy for finding local maxima and minima
         try:
             from scipy.signal import argrelextrema
+
             # Find local maxima (resistance) and minima (support)
             resistance_indices = argrelextrema(highs, np.greater, order=5)[0]
             support_indices = argrelextrema(lows, np.less, order=5)[0]
