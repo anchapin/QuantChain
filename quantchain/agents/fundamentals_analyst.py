@@ -214,7 +214,12 @@ class FundamentalsAnalystAgent(BaseSpecializedAgent):
         Returns:
             FinancialMetrics object
         """
-        # Return mock data for testing (when no connector or real implementation)
+        # If no data connector, return empty metrics (insufficient data)
+        if not self.data_connector:
+            self.logger.info(f"No data connector available for {symbol}, returning empty metrics")
+            return FinancialMetrics()
+
+        # Return mock data for testing (when connector available but no real implementation)
         try:
             # In a real implementation, this would fetch from financial data provider
             # For now, return mock data
@@ -245,7 +250,12 @@ class FundamentalsAnalystAgent(BaseSpecializedAgent):
         Returns:
             List of EarningsData objects
         """
-        # Return mock data for testing (when no connector or real implementation)
+        # If no data connector, return empty list (insufficient data)
+        if not self.data_connector:
+            self.logger.info(f"No data connector available for {symbol}, returning empty earnings data")
+            return []
+
+        # Return mock data for testing (when connector available but no real implementation)
         try:
             # In a real implementation, this would fetch from earnings data provider
             # For now, return mock data
