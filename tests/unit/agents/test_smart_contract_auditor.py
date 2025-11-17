@@ -177,7 +177,7 @@ class TestSmartContractAuditorComprehensive:
                 VulnerabilitySeverity.HIGH,
                 "Reentrancy vulnerability detected",
                 "Function withdraw()",
-                "Add reentrancy protection"
+                "Add reentrancy protection",
             )
             assert vuln is not None
         except TypeError:
@@ -197,7 +197,7 @@ class TestSmartContractAuditorComprehensive:
                 ["_initialValue"],
                 "ethereum",
                 "0x1234567890123456789012345678901234567890",
-                '{"name": "Example", "type": "contract"}'
+                '{"name": "Example", "type": "contract"}',
             )
             # The field mapping is different than expected
             assert source is not None
@@ -208,10 +208,10 @@ class TestSmartContractAuditorComprehensive:
     def test_vulnerability_report_dataclass_with_real_api(self) -> None:
         """Test VulnerabilityReport dataclass functionality with correct API."""
         from quantchain.agents.smart_contract_auditor import (
-            VulnerabilityReport,
-            Vulnerability,
-            VulnerabilitySeverity,
             AuditStatus,
+            Vulnerability,
+            VulnerabilityReport,
+            VulnerabilitySeverity,
         )
 
         try:
@@ -220,16 +220,11 @@ class TestSmartContractAuditorComprehensive:
                 VulnerabilitySeverity.MEDIUM,
                 "Potential overflow",
                 "line 42",
-                "Check bounds"
+                "Check bounds",
             )
 
             report = VulnerabilityReport(
-                [vuln],
-                0.7,
-                AuditStatus.VULNERABLE,
-                5,
-                100,
-                "Test report"
+                [vuln], 0.7, AuditStatus.VULNERABLE, 5, 100, "Test report"
             )
 
             assert len(report.vulnerabilities) == 1
@@ -243,10 +238,7 @@ class TestSmartContractAuditorComprehensive:
         from quantchain.agents.smart_contract_auditor import TokenomicsAnalysis
 
         try:
-            analysis = TokenomicsAnalysis(
-                1000000,
-                750000
-            )
+            analysis = TokenomicsAnalysis(1000000, 750000)
             # The API is different than expected, just verify creation works
             assert analysis is not None
         except TypeError:
@@ -258,10 +250,7 @@ class TestSmartContractAuditorComprehensive:
         from quantchain.agents.smart_contract_auditor import ProtocolAnalysis
 
         try:
-            analysis = ProtocolAnalysis(
-                10000000,
-                8.5
-            )
+            analysis = ProtocolAnalysis(10000000, 8.5)
             assert analysis.tvl == 10000000
         except TypeError:
             # Fallback: test that class exists
@@ -272,10 +261,7 @@ class TestSmartContractAuditorComprehensive:
         from quantchain.agents.smart_contract_auditor import SmartContractAuditorConfig
 
         try:
-            config = SmartContractAuditorConfig(
-                max_contracts=10,
-                timeout_seconds=300
-            )
+            config = SmartContractAuditorConfig(max_contracts=10, timeout_seconds=300)
             assert config is not None
         except TypeError:
             # Fallback: test that class exists
@@ -304,8 +290,8 @@ class TestSmartContractAuditorComprehensive:
     def test_vulnerability_scanner_class_with_real_api(self) -> None:
         """Test VulnerabilityScanner class structure with correct API."""
         from quantchain.agents.smart_contract_auditor import (
-            VulnerabilityScanner,
             SmartContractAuditorConfig,
+            VulnerabilityScanner,
         )
 
         try:
@@ -313,7 +299,11 @@ class TestSmartContractAuditorComprehensive:
             scanner = VulnerabilityScanner(config)
             assert scanner is not None
 
-            expected_methods = ["scan_contract", "analyze_function", "check_common_patterns"]
+            expected_methods = [
+                "scan_contract",
+                "analyze_function",
+                "check_common_patterns",
+            ]
             for method in expected_methods:
                 assert hasattr(scanner, method), f"Missing method: {method}"
         except Exception:
@@ -354,7 +344,7 @@ class TestSmartContractAuditorComprehensive:
             expected_methods = [
                 "audit_contract",
                 "generate_report",
-                "get_audit_summary"
+                "get_audit_summary",
             ]
 
             for method in expected_methods:
@@ -376,7 +366,7 @@ class TestSmartContractAuditorComprehensive:
             "secure",
             "vulnerable",
             "requires_review",
-            "insufficient_data"
+            "insufficient_data",
         ]
         for expected in expected_statuses:
             assert expected in status_values
@@ -395,10 +385,10 @@ class TestSmartContractAuditorComprehensive:
     def test_dataclass_creation_patterns(self) -> None:
         """Test various dataclass creation patterns."""
         from quantchain.agents.smart_contract_auditor import (
-            Vulnerability,
-            VulnerabilitySeverity,
             AuditStatus,
             SmartContractAuditorConfig,
+            Vulnerability,
+            VulnerabilitySeverity,
         )
 
         # Test multiple vulnerability creation patterns
@@ -406,7 +396,7 @@ class TestSmartContractAuditorComprehensive:
             VulnerabilitySeverity.CRITICAL,
             VulnerabilitySeverity.HIGH,
             VulnerabilitySeverity.MEDIUM,
-            VulnerabilitySeverity.LOW
+            VulnerabilitySeverity.LOW,
         ]
 
         vulns = []
@@ -417,7 +407,7 @@ class TestSmartContractAuditorComprehensive:
                     severity,
                     f"Test vulnerability {i}",
                     f"location_{i}",
-                    f"fix_{i}"
+                    f"fix_{i}",
                 )
                 vulns.append(vuln)
                 assert vuln is not None
@@ -428,7 +418,7 @@ class TestSmartContractAuditorComprehensive:
         # Test different audit statuses
         statuses = list(AuditStatus)
         for status in statuses:
-            assert hasattr(status, 'value')
+            assert hasattr(status, "value")
             assert isinstance(status.value, str)
 
     def test_import_completeness(self) -> None:

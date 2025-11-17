@@ -2,17 +2,18 @@
 Comprehensive tests for trading execution module.
 """
 
-import pytest
-from datetime import datetime
-from unittest.mock import Mock, patch, AsyncMock
-from decimal import Decimal
 import asyncio
+from datetime import datetime
+from decimal import Decimal
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 from quantchain.tools.trading_execution import (
+    OrderRequest,
+    OrderSide,
     OrderStatus,
     OrderType,
-    OrderSide,
-    OrderRequest,
 )
 
 
@@ -29,6 +30,7 @@ class TestExecutionErrors:
                 TradingError,
                 ValidationError,
             )
+
             assert InsufficientFundsError is not None
             assert OrderNotFoundError is not None
             assert TradingError is not None
@@ -50,7 +52,7 @@ class TestOrderEnums:
             "partially_filled",
             "rejected",
             "cancelled",
-            "expired"
+            "expired",
         ]
 
         actual_statuses = [status.value for status in OrderStatus]
@@ -64,12 +66,7 @@ class TestOrderEnums:
 
     def test_order_type_values(self):
         """Test OrderType enum has expected values."""
-        expected_types = [
-            "market",
-            "limit",
-            "stop",
-            "stop_limit"
-        ]
+        expected_types = ["market", "limit", "stop", "stop_limit"]
 
         actual_types = [order_type.value for order_type in OrderType]
 
@@ -105,7 +102,7 @@ class TestOrderRequest:
                 symbol="AAPL",
                 side=OrderSide.BUY,
                 order_type=OrderType.MARKET,
-                quantity=100
+                quantity=100,
             )
             assert order.symbol == "AAPL"
             assert order.side == OrderSide.BUY
@@ -125,7 +122,7 @@ class TestOrderRequest:
                 quantity=50,
                 price=2500.0,
                 time_in_force="GTC",
-                client_order_id="test_order_123"
+                client_order_id="test_order_123",
             )
             assert order.symbol == "GOOG"
             assert order.side == OrderSide.SELL
@@ -143,7 +140,7 @@ class TestOrderRequest:
                 symbol="MSFT",
                 side=OrderSide.BUY,
                 order_type=OrderType.MARKET,
-                quantity=75
+                quantity=75,
             )
             str_repr = str(order)
             assert "MSFT" in str_repr
@@ -161,12 +158,12 @@ class TestOrderRequest:
                 symbol="AAPL",
                 side=OrderSide.BUY,
                 order_type=OrderType.MARKET,
-                quantity=100
+                quantity=100,
             )
             assert valid_order is not None
 
             # Test validation methods if they exist
-            if hasattr(valid_order, 'validate'):
+            if hasattr(valid_order, "validate"):
                 validation_result = valid_order.validate()
                 assert validation_result is True
 
@@ -187,7 +184,7 @@ class TestTradingExecutionIntegration:
                 symbol="AAPL",
                 side=OrderSide.BUY,
                 order_type=OrderType.MARKET,
-                quantity=100
+                quantity=100,
             )
             assert market_buy.symbol == "AAPL"
             assert market_buy.side == OrderSide.BUY
@@ -199,7 +196,7 @@ class TestTradingExecutionIntegration:
                 side=OrderSide.SELL,
                 order_type=OrderType.LIMIT,
                 quantity=50,
-                price=2500.0
+                price=2500.0,
             )
             assert limit_sell.side == OrderSide.SELL
             assert limit_sell.order_type == OrderType.LIMIT
@@ -213,7 +210,7 @@ class TestTradingExecutionIntegration:
                     order_type=OrderType.STOP,
                     quantity=75,
                     price=300.0,
-                    stop_price=305.0  # Stop price is required
+                    stop_price=305.0,  # Stop price is required
                 )
                 assert stop_order.order_type == OrderType.STOP
                 assert stop_order.price == 300.0
@@ -229,7 +226,12 @@ class TestTradingExecutionIntegration:
         """Test enum compatibility across different operations."""
         # Test that enums work together properly
         sides = [OrderSide.BUY, OrderSide.SELL]
-        types = [OrderType.MARKET, OrderType.LIMIT, OrderType.STOP, OrderType.STOP_LIMIT]
+        types = [
+            OrderType.MARKET,
+            OrderType.LIMIT,
+            OrderType.STOP,
+            OrderType.STOP_LIMIT,
+        ]
         statuses = list(OrderStatus)
 
         for side in sides:
@@ -239,8 +241,13 @@ class TestTradingExecutionIntegration:
                     assert side.value in ["buy", "sell"]
                     assert order_type.value in ["market", "limit", "stop", "stop_limit"]
                     assert status.value in [
-                        "new", "submitted", "filled", "partially_filled",
-                        "rejected", "cancelled", "expired"
+                        "new",
+                        "submitted",
+                        "filled",
+                        "partially_filled",
+                        "rejected",
+                        "cancelled",
+                        "expired",
                     ]
 
     def test_order_request_edge_cases(self):
@@ -251,7 +258,7 @@ class TestTradingExecutionIntegration:
                 symbol="AAPL",
                 side=OrderSide.BUY,
                 order_type=OrderType.MARKET,
-                quantity=0
+                quantity=0,
             )
             assert zero_quantity is not None
 
@@ -262,7 +269,7 @@ class TestTradingExecutionIntegration:
                     side=OrderSide.SELL,
                     order_type=OrderType.LIMIT,
                     quantity=50,
-                    price=-100.0
+                    price=-100.0,
                 )
                 assert negative_price is not None
             except (ValueError, TypeError):
@@ -281,7 +288,7 @@ class TestTradingExecutionIntegration:
                 symbol="AAPL",
                 side=OrderSide.BUY,
                 order_type=OrderType.MARKET,
-                quantity=100
+                quantity=100,
             )
 
             # Simulate order status progression
@@ -309,10 +316,10 @@ def test_import_completeness():
     """Test that all expected classes can be imported."""
     try:
         from quantchain.tools.trading_execution import (
+            OrderRequest,
+            OrderSide,
             OrderStatus,
             OrderType,
-            OrderSide,
-            OrderRequest,
         )
 
         # Verify all imports worked
@@ -323,6 +330,7 @@ def test_import_completeness():
 
         # Test that module can be imported completely
         import quantchain.tools.trading_execution
+
         assert quantchain.tools.trading_execution is not None
 
     except ImportError:
@@ -335,12 +343,7 @@ def test_module_structure():
     import quantchain.tools.trading_execution as trading_module
 
     # Check that expected classes exist
-    expected_classes = [
-        'OrderSide',
-        'OrderType',
-        'OrderStatus',
-        'OrderRequest'
-    ]
+    expected_classes = ["OrderSide", "OrderType", "OrderStatus", "OrderRequest"]
 
     for class_name in expected_classes:
         assert hasattr(trading_module, class_name), f"Missing class: {class_name}"
@@ -374,8 +377,13 @@ def test_enum_completeness():
     order_statuses = list(OrderStatus)
     status_values = [status.value for status in order_statuses]
     expected_statuses = [
-        "new", "submitted", "filled", "partially_filled",
-        "rejected", "cancelled", "expired"
+        "new",
+        "submitted",
+        "filled",
+        "partially_filled",
+        "rejected",
+        "cancelled",
+        "expired",
     ]
     for expected in expected_statuses:
         assert expected in status_values

@@ -2,17 +2,18 @@
 Comprehensive tests for the backtesting engine module.
 """
 
-import pytest
 from datetime import datetime
 from unittest.mock import Mock, patch
+
 import numpy as np
 import pandas as pd
+import pytest
 
 from quantchain.backtesting.engine import (
-    BacktestExecutionError,
     BacktestConfig,
-    MetricsResult,
     BacktestEngine,
+    BacktestExecutionError,
+    MetricsResult,
 )
 
 
@@ -84,12 +85,16 @@ class TestBacktestConfig:
 
     def test_backtest_config_validation_stop_loss_pct_zero(self):
         """Test validation for zero stop loss percentage."""
-        with pytest.raises(ValueError, match="Stop loss percentage must be between 0 and 1"):
+        with pytest.raises(
+            ValueError, match="Stop loss percentage must be between 0 and 1"
+        ):
             BacktestConfig(stop_loss_pct=0.0)
 
     def test_backtest_config_validation_stop_loss_pct_one(self):
         """Test validation for stop loss percentage of 1."""
-        with pytest.raises(ValueError, match="Stop loss percentage must be between 0 and 1"):
+        with pytest.raises(
+            ValueError, match="Stop loss percentage must be between 0 and 1"
+        ):
             BacktestConfig(stop_loss_pct=1.0)
 
     def test_backtest_config_validation_take_profit_pct_negative(self):
@@ -242,7 +247,9 @@ class TestBacktestEngine:
 
     def test_execute_trade_buy_success(self):
         """Test successful buy trade execution."""
-        config = BacktestConfig(initial_capital=100000.0, commission=0.001, slippage=0.0005)
+        config = BacktestConfig(
+            initial_capital=100000.0, commission=0.001, slippage=0.0005
+        )
         engine = BacktestEngine(config)
 
         timestamp = datetime.now()
@@ -262,7 +269,9 @@ class TestBacktestEngine:
 
     def test_execute_trade_buy_insufficient_capital(self):
         """Test buy trade execution with insufficient capital."""
-        config = BacktestConfig(initial_capital=1000.0, commission=0.001, slippage=0.0005)
+        config = BacktestConfig(
+            initial_capital=1000.0, commission=0.001, slippage=0.0005
+        )
         engine = BacktestEngine(config)
 
         timestamp = datetime.now()
@@ -274,7 +283,9 @@ class TestBacktestEngine:
 
     def test_execute_trade_sell_success(self):
         """Test successful sell trade execution."""
-        config = BacktestConfig(initial_capital=100000.0, commission=0.001, slippage=0.0005)
+        config = BacktestConfig(
+            initial_capital=100000.0, commission=0.001, slippage=0.0005
+        )
         engine = BacktestEngine(config)
 
         # First create a position
@@ -321,7 +332,9 @@ class TestBacktestEngine:
 
     def test_execute_trade_add_to_existing_position(self):
         """Test adding to an existing position."""
-        config = BacktestConfig(initial_capital=100000.0, commission=0.001, slippage=0.0005)
+        config = BacktestConfig(
+            initial_capital=100000.0, commission=0.001, slippage=0.0005
+        )
         engine = BacktestEngine(config)
 
         timestamp = datetime.now()
@@ -342,7 +355,9 @@ class TestBacktestEngine:
 
     def test_execute_trade_close_position_complete(self):
         """Test closing a position completely."""
-        config = BacktestConfig(initial_capital=100000.0, commission=0.001, slippage=0.0005)
+        config = BacktestConfig(
+            initial_capital=100000.0, commission=0.001, slippage=0.0005
+        )
         engine = BacktestEngine(config)
 
         timestamp = datetime.now()
@@ -388,7 +403,9 @@ class TestBacktestEngineIntegration:
 
     def test_multiple_trades_sequence(self):
         """Test a sequence of multiple trades."""
-        config = BacktestConfig(initial_capital=100000.0, commission=0.001, slippage=0.0005)
+        config = BacktestConfig(
+            initial_capital=100000.0, commission=0.001, slippage=0.0005
+        )
         engine = BacktestEngine(config)
 
         timestamp = datetime.now()
@@ -433,7 +450,9 @@ class TestBacktestEngineIntegration:
         # Expected: remaining cash + value of open positions
         expected_aapl_value = 8 * 155.0  # Remaining AAPL shares
         expected_goog_value = 5 * 105.0  # All GOOG shares
-        expected_total = engine.current_capital + expected_aapl_value + expected_goog_value
+        expected_total = (
+            engine.current_capital + expected_aapl_value + expected_goog_value
+        )
 
         assert portfolio_value == expected_total
 

@@ -10,11 +10,14 @@ def test_ib_async_execution_import_error_handling():
     """Test that import errors are handled gracefully."""
     try:
         from quantchain.connectors.ib_async_execution import IBAsyncExecutionConnector
+
         # If import succeeds, we can test basic functionality
-        assert hasattr(IBAsyncExecutionConnector, '__init__')
+        assert hasattr(IBAsyncExecutionConnector, "__init__")
     except ImportError:
         # If import fails due to missing dependencies, that's expected
-        pytest.skip("ib_async_execution module has import issues - likely missing ib_async dependency")
+        pytest.skip(
+            "ib_async_execution module has import issues - likely missing ib_async dependency"
+        )
 
 
 @pytest.mark.unit
@@ -22,13 +25,14 @@ def test_ib_async_execution_basic_imports():
     """Test basic imports from the module."""
     try:
         from quantchain.connectors.ib_async_execution import (
-            IBAsyncExecutionError,
             IBAsyncConnectionError,
             IBAsyncContractError,
-            IBAsyncOrderError,
             IBAsyncDataError,
             IBAsyncExecutionConnector,
+            IBAsyncExecutionError,
+            IBAsyncOrderError,
         )
+
         # If imports succeed, test basic error inheritance
         assert issubclass(IBAsyncConnectionError, IBAsyncExecutionError)
         assert issubclass(IBAsyncContractError, IBAsyncExecutionError)
@@ -43,11 +47,11 @@ def test_ib_async_execution_error_classes():
     """Test error classes are properly defined."""
     try:
         from quantchain.connectors.ib_async_execution import (
-            IBAsyncExecutionError,
             IBAsyncConnectionError,
             IBAsyncContractError,
-            IBAsyncOrderError,
             IBAsyncDataError,
+            IBAsyncExecutionError,
+            IBAsyncOrderError,
         )
 
         # Test error instantiation
@@ -77,11 +81,11 @@ def test_ib_async_execution_connector_class():
         from quantchain.connectors.ib_async_execution import IBAsyncExecutionConnector
 
         # Test class has expected attributes
-        assert hasattr(IBAsyncExecutionConnector, '__init__')
-        assert hasattr(IBAsyncExecutionConnector, 'connect')
-        assert hasattr(IBAsyncExecutionConnector, 'disconnect')
-        assert hasattr(IBAsyncExecutionConnector, 'place_order')
-        assert hasattr(IBAsyncExecutionConnector, 'cancel_order')
+        assert hasattr(IBAsyncExecutionConnector, "__init__")
+        assert hasattr(IBAsyncExecutionConnector, "connect")
+        assert hasattr(IBAsyncExecutionConnector, "disconnect")
+        assert hasattr(IBAsyncExecutionConnector, "place_order")
+        assert hasattr(IBAsyncExecutionConnector, "cancel_order")
 
         # Test it's a class
         assert isinstance(IBAsyncExecutionConnector, type)
@@ -98,12 +102,12 @@ def test_ib_async_execution_module_structure():
 
         # Test expected classes are in module
         expected_classes = [
-            'IBAsyncExecutionError',
-            'IBAsyncConnectionError',
-            'IBAsyncContractError',
-            'IBAsyncOrderError',
-            'IBAsyncDataError',
-            'IBAsyncExecutionConnector',
+            "IBAsyncExecutionError",
+            "IBAsyncConnectionError",
+            "IBAsyncContractError",
+            "IBAsyncOrderError",
+            "IBAsyncDataError",
+            "IBAsyncExecutionConnector",
         ]
 
         for class_name in expected_classes:
