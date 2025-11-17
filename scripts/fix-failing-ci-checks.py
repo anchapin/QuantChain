@@ -25,9 +25,9 @@ def run_command(cmd: list[str], capture: bool = True) -> subprocess.CompletedPro
     for arg in cmd:
         if not isinstance(arg, str):
             raise ValueError(f"Command argument must be a string, got {type(arg)}")
-        # Only allow alphanumeric characters, hyphens, underscores, dots, and common punctuation
-        # This is a restrictive allowlist approach
-        if not all(c.isalnum() or c in "-._/:" for c in arg):
+        # Only allow alphanumeric characters, hyphens, underscores, dots, and forward slashes
+        # This is a restrictive allowlist approach - exclude colons and other dangerous chars
+        if not all(c.isalnum() or c in "-._/" for c in arg):
             raise ValueError(f"Invalid characters in command argument: {arg}")
         sanitized_cmd.append(arg)
 
