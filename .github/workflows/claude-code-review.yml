@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
+      pull_requests: write
       issues: read
       id-token: write
 
@@ -29,10 +29,50 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
+
+      - name: Check PR size
+        id: pr-size
+        run: |
+          # Get PR diff and count characters
+          DIFF_CHARS=$(gh pr diff ${{ github.event.pull_request.number }} | wc -c)
+          echo "diff-chars=$DIFF_CHARS" >> $GITHUB_OUTPUT
+          echo "PR diff has $DIFF_CHARS characters"
+
+          # Set threshold (150,000 characters as per Claude Code Action limit)
+          THRESHOLD=150000
+          if [ $DIFF_CHARS -gt $THRESHOLD ]; then
+            echo "exceeds-limit=true" >> $GITHUB_OUTPUT
+            echo "PR exceeds character limit for automated review"
+          else
+            echo "exceeds-limit=false" >> $GITHUB_OUTPUT
+            echo "PR within character limit for automated review"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment on large PR
+        if: steps.pr-size.outputs.exceeds-limit == 'true'
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body "## 🔍 Claude Code Review Skipped
+
+This PR exceeds the 150,000 character limit for automated code review (${{ steps.pr-size.outputs.diff-chars }} characters).
+
+**Recommendations:**
+- Consider breaking this into smaller, focused PRs
+- Ensure each PR addresses a single feature or concern
+- This helps maintain thorough code review quality
+
+If this PR must remain large, please request a manual code review from maintainers.
+
+---
+*This automated check helps ensure comprehensive reviews for all changes.*"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Claude Code Review
         id: claude-review
+        if: steps.pr-size.outputs.exceeds-limit == 'false'
         uses: anthropics/claude-code-action@v1
         env:
           # You are 100% correct: This redirects the API
