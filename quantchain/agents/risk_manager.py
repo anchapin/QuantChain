@@ -1,14 +1,16 @@
 """Risk Manager Agent - Portfolio risk assessment and position sizing."""
 
 import logging
-import math
 from dataclasses import dataclass
-from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
-import numpy as np
-
-from .base import AgentAnalysis, AgentArgument, AgentRole, BaseSpecializedAgent, RecommendationType
+from .base import (
+    AgentAnalysis,
+    AgentArgument,
+    AgentRole,
+    BaseSpecializedAgent,
+    RecommendationType,
+)
 
 
 @dataclass
@@ -99,11 +101,17 @@ class RiskManagerAgent(BaseSpecializedAgent):
         self.risk_params = RiskParameters(
             max_portfolio_risk=self.agent_config.get("max_portfolio_risk", 0.02),  # 2%
             max_position_size=self.agent_config.get("max_position_size", 0.05),  # 5%
-            max_sector_exposure=self.agent_config.get("max_sector_exposure", 0.25),  # 25%
+            max_sector_exposure=self.agent_config.get(
+                "max_sector_exposure", 0.25
+            ),  # 25%
             min_liquidity_score=self.agent_config.get("min_liquidity_score", 30.0),
             max_leverage=self.agent_config.get("max_leverage", 1.0),
-            stop_loss_atr_multiplier=self.agent_config.get("stop_loss_atr_multiplier", 2.0),
-            position_sizing_method=self.agent_config.get("position_sizing_method", "volatility"),
+            stop_loss_atr_multiplier=self.agent_config.get(
+                "stop_loss_atr_multiplier", 2.0
+            ),
+            position_sizing_method=self.agent_config.get(
+                "position_sizing_method", "volatility"
+            ),
         )
 
     def analyze(self, symbol: str, **kwargs) -> AgentAnalysis:
@@ -130,7 +138,7 @@ class RiskManagerAgent(BaseSpecializedAgent):
                     confidence_score=50.0,
                     reasoning="Portfolio data unavailable for risk assessment",
                     data_sources=["portfolio_data"],
-                    metadata={"risk_available": False}
+                    metadata={"risk_available": False},
                 )
 
             # Get proposed action details
@@ -144,7 +152,10 @@ class RiskManagerAgent(BaseSpecializedAgent):
                     confidence_score=75.0,
                     reasoning="No action required for risk analysis",
                     data_sources=["portfolio_data"],
-                    metadata={"risk_available": True, "portfolio_risk": portfolio_risk.__dict__}
+                    metadata={
+                        "risk_available": True,
+                        "portfolio_risk": portfolio_risk.__dict__,
+                    },
                 )
 
             # Analyze position-specific risk
@@ -169,8 +180,10 @@ class RiskManagerAgent(BaseSpecializedAgent):
                     "portfolio_risk": portfolio_risk.__dict__,
                     "position_risk": position_risk.__dict__,
                     "risk_assessment": risk_assessment,
-                    "recommended_position_size": risk_assessment.get("recommended_size", proposed_size),
-                }
+                    "recommended_position_size": risk_assessment.get(
+                        "recommended_size", proposed_size
+                    ),
+                },
             )
 
         except Exception as e:
@@ -313,14 +326,17 @@ class RiskManagerAgent(BaseSpecializedAgent):
             total_value=total_value,
             cash_position=20000.0,
             total_risk=total_risk,
-            risk_budget_used=total_risk / (total_value * self.risk_params.max_portfolio_risk),
+            risk_budget_used=total_risk
+            / (total_value * self.risk_params.max_portfolio_risk),
             diversification_score=75.0,
             leverage_ratio=1.0,
             positions=positions,
             portfolio_metrics=portfolio_metrics,
         )
 
-    def _analyze_position_risk(self, symbol: str, proposed_size: float, action: str) -> PositionRisk:
+    def _analyze_position_risk(
+        self, symbol: str, proposed_size: float, action: str
+    ) -> PositionRisk:
         """Analyze risk for a specific position.
 
         Args:
@@ -383,35 +399,49 @@ class RiskManagerAgent(BaseSpecializedAgent):
 
         # Check position size limit
         if position_risk.position_weight > self.risk_params.max_position_size:
-            risk_factors.append(f"Position size {position_risk.position_weight:.1%} exceeds limit {self.risk_params.max_position_size:.1%}")
+            risk_factors.append(
+                f"Position size {position_risk.position_weight:.1%} exceeds limit {self.risk_params.max_position_size:.1%}"
+            )
             confidence_score -= 30
             risk_level = "HIGH"
 
         # Check portfolio risk budget
         if action == "BUY":
             new_total_risk = portfolio_risk.total_risk + position_risk.position_risk
-            new_risk_budget_used = new_total_risk / (portfolio_risk.total_value * self.risk_params.max_portfolio_risk)
+            new_risk_budget_used = new_total_risk / (
+                portfolio_risk.total_value * self.risk_params.max_portfolio_risk
+            )
             if new_risk_budget_used > 1.0:
-                risk_factors.append(f"Portfolio risk budget would be exceeded ({new_risk_budget_used:.1%})")
+                risk_factors.append(
+                    f"Portfolio risk budget would be exceeded ({new_risk_budget_used:.1%})"
+                )
                 confidence_score -= 40
                 risk_level = "HIGH"
 
         # Check liquidity risk
         if position_risk.liquidity_risk > (100 - self.risk_params.min_liquidity_score):
-            risk_factors.append(f"High liquidity risk score: {position_risk.liquidity_risk:.1f}")
+            risk_factors.append(
+                f"High liquidity risk score: {position_risk.liquidity_risk:.1f}"
+            )
             confidence_score -= 20
 
         # Check sector concentration
-        current_sector_exposure = portfolio_risk.portfolio_metrics.sector_exposure.get(position_risk.sector or "Unknown", 0)
+        current_sector_exposure = portfolio_risk.portfolio_metrics.sector_exposure.get(
+            position_risk.sector or "Unknown", 0
+        )
         new_sector_exposure = current_sector_exposure + position_risk.position_weight
         if new_sector_exposure > self.risk_params.max_sector_exposure:
-            risk_factors.append(f"Sector exposure would exceed limit: {new_sector_exposure:.1%}")
+            risk_factors.append(
+                f"Sector exposure would exceed limit: {new_sector_exposure:.1%}"
+            )
             confidence_score -= 25
             if risk_level != "HIGH":
                 risk_level = "MODERATE"
 
         # Calculate recommended position size
-        recommended_size = self._calculate_recommended_position_size(portfolio_risk, position_risk)
+        recommended_size = self._calculate_recommended_position_size(
+            portfolio_risk, position_risk
+        )
 
         # Build reasoning
         if risk_factors:
@@ -459,7 +489,7 @@ class RiskManagerAgent(BaseSpecializedAgent):
             volatility = position_risk.volatility
 
             if volatility > 0:
-                kelly_fraction = (expected_return * win_rate) / (volatility ** 2)
+                kelly_fraction = (expected_return * win_rate) / (volatility**2)
                 # Apply fractional Kelly (25% of full Kelly for safety)
                 kelly_fraction *= 0.25
                 # Cap at maximum position size
@@ -471,7 +501,9 @@ class RiskManagerAgent(BaseSpecializedAgent):
         else:  # Default to fixed
             return portfolio_risk.total_value * self.risk_params.max_position_size
 
-    def _risk_to_recommendation(self, risk_assessment: Dict[str, Any], action: str) -> RecommendationType:
+    def _risk_to_recommendation(
+        self, risk_assessment: Dict[str, Any], action: str
+    ) -> RecommendationType:
         """Convert risk assessment to recommendation.
 
         Args:
@@ -487,11 +519,15 @@ class RiskManagerAgent(BaseSpecializedAgent):
         if risk_level == "HIGH" or confidence < 30:
             return RecommendationType.HOLD
         elif risk_level == "LOW" and confidence > 70:
-            return RecommendationType.BUY if action == "BUY" else RecommendationType.SELL
+            return (
+                RecommendationType.BUY if action == "BUY" else RecommendationType.SELL
+            )
         else:
             return RecommendationType.HOLD
 
-    def _extract_risk_evidence(self, risk_analysis: AgentAnalysis, risk_type: str) -> List[str]:
+    def _extract_risk_evidence(
+        self, risk_analysis: AgentAnalysis, risk_type: str
+    ) -> List[str]:
         """Extract key risk evidence from analysis.
 
         Args:
@@ -508,12 +544,20 @@ class RiskManagerAgent(BaseSpecializedAgent):
 
         evidence.append(f"Risk Level: {risk_assessment.get('risk_level', 'UNKNOWN')}")
         evidence.append(f"Confidence: {risk_assessment.get('confidence', 0):.1f}%")
-        evidence.append(f"Position Weight: {position_risk.get('position_weight', 0):.1%}")
-        evidence.append(f"Risk/Reward Ratio: {position_risk.get('risk_reward_ratio', 0):.1f}")
+        evidence.append(
+            f"Position Weight: {position_risk.get('position_weight', 0):.1%}"
+        )
+        evidence.append(
+            f"Risk/Reward Ratio: {position_risk.get('risk_reward_ratio', 0):.1f}"
+        )
 
         if portfolio_risk:
-            evidence.append(f"Current Portfolio Risk: {portfolio_risk.get('risk_budget_used', 0):.1%}")
-            evidence.append(f"Diversification Score: {portfolio_risk.get('diversification_score', 0):.1f}")
+            evidence.append(
+                f"Current Portfolio Risk: {portfolio_risk.get('risk_budget_used', 0):.1%}"
+            )
+            evidence.append(
+                f"Diversification Score: {portfolio_risk.get('diversification_score', 0):.1f}"
+            )
 
         risk_factors = risk_assessment.get("risk_factors", [])
         if risk_factors:

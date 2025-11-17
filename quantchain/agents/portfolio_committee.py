@@ -45,12 +45,14 @@ class CommitteeConfig:
 
     max_debate_rounds: int = 3
     consensus_threshold: float = 70.0  # Minimum consensus score to proceed
-    voting_weights: Dict[AgentRole, float] = field(default_factory=lambda: {
-        AgentRole.FUNDAMENTALS: 0.25,
-        AgentRole.SENTIMENT: 0.20,
-        AgentRole.TECHNICAL: 0.25,
-        AgentRole.RISK_MANAGER: 0.30,
-    })
+    voting_weights: Dict[AgentRole, float] = field(
+        default_factory=lambda: {
+            AgentRole.FUNDAMENTALS: 0.25,
+            AgentRole.SENTIMENT: 0.20,
+            AgentRole.TECHNICAL: 0.25,
+            AgentRole.RISK_MANAGER: 0.30,
+        }
+    )
     enable_dispute_resolution: bool = True
     tie_breaker_role: AgentRole = AgentRole.RISK_MANAGER
 
@@ -79,13 +81,18 @@ class PortfolioCommitteeAgent(BaseSpecializedAgent):
         self.committee_config = CommitteeConfig(
             max_debate_rounds=self.agent_config.get("max_debate_rounds", 3),
             consensus_threshold=self.agent_config.get("consensus_threshold", 70.0),
-            voting_weights=self.agent_config.get("voting_weights", {
-                "fundamentals_analyst": 0.25,
-                "sentiment_expert": 0.20,
-                "technical_analyst": 0.25,
-                "risk_manager": 0.30,
-            }),
-            enable_dispute_resolution=self.agent_config.get("enable_dispute_resolution", True),
+            voting_weights=self.agent_config.get(
+                "voting_weights",
+                {
+                    "fundamentals_analyst": 0.25,
+                    "sentiment_expert": 0.20,
+                    "technical_analyst": 0.25,
+                    "risk_manager": 0.30,
+                },
+            ),
+            enable_dispute_resolution=self.agent_config.get(
+                "enable_dispute_resolution", True
+            ),
         )
 
     def analyze(self, symbol: str, **kwargs) -> AgentAnalysis:
@@ -111,14 +118,16 @@ class PortfolioCommitteeAgent(BaseSpecializedAgent):
                     confidence_score=0.0,
                     reasoning="No agent analyses available for committee decision",
                     data_sources=["committee_coordination"],
-                    metadata={"committee_available": False}
+                    metadata={"committee_available": False},
                 )
 
             # Step 2: Conduct debate if needed
             debate_result = self._conduct_debate(symbol, initial_analyses, **kwargs)
 
             # Step 3: Generate final committee recommendation
-            final_recommendation = self._generate_committee_recommendation(debate_result)
+            final_recommendation = self._generate_committee_recommendation(
+                debate_result
+            )
 
             return self._create_base_analysis(
                 symbol=symbol,
@@ -128,15 +137,22 @@ class PortfolioCommitteeAgent(BaseSpecializedAgent):
                 data_sources=["committee_coordination", "multi_agent_debate"],
                 metadata={
                     "committee_available": True,
-                    "initial_analyses": {role.value: analysis.to_dict() for role, analysis in initial_analyses.items()},
+                    "initial_analyses": {
+                        role.value: analysis.to_dict()
+                        for role, analysis in initial_analyses.items()
+                    },
                     "debate_result": debate_result.__dict__,
                     "final_consensus": final_recommendation.to_dict(),
-                    "participating_agents": [role.value for role in initial_analyses.keys()],
-                }
+                    "participating_agents": [
+                        role.value for role in initial_analyses.keys()
+                    ],
+                },
             )
 
         except Exception as e:
-            self.logger.error(f"Error in portfolio committee analysis for {symbol}: {str(e)}")
+            self.logger.error(
+                f"Error in portfolio committee analysis for {symbol}: {str(e)}"
+            )
             return self._create_base_analysis(
                 symbol=symbol,
                 recommendation=RecommendationType.HOLD,
@@ -163,7 +179,9 @@ class PortfolioCommitteeAgent(BaseSpecializedAgent):
             confidence_impact=0.0,
         )
 
-    def _gather_agent_analyses(self, symbol: str, **kwargs) -> Dict[AgentRole, AgentAnalysis]:
+    def _gather_agent_analyses(
+        self, symbol: str, **kwargs
+    ) -> Dict[AgentRole, AgentAnalysis]:
         """Gather analyses from all specialized agents.
 
         Args:
@@ -180,9 +198,13 @@ class PortfolioCommitteeAgent(BaseSpecializedAgent):
                 self.logger.info(f"Getting analysis from {role.value} for {symbol}")
                 analysis = agent.analyze(symbol, **kwargs)
                 analyses[role] = analysis
-                self.logger.info(f"Received {role.value} analysis: {analysis.recommendation.value} ({analysis.confidence_score:.1f}%)")
+                self.logger.info(
+                    f"Received {role.value} analysis: {analysis.recommendation.value} ({analysis.confidence_score:.1f}%)"
+                )
             except Exception as e:
-                self.logger.error(f"Error getting analysis from {role.value} for {symbol}: {str(e)}")
+                self.logger.error(
+                    f"Error getting analysis from {role.value} for {symbol}: {str(e)}"
+                )
                 # Continue with other agents
                 continue
 
@@ -210,15 +232,19 @@ class PortfolioCommitteeAgent(BaseSpecializedAgent):
         context = {
             "symbol": symbol,
             "other_analyses": {
-                role: analysis for role, analysis in initial_analyses.items()
+                role: analysis
+                for role, analysis in initial_analyses.items()
                 if role != AgentRole.PORTFOLIO_COMMITTEE
             },
-            **kwargs
+            **kwargs,
         }
 
         # Round 1: Initial arguments from each agent
         for role, analysis in initial_analyses.items():
-            if role in self.specialized_agents and role != AgentRole.PORTFOLIO_COMMITTEE:
+            if (
+                role in self.specialized_agents
+                and role != AgentRole.PORTFOLIO_COMMITTEE
+            ):
                 agent = self.specialized_agents[role]
                 context[f"{role.value}_analysis"] = analysis
 
@@ -226,15 +252,19 @@ class PortfolioCommitteeAgent(BaseSpecializedAgent):
                     argument = agent.create_argument(context)
                     if argument:
                         arguments.append(argument)
-                        debate_rounds.append(DebateRound(
-                            round_number=1,
-                            presenting_agent=role,
-                            argument=argument,
-                            responding_agents=list(initial_analyses.keys()),
-                            timestamp=datetime.now()
-                        ))
+                        debate_rounds.append(
+                            DebateRound(
+                                round_number=1,
+                                presenting_agent=role,
+                                argument=argument,
+                                responding_agents=list(initial_analyses.keys()),
+                                timestamp=datetime.now(),
+                            )
+                        )
                 except Exception as e:
-                    self.logger.error(f"Error getting argument from {role.value}: {str(e)}")
+                    self.logger.error(
+                        f"Error getting argument from {role.value}: {str(e)}"
+                    )
 
         # Additional rounds for debate and refinement (simplified)
         # In a full implementation, this would involve multi-round exchanges
@@ -255,7 +285,9 @@ class PortfolioCommitteeAgent(BaseSpecializedAgent):
             participant_agents=list(initial_analyses.keys()),
         )
 
-        self.logger.info(f"Completed debate for {symbol}. Consensus: {consensus.final_recommendation.value}")
+        self.logger.info(
+            f"Completed debate for {symbol}. Consensus: {consensus.final_recommendation.value}"
+        )
 
         return debate_session
 
@@ -272,14 +304,17 @@ class PortfolioCommitteeAgent(BaseSpecializedAgent):
             ConsensusResult
         """
         # Weight voting based on agent roles and confidence scores
-        votes = {RecommendationType.BUY: 0.0, RecommendationType.SELL: 0.0, RecommendationType.HOLD: 0.0}
+        votes = {
+            RecommendationType.BUY: 0.0,
+            RecommendationType.SELL: 0.0,
+            RecommendationType.HOLD: 0.0,
+        }
         agent_weights = {}
 
         for role, analysis in analyses.items():
             # Get voting weight for this agent role
             weight = self.committee_config.voting_weights.get(
-                role.value,
-                self.committee_config.voting_weights.get(role, 0.25)
+                role.value, self.committee_config.voting_weights.get(role, 0.25)
             )
 
             # Adjust weight by confidence score
@@ -300,11 +335,14 @@ class PortfolioCommitteeAgent(BaseSpecializedAgent):
             consensus_score = 0
 
         # Calculate confidence based on consensus and argument alignment
-        confidence_score = self._calculate_confidence_score(analyses, arguments, consensus_score)
+        confidence_score = self._calculate_confidence_score(
+            analyses, arguments, consensus_score
+        )
 
         # Identify dissenting opinions
         dissenting_opinions = [
-            role for role, analysis in analyses.items()
+            role
+            for role, analysis in analyses.items()
             if analysis.recommendation != final_recommendation
         ]
 
@@ -331,7 +369,10 @@ class PortfolioCommitteeAgent(BaseSpecializedAgent):
         )
 
     def _calculate_confidence_score(
-        self, analyses: Dict[AgentRole, AgentAnalysis], arguments: List[AgentArgument], consensus_score: float
+        self,
+        analyses: Dict[AgentRole, AgentAnalysis],
+        arguments: List[AgentArgument],
+        consensus_score: float,
     ) -> float:
         """Calculate overall confidence score.
 
@@ -347,13 +388,19 @@ class PortfolioCommitteeAgent(BaseSpecializedAgent):
         confidence = consensus_score * 0.6  # 60% weight to consensus
 
         # Factor in average confidence from agents
-        avg_agent_confidence = sum(analysis.confidence_score for analysis in analyses.values()) / len(analyses)
+        avg_agent_confidence = sum(
+            analysis.confidence_score for analysis in analyses.values()
+        ) / len(analyses)
         confidence += avg_agent_confidence * 0.3  # 30% weight to agent confidence
 
         # Factor in argument strength
         if arguments:
-            avg_argument_strength = sum(abs(arg.confidence_impact) for arg in arguments) / len(arguments)
-            confidence += min(avg_argument_strength, 20) * 0.1  # 10% weight to arguments
+            avg_argument_strength = sum(
+                abs(arg.confidence_impact) for arg in arguments
+            ) / len(arguments)
+            confidence += (
+                min(avg_argument_strength, 20) * 0.1
+            )  # 10% weight to arguments
 
         return min(100, max(0, confidence))
 
@@ -378,9 +425,21 @@ class PortfolioCommitteeAgent(BaseSpecializedAgent):
         reasoning_parts = []
 
         # Summarize agent positions
-        buy_agents = [role.value for role, analysis in analyses.items() if analysis.recommendation == RecommendationType.BUY]
-        sell_agents = [role.value for role, analysis in analyses.items() if analysis.recommendation == RecommendationType.SELL]
-        hold_agents = [role.value for role, analysis in analyses.items() if analysis.recommendation == RecommendationType.HOLD]
+        buy_agents = [
+            role.value
+            for role, analysis in analyses.items()
+            if analysis.recommendation == RecommendationType.BUY
+        ]
+        sell_agents = [
+            role.value
+            for role, analysis in analyses.items()
+            if analysis.recommendation == RecommendationType.SELL
+        ]
+        hold_agents = [
+            role.value
+            for role, analysis in analyses.items()
+            if analysis.recommendation == RecommendationType.HOLD
+        ]
 
         if buy_agents:
             reasoning_parts.append(f"BUY arguments from: {', '.join(buy_agents)}")
@@ -395,22 +454,30 @@ class PortfolioCommitteeAgent(BaseSpecializedAgent):
         # Add key supporting arguments
         supporting_args = [arg for arg in arguments if arg.argument_type == "support"]
         if supporting_args:
-            reasoning_parts.append(f"Key supporting factors: {len(supporting_args)} agents support this decision")
+            reasoning_parts.append(
+                f"Key supporting factors: {len(supporting_args)} agents support this decision"
+            )
 
         # Add opposing arguments if significant
         opposing_args = [arg for arg in arguments if arg.argument_type == "oppose"]
         if opposing_args and len(opposing_args) >= 2:
-            reasoning_parts.append(f"Significant opposition: {len(opposing_args)} agents oppose this decision")
+            reasoning_parts.append(
+                f"Significant opposition: {len(opposing_args)} agents oppose this decision"
+            )
 
         # Add risk consideration
         if AgentRole.RISK_MANAGER in analyses:
             risk_analysis = analyses[AgentRole.RISK_MANAGER]
-            risk_level = risk_analysis.metadata.get("risk_assessment", {}).get("risk_level", "UNKNOWN")
+            risk_level = risk_analysis.metadata.get("risk_assessment", {}).get(
+                "risk_level", "UNKNOWN"
+            )
             reasoning_parts.append(f"Risk assessment: {risk_level}")
 
         return "; ".join(reasoning_parts)
 
-    def _generate_committee_recommendation(self, debate_result: DebateSession) -> ConsensusResult:
+    def _generate_committee_recommendation(
+        self, debate_result: DebateSession
+    ) -> ConsensusResult:
         """Generate the final committee recommendation from debate results.
 
         Args:

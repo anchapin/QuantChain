@@ -1,7 +1,6 @@
 """Tests for the multi-agent trading system."""
 
-import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 from datetime import datetime
 
 from quantchain.agents import (
@@ -77,7 +76,11 @@ class TestFundamentalsAnalystAgent:
 
         assert isinstance(result, AgentAnalysis)
         assert result.symbol == "TEST"
-        assert result.data_sources == ["financial_statements", "earnings_reports", "market_data"]
+        assert result.data_sources == [
+            "financial_statements",
+            "earnings_reports",
+            "market_data",
+        ]
         assert result.metadata["data_quality_score"] >= 50.0
 
     def test_create_argument(self):
@@ -102,7 +105,7 @@ class TestFundamentalsAnalystAgent:
             confidence_score=85.0,
             reasoning="Strong fundamentals",
             data_sources=["financial_statements"],
-            metadata={"fundamental_score": 85.0}
+            metadata={"fundamental_score": 85.0},
         )
 
         context["fundamentals_analysis"] = mock_analysis
@@ -128,7 +131,9 @@ class TestSentimentExpertAgent:
         """Test analysis with no sentiment data."""
         config = QuantChainConfig()
         llm_provider = MockLLMProvider()
-        agent = SentimentExpertAgent(config, llm_provider, news_connector=None, social_connector=None)
+        agent = SentimentExpertAgent(
+            config, llm_provider, news_connector=None, social_connector=None
+        )
 
         result = agent.analyze("TEST")
 
@@ -140,7 +145,9 @@ class TestSentimentExpertAgent:
         """Test analysis with mock sentiment data."""
         config = QuantChainConfig()
         llm_provider = MockLLMProvider()
-        agent = SentimentExpertAgent(config, llm_provider, news_connector=None, social_connector=None)
+        agent = SentimentExpertAgent(
+            config, llm_provider, news_connector=None, social_connector=None
+        )
 
         result = agent.analyze("TEST")
 
@@ -164,7 +171,7 @@ class TestSentimentExpertAgent:
             confidence_score=80.0,
             reasoning="Positive sentiment",
             data_sources=["news", "social_media"],
-            metadata={"sentiment_score": 50.0, "sentiment_available": True}
+            metadata={"sentiment_score": 50.0, "sentiment_available": True},
         )
 
         context = {"sentiment_analysis": mock_analysis}
@@ -230,7 +237,7 @@ class TestTechnicalAnalystAgent:
             confidence_score=85.0,
             reasoning="Strong technical indicators",
             data_sources=["market_data"],
-            metadata={"technical_available": True, "overall_score": 75.0}
+            metadata={"technical_available": True, "overall_score": 75.0},
         )
 
         context = {"technical_analysis": mock_analysis}
@@ -258,11 +265,7 @@ class TestRiskManagerAgent:
         llm_provider = MockLLMProvider()
         agent = RiskManagerAgent(config, llm_provider)
 
-        result = agent.analyze(
-            "TEST",
-            action="BUY",
-            proposed_position_size=5000.0
-        )
+        result = agent.analyze("TEST", action="BUY", proposed_position_size=5000.0)
 
         assert isinstance(result, AgentAnalysis)
         assert result.symbol == "TEST"
@@ -298,8 +301,8 @@ class TestRiskManagerAgent:
             data_sources=["portfolio_data"],
             metadata={
                 "risk_available": True,
-                "risk_assessment": {"risk_level": "LOW", "confidence": 80}
-            }
+                "risk_assessment": {"risk_level": "LOW", "confidence": 80},
+            },
         )
 
         context = {"risk_analysis": mock_analysis, "proposed_action": "BUY"}
@@ -348,7 +351,7 @@ class TestPortfolioCommitteeAgent:
             confidence_score=80.0,
             reasoning="Strong fundamentals",
             data_sources=["financial_statements"],
-            metadata={}
+            metadata={},
         )
 
         mock_fundamentals.create_argument.return_value = AgentArgument(
@@ -357,7 +360,7 @@ class TestPortfolioCommitteeAgent:
             target_agent=None,
             reasoning="Fundamentals support buy",
             evidence=[],
-            confidence_impact=20.0
+            confidence_impact=20.0,
         )
 
         specialized_agents = {AgentRole.FUNDAMENTALS: mock_fundamentals}
@@ -413,7 +416,11 @@ class TestMultiAgentIntegration:
         # Verify result
         assert isinstance(result, AgentAnalysis)
         assert result.symbol == "TEST"
-        assert result.recommendation in [RecommendationType.BUY, RecommendationType.SELL, RecommendationType.HOLD]
+        assert result.recommendation in [
+            RecommendationType.BUY,
+            RecommendationType.SELL,
+            RecommendationType.HOLD,
+        ]
         assert 0 <= result.confidence_score <= 100
         assert len(result.reasoning) > 0
 

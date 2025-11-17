@@ -12,6 +12,7 @@ from ..core.llm_providers import LLMProvider
 
 class AgentRole(Enum):
     """Roles for different agent types."""
+
     FUNDAMENTALS = "fundamentals_analyst"
     SENTIMENT = "sentiment_expert"
     TECHNICAL = "technical_analyst"
@@ -21,6 +22,7 @@ class AgentRole(Enum):
 
 class RecommendationType(Enum):
     """Trading recommendation types."""
+
     BUY = "BUY"
     SELL = "SELL"
     HOLD = "HOLD"
@@ -95,7 +97,9 @@ class ConsensusResult:
             "final_recommendation": self.final_recommendation.value,
             "consensus_score": self.consensus_score,
             "confidence_score": self.confidence_score,
-            "participating_agents": [agent.value for agent in self.participating_agents],
+            "participating_agents": [
+                agent.value for agent in self.participating_agents
+            ],
             "arguments": [arg.to_dict() for arg in self.arguments],
             "dissenting_opinions": [agent.value for agent in self.dissenting_opinions],
             "final_reasoning": self.final_reasoning,

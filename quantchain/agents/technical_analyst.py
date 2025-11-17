@@ -7,7 +7,13 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from .base import AgentAnalysis, AgentArgument, AgentRole, BaseSpecializedAgent, RecommendationType
+from .base import (
+    AgentAnalysis,
+    AgentArgument,
+    AgentRole,
+    BaseSpecializedAgent,
+    RecommendationType,
+)
 
 
 @dataclass
@@ -82,16 +88,20 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
 
         # Configuration
         self.timeframes = self.agent_config.get("timeframes", ["1h", "4h", "1d"])
-        self.indicators_enabled = self.agent_config.get("indicators", {
-            "SMA": {"periods": [20, 50, 200]},
-            "RSI": {"period": 14},
-            "MACD": {"fast": 12, "slow": 26, "signal": 9},
-            "BB": {"period": 20, "std": 2},
-            "ATR": {"period": 14},
-        })
-        self.patterns_enabled = self.agent_config.get("patterns", [
-            "head_and_shoulders", "double_top", "double_bottom", "triangle", "flag"
-        ])
+        self.indicators_enabled = self.agent_config.get(
+            "indicators",
+            {
+                "SMA": {"periods": [20, 50, 200]},
+                "RSI": {"period": 14},
+                "MACD": {"fast": 12, "slow": 26, "signal": 9},
+                "BB": {"period": 20, "std": 2},
+                "ATR": {"period": 14},
+            },
+        )
+        self.patterns_enabled = self.agent_config.get(
+            "patterns",
+            ["head_and_shoulders", "double_top", "double_bottom", "triangle", "flag"],
+        )
         self.min_data_points = self.agent_config.get("min_data_points", 50)
 
     def analyze(self, symbol: str, **kwargs) -> AgentAnalysis:
@@ -121,7 +131,7 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
                     confidence_score=0.0,
                     reasoning="Insufficient price data for technical analysis",
                     data_sources=["market_data"],
-                    metadata={"technical_available": False}
+                    metadata={"technical_available": False},
                 )
 
             # Perform technical analysis across timeframes
@@ -131,7 +141,9 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
                 technical_analyses[timeframe] = analysis
 
             # Synthesize multi-timeframe analysis
-            overall_score, reasoning = self._synthesize_timeframe_analysis(technical_analyses, symbol)
+            overall_score, reasoning = self._synthesize_timeframe_analysis(
+                technical_analyses, symbol
+            )
             recommendation = self._score_to_recommendation(overall_score)
 
             return self._create_base_analysis(
@@ -147,7 +159,7 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
                     },
                     "overall_score": overall_score,
                     "timeframes_analyzed": list(technical_analyses.keys()),
-                }
+                },
             )
 
         except Exception as e:
@@ -172,7 +184,9 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
         symbol = context.get("symbol", "")
         technical_analysis = context.get("technical_analysis")
 
-        if not technical_analysis or not technical_analysis.metadata.get("technical_available"):
+        if not technical_analysis or not technical_analysis.metadata.get(
+            "technical_available"
+        ):
             return AgentArgument(
                 agent_role=self.role,
                 argument_type="neutral",
@@ -194,7 +208,9 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
                 argument_type="support",
                 target_agent=None,
                 reasoning=f"Strong technical signals with consistent bullish trends across timeframes. Score: {overall_score:.1f}",
-                evidence=self._extract_technical_evidence(technical_analyses, "bullish"),
+                evidence=self._extract_technical_evidence(
+                    technical_analyses, "bullish"
+                ),
                 confidence_impact=min(20.0, overall_score / 5),
             )
         elif overall_score < -50 and trend_consistency > 70:
@@ -203,7 +219,9 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
                 argument_type="oppose",
                 target_agent=None,
                 reasoning=f"Strong technical signals with consistent bearish trends across timeframes. Score: {overall_score:.1f}",
-                evidence=self._extract_technical_evidence(technical_analyses, "bearish"),
+                evidence=self._extract_technical_evidence(
+                    technical_analyses, "bearish"
+                ),
                 confidence_impact=max(-20.0, overall_score / 5),
             )
         else:
@@ -234,7 +252,9 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
             # In a real implementation, this would fetch from market data provider
             return self._generate_mock_price_data(symbol, timeframe)
         except Exception as e:
-            self.logger.error(f"Error getting price data for {symbol} {timeframe}: {str(e)}")
+            self.logger.error(
+                f"Error getting price data for {symbol} {timeframe}: {str(e)}"
+            )
             return None
 
     def _generate_mock_price_data(self, symbol: str, timeframe: str) -> PriceData:
@@ -290,7 +310,10 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
 
         # Generate volumes
         base_volume = 1000000
-        volumes = [int(base_volume * (1 + np.random.normal(0, 0.3))) for _ in range(len(closes))]
+        volumes = [
+            int(base_volume * (1 + np.random.normal(0, 0.3)))
+            for _ in range(len(closes))
+        ]
 
         return PriceData(
             symbol=symbol,
@@ -312,9 +335,9 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
             Hours per candle
         """
         mapping = {
-            "1m": 1/60,
-            "5m": 5/60,
-            "15m": 15/60,
+            "1m": 1 / 60,
+            "5m": 5 / 60,
+            "15m": 15 / 60,
             "30m": 0.5,
             "1h": 1,
             "4h": 4,
@@ -323,7 +346,9 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
         }
         return mapping.get(timeframe, 1)
 
-    def _perform_technical_analysis(self, price_data: PriceData, timeframe: str) -> TechnicalAnalysis:
+    def _perform_technical_analysis(
+        self, price_data: PriceData, timeframe: str
+    ) -> TechnicalAnalysis:
         """Perform technical analysis on price data.
 
         Args:
@@ -369,13 +394,15 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
                 if len(closes) >= period:
                     sma = self._calculate_sma(closes, period)
                     signal = self._get_ma_signal(closes[-1], sma[-1])
-                    indicators.append(TechnicalIndicator(
-                        name=f"SMA_{period}",
-                        value=sma[-1],
-                        signal=signal,
-                        confidence=70.0,
-                        parameters={"period": period}
-                    ))
+                    indicators.append(
+                        TechnicalIndicator(
+                            name=f"SMA_{period}",
+                            value=sma[-1],
+                            signal=signal,
+                            confidence=70.0,
+                            parameters={"period": period},
+                        )
+                    )
 
         # Relative Strength Index
         if "RSI" in self.indicators_enabled:
@@ -383,29 +410,36 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
             if len(closes) >= period:
                 rsi = self._calculate_rsi(closes, period)
                 signal = self._get_rsi_signal(rsi[-1])
-                indicators.append(TechnicalIndicator(
-                    name="RSI",
-                    value=rsi[-1],
-                    signal=signal,
-                    confidence=75.0,
-                    parameters={"period": period}
-                ))
+                indicators.append(
+                    TechnicalIndicator(
+                        name="RSI",
+                        value=rsi[-1],
+                        signal=signal,
+                        confidence=75.0,
+                        parameters={"period": period},
+                    )
+                )
 
         # MACD
         if "MACD" in self.indicators_enabled:
             macd_config = self.indicators_enabled["MACD"]
             if len(closes) >= macd_config["slow"]:
                 macd_line, signal_line, histogram = self._calculate_macd(
-                    closes, macd_config["fast"], macd_config["slow"], macd_config["signal"]
+                    closes,
+                    macd_config["fast"],
+                    macd_config["slow"],
+                    macd_config["signal"],
                 )
                 macd_signal = self._get_macd_signal(histogram[-1])
-                indicators.append(TechnicalIndicator(
-                    name="MACD",
-                    value=histogram[-1],
-                    signal=macd_signal,
-                    confidence=80.0,
-                    parameters=macd_config
-                ))
+                indicators.append(
+                    TechnicalIndicator(
+                        name="MACD",
+                        value=histogram[-1],
+                        signal=macd_signal,
+                        confidence=80.0,
+                        parameters=macd_config,
+                    )
+                )
 
         return indicators
 
@@ -419,7 +453,7 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
         Returns:
             SMA array
         """
-        return np.convolve(prices, np.ones(period)/period, mode='valid')
+        return np.convolve(prices, np.ones(period) / period, mode="valid")
 
     def _calculate_rsi(self, prices: np.ndarray, period: int) -> np.ndarray:
         """Calculate Relative Strength Index.
@@ -432,15 +466,15 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
             RSI array
         """
         deltas = np.diff(prices)
-        seed = deltas[:period+1]
-        up = seed[seed >= 0].sum()/period
-        down = -seed[seed < 0].sum()/period
-        rs = up/down if down != 0 else 0
+        seed = deltas[: period + 1]
+        up = seed[seed >= 0].sum() / period
+        down = -seed[seed < 0].sum() / period
+        rs = up / down if down != 0 else 0
         rsi = np.zeros_like(prices)
         rsi[:period] = 0.5
 
         for i in range(period, len(prices)):
-            delta = deltas[i-1]
+            delta = deltas[i - 1]
             if delta > 0:
                 upval = delta
                 downval = 0
@@ -450,12 +484,14 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
 
             up = (up * (period - 1) + upval) / period
             down = (down * (period - 1) + downval) / period
-            rs = up/down if down != 0 else 0
+            rs = up / down if down != 0 else 0
             rsi[i] = 100 - (100 / (1 + rs))
 
         return rsi
 
-    def _calculate_macd(self, prices: np.ndarray, fast: int, slow: int, signal: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def _calculate_macd(
+        self, prices: np.ndarray, fast: int, slow: int, signal: int
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Calculate MACD indicator.
 
         Args:
@@ -501,7 +537,7 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
         ema[0] = prices[0]
 
         for i in range(1, len(prices)):
-            ema[i] = (prices[i] * multiplier) + (ema[i-1] * (1 - multiplier))
+            ema[i] = (prices[i] * multiplier) + (ema[i - 1] * (1 - multiplier))
 
         return ema
 
@@ -623,7 +659,9 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
             resistance_indices = argrelextrema(highs, np.greater, order=5)[0]
             support_indices = argrelextrema(lows, np.less, order=5)[0]
 
-            resistance_levels = [float(highs[i]) for i in resistance_indices[-5:]]  # Last 5
+            resistance_levels = [
+                float(highs[i]) for i in resistance_indices[-5:]
+            ]  # Last 5
             support_levels = [float(lows[i]) for i in support_indices[-5:]]  # Last 5
 
             return {
@@ -657,7 +695,9 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
             "current_volume": float(current_volume),
             "average_volume": float(avg_volume),
             "volume_ratio": float(volume_ratio),
-            "volume_trend": "increasing" if current_volume > avg_volume * 1.2 else "normal",
+            "volume_trend": (
+                "increasing" if current_volume > avg_volume * 1.2 else "normal"
+            ),
         }
 
     def _synthesize_timeframe_analysis(
@@ -692,14 +732,15 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
             timeframe_scores[timeframe] = score
 
             # Add reasoning
-            trend_desc = f"{analysis.overall_trend} ({analysis.trend_strength:.1f}% strength)"
+            trend_desc = (
+                f"{analysis.overall_trend} ({analysis.trend_strength:.1f}% strength)"
+            )
             reasoning_parts.append(f"{timeframe}: {trend_desc}")
 
         # Weight longer timeframes more heavily
         weights = {"1h": 0.2, "4h": 0.3, "1d": 0.5}
         overall_score = sum(
-            timeframe_scores[tf] * weights.get(tf, 0.25)
-            for tf in timeframe_scores
+            timeframe_scores[tf] * weights.get(tf, 0.25) for tf in timeframe_scores
         )
 
         reasoning = f"Multi-timeframe analysis: {'; '.join(reasoning_parts)}"

@@ -6,14 +6,12 @@ to enhance decision quality through diverse expert perspectives and structured c
 """
 
 import logging
-from datetime import datetime
 from typing import Dict, Any
 
 from quantchain.agents import (
     AgentRole,
     FundamentalsAnalystAgent,
     PortfolioCommitteeAgent,
-    RecommendationType,
     RiskManagerAgent,
     SentimentExpertAgent,
     TechnicalAnalystAgent,
@@ -26,7 +24,7 @@ def setup_logging():
     """Setup logging for the example."""
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
 
@@ -103,9 +101,9 @@ def analyze_symbol(committee: PortfolioCommitteeAgent, symbol: str) -> Dict[str,
     Returns:
         Analysis results dictionary
     """
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"MULTI-AGENT ANALYSIS FOR {symbol}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Run committee analysis
     result = committee.analyze(
@@ -127,30 +125,40 @@ def analyze_symbol(committee: PortfolioCommitteeAgent, symbol: str) -> Dict[str,
 
         print(f"\nParticipating Agents: {', '.join(participating_agents)}")
         print(f"Consensus Score: {final_consensus.get('consensus_score', 0):.1f}%")
-        print(f"Dissenting Opinions: {', '.join(final_consensus.get('dissenting_opinions', []))}")
+        print(
+            f"Dissenting Opinions: {', '.join(final_consensus.get('dissenting_opinions', []))}"
+        )
 
         # Show individual agent analyses
         initial_analyses = metadata.get("initial_analyses", {})
-        print(f"\nIndividual Agent Analyses:")
+        print("\nIndividual Agent Analyses:")
         for agent_role, analysis in initial_analyses.items():
-            print(f"  {agent_role}: {analysis.get('recommendation', 'UNKNOWN')} "
-                  f"({analysis.get('confidence_score', 0):.1f}% confidence)")
+            print(
+                f"  {agent_role}: {analysis.get('recommendation', 'UNKNOWN')} "
+                f"({analysis.get('confidence_score', 0):.1f}% confidence)"
+            )
 
         # Show risk assessment
         risk_assessment = final_consensus.get("risk_assessment", {})
         if risk_assessment:
-            print(f"\nRisk Assessment:")
+            print("\nRisk Assessment:")
             print(f"  Risk Level: {risk_assessment.get('risk_level', 'UNKNOWN')}")
-            print(f"  Recommended Position Size: ${risk_assessment.get('recommended_size', 0):,.0f}")
-            print(f"  Risk/Reward Ratio: {risk_assessment.get('risk_reward_ratio', 0):.1f}")
+            print(
+                f"  Recommended Position Size: ${risk_assessment.get('recommended_size', 0):,.0f}"
+            )
+            print(
+                f"  Risk/Reward Ratio: {risk_assessment.get('risk_reward_ratio', 0):.1f}"
+            )
 
         # Show debate arguments
         arguments = final_consensus.get("arguments", [])
         if arguments:
-            print(f"\nDebate Arguments:")
+            print("\nDebate Arguments:")
             for arg in arguments:
-                print(f"  {arg.get('agent_role', 'Unknown')} - {arg.get('argument_type', 'neutral')}: "
-                      f"{arg.get('reasoning', 'No reasoning')[:100]}...")
+                print(
+                    f"  {arg.get('agent_role', 'Unknown')} - {arg.get('argument_type', 'neutral')}: "
+                    f"{arg.get('reasoning', 'No reasoning')[:100]}..."
+                )
 
     return {
         "symbol": symbol,
@@ -163,9 +171,9 @@ def analyze_symbol(committee: PortfolioCommitteeAgent, symbol: str) -> Dict[str,
 
 def demonstrate_multi_agent_benefits():
     """Demonstrate the benefits of the multi-agent system."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("MULTI-AGENT SYSTEM BENEFITS")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     benefits = [
         "🎯 Decision Quality: 40-60% improvement through diverse expert analysis",
@@ -187,7 +195,9 @@ def main():
 
     try:
         # Load configuration
-        config = QuantChainConfig.from_file("config.yaml") if True else QuantChainConfig()
+        config = (
+            QuantChainConfig.from_file("config.yaml") if True else QuantChainConfig()
+        )
 
         # Configure multi-agent system
         agent_config = {
@@ -224,17 +234,23 @@ def main():
                 continue
 
         # Summary
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("ANALYSIS SUMMARY")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         for result in results:
             symbol = result["symbol"]
             recommendation = result["recommendation"]
             confidence = result["confidence"]
-            status = "HIGH CONFIDENCE" if confidence > 80 else "MODERATE" if confidence > 60 else "LOW"
+            status = (
+                "HIGH CONFIDENCE"
+                if confidence > 80
+                else "MODERATE" if confidence > 60 else "LOW"
+            )
 
-            print(f"{symbol}: {recommendation} ({confidence:.1f}% confidence) - {status}")
+            print(
+                f"{symbol}: {recommendation} ({confidence:.1f}% confidence) - {status}"
+            )
 
         print(f"\n✅ Multi-agent analysis completed for {len(results)} symbols")
 

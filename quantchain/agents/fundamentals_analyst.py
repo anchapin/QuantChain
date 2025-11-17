@@ -2,10 +2,16 @@
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from .base import AgentAnalysis, AgentArgument, AgentRole, BaseSpecializedAgent, RecommendationType
+from .base import (
+    AgentAnalysis,
+    AgentArgument,
+    AgentRole,
+    BaseSpecializedAgent,
+    RecommendationType,
+)
 
 
 @dataclass
@@ -62,8 +68,12 @@ class FundamentalsAnalystAgent(BaseSpecializedAgent):
         self.logger = logging.getLogger(__name__)
 
         # Configuration
-        self.min_data_quality_score = self.agent_config.get("min_data_quality_score", 70.0)
-        self.pe_ratio_thresholds = self.agent_config.get("pe_ratio_thresholds", {"overvalued": 30, "undervalued": 10})
+        self.min_data_quality_score = self.agent_config.get(
+            "min_data_quality_score", 70.0
+        )
+        self.pe_ratio_thresholds = self.agent_config.get(
+            "pe_ratio_thresholds", {"overvalued": 30, "undervalued": 10}
+        )
         self.debt_to_equity_limit = self.agent_config.get("debt_to_equity_limit", 2.0)
         self.roe_threshold = self.agent_config.get("roe_threshold", 15.0)
 
@@ -85,7 +95,9 @@ class FundamentalsAnalystAgent(BaseSpecializedAgent):
             earnings_data = self._get_earnings_data(symbol)
 
             # Validate data quality
-            data_quality_score = self._calculate_data_quality(financial_metrics, earnings_data)
+            data_quality_score = self._calculate_data_quality(
+                financial_metrics, earnings_data
+            )
 
             if data_quality_score < self.min_data_quality_score:
                 return self._create_base_analysis(
@@ -94,11 +106,13 @@ class FundamentalsAnalystAgent(BaseSpecializedAgent):
                     confidence_score=data_quality_score,
                     reasoning=f"Insufficient fundamental data quality (score: {data_quality_score:.1f})",
                     data_sources=["financial_statements", "earnings_reports"],
-                    metadata={"data_quality_score": data_quality_score}
+                    metadata={"data_quality_score": data_quality_score},
                 )
 
             # Perform fundamental analysis
-            fundamental_score, reasoning = self._analyze_fundamentals(financial_metrics, earnings_data)
+            fundamental_score, reasoning = self._analyze_fundamentals(
+                financial_metrics, earnings_data
+            )
 
             # Generate recommendation based on fundamental score
             recommendation = self._score_to_recommendation(fundamental_score)
@@ -108,13 +122,17 @@ class FundamentalsAnalystAgent(BaseSpecializedAgent):
                 recommendation=recommendation,
                 confidence_score=fundamental_score,
                 reasoning=reasoning,
-                data_sources=["financial_statements", "earnings_reports", "market_data"],
+                data_sources=[
+                    "financial_statements",
+                    "earnings_reports",
+                    "market_data",
+                ],
                 metadata={
                     "financial_metrics": financial_metrics.__dict__,
                     "earnings_data": [ed.__dict__ for ed in earnings_data],
                     "fundamental_score": fundamental_score,
                     "data_quality_score": data_quality_score,
-                }
+                },
             )
 
         except Exception as e:
@@ -271,7 +289,9 @@ class FundamentalsAnalystAgent(BaseSpecializedAgent):
             financial_metrics.price_to_earnings,
             financial_metrics.return_on_equity,
         ]
-        financial_completeness = sum(1 for field in financial_fields if field is not None) / len(financial_fields)
+        financial_completeness = sum(
+            1 for field in financial_fields if field is not None
+        ) / len(financial_fields)
         score += financial_completeness * 40
 
         # Check earnings data completeness
@@ -283,12 +303,18 @@ class FundamentalsAnalystAgent(BaseSpecializedAgent):
                 latest_earnings.revenue_actual,
                 latest_earnings.revenue_estimated,
             ]
-            earnings_completeness = sum(1 for field in earnings_fields if field is not None) / len(earnings_fields)
+            earnings_completeness = sum(
+                1 for field in earnings_fields if field is not None
+            ) / len(earnings_fields)
             score += earnings_completeness * 40
 
         # Check data recency (earnings should be within last 6 months)
         if earnings_data:
-            latest_date = datetime(earnings_data[0].year, ((int(earnings_data[0].quarter[1]) - 1) * 3 + 1), 1)
+            latest_date = datetime(
+                earnings_data[0].year,
+                ((int(earnings_data[0].quarter[1]) - 1) * 3 + 1),
+                1,
+            )
             days_since_earnings = (datetime.now() - latest_date).days
             if days_since_earnings <= 180:
                 score += 20
@@ -314,30 +340,48 @@ class FundamentalsAnalystAgent(BaseSpecializedAgent):
 
         # P/E ratio analysis
         if financial_metrics.price_to_earnings:
-            if financial_metrics.price_to_earnings < self.pe_ratio_thresholds["undervalued"]:
+            if (
+                financial_metrics.price_to_earnings
+                < self.pe_ratio_thresholds["undervalued"]
+            ):
                 score += 15
-                reasoning_parts.append(f"Low P/E ratio ({financial_metrics.price_to_earnings:.1f}) suggests undervaluation")
-            elif financial_metrics.price_to_earnings > self.pe_ratio_thresholds["overvalued"]:
+                reasoning_parts.append(
+                    f"Low P/E ratio ({financial_metrics.price_to_earnings:.1f}) suggests undervaluation"
+                )
+            elif (
+                financial_metrics.price_to_earnings
+                > self.pe_ratio_thresholds["overvalued"]
+            ):
                 score -= 15
-                reasoning_parts.append(f"High P/E ratio ({financial_metrics.price_to_earnings:.1f}) suggests overvaluation")
+                reasoning_parts.append(
+                    f"High P/E ratio ({financial_metrics.price_to_earnings:.1f}) suggests overvaluation"
+                )
 
         # Debt-to-equity analysis
         if financial_metrics.debt_to_equity:
             if financial_metrics.debt_to_equity < self.debt_to_equity_limit:
                 score += 10
-                reasoning_parts.append(f"Healthy debt-to-equity ratio ({financial_metrics.debt_to_equity:.2f})")
+                reasoning_parts.append(
+                    f"Healthy debt-to-equity ratio ({financial_metrics.debt_to_equity:.2f})"
+                )
             else:
                 score -= 10
-                reasoning_parts.append(f"High debt-to-equity ratio ({financial_metrics.debt_to_equity:.2f})")
+                reasoning_parts.append(
+                    f"High debt-to-equity ratio ({financial_metrics.debt_to_equity:.2f})"
+                )
 
         # Return on equity analysis
         if financial_metrics.return_on_equity:
             if financial_metrics.return_on_equity > self.roe_threshold:
                 score += 10
-                reasoning_parts.append(f"Strong ROE ({financial_metrics.return_on_equity:.1f}%)")
+                reasoning_parts.append(
+                    f"Strong ROE ({financial_metrics.return_on_equity:.1f}%)"
+                )
             else:
                 score -= 5
-                reasoning_parts.append(f"Weak ROE ({financial_metrics.return_on_equity:.1f}%)")
+                reasoning_parts.append(
+                    f"Weak ROE ({financial_metrics.return_on_equity:.1f}%)"
+                )
 
         # Earnings analysis
         if earnings_data:
@@ -353,13 +397,21 @@ class FundamentalsAnalystAgent(BaseSpecializedAgent):
         if financial_metrics.revenue_growth:
             if financial_metrics.revenue_growth > 10:
                 score += 10
-                reasoning_parts.append(f"Strong revenue growth ({financial_metrics.revenue_growth:.1f}%)")
+                reasoning_parts.append(
+                    f"Strong revenue growth ({financial_metrics.revenue_growth:.1f}%)"
+                )
             elif financial_metrics.revenue_growth < 0:
                 score -= 10
-                reasoning_parts.append(f"Negative revenue growth ({financial_metrics.revenue_growth:.1f}%)")
+                reasoning_parts.append(
+                    f"Negative revenue growth ({financial_metrics.revenue_growth:.1f}%)"
+                )
 
         # Combine reasoning
-        reasoning = "; ".join(reasoning_parts) if reasoning_parts else "Mixed fundamental indicators"
+        reasoning = (
+            "; ".join(reasoning_parts)
+            if reasoning_parts
+            else "Mixed fundamental indicators"
+        )
 
         return max(0, min(100, score)), reasoning
 
@@ -399,6 +451,8 @@ class FundamentalsAnalystAgent(BaseSpecializedAgent):
         if financial_metrics.get("debt_to_equity"):
             evidence.append(f"Debt/Equity: {financial_metrics['debt_to_equity']:.2f}")
         if financial_metrics.get("revenue_growth"):
-            evidence.append(f"Revenue Growth: {financial_metrics['revenue_growth']:.1f}%")
+            evidence.append(
+                f"Revenue Growth: {financial_metrics['revenue_growth']:.1f}%"
+            )
 
         return evidence

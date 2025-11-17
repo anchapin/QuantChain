@@ -5,7 +5,13 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-from .base import AgentAnalysis, AgentArgument, AgentRole, BaseSpecializedAgent, RecommendationType
+from .base import (
+    AgentAnalysis,
+    AgentArgument,
+    AgentRole,
+    BaseSpecializedAgent,
+    RecommendationType,
+)
 
 
 @dataclass
@@ -77,12 +83,18 @@ class SentimentExpertAgent(BaseSpecializedAgent):
         self.logger = logging.getLogger(__name__)
 
         # Configuration
-        self.analysis_timeframe_hours = self.agent_config.get("analysis_timeframe_hours", 24)
-        self.min_mentions_threshold = self.agent_config.get("min_mentions_threshold", 10)
-        self.sentiment_thresholds = self.agent_config.get("sentiment_thresholds", {
-            "bullish": 30, "bearish": -30
-        })
-        self.influencer_min_followers = self.agent_config.get("influencer_min_followers", 10000)
+        self.analysis_timeframe_hours = self.agent_config.get(
+            "analysis_timeframe_hours", 24
+        )
+        self.min_mentions_threshold = self.agent_config.get(
+            "min_mentions_threshold", 10
+        )
+        self.sentiment_thresholds = self.agent_config.get(
+            "sentiment_thresholds", {"bullish": 30, "bearish": -30}
+        )
+        self.influencer_min_followers = self.agent_config.get(
+            "influencer_min_followers", 10000
+        )
 
     def analyze(self, symbol: str, **kwargs) -> AgentAnalysis:
         """Perform sentiment analysis for a given symbol.
@@ -109,14 +121,18 @@ class SentimentExpertAgent(BaseSpecializedAgent):
                     confidence_score=30.0,
                     reasoning="No sentiment data available for analysis",
                     data_sources=["news", "social_media"],
-                    metadata={"sentiment_available": False}
+                    metadata={"sentiment_available": False},
                 )
 
             # Calculate sentiment metrics
-            sentiment_metrics = self._calculate_sentiment_metrics(news_articles, social_posts)
+            sentiment_metrics = self._calculate_sentiment_metrics(
+                news_articles, social_posts
+            )
 
             # Analyze sentiment and generate recommendation
-            sentiment_score, reasoning = self._analyze_sentiment(sentiment_metrics, symbol)
+            sentiment_score, reasoning = self._analyze_sentiment(
+                sentiment_metrics, symbol
+            )
             recommendation = self._sentiment_to_recommendation(sentiment_score)
 
             return self._create_base_analysis(
@@ -130,7 +146,7 @@ class SentimentExpertAgent(BaseSpecializedAgent):
                     "sentiment_score": sentiment_score,
                     "news_articles_count": len(news_articles),
                     "social_posts_count": len(social_posts),
-                }
+                },
             )
 
         except Exception as e:
@@ -155,7 +171,9 @@ class SentimentExpertAgent(BaseSpecializedAgent):
         symbol = context.get("symbol", "")
         sentiment_analysis = context.get("sentiment_analysis")
 
-        if not sentiment_analysis or not sentiment_analysis.metadata.get("sentiment_available"):
+        if not sentiment_analysis or not sentiment_analysis.metadata.get(
+            "sentiment_available"
+        ):
             return AgentArgument(
                 agent_role=self.role,
                 argument_type="neutral",
@@ -211,7 +229,9 @@ class SentimentExpertAgent(BaseSpecializedAgent):
         try:
             # In a real implementation, this would fetch from news API
             # For now, return mock data
-            cutoff_time = datetime.now() - timedelta(hours=self.analysis_timeframe_hours)
+            cutoff_time = datetime.now() - timedelta(
+                hours=self.analysis_timeframe_hours
+            )
             return [
                 NewsArticle(
                     title=f"{symbol} Reports Strong Quarterly Earnings",
@@ -249,7 +269,9 @@ class SentimentExpertAgent(BaseSpecializedAgent):
         try:
             # In a real implementation, this would fetch from social media APIs
             # For now, return mock data
-            cutoff_time = datetime.now() - timedelta(hours=self.analysis_timeframe_hours)
+            cutoff_time = datetime.now() - timedelta(
+                hours=self.analysis_timeframe_hours
+            )
             return [
                 SocialMediaPost(
                     platform="Twitter",
@@ -293,24 +315,46 @@ class SentimentExpertAgent(BaseSpecializedAgent):
             SentimentMetrics object
         """
         # Calculate news sentiment
-        news_sentiments = [article.sentiment_score for article in news_articles if article.sentiment_score is not None]
-        news_sentiment = sum(news_sentiments) / len(news_sentiments) * 100 if news_sentiments else 0
+        news_sentiments = [
+            article.sentiment_score
+            for article in news_articles
+            if article.sentiment_score is not None
+        ]
+        news_sentiment = (
+            sum(news_sentiments) / len(news_sentiments) * 100 if news_sentiments else 0
+        )
 
         # Calculate social sentiment
-        social_sentiments = [post.sentiment_score for post in social_posts if post.sentiment_score is not None]
-        social_sentiment = sum(social_sentiments) / len(social_sentiments) * 100 if social_sentiments else 0
+        social_sentiments = [
+            post.sentiment_score
+            for post in social_posts
+            if post.sentiment_score is not None
+        ]
+        social_sentiment = (
+            sum(social_sentiments) / len(social_sentiments) * 100
+            if social_sentiments
+            else 0
+        )
 
         # Calculate influencer sentiment (weighted by follower count)
         influencer_posts = [
-            post for post in social_posts
-            if post.followers_count and post.followers_count >= self.influencer_min_followers
+            post
+            for post in social_posts
+            if post.followers_count
+            and post.followers_count >= self.influencer_min_followers
         ]
         if influencer_posts:
             total_weight = sum(post.followers_count for post in influencer_posts)
-            influencer_sentiment = sum(
-                (post.sentiment_score * post.followers_count) / total_weight
-                for post in influencer_posts if post.sentiment_score
-            ) * 100 if total_weight > 0 else 0
+            influencer_sentiment = (
+                sum(
+                    (post.sentiment_score * post.followers_count) / total_weight
+                    for post in influencer_posts
+                    if post.sentiment_score
+                )
+                * 100
+                if total_weight > 0
+                else 0
+            )
         else:
             influencer_sentiment = social_sentiment
 
@@ -332,13 +376,17 @@ class SentimentExpertAgent(BaseSpecializedAgent):
         all_sentiments = news_sentiments + social_sentiments
         if len(all_sentiments) > 1:
             avg_sentiment = sum(all_sentiments) / len(all_sentiments)
-            variance = sum((s - avg_sentiment) ** 2 for s in all_sentiments) / len(all_sentiments)
+            variance = sum((s - avg_sentiment) ** 2 for s in all_sentiments) / len(
+                all_sentiments
+            )
             sentiment_volatility = min(100, variance * 100)
         else:
             sentiment_volatility = 0
 
         # Determine sentiment trend (simplified - just based on recent vs older posts)
-        sentiment_trend = "stable"  # Would require more historical data for real trend analysis
+        sentiment_trend = (
+            "stable"  # Would require more historical data for real trend analysis
+        )
 
         return SentimentMetrics(
             overall_sentiment=overall_sentiment,
@@ -353,7 +401,9 @@ class SentimentExpertAgent(BaseSpecializedAgent):
             timeframe_hours=self.analysis_timeframe_hours,
         )
 
-    def _analyze_sentiment(self, sentiment_metrics: SentimentMetrics, symbol: str) -> tuple[float, str]:
+    def _analyze_sentiment(
+        self, sentiment_metrics: SentimentMetrics, symbol: str
+    ) -> tuple[float, str]:
         """Analyze sentiment metrics and return score with reasoning.
 
         Args:
@@ -368,18 +418,28 @@ class SentimentExpertAgent(BaseSpecializedAgent):
 
         # Overall sentiment
         if sentiment_metrics.overall_sentiment > 30:
-            reasoning_parts.append(f"Strong positive sentiment ({sentiment_metrics.overall_sentiment:.1f})")
+            reasoning_parts.append(
+                f"Strong positive sentiment ({sentiment_metrics.overall_sentiment:.1f})"
+            )
         elif sentiment_metrics.overall_sentiment < -30:
-            reasoning_parts.append(f"Strong negative sentiment ({sentiment_metrics.overall_sentiment:.1f})")
+            reasoning_parts.append(
+                f"Strong negative sentiment ({sentiment_metrics.overall_sentiment:.1f})"
+            )
         else:
-            reasoning_parts.append(f"Neutral sentiment ({sentiment_metrics.overall_sentiment:.1f})")
+            reasoning_parts.append(
+                f"Neutral sentiment ({sentiment_metrics.overall_sentiment:.1f})"
+            )
 
         # Volume analysis
         if sentiment_metrics.volume_score > 75:
-            reasoning_parts.append(f"High mention volume ({sentiment_metrics.volume_score:.1f})")
+            reasoning_parts.append(
+                f"High mention volume ({sentiment_metrics.volume_score:.1f})"
+            )
             score += 10  # Boost confidence for high volume
         elif sentiment_metrics.volume_score < 25:
-            reasoning_parts.append(f"Low mention volume ({sentiment_metrics.volume_score:.1f})")
+            reasoning_parts.append(
+                f"Low mention volume ({sentiment_metrics.volume_score:.1f})"
+            )
             score *= 0.8  # Reduce confidence for low volume
 
         # Influencer sentiment
@@ -395,8 +455,13 @@ class SentimentExpertAgent(BaseSpecializedAgent):
             reasoning_parts.append("High sentiment volatility")
 
         # News vs social alignment
-        if (sentiment_metrics.news_sentiment > 20 and sentiment_metrics.social_sentiment > 20) or \
-           (sentiment_metrics.news_sentiment < -20 and sentiment_metrics.social_sentiment < -20):
+        if (
+            sentiment_metrics.news_sentiment > 20
+            and sentiment_metrics.social_sentiment > 20
+        ) or (
+            sentiment_metrics.news_sentiment < -20
+            and sentiment_metrics.social_sentiment < -20
+        ):
             reasoning_parts.append("Aligned sentiment across news and social media")
         else:
             reasoning_parts.append("Divergent sentiment between news and social media")
@@ -405,7 +470,9 @@ class SentimentExpertAgent(BaseSpecializedAgent):
 
         return max(-100, min(100, score)), reasoning
 
-    def _sentiment_to_recommendation(self, sentiment_score: float) -> RecommendationType:
+    def _sentiment_to_recommendation(
+        self, sentiment_score: float
+    ) -> RecommendationType:
         """Convert sentiment score to recommendation.
 
         Args:
@@ -435,13 +502,19 @@ class SentimentExpertAgent(BaseSpecializedAgent):
         """
         evidence = []
 
-        evidence.append(f"Overall Sentiment: {sentiment_metrics.get('overall_sentiment', 0):.1f}")
-        evidence.append(f"News Sentiment: {sentiment_metrics.get('news_sentiment', 0):.1f}")
-        evidence.append(f"Social Sentiment: {sentiment_metrics.get('social_sentiment', 0):.1f}")
+        evidence.append(
+            f"Overall Sentiment: {sentiment_metrics.get('overall_sentiment', 0):.1f}"
+        )
+        evidence.append(
+            f"News Sentiment: {sentiment_metrics.get('news_sentiment', 0):.1f}"
+        )
+        evidence.append(
+            f"Social Sentiment: {sentiment_metrics.get('social_sentiment', 0):.1f}"
+        )
 
-        if sentiment_metrics.get('volume_score', 0) > 75:
+        if sentiment_metrics.get("volume_score", 0) > 75:
             evidence.append("High mention volume")
-        if sentiment_metrics.get('influencer_sentiment', 0) > 50:
+        if sentiment_metrics.get("influencer_sentiment", 0) > 50:
             evidence.append("Positive influencer sentiment")
 
         evidence.append(f"News Articles: {sentiment_metrics.get('news_count', 0)}")
