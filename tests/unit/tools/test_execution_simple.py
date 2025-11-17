@@ -1,26 +1,26 @@
 """
-Simple comprehensive tests for the trading_execution module.
+Simple comprehensive tests for the execution module.
 
 Focuses on testing actual class structure and functionality.
 """
 
 import pytest
 
-from quantchain.tools.trading_execution import (
+from quantchain.tools.execution import (
     AccountInfo,
+    AlpacaExecutionTool,
     OrderRequest,
     OrderResult,
     OrderSide,
     OrderStatus,
     OrderType,
     Position,
-    TradingExecutionTool,
 )
 
 
 @pytest.mark.unit
-class TestTradingExecutionModule:
-    """Simple comprehensive tests for trading_execution module."""
+class TestExecutionModule:
+    """Simple comprehensive tests for execution module."""
 
     def test_import_all_classes(self) -> None:
         """Test that all classes can be imported."""
@@ -102,13 +102,13 @@ class TestTradingExecutionModule:
             # Constructor might be different
             pass
 
-    def test_trading_execution_tool_creation(self) -> None:
-        """Test creating TradingExecutionTool."""
+    def test_alpaca_execution_tool_creation(self) -> None:
+        """Test creating AlpacaExecutionTool."""
         try:
-            tool = TradingExecutionTool()
+            tool = AlpacaExecutionTool()
             assert tool is not None
         except Exception:
-            # Might require parameters
+            # Might require environment variables
             pass
 
     def test_enum_functionality(self) -> None:
@@ -137,16 +137,16 @@ class TestTradingExecutionModule:
 
     def test_module_import(self) -> None:
         """Test that module can be imported as expected."""
-        from quantchain.tools import trading_execution
+        from quantchain.tools import execution
 
-        assert trading_execution.OrderSide is not None
-        assert trading_execution.OrderType is not None
-        assert trading_execution.OrderStatus is not None
-        assert trading_execution.OrderRequest is not None
-        assert trading_execution.OrderResult is not None
-        assert trading_execution.AccountInfo is not None
-        assert trading_execution.Position is not None
-        assert trading_execution.TradingExecutionTool is not None
+        assert execution.OrderSide is not None
+        assert execution.OrderType is not None
+        assert execution.OrderStatus is not None
+        assert execution.OrderRequest is not None
+        assert execution.OrderResult is not None
+        assert execution.AccountInfo is not None
+        assert execution.Position is not None
+        assert execution.AlpacaExecutionTool is not None
 
     def test_enum_values_list(self) -> None:
         """Test that enum values can be listed."""
