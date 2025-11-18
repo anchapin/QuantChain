@@ -14,16 +14,16 @@ from quantchain.connectors.ib_async_execution import (
     IBAsyncExecutionError,
     IBAsyncOrderError,
 )
-from quantchain.core.execution import (
+from quantchain.core.exceptions import TradingError
+from quantchain.tools.execution import (
     AccountInfo,
-    ExecutionError,
     OrderRequest,
     OrderResult,
     OrderSide,
     OrderStatus,
     OrderType,
 )
-from quantchain.core.execution import Position as QuantChainPosition
+from quantchain.tools.execution import Position as QuantChainPosition
 
 
 class TestIBAsyncExecutionErrors:
@@ -34,7 +34,7 @@ class TestIBAsyncExecutionErrors:
         """Test IBAsyncExecutionError base exception."""
         error = IBAsyncExecutionError("Test error")
         assert str(error) == "Test error"
-        assert isinstance(error, ExecutionError)
+        assert isinstance(error, TradingError)
 
     @pytest.mark.unit
     def test_ib_async_connection_error(self):
