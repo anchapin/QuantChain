@@ -1,15 +1,16 @@
 """Comprehensive tests for quantchain.backtesting.performance_metrics module."""
 
-import pytest
-import pandas as pd
-import numpy as np
 from unittest.mock import Mock, patch
+
+import numpy as np
+import pandas as pd
+import pytest
 
 from quantchain.backtesting.performance_metrics import (
     InsufficientDataError,
     LibraryImportError,
-    MissingColumnError,
     MetricsResult,
+    MissingColumnError,
     PerformanceMetrics,
 )
 
@@ -69,7 +70,7 @@ class TestMetricsResult:
             alpha=0.02,
             beta=0.8,
             information_ratio=0.5,
-            var_95=-0.02
+            var_95=-0.02,
         )
 
         assert result.total_return == 0.15
@@ -81,29 +82,65 @@ class TestMetricsResult:
     def test_metrics_result_equality(self) -> None:
         """Test MetricsResult equality."""
         result1 = MetricsResult(
-            total_return=0.15, annualized_return=0.12, sharpe_ratio=1.5,
-            sortino_ratio=2.0, calmar_ratio=1.2, max_drawdown=-0.05,
-            max_drawdown_duration=30, max_drawdown_start=pd.Timestamp("2023-01-01"),
-            max_drawdown_end=pd.Timestamp("2023-01-31"), volatility=0.1,
-            win_rate=0.6, profit_factor=1.8, total_trades=100,
-            winning_trades=60, losing_trades=40, avg_win=0.02, avg_loss=-0.01,
-            best_trade=0.05, worst_trade=-0.03, avg_trade_duration=5.5,
-            avg_trade_duration_days=5.5, sharpe_ratio_qstats=1.4,
-            sortino_ratio_qstats=1.9, omega_ratio=1.3, alpha=0.02, beta=0.8,
-            information_ratio=0.5, var_95=-0.02
+            total_return=0.15,
+            annualized_return=0.12,
+            sharpe_ratio=1.5,
+            sortino_ratio=2.0,
+            calmar_ratio=1.2,
+            max_drawdown=-0.05,
+            max_drawdown_duration=30,
+            max_drawdown_start=pd.Timestamp("2023-01-01"),
+            max_drawdown_end=pd.Timestamp("2023-01-31"),
+            volatility=0.1,
+            win_rate=0.6,
+            profit_factor=1.8,
+            total_trades=100,
+            winning_trades=60,
+            losing_trades=40,
+            avg_win=0.02,
+            avg_loss=-0.01,
+            best_trade=0.05,
+            worst_trade=-0.03,
+            avg_trade_duration=5.5,
+            avg_trade_duration_days=5.5,
+            sharpe_ratio_qstats=1.4,
+            sortino_ratio_qstats=1.9,
+            omega_ratio=1.3,
+            alpha=0.02,
+            beta=0.8,
+            information_ratio=0.5,
+            var_95=-0.02,
         )
 
         result2 = MetricsResult(
-            total_return=0.15, annualized_return=0.12, sharpe_ratio=1.5,
-            sortino_ratio=2.0, calmar_ratio=1.2, max_drawdown=-0.05,
-            max_drawdown_duration=30, max_drawdown_start=pd.Timestamp("2023-01-01"),
-            max_drawdown_end=pd.Timestamp("2023-01-31"), volatility=0.1,
-            win_rate=0.6, profit_factor=1.8, total_trades=100,
-            winning_trades=60, losing_trades=40, avg_win=0.02, avg_loss=-0.01,
-            best_trade=0.05, worst_trade=-0.03, avg_trade_duration=5.5,
-            avg_trade_duration_days=5.5, sharpe_ratio_qstats=1.4,
-            sortino_ratio_qstats=1.9, omega_ratio=1.3, alpha=0.02, beta=0.8,
-            information_ratio=0.5, var_95=-0.02
+            total_return=0.15,
+            annualized_return=0.12,
+            sharpe_ratio=1.5,
+            sortino_ratio=2.0,
+            calmar_ratio=1.2,
+            max_drawdown=-0.05,
+            max_drawdown_duration=30,
+            max_drawdown_start=pd.Timestamp("2023-01-01"),
+            max_drawdown_end=pd.Timestamp("2023-01-31"),
+            volatility=0.1,
+            win_rate=0.6,
+            profit_factor=1.8,
+            total_trades=100,
+            winning_trades=60,
+            losing_trades=40,
+            avg_win=0.02,
+            avg_loss=-0.01,
+            best_trade=0.05,
+            worst_trade=-0.03,
+            avg_trade_duration=5.5,
+            avg_trade_duration_days=5.5,
+            sharpe_ratio_qstats=1.4,
+            sortino_ratio_qstats=1.9,
+            omega_ratio=1.3,
+            alpha=0.02,
+            beta=0.8,
+            information_ratio=0.5,
+            var_95=-0.02,
         )
 
         assert result1 == result2
@@ -121,7 +158,9 @@ class TestPerformanceMetrics:
 
     def test_init_with_benchmark(self) -> None:
         """Test initialization with benchmark."""
-        benchmark = pd.Series([0.01, 0.02, -0.01], index=pd.date_range("2023-01-01", periods=3))
+        benchmark = pd.Series(
+            [0.01, 0.02, -0.01], index=pd.date_range("2023-01-01", periods=3)
+        )
         metrics = PerformanceMetrics(benchmark_returns=benchmark, risk_free_rate=0.03)
         assert metrics.benchmark_returns is not None
         assert metrics.risk_free_rate == 0.03
@@ -136,13 +175,17 @@ class TestPerformanceMetrics:
         metrics = PerformanceMetrics()
         equity_curve = pd.Series([1000], index=pd.date_range("2023-01-01", periods=1))
 
-        with pytest.raises(InsufficientDataError, match="Equity curve must have at least 2 points"):
+        with pytest.raises(
+            InsufficientDataError, match="Equity curve must have at least 2 points"
+        ):
             metrics.calculate_returns(equity_curve)
 
     def test_calculate_returns_success(self) -> None:
         """Test calculate_returns success."""
         metrics = PerformanceMetrics()
-        equity_curve = pd.Series([1000, 1100, 1050], index=pd.date_range("2023-01-01", periods=3))
+        equity_curve = pd.Series(
+            [1000, 1100, 1050], index=pd.date_range("2023-01-01", periods=3)
+        )
 
         returns = metrics.calculate_returns(equity_curve)
 
@@ -152,9 +195,13 @@ class TestPerformanceMetrics:
     def test_calculate_total_return_insufficient_data(self) -> None:
         """Test calculate_total_return with insufficient data."""
         metrics = PerformanceMetrics()
-        equity_curve = pd.Series([], index=pd.date_range("2023-01-01", periods=0), dtype=float)
+        equity_curve = pd.Series(
+            [], index=pd.date_range("2023-01-01", periods=0), dtype=float
+        )
 
-        with pytest.raises(InsufficientDataError, match="Equity curve must have at least 1 point"):
+        with pytest.raises(
+            InsufficientDataError, match="Equity curve must have at least 1 point"
+        ):
             metrics.calculate_total_return(equity_curve)
 
     def test_calculate_total_return_single_point(self) -> None:
@@ -168,7 +215,9 @@ class TestPerformanceMetrics:
     def test_calculate_total_return_success(self) -> None:
         """Test calculate_total_return success."""
         metrics = PerformanceMetrics()
-        equity_curve = pd.Series([1000, 1100, 1200], index=pd.date_range("2023-01-01", periods=3))
+        equity_curve = pd.Series(
+            [1000, 1100, 1200], index=pd.date_range("2023-01-01", periods=3)
+        )
 
         total_return = metrics.calculate_total_return(equity_curve)
         assert total_return == 0.2  # (1200/1000) - 1 = 0.2
@@ -178,8 +227,7 @@ class TestPerformanceMetrics:
         metrics = PerformanceMetrics()
         # 6 months of data
         equity_curve = pd.Series(
-            [1000, 1100],
-            index=pd.date_range("2023-01-01", periods=2, freq="6M")
+            [1000, 1100], index=pd.date_range("2023-01-01", periods=2, freq="6M")
         )
 
         annualized_return = metrics.calculate_annualized_return(equity_curve)
@@ -192,8 +240,7 @@ class TestPerformanceMetrics:
         metrics = PerformanceMetrics()
         # 2 years of data
         equity_curve = pd.Series(
-            [1000, 1200],
-            index=pd.date_range("2023-01-01", periods=2, freq="2Y")
+            [1000, 1200], index=pd.date_range("2023-01-01", periods=2, freq="2Y")
         )
 
         annualized_return = metrics.calculate_annualized_return(equity_curve)
@@ -212,7 +259,9 @@ class TestPerformanceMetrics:
     def test_calculate_volatility_success(self) -> None:
         """Test calculate_volatility success."""
         metrics = PerformanceMetrics()
-        equity_curve = pd.Series([1000, 1100, 1050, 1150, 1200], index=pd.date_range("2023-01-01", periods=5))
+        equity_curve = pd.Series(
+            [1000, 1100, 1050, 1150, 1200], index=pd.date_range("2023-01-01", periods=5)
+        )
 
         volatility = metrics.calculate_volatility(equity_curve)
         assert volatility > 0
@@ -221,7 +270,9 @@ class TestPerformanceMetrics:
     def test_calculate_sharpe_ratio_insufficient_data(self) -> None:
         """Test calculate_sharpe_ratio with insufficient data."""
         metrics = PerformanceMetrics()
-        equity_curve = pd.Series([1000, 1100], index=pd.date_range("2023-01-01", periods=2))
+        equity_curve = pd.Series(
+            [1000, 1100], index=pd.date_range("2023-01-01", periods=2)
+        )
 
         with pytest.raises(InsufficientDataError):
             metrics.calculate_sharpe_ratio(equity_curve)
@@ -230,7 +281,9 @@ class TestPerformanceMetrics:
         """Test calculate_sharpe_ratio with zero volatility."""
         metrics = PerformanceMetrics()
         # Constant equity curve should have zero volatility
-        equity_curve = pd.Series([1000, 1000, 1000, 1000], index=pd.date_range("2023-01-01", periods=4))
+        equity_curve = pd.Series(
+            [1000, 1000, 1000, 1000], index=pd.date_range("2023-01-01", periods=4)
+        )
 
         sharpe = metrics.calculate_sharpe_ratio(equity_curve)
         assert sharpe == 0.0
@@ -238,7 +291,9 @@ class TestPerformanceMetrics:
     def test_calculate_sharpe_ratio_success(self) -> None:
         """Test calculate_sharpe_ratio success."""
         metrics = PerformanceMetrics()
-        equity_curve = pd.Series([1000, 1100, 1050, 1150, 1200], index=pd.date_range("2023-01-01", periods=5))
+        equity_curve = pd.Series(
+            [1000, 1100, 1050, 1150, 1200], index=pd.date_range("2023-01-01", periods=5)
+        )
 
         sharpe = metrics.calculate_sharpe_ratio(equity_curve)
         assert isinstance(sharpe, float)
@@ -246,7 +301,9 @@ class TestPerformanceMetrics:
     def test_calculate_sharpe_ratio_with_custom_frequency(self) -> None:
         """Test calculate_sharpe_ratio with custom frequency."""
         metrics = PerformanceMetrics()
-        equity_curve = pd.Series([1000, 1100, 1050, 1150, 1200], index=pd.date_range("2023-01-01", periods=5))
+        equity_curve = pd.Series(
+            [1000, 1100, 1050, 1150, 1200], index=pd.date_range("2023-01-01", periods=5)
+        )
 
         sharpe_daily = metrics.calculate_sharpe_ratio(equity_curve, frequency="1d")
         sharpe_weekly = metrics.calculate_sharpe_ratio(equity_curve, frequency="1w")
@@ -257,7 +314,9 @@ class TestPerformanceMetrics:
     def test_calculate_sortino_ratio_insufficient_data(self) -> None:
         """Test calculate_sortino_ratio with insufficient data."""
         metrics = PerformanceMetrics()
-        equity_curve = pd.Series([1000, 1100], index=pd.date_range("2023-01-01", periods=2))
+        equity_curve = pd.Series(
+            [1000, 1100], index=pd.date_range("2023-01-01", periods=2)
+        )
 
         with pytest.raises(InsufficientDataError):
             metrics.calculate_sortino_ratio(equity_curve)
@@ -265,7 +324,9 @@ class TestPerformanceMetrics:
     def test_calculate_sortino_ratio_success(self) -> None:
         """Test calculate_sortino_ratio success."""
         metrics = PerformanceMetrics()
-        equity_curve = pd.Series([1000, 1100, 1050, 1150, 1200], index=pd.date_range("2023-01-01", periods=5))
+        equity_curve = pd.Series(
+            [1000, 1100, 1050, 1150, 1200], index=pd.date_range("2023-01-01", periods=5)
+        )
 
         sortino = metrics.calculate_sortino_ratio(equity_curve)
         assert isinstance(sortino, float)
@@ -282,7 +343,9 @@ class TestPerformanceMetrics:
         """Test calculate_max_drawdown with no drawdown."""
         metrics = PerformanceMetrics()
         # Monotonically increasing equity curve
-        equity_curve = pd.Series([1000, 1100, 1200, 1300], index=pd.date_range("2023-01-01", periods=4))
+        equity_curve = pd.Series(
+            [1000, 1100, 1200, 1300], index=pd.date_range("2023-01-01", periods=4)
+        )
 
         drawdown = metrics.calculate_max_drawdown(equity_curve)
         assert drawdown["max_drawdown"] == 0.0
@@ -291,7 +354,9 @@ class TestPerformanceMetrics:
     def test_calculate_max_drawdown_with_drawdown(self) -> None:
         """Test calculate_max_drawdown with drawdown."""
         metrics = PerformanceMetrics()
-        equity_curve = pd.Series([1000, 1200, 1100, 900, 1000], index=pd.date_range("2023-01-01", periods=5))
+        equity_curve = pd.Series(
+            [1000, 1200, 1100, 900, 1000], index=pd.date_range("2023-01-01", periods=5)
+        )
 
         drawdown = metrics.calculate_max_drawdown(equity_curve)
         assert drawdown["max_drawdown"] < 0  # Should be negative
@@ -312,7 +377,9 @@ class TestPerformanceMetrics:
     def test_calculate_max_drawdown_duration_no_drawdown(self) -> None:
         """Test calculate_max_drawdown_duration with no drawdown."""
         metrics = PerformanceMetrics()
-        equity_curve = pd.Series([1000, 1100, 1200, 1300], index=pd.date_range("2023-01-01", periods=4))
+        equity_curve = pd.Series(
+            [1000, 1100, 1200, 1300], index=pd.date_range("2023-01-01", periods=4)
+        )
 
         duration = metrics.calculate_max_drawdown_duration(equity_curve)
         assert duration == 0
@@ -320,7 +387,10 @@ class TestPerformanceMetrics:
     def test_calculate_max_drawdown_duration_with_drawdown(self) -> None:
         """Test calculate_max_drawdown_duration with drawdown."""
         metrics = PerformanceMetrics()
-        equity_curve = pd.Series([1000, 1200, 1100, 900, 800, 1000], index=pd.date_range("2023-01-01", periods=6))
+        equity_curve = pd.Series(
+            [1000, 1200, 1100, 900, 800, 1000],
+            index=pd.date_range("2023-01-01", periods=6),
+        )
 
         duration = metrics.calculate_max_drawdown_duration(equity_curve)
         assert duration > 0
@@ -329,7 +399,9 @@ class TestPerformanceMetrics:
     def test_calculate_calmar_ratio_no_drawdown(self) -> None:
         """Test calculate_calmar_ratio with no drawdown."""
         metrics = PerformanceMetrics()
-        equity_curve = pd.Series([1000, 1100, 1200, 1300], index=pd.date_range("2023-01-01", periods=4))
+        equity_curve = pd.Series(
+            [1000, 1100, 1200, 1300], index=pd.date_range("2023-01-01", periods=4)
+        )
 
         calmar = metrics.calculate_calmar_ratio(equity_curve)
         assert calmar > 0
@@ -337,7 +409,9 @@ class TestPerformanceMetrics:
     def test_calculate_calmar_ratio_with_drawdown(self) -> None:
         """Test calculate_calmar_ratio with drawdown."""
         metrics = PerformanceMetrics()
-        equity_curve = pd.Series([1000, 1200, 1100, 900, 1000], index=pd.date_range("2023-01-01", periods=5))
+        equity_curve = pd.Series(
+            [1000, 1200, 1100, 900, 1000], index=pd.date_range("2023-01-01", periods=5)
+        )
 
         calmar = metrics.calculate_calmar_ratio(equity_curve)
         assert isinstance(calmar, float)
@@ -404,7 +478,7 @@ class TestPerformanceMetrics:
         trades = pd.DataFrame({"pnl": [10, 20, 15]})
 
         profit_factor = metrics.calculate_profit_factor(trades)
-        assert profit_factor == float('inf')  # No losing trades
+        assert profit_factor == float("inf")  # No losing trades
 
     def test_calculate_profit_factor_all_losing(self) -> None:
         """Test calculate_profit_factor with all losing trades."""
@@ -494,10 +568,12 @@ class TestPerformanceMetrics:
     def test_calculate_average_trade_duration_success(self) -> None:
         """Test calculate_average_trade_duration success."""
         metrics = PerformanceMetrics()
-        trades = pd.DataFrame({
-            "entry_time": pd.date_range("2023-01-01", periods=3, freq="1D"),
-            "exit_time": pd.date_range("2023-01-02", periods=3, freq="1D")
-        })
+        trades = pd.DataFrame(
+            {
+                "entry_time": pd.date_range("2023-01-01", periods=3, freq="1D"),
+                "exit_time": pd.date_range("2023-01-02", periods=3, freq="1D"),
+            }
+        )
 
         result = metrics.calculate_average_trade_duration(trades)
         assert "avg_duration" in result
@@ -507,30 +583,36 @@ class TestPerformanceMetrics:
     def test_calculate_comprehensive_metrics_with_trades(self) -> None:
         """Test calculate_comprehensive_metrics with trades."""
         metrics = PerformanceMetrics()
-        equity_curve = pd.Series([1000, 1100, 1050, 1150, 1200], index=pd.date_range("2023-01-01", periods=5))
+        equity_curve = pd.Series(
+            [1000, 1100, 1050, 1150, 1200], index=pd.date_range("2023-01-01", periods=5)
+        )
 
-        trades = pd.DataFrame({
-            "pnl": [10, -5, 20, -10, 15],
-            "entry_time": pd.date_range("2023-01-01", periods=5, freq="1D"),
-            "exit_time": pd.date_range("2023-01-02", periods=5, freq="1D")
-        })
+        trades = pd.DataFrame(
+            {
+                "pnl": [10, -5, 20, -10, 15],
+                "entry_time": pd.date_range("2023-01-01", periods=5, freq="1D"),
+                "exit_time": pd.date_range("2023-01-02", periods=5, freq="1D"),
+            }
+        )
 
         result = metrics.calculate_comprehensive_metrics(equity_curve, trades)
         assert isinstance(result, MetricsResult)
-        assert hasattr(result, 'total_return')
-        assert hasattr(result, 'sharpe_ratio')
-        assert hasattr(result, 'win_rate')
-        assert hasattr(result, 'total_trades')
+        assert hasattr(result, "total_return")
+        assert hasattr(result, "sharpe_ratio")
+        assert hasattr(result, "win_rate")
+        assert hasattr(result, "total_trades")
 
     def test_calculate_comprehensive_metrics_without_trades(self) -> None:
         """Test calculate_comprehensive_metrics without trades."""
         metrics = PerformanceMetrics()
-        equity_curve = pd.Series([1000, 1100, 1050, 1150, 1200], index=pd.date_range("2023-01-01", periods=5))
+        equity_curve = pd.Series(
+            [1000, 1100, 1050, 1150, 1200], index=pd.date_range("2023-01-01", periods=5)
+        )
 
         result = metrics.calculate_comprehensive_metrics(equity_curve)
         assert isinstance(result, MetricsResult)
-        assert hasattr(result, 'total_return')
-        assert hasattr(result, 'sharpe_ratio')
+        assert hasattr(result, "total_return")
+        assert hasattr(result, "sharpe_ratio")
         # Trade-related fields should have default values
         assert result.total_trades == 0
         assert result.winning_trades == 0
@@ -538,13 +620,18 @@ class TestPerformanceMetrics:
 
     def test_calculate_comprehensive_metrics_with_benchmark(self) -> None:
         """Test calculate_comprehensive_metrics with benchmark."""
-        benchmark = pd.Series([0.01, 0.02, -0.01, 0.01, 0.02], index=pd.date_range("2023-01-01", periods=5))
+        benchmark = pd.Series(
+            [0.01, 0.02, -0.01, 0.01, 0.02],
+            index=pd.date_range("2023-01-01", periods=5),
+        )
         metrics = PerformanceMetrics(benchmark_returns=benchmark)
-        equity_curve = pd.Series([1000, 1100, 1050, 1150, 1200], index=pd.date_range("2023-01-01", periods=5))
+        equity_curve = pd.Series(
+            [1000, 1100, 1050, 1150, 1200], index=pd.date_range("2023-01-01", periods=5)
+        )
 
         result = metrics.calculate_comprehensive_metrics(equity_curve)
         assert isinstance(result, MetricsResult)
         # Should have benchmark-related metrics
-        assert hasattr(result, 'alpha')
-        assert hasattr(result, 'beta')
-        assert hasattr(result, 'information_ratio')
+        assert hasattr(result, "alpha")
+        assert hasattr(result, "beta")
+        assert hasattr(result, "information_ratio")

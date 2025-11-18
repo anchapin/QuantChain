@@ -2,15 +2,16 @@
 Comprehensive tests for quantchain.core.config module.
 """
 
+import json
 import os
 import tempfile
-import json
+from unittest.mock import Mock, mock_open, patch
+
 import pytest
-from unittest.mock import patch, mock_open
 
 from quantchain.core.config import (
-    QuantChainConfig,
     LogLevel,
+    QuantChainConfig,
 )
 
 
@@ -107,7 +108,7 @@ class TestQuantChainConfig:
         config = QuantChainConfig(
             agent_type="test_agent",
             vector_store_path="/test/vector_store",
-            db_path="/test/db.sqlite"
+            db_path="/test/db.sqlite",
         )
         assert config.agent_type == "test_agent"
         assert config.vector_store_path == "/test/vector_store"
@@ -115,7 +116,9 @@ class TestQuantChainConfig:
 
     @patch("os.path.exists")
     @patch("builtins.open", new_callable=mock_open)
-    def test_init_with_config_file(self, mock_file: mock_open, mock_exists: Mock) -> None:
+    def test_init_with_config_file(
+        self, mock_file: mock_open, mock_exists: Mock
+    ) -> None:
         """Test initialization with config file."""
         mock_exists.return_value = True
         config_data = {
@@ -123,7 +126,7 @@ class TestQuantChainConfig:
             "llm_provider": "anthropic",
             "temperature": 0.3,
             "enable_rag": True,
-            "log_level": "warning"
+            "log_level": "warning",
         }
         mock_file.return_value.read.return_value = json.dumps(config_data)
 
@@ -137,7 +140,9 @@ class TestQuantChainConfig:
 
     @patch("os.path.exists")
     @patch("builtins.open", side_effect=IOError("Permission denied"))
-    def test_init_with_config_file_error(self, mock_file: Mock, mock_exists: Mock) -> None:
+    def test_init_with_config_file_error(
+        self, mock_file: Mock, mock_exists: Mock
+    ) -> None:
         """Test initialization with config file error."""
         mock_exists.return_value = True
 
@@ -156,7 +161,7 @@ class TestQuantChainConfig:
         """Test that data directories are created."""
         config = QuantChainConfig(
             vector_store_path="/test/vector_store/data.db",
-            db_path="/test/db/data.sqlite"
+            db_path="/test/db/data.sqlite",
         )
 
         # Should create parent directories
@@ -184,7 +189,7 @@ class TestQuantChainConfig:
             "max_tokens": 4096,
             "enable_rag": True,
             "log_level": "error",
-            "custom_field": "custom_value"
+            "custom_field": "custom_value",
         }
 
         with patch("builtins.open", mock_open(read_data=json.dumps(config_data))):
@@ -227,17 +232,19 @@ class TestQuantChainConfig:
             llm_provider="anthropic",
             temperature=0.5,
             enable_rag=True,
-            log_level=LogLevel.DEBUG
+            log_level=LogLevel.DEBUG,
         )
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as temp_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".json"
+        ) as temp_file:
             temp_path = temp_file.name
 
         try:
             config.save_to_file(temp_path)
 
             # Read and verify the saved content
-            with open(temp_path, 'r') as f:
+            with open(temp_path, "r") as f:
                 saved_data = json.load(f)
 
             assert saved_data["agent_type"] == "test_agent"
@@ -252,13 +259,15 @@ class TestQuantChainConfig:
         """Test saving to file with enum values."""
         config = QuantChainConfig(log_level=LogLevel.CRITICAL)
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as temp_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".json"
+        ) as temp_file:
             temp_path = temp_file.name
 
         try:
             config.save_to_file(temp_path)
 
-            with open(temp_path, 'r') as f:
+            with open(temp_path, "r") as f:
                 saved_data = json.load(f)
 
             assert saved_data["log_level"] == "critical"
@@ -310,7 +319,7 @@ class TestQuantChainConfig:
             temperature=0.5,
             max_tokens=1024,
             enable_rag=True,
-            log_level=LogLevel.DEBUG
+            log_level=LogLevel.DEBUG,
         )
 
         result = config.to_dict()
@@ -358,7 +367,7 @@ class TestQuantChainConfig:
             temperature=0.7,
             max_tokens=2048,
             max_retries=3,
-            retry_delay=1.0
+            retry_delay=1.0,
         )
 
         errors = config.validate()
@@ -440,7 +449,7 @@ class TestQuantChainConfig:
             temperature=3.0,
             max_tokens=-100,
             max_retries=-5,
-            retry_delay=-2.0
+            retry_delay=-2.0,
         )
 
         errors = config.validate()
@@ -459,7 +468,7 @@ class TestQuantChainConfig:
             enable_rag=True,
             log_level=LogLevel.WARNING,
             custom_list=[1, 2, 3],
-            custom_dict={"key": "value"}
+            custom_dict={"key": "value"},
         )
 
         # Add custom attribute

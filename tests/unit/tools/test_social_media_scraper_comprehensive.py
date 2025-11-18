@@ -1,8 +1,9 @@
 """Comprehensive tests for social_media_scraper module."""
 
-import pytest
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
+
+import pytest
 
 from quantchain.tools.social_media_scraper import (
     SentimentScore,
@@ -51,7 +52,7 @@ class TestSocialMediaPost:
             platform="twitter",
             author="user",
             content="Test post",
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
         assert post.id == "123"
@@ -85,7 +86,7 @@ class TestSocialMediaPost:
             hashtags=["bitcoin", "crypto"],
             mentions=["elonmusk"],
             sentiment_score=SentimentScore.POSITIVE,
-            confidence=0.85
+            confidence=0.85,
         )
 
         assert post.id == "123"
@@ -111,21 +112,21 @@ class TestSocialMediaPost:
             platform="twitter",
             author="user",
             content="Test",
-            timestamp=timestamp
+            timestamp=timestamp,
         )
         post2 = SocialMediaPost(
             id="123",
             platform="twitter",
             author="user",
             content="Test",
-            timestamp=timestamp
+            timestamp=timestamp,
         )
         post3 = SocialMediaPost(
             id="456",
             platform="twitter",
             author="user",
             content="Test",
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
         assert post1 == post2
@@ -147,7 +148,7 @@ class TestSocialMediaMetrics:
             total_shares=20,
             total_comments=30,
             unique_authors=8,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
         assert metrics.platform == "twitter"
@@ -171,7 +172,7 @@ class TestSocialMediaMetrics:
         sentiment_dist = {
             SentimentScore.POSITIVE: 5,
             SentimentScore.NEUTRAL: 3,
-            SentimentScore.NEGATIVE: 2
+            SentimentScore.NEGATIVE: 2,
         }
         top_hashtags = [("bitcoin", 8), ("crypto", 5)]
         top_mentions = [("elonmusk", 3), ("cz_binance", 2)]
@@ -189,7 +190,7 @@ class TestSocialMediaMetrics:
             top_mentions=top_mentions,
             engagement_rate=32.5,
             time_period="7d",
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
         assert metrics.platform == "reddit"
@@ -218,7 +219,7 @@ class TestSocialMediaMetrics:
             total_shares=20,
             total_comments=30,
             unique_authors=4,
-            engagement_rate=30.0  # (100 + 20 + 30) / 5 = 30.0
+            engagement_rate=30.0,  # (100 + 20 + 30) / 5 = 30.0
         )
 
         assert metrics.engagement_rate == 30.0
@@ -237,7 +238,7 @@ class TestVibeAssessment:
             vibe_score=75.0,
             sentiment=SentimentScore.POSITIVE,
             confidence=0.8,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
         assert assessment.symbol == "MEME"
@@ -260,7 +261,7 @@ class TestVibeAssessment:
             total_likes=500,
             total_shares=100,
             total_comments=200,
-            unique_authors=30
+            unique_authors=30,
         )
         reasons = ["High engagement", "Positive sentiment"]
 
@@ -272,7 +273,7 @@ class TestVibeAssessment:
             confidence=0.9,
             reasons=reasons,
             social_metrics=metrics,
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
         assert assessment.symbol == "SHIB"
@@ -312,7 +313,7 @@ class TestSocialMediaScraper:
             api_keys=api_keys,
             request_delay=2.0,
             max_retries=5,
-            timeout=30
+            timeout=30,
         )
 
         assert scraper.config == mock_config
@@ -404,16 +405,28 @@ class TestSocialMediaScraper:
         # Create test posts with different sentiments
         posts = [
             SocialMediaPost(
-                id="1", platform="test", author="user1", content="Good",
-                timestamp=datetime.now(), sentiment_score=SentimentScore.POSITIVE
+                id="1",
+                platform="test",
+                author="user1",
+                content="Good",
+                timestamp=datetime.now(),
+                sentiment_score=SentimentScore.POSITIVE,
             ),
             SocialMediaPost(
-                id="2", platform="test", author="user2", content="Bad",
-                timestamp=datetime.now(), sentiment_score=SentimentScore.NEGATIVE
+                id="2",
+                platform="test",
+                author="user2",
+                content="Bad",
+                timestamp=datetime.now(),
+                sentiment_score=SentimentScore.NEGATIVE,
             ),
             SocialMediaPost(
-                id="3", platform="test", author="user3", content="Neutral",
-                timestamp=datetime.now(), sentiment_score=SentimentScore.NEUTRAL
+                id="3",
+                platform="test",
+                author="user3",
+                content="Neutral",
+                timestamp=datetime.now(),
+                sentiment_score=SentimentScore.NEUTRAL,
             ),
         ]
 
@@ -431,16 +444,28 @@ class TestSocialMediaScraper:
         # Create test posts with hashtags
         posts = [
             SocialMediaPost(
-                id="1", platform="test", author="user1", content="Test",
-                timestamp=datetime.now(), hashtags=["crypto", "bitcoin"]
+                id="1",
+                platform="test",
+                author="user1",
+                content="Test",
+                timestamp=datetime.now(),
+                hashtags=["crypto", "bitcoin"],
             ),
             SocialMediaPost(
-                id="2", platform="test", author="user2", content="Test",
-                timestamp=datetime.now(), hashtags=["crypto", "ethereum"]
+                id="2",
+                platform="test",
+                author="user2",
+                content="Test",
+                timestamp=datetime.now(),
+                hashtags=["crypto", "ethereum"],
             ),
             SocialMediaPost(
-                id="3", platform="test", author="user3", content="Test",
-                timestamp=datetime.now(), hashtags=["blockchain"]
+                id="3",
+                platform="test",
+                author="user3",
+                content="Test",
+                timestamp=datetime.now(),
+                hashtags=["blockchain"],
             ),
         ]
 
@@ -458,12 +483,20 @@ class TestSocialMediaScraper:
         # Create test posts with mentions
         posts = [
             SocialMediaPost(
-                id="1", platform="test", author="user1", content="Test",
-                timestamp=datetime.now(), mentions=["elonmusk"]
+                id="1",
+                platform="test",
+                author="user1",
+                content="Test",
+                timestamp=datetime.now(),
+                mentions=["elonmusk"],
             ),
             SocialMediaPost(
-                id="2", platform="test", author="user2", content="Test",
-                timestamp=datetime.now(), mentions=["elonmusk", "cz_binance"]
+                id="2",
+                platform="test",
+                author="user2",
+                content="Test",
+                timestamp=datetime.now(),
+                mentions=["elonmusk", "cz_binance"],
             ),
         ]
 
@@ -566,7 +599,9 @@ class TestSocialMediaScraper:
         """Test overall vibe assessment with data."""
         scraper = SocialMediaScraper()
 
-        assessment = scraper.assess_overall_vibe("MEME", platforms=["twitter", "reddit"])
+        assessment = scraper.assess_overall_vibe(
+            "MEME", platforms=["twitter", "reddit"]
+        )
 
         assert assessment.symbol == "MEME"
         assert assessment.platform == "all"
@@ -581,15 +616,21 @@ class TestSocialMediaScraper:
         scraper = SocialMediaScraper()
 
         # Mock platform assessments with different confidence scores
-        with patch.object(scraper, 'assess_vibe') as mock_assess:
+        with patch.object(scraper, "assess_vibe") as mock_assess:
             mock_assess.return_value = [
                 VibeAssessment(
-                    symbol="TEST", platform="twitter", vibe_score=80.0,
-                    sentiment=SentimentScore.POSITIVE, confidence=0.9
+                    symbol="TEST",
+                    platform="twitter",
+                    vibe_score=80.0,
+                    sentiment=SentimentScore.POSITIVE,
+                    confidence=0.9,
                 ),
                 VibeAssessment(
-                    symbol="TEST", platform="reddit", vibe_score=60.0,
-                    sentiment=SentimentScore.NEUTRAL, confidence=0.5
+                    symbol="TEST",
+                    platform="reddit",
+                    vibe_score=60.0,
+                    sentiment=SentimentScore.NEUTRAL,
+                    confidence=0.5,
                 ),
             ]
 
@@ -616,7 +657,7 @@ class TestSocialMediaScraper:
         scraper = SocialMediaScraper()
 
         # Mock fetch_posts to return empty list
-        with patch.object(scraper, 'fetch_posts', return_value=[]):
+        with patch.object(scraper, "fetch_posts", return_value=[]):
             metrics = scraper.get_metrics("UNKNOWN")
 
             assert metrics.platform == "twitter"
@@ -635,12 +676,24 @@ class TestSocialMediaScraper:
         # Create posts with known engagement
         posts = [
             SocialMediaPost(
-                id="1", platform="test", author="user1", content="Test",
-                timestamp=datetime.now(), likes=10, comments=5, shares=2
+                id="1",
+                platform="test",
+                author="user1",
+                content="Test",
+                timestamp=datetime.now(),
+                likes=10,
+                comments=5,
+                shares=2,
             ),
             SocialMediaPost(
-                id="2", platform="test", author="user2", content="Test",
-                timestamp=datetime.now(), likes=20, comments=8, shares=3
+                id="2",
+                platform="test",
+                author="user2",
+                content="Test",
+                timestamp=datetime.now(),
+                likes=20,
+                comments=8,
+                shares=3,
             ),
         ]
 
@@ -663,9 +716,10 @@ class TestSocialMediaScraper:
 
             # Check for common reason patterns
             all_reasons_text = " ".join(assessment.reasons).lower()
-            assert any(keyword in all_reasons_text for keyword in [
-                "posts", "engagement", "sentiment", "authors"
-            ])
+            assert any(
+                keyword in all_reasons_text
+                for keyword in ["posts", "engagement", "sentiment", "authors"]
+            )
 
     @pytest.mark.unit
     def test_mock_data_structure(self):

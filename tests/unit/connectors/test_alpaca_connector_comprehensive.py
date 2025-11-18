@@ -1,9 +1,10 @@
 """Comprehensive tests for alpaca_connector module."""
 
 import os
-import pytest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from quantchain.connectors.alpaca_connector import AlpacaDataConnector
 from quantchain.core.exceptions import (
@@ -20,9 +21,7 @@ class TestAlpacaDataConnector:
     def test_connector_init_with_credentials(self):
         """Test connector initialization with provided credentials."""
         connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret",
-            paper_trading=True
+            api_key="test_key", secret_key="test_secret", paper_trading=True
         )
 
         assert connector.api_key == "test_key"
@@ -35,10 +34,9 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_connector_init_env_credentials(self):
         """Test connector initialization with environment credentials."""
-        with patch.dict(os.environ, {
-            'ALPACA_API_KEY': 'env_key',
-            'ALPACA_SECRET_KEY': 'env_secret'
-        }):
+        with patch.dict(
+            os.environ, {"ALPACA_API_KEY": "env_key", "ALPACA_SECRET_KEY": "env_secret"}
+        ):
             connector = AlpacaDataConnector()
 
             assert connector.api_key == "env_key"
@@ -48,7 +46,9 @@ class TestAlpacaDataConnector:
     def test_connector_init_missing_credentials(self):
         """Test connector initialization with missing credentials."""
         with patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(AuthenticationError, match="Alpaca API credentials not provided"):
+            with pytest.raises(
+                AuthenticationError, match="Alpaca API credentials not provided"
+            ):
                 AlpacaDataConnector()
 
     @pytest.mark.unit
@@ -60,7 +60,7 @@ class TestAlpacaDataConnector:
             paper_trading=False,
             symbol_limit=500,
             retry_count=5,
-            retry_delay=2.0
+            retry_delay=2.0,
         )
 
         assert connector.paper_trading is False
@@ -71,43 +71,48 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_initialize_clients_success(self):
         """Test successful client initialization."""
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', True):
-            with patch('quantchain.connectors.alpaca_connector.StockHistoricalDataClient') as mock_stock, \
-                 patch('quantchain.connectors.alpaca_connector.CryptoHistoricalDataClient') as mock_crypto, \
-                 patch('quantchain.connectors.alpaca_connector.TradingClient') as mock_trading:
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", True):
+            with patch(
+                "quantchain.connectors.alpaca_connector.StockHistoricalDataClient"
+            ) as mock_stock, patch(
+                "quantchain.connectors.alpaca_connector.CryptoHistoricalDataClient"
+            ) as mock_crypto, patch(
+                "quantchain.connectors.alpaca_connector.TradingClient"
+            ) as mock_trading:
 
                 connector = AlpacaDataConnector(
-                    api_key="test_key",
-                    secret_key="test_secret"
+                    api_key="test_key", secret_key="test_secret"
                 )
                 connector._initialize_clients()
 
                 mock_stock.assert_called_once_with("test_key", "test_secret")
                 mock_crypto.assert_called_once_with("test_key", "test_secret")
-                mock_trading.assert_called_once_with("test_key", "test_secret", paper=True)
+                mock_trading.assert_called_once_with(
+                    "test_key", "test_secret", paper=True
+                )
 
     @pytest.mark.unit
     def test_initialize_clients_failure(self):
         """Test client initialization failure."""
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', True):
-            with patch('quantchain.connectors.alpaca_connector.StockHistoricalDataClient') as mock_stock:
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", True):
+            with patch(
+                "quantchain.connectors.alpaca_connector.StockHistoricalDataClient"
+            ) as mock_stock:
                 mock_stock.side_effect = Exception("Authentication failed")
 
                 connector = AlpacaDataConnector(
-                    api_key="invalid_key",
-                    secret_key="invalid_secret"
+                    api_key="invalid_key", secret_key="invalid_secret"
                 )
 
-                with pytest.raises(AuthenticationError, match="Failed to authenticate with Alpaca"):
+                with pytest.raises(
+                    AuthenticationError, match="Failed to authenticate with Alpaca"
+                ):
                     connector._initialize_clients()
 
     @pytest.mark.unit
     def test_is_crypto_symbol(self):
         """Test crypto symbol detection."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
         # Crypto symbols with slash
         assert connector._is_crypto_symbol("BTC/USD") is True
@@ -124,10 +129,7 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_normalize_crypto_symbol(self):
         """Test crypto symbol normalization."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
         # Should replace dash with slash
         assert connector._normalize_crypto_symbol("BTC-USD") == "BTC/USD"
@@ -139,12 +141,9 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_convert_timeframe_valid(self):
         """Test timeframe conversion for valid timeframes."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector.TimeFrame') as mock_tf:
+        with patch("quantchain.connectors.alpaca_connector.TimeFrame") as mock_tf:
             mock_tf.Minute = "1Min"
             mock_tf.Hour = "1H"
             mock_tf.Day = "1D"
@@ -156,12 +155,9 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_convert_timeframe_invalid(self):
         """Test timeframe conversion for invalid timeframes."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector.TimeFrame') as mock_tf:
+        with patch("quantchain.connectors.alpaca_connector.TimeFrame") as mock_tf:
             timeframe_map = {
                 "1Min": "1Min",
                 "5Min": "1Min",
@@ -178,12 +174,9 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_refresh_symbol_cache_success(self):
         """Test successful symbol cache refresh."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', True):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", True):
             # Mock trading client and assets
             mock_asset1 = Mock()
             mock_asset1.symbol = "AAPL"
@@ -197,7 +190,9 @@ class TestAlpacaDataConnector:
             mock_trading_client.get_all_assets.return_value = [mock_asset1, mock_asset2]
             connector.trading_client = mock_trading_client
 
-            with patch('quantchain.connectors.alpaca_connector.AssetClass') as mock_asset_class:
+            with patch(
+                "quantchain.connectors.alpaca_connector.AssetClass"
+            ) as mock_asset_class:
                 mock_asset_class.US_EQUITY = "us_equity"
 
                 connector._refresh_symbol_cache()
@@ -210,12 +205,9 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_refresh_symbol_cache_failure(self):
         """Test symbol cache refresh failure."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', True):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", True):
             mock_trading_client = Mock()
             mock_trading_client.get_all_assets.side_effect = Exception("API Error")
             connector.trading_client = mock_trading_client
@@ -228,12 +220,9 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_refresh_symbol_cache_unavailable(self):
         """Test symbol cache refresh when Alpaca not available."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', False):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", False):
             connector._refresh_symbol_cache()
 
             assert connector._symbol_cache == {}
@@ -241,25 +230,21 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_get_historical_data_library_unavailable(self):
         """Test historical data retrieval when library unavailable."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', False):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", False):
             with pytest.raises(DataSourceError, match="Alpaca library not installed"):
                 connector.get_historical_data("AAPL", "1D")
 
     @pytest.mark.unit
     def test_get_historical_data_crypto_symbol(self):
         """Test historical data retrieval for crypto symbol."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', True):
-            with patch('quantchain.connectors.alpaca_connector._PANDAS_AVAILABLE', True):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", True):
+            with patch(
+                "quantchain.connectors.alpaca_connector._PANDAS_AVAILABLE", True
+            ):
                 # Mock crypto client
                 mock_crypto_client = Mock()
                 mock_bars = Mock()
@@ -279,13 +264,12 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_get_historical_data_stock_symbol(self):
         """Test historical data retrieval for stock symbol."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', True):
-            with patch('quantchain.connectors.alpaca_connector._PANDAS_AVAILABLE', True):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", True):
+            with patch(
+                "quantchain.connectors.alpaca_connector._PANDAS_AVAILABLE", True
+            ):
                 # Mock stock client
                 mock_stock_client = Mock()
                 mock_bars = Mock()
@@ -305,12 +289,9 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_get_historical_data_symbol_not_found(self):
         """Test historical data retrieval for unknown symbol."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', True):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", True):
             # Mock empty cache
             connector._symbol_cache = {}
 
@@ -320,13 +301,12 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_get_historical_data_default_dates(self):
         """Test historical data retrieval with default date ranges."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', True):
-            with patch('quantchain.connectors.alpaca_connector._PANDAS_AVAILABLE', True):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", True):
+            with patch(
+                "quantchain.connectors.alpaca_connector._PANDAS_AVAILABLE", True
+            ):
                 # Mock stock client
                 mock_stock_client = Mock()
                 mock_bars = Mock()
@@ -343,33 +323,30 @@ class TestAlpacaDataConnector:
 
                 # Should call with date range
                 args, kwargs = mock_stock_client.get_stock_bars.call_args
-                assert 'start' in kwargs
-                assert 'end' in kwargs
+                assert "start" in kwargs
+                assert "end" in kwargs
 
     @pytest.mark.unit
     def test_get_historical_data_retry_mechanism(self):
         """Test retry mechanism for historical data retrieval."""
         connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret",
-            retry_count=2,
-            retry_delay=0.1
+            api_key="test_key", secret_key="test_secret", retry_count=2, retry_delay=0.1
         )
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', True):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", True):
             # Mock stock client that fails then succeeds
             mock_stock_client = Mock()
             mock_stock_client.get_stock_bars.side_effect = [
                 Exception("Network error"),
                 Exception("Network error"),
-                Mock(df=Mock(), __contains__=Mock(return_value=True))
+                Mock(df=Mock(), __contains__=Mock(return_value=True)),
             ]
             connector.stock_client = mock_stock_client
 
             # Mock cache
             connector._symbol_cache = {"AAPL": {"market": "equity"}}
 
-            with patch('time.sleep'):  # Skip sleep for faster tests
+            with patch("time.sleep"):  # Skip sleep for faster tests
                 result = connector.get_historical_data("AAPL", "1D")
 
             # Should have retried 3 times
@@ -379,13 +356,10 @@ class TestAlpacaDataConnector:
     def test_get_historical_data_retry_exhausted(self):
         """Test retry exhausted for historical data retrieval."""
         connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret",
-            retry_count=2,
-            retry_delay=0.1
+            api_key="test_key", secret_key="test_secret", retry_count=2, retry_delay=0.1
         )
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', True):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", True):
             # Mock stock client that always fails
             mock_stock_client = Mock()
             mock_stock_client.get_stock_bars.side_effect = Exception("Persistent error")
@@ -394,8 +368,10 @@ class TestAlpacaDataConnector:
             # Mock cache
             connector._symbol_cache = {"AAPL": {"market": "equity"}}
 
-            with patch('time.sleep'):  # Skip sleep for faster tests
-                with pytest.raises(DataSourceError, match="Failed to get data for AAPL"):
+            with patch("time.sleep"):  # Skip sleep for faster tests
+                with pytest.raises(
+                    DataSourceError, match="Failed to get data for AAPL"
+                ):
                     connector.get_historical_data("AAPL", "1D")
 
             # Should have retried 3 times
@@ -404,24 +380,18 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_get_real_time_data_library_unavailable(self):
         """Test real-time data retrieval when library unavailable."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', False):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", False):
             with pytest.raises(DataSourceError, match="Alpaca library not installed"):
                 connector.get_real_time_data("AAPL")
 
     @pytest.mark.unit
     def test_get_real_time_data_crypto(self):
         """Test real-time data retrieval for crypto."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', True):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", True):
             # Mock crypto client
             mock_crypto_client = Mock()
             mock_quote = Mock()
@@ -447,12 +417,9 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_get_real_time_data_stock(self):
         """Test real-time data retrieval for stock."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', True):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", True):
             # Mock stock client
             mock_stock_client = Mock()
             mock_quote = Mock()
@@ -478,12 +445,9 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_get_real_time_data_symbol_not_found(self):
         """Test real-time data retrieval for unknown symbol."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', True):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", True):
             # Mock empty cache
             connector._symbol_cache = {}
 
@@ -493,12 +457,9 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_get_real_time_data_no_data(self):
         """Test real-time data retrieval when no data available."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', True):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", True):
             # Mock stock client that returns empty quotes
             mock_stock_client = Mock()
             mock_stock_client.get_stock_latest_quote.return_value = {}
@@ -507,16 +468,15 @@ class TestAlpacaDataConnector:
             # Mock cache
             connector._symbol_cache = {"AAPL": {"market": "equity"}}
 
-            with pytest.raises(SymbolNotFoundError, match="No quote data for symbol AAPL"):
+            with pytest.raises(
+                SymbolNotFoundError, match="No quote data for symbol AAPL"
+            ):
                 connector.get_real_time_data("AAPL")
 
     @pytest.mark.unit
     def test_get_quote(self):
         """Test getting detailed quote information."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
         # Mock get_real_time_data
         mock_real_time_data = {
@@ -524,10 +484,12 @@ class TestAlpacaDataConnector:
             "price": 150.5,
             "bid": 150.0,
             "ask": 151.0,
-            "timestamp": datetime.now()
+            "timestamp": datetime.now(),
         }
 
-        with patch.object(connector, 'get_real_time_data', return_value=mock_real_time_data):
+        with patch.object(
+            connector, "get_real_time_data", return_value=mock_real_time_data
+        ):
             result = connector.get_quote("AAPL")
 
             assert result["symbol"] == "AAPL"
@@ -541,17 +503,14 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_get_available_symbols_all(self):
         """Test getting all available symbols."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
         # Mock cache
         connector._symbol_cache = {
             "AAPL": {"market": "equity"},
             "GOOGL": {"market": "equity"},
             "BTC/USD": {"market": "crypto"},
-            "ETH/USD": {"market": "crypto"}
+            "ETH/USD": {"market": "crypto"},
         }
 
         result = connector.get_available_symbols()
@@ -561,17 +520,14 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_get_available_symbols_filtered(self):
         """Test getting symbols filtered by market."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
         # Mock cache
         connector._symbol_cache = {
             "AAPL": {"market": "equity"},
             "GOOGL": {"market": "equity"},
             "BTC/USD": {"market": "crypto"},
-            "ETH/USD": {"market": "crypto"}
+            "ETH/USD": {"market": "crypto"},
         }
 
         # Test equity market filter
@@ -585,17 +541,14 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_get_available_symbols_with_limit(self):
         """Test getting symbols with limit."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
         # Mock cache
         connector._symbol_cache = {
             "AAPL": {"market": "equity"},
             "GOOGL": {"market": "equity"},
             "MSFT": {"market": "equity"},
-            "TSLA": {"market": "equity"}
+            "TSLA": {"market": "equity"},
         }
 
         result = connector.get_available_symbols(limit=2)
@@ -607,18 +560,11 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_get_symbol_info_success(self):
         """Test getting symbol information successfully."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
         # Mock cache
         connector._symbol_cache = {
-            "AAPL": {
-                "market": "equity",
-                "name": "Apple Inc.",
-                "fractionable": True
-            }
+            "AAPL": {"market": "equity", "name": "Apple Inc.", "fractionable": True}
         }
 
         result = connector.get_symbol_info("AAPL")
@@ -635,10 +581,7 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_get_symbol_info_not_found(self):
         """Test getting symbol info for unknown symbol."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
         # Mock empty cache
         connector._symbol_cache = {}
@@ -649,15 +592,10 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_get_symbol_info_defaults(self):
         """Test getting symbol info with default values."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
         # Mock cache with minimal info
-        connector._symbol_cache = {
-            "AAPL": {"market": "equity"}
-        }
+        connector._symbol_cache = {"AAPL": {"market": "equity"}}
 
         result = connector.get_symbol_info("AAPL")
 
@@ -670,10 +608,7 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_is_market_open_crypto(self):
         """Test market status check for crypto (always open)."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
         result = connector.is_market_open(market="crypto")
         assert result is True
@@ -681,24 +616,18 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_is_market_open_equity_unavailable(self):
         """Test market status check when Alpaca unavailable."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', False):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", False):
             with pytest.raises(DataSourceError, match="Alpaca library not available"):
                 connector.is_market_open(market="equity")
 
     @pytest.mark.unit
     def test_is_market_open_equity_success(self):
         """Test successful market status check for equity."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', True):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", True):
             # Mock trading client
             mock_clock = Mock()
             mock_clock.is_open = True
@@ -712,12 +641,9 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_is_market_open_equity_failure(self):
         """Test market status check failure for equity."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', True):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", True):
             # Mock trading client that raises exception
             mock_trading_client = Mock()
             mock_trading_client.get_clock.side_effect = Exception("Clock API error")
@@ -729,12 +655,9 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_is_market_open_equity_no_is_open_attribute(self):
         """Test market status check when clock has no is_open attribute."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', True):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", True):
             # Mock trading client with clock lacking is_open
             mock_clock = Mock(spec=[])  # No attributes
             mock_trading_client = Mock()
@@ -747,12 +670,9 @@ class TestAlpacaDataConnector:
     @pytest.mark.unit
     def test_is_market_open_default_equity(self):
         """Test market status check with default equity market."""
-        connector = AlpacaDataConnector(
-            api_key="test_key",
-            secret_key="test_secret"
-        )
+        connector = AlpacaDataConnector(api_key="test_key", secret_key="test_secret")
 
-        with patch('quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE', True):
+        with patch("quantchain.connectors.alpaca_connector._ALPACA_AVAILABLE", True):
             # Mock trading client
             mock_clock = Mock()
             mock_clock.is_open = False
@@ -760,5 +680,7 @@ class TestAlpacaDataConnector:
             mock_trading_client.get_clock.return_value = mock_clock
             connector.trading_client = mock_trading_client
 
-            result = connector.is_market_open()  # No market specified, defaults to equity
+            result = (
+                connector.is_market_open()
+            )  # No market specified, defaults to equity
             assert result is False

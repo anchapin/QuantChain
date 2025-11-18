@@ -4,18 +4,19 @@ Comprehensive tests for quantchain.core.security module.
 
 import os
 import tempfile
+from unittest.mock import Mock, mock_open, patch
+
 import pytest
-from unittest.mock import Mock, patch, mock_open
 
 from quantchain.core.security import (
+    API_KEY_PATTERNS,
     APISecurityManager,
     CredentialNotFoundError,
-    SecurityConfigurationError,
     InvalidCredentialFormatError,
-    API_KEY_PATTERNS,
     SecretManager,
-    get_default_secret_manager,
+    SecurityConfigurationError,
     create_secret_manager,
+    get_default_secret_manager,
 )
 
 
@@ -89,14 +90,17 @@ class TestAPISecurityManager:
             # Should load from env file
             assert "alpaca" in manager._services
 
-    @patch.dict(os.environ, {
-        "ALPACA_API_KEY": "test_alpaca_key",
-        "ALPACA_API_SECRET": "test_alpaca_secret",
-        "POLYGON_API_KEY": "test_polygon_key",
-        "ALPHA_VANTAGE_API_KEY": "test_alpha_key",
-        "ANTHROPIC_API_KEY": "test_anthropic_key",
-        "OPENAI_API_KEY": "test_openai_key",
-    })
+    @patch.dict(
+        os.environ,
+        {
+            "ALPACA_API_KEY": "test_alpaca_key",
+            "ALPACA_API_SECRET": "test_alpaca_secret",
+            "POLYGON_API_KEY": "test_polygon_key",
+            "ALPHA_VANTAGE_API_KEY": "test_alpha_key",
+            "ANTHROPIC_API_KEY": "test_anthropic_key",
+            "OPENAI_API_KEY": "test_openai_key",
+        },
+    )
     def test_load_from_environment(self) -> None:
         """Test loading credentials from environment variables."""
         manager = APISecurityManager()
@@ -125,7 +129,9 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
                 assert manager._services["alpaca"]["key"] == "test_key_from_file"
                 assert manager._services["alpaca"]["secret"] == "test_secret_from_file"
                 assert manager._services["polygon"]["key"] == "test_polygon_from_file"
-                assert manager._services["alpha_vantage"]["key"] == "test_alpha_from_file"
+                assert (
+                    manager._services["alpha_vantage"]["key"] == "test_alpha_from_file"
+                )
 
     def test_load_from_env_file_with_exception(self) -> None:
         """Test loading from env file with exception."""
@@ -158,7 +164,9 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
         """Test setting API key with secret."""
         manager = APISecurityManager()
         valid_key = "ABCDEFGHIJKLMNOP"
-        valid_secret = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        valid_secret = (
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        )
         manager.set_api_key("alpaca", valid_key, valid_secret)
         assert manager._services["alpaca"]["key"] == valid_key
         assert manager._services["alpaca"]["secret"] == valid_secret
@@ -171,7 +179,7 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
         with pytest.raises(InvalidCredentialFormatError):
             manager.set_api_key("alpaca", valid_key, invalid_secret)
 
-    @patch.object(SecretManager, 'set_secret')
+    @patch.object(SecretManager, "set_secret")
     def test_set_api_key_with_secret_manager(self, mock_set_secret: Mock) -> None:
         """Test setting API key with secret manager."""
         manager = APISecurityManager()
@@ -181,7 +189,9 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
         # Should call secret manager set_secret
         mock_set_secret.assert_called_with("alpaca_api_key", valid_key)
 
-    @patch.object(SecretManager, 'set_secret', side_effect=Exception("Secret manager error"))
+    @patch.object(
+        SecretManager, "set_secret", side_effect=Exception("Secret manager error")
+    )
     def test_set_api_key_secret_manager_failure(self, mock_set_secret: Mock) -> None:
         """Test setting API key when secret manager fails."""
         manager = APISecurityManager()
@@ -204,7 +214,7 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
         retrieved_key = manager.get_api_key("alpaca")
         assert retrieved_key == valid_key
 
-    @patch.object(SecretManager, 'get_secret')
+    @patch.object(SecretManager, "get_secret")
     def test_get_api_key_from_secret_manager(self, mock_get_secret: Mock) -> None:
         """Test getting API key from secret manager."""
         manager = APISecurityManager()
@@ -215,7 +225,9 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
         assert retrieved_key == valid_key
         assert manager._services["alpaca"]["key"] == valid_key  # Should cache in memory
 
-    @patch.object(SecretManager, 'get_secret', side_effect=Exception("Secret manager error"))
+    @patch.object(
+        SecretManager, "get_secret", side_effect=Exception("Secret manager error")
+    )
     def test_get_api_key_secret_manager_failure(self, mock_get_secret: Mock) -> None:
         """Test getting API key when secret manager fails."""
         manager = APISecurityManager()
@@ -232,16 +244,20 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
         """Test getting API secret from memory."""
         manager = APISecurityManager()
         valid_key = "ABCDEFGHIJKLMNOP"
-        valid_secret = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        valid_secret = (
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        )
         manager.set_api_key("alpaca", valid_key, valid_secret)
         retrieved_secret = manager.get_api_secret("alpaca")
         assert retrieved_secret == valid_secret
 
-    @patch.object(SecretManager, 'get_secret')
+    @patch.object(SecretManager, "get_secret")
     def test_get_api_secret_from_secret_manager(self, mock_get_secret: Mock) -> None:
         """Test getting API secret from secret manager."""
         manager = APISecurityManager()
-        valid_secret = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        valid_secret = (
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        )
         mock_get_secret.return_value = valid_secret
 
         retrieved_secret = manager.get_api_secret("alpaca")
@@ -270,7 +286,9 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
         """Test validating credentials with secret."""
         manager = APISecurityManager()
         valid_key = "ABCDEFGHIJKLMNOP"
-        valid_secret = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        valid_secret = (
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        )
         result = manager.validate_credentials("alpaca", valid_key, valid_secret)
         assert result is True
 
@@ -307,7 +325,7 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
 
         assert "alpaca" not in manager._services
 
-    @patch.object(SecretManager, 'delete_secret')
+    @patch.object(SecretManager, "delete_secret")
     def test_remove_service_with_secret_manager(self, mock_delete_secret: Mock) -> None:
         """Test removing service with secret manager."""
         manager = APISecurityManager()
@@ -318,8 +336,12 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
         mock_delete_secret.assert_any_call("alpaca_api_key")
         mock_delete_secret.assert_any_call("alpaca_api_secret")
 
-    @patch.object(SecretManager, 'delete_secret', side_effect=Exception("Secret manager error"))
-    def test_remove_service_secret_manager_failure(self, mock_delete_secret: Mock) -> None:
+    @patch.object(
+        SecretManager, "delete_secret", side_effect=Exception("Secret manager error")
+    )
+    def test_remove_service_secret_manager_failure(
+        self, mock_delete_secret: Mock
+    ) -> None:
         """Test removing service when secret manager fails."""
         manager = APISecurityManager()
         manager.set_api_key("alpaca", "ABCDEFGHIJKLMNOP")
@@ -329,7 +351,9 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
 
     def test_save_to_env_file(self) -> None:
         """Test saving credentials to env file."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.env') as temp_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".env"
+        ) as temp_file:
             temp_path = temp_file.name
 
         try:
@@ -340,7 +364,7 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
             manager.save_to_env_file()
 
             # Read file contents
-            with open(temp_path, 'r') as f:
+            with open(temp_path, "r") as f:
                 content = f.read()
 
             assert "ALPACA_API_KEY=test_alpaca_key" in content
@@ -351,8 +375,12 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
 
     def test_save_to_env_file_with_existing_content(self) -> None:
         """Test saving credentials to env file with existing non-credential content."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.env') as temp_file:
-            temp_file.write("# This is a comment\nOTHER_VAR=value\nANOTHER_VAR=another_value\n")
+        with tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".env"
+        ) as temp_file:
+            temp_file.write(
+                "# This is a comment\nOTHER_VAR=value\nANOTHER_VAR=another_value\n"
+            )
             temp_path = temp_file.name
 
         try:
@@ -362,7 +390,7 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
             manager.save_to_env_file()
 
             # Read file contents
-            with open(temp_path, 'r') as f:
+            with open(temp_path, "r") as f:
                 content = f.read()
 
             assert "# This is a comment" in content
@@ -432,6 +460,7 @@ class TestAPIKeyPatterns:
     def test_alpaca_pattern(self) -> None:
         """Test Alpaca API key pattern."""
         import re
+
         pattern = API_KEY_PATTERNS["alpaca"]
         assert "key_pattern" in pattern
         assert "secret_pattern" in pattern
@@ -447,6 +476,7 @@ class TestAPIKeyPatterns:
     def test_polygon_pattern(self) -> None:
         """Test Polygon API key pattern."""
         import re
+
         pattern = API_KEY_PATTERNS["polygon"]
         assert "key_pattern" in pattern
 
@@ -457,6 +487,7 @@ class TestAPIKeyPatterns:
     def test_alpha_vantage_pattern(self) -> None:
         """Test Alpha Vantage API key pattern."""
         import re
+
         pattern = API_KEY_PATTERNS["alpha_vantage"]
         assert "key_pattern" in pattern
 
@@ -467,6 +498,7 @@ class TestAPIKeyPatterns:
     def test_anthropic_pattern(self) -> None:
         """Test Anthropic API key pattern."""
         import re
+
         pattern = API_KEY_PATTERNS["anthropic"]
         assert "key_pattern" in pattern
 
@@ -477,6 +509,7 @@ class TestAPIKeyPatterns:
     def test_openai_pattern(self) -> None:
         """Test OpenAI API key pattern."""
         import re
+
         pattern = API_KEY_PATTERNS["openai"]
         assert "key_pattern" in pattern
 

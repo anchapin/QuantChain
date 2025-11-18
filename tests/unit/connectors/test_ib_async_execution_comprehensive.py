@@ -1,9 +1,10 @@
 """Comprehensive tests for ib_async_execution module."""
 
 import asyncio
-import pytest
 from datetime import datetime
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 from quantchain.connectors.ib_async_execution import (
     IBAsyncConnectionError,
@@ -21,8 +22,8 @@ from quantchain.core.execution import (
     OrderSide,
     OrderStatus,
     OrderType,
-    Position as QuantChainPosition,
 )
+from quantchain.core.execution import Position as QuantChainPosition
 
 
 class TestIBAsyncExecutionErrors:
@@ -94,7 +95,7 @@ class TestIBAsyncExecutionConnector:
             client_id=2,
             account="DU123456",
             timeout=30,
-            readonly=True
+            readonly=True,
         )
 
         assert connector.host == "192.168.1.100"
@@ -108,9 +109,7 @@ class TestIBAsyncExecutionConnector:
     def test_connector_repr(self):
         """Test connector string representation."""
         connector = IBAsyncExecutionConnector(
-            host="192.168.1.100",
-            port=7496,
-            client_id=2
+            host="192.168.1.100", port=7496, client_id=2
         )
 
         repr_str = repr(connector)
@@ -131,7 +130,7 @@ class TestIBAsyncExecutionConnector:
         assert connector.is_connected()
 
     @pytest.mark.unit
-    @patch('quantchain.connectors.ib_async_execution.IB')
+    @patch("quantchain.connectors.ib_async_execution.IB")
     def test_connect_success(self, mock_ib):
         """Test successful connection to IB."""
         mock_ib_instance = Mock()
@@ -147,14 +146,11 @@ class TestIBAsyncExecutionConnector:
 
         asyncio.run(test_connect())
         mock_ib_instance.connect.assert_called_once_with(
-            host="127.0.0.1",
-            port=7497,
-            clientId=1,
-            timeout=10
+            host="127.0.0.1", port=7497, clientId=1, timeout=10
         )
 
     @pytest.mark.unit
-    @patch('quantchain.connectors.ib_async_execution.IB')
+    @patch("quantchain.connectors.ib_async_execution.IB")
     def test_connect_failure(self, mock_ib):
         """Test failed connection to IB."""
         mock_ib_instance = Mock()
@@ -176,7 +172,9 @@ class TestIBAsyncExecutionConnector:
         connector._connected = True
 
         async def test_disconnect():
-            with patch.object(connector.ib, 'disconnect', new_callable=AsyncMock) as mock_disconnect:
+            with patch.object(
+                connector.ib, "disconnect", new_callable=AsyncMock
+            ) as mock_disconnect:
                 await connector.disconnect()
                 mock_disconnect.assert_called_once()
                 assert connector._connected is False
@@ -209,13 +207,12 @@ class TestIBAsyncExecutionConnector:
         connector = IBAsyncExecutionConnector(readonly=True)
 
         order_request = OrderRequest(
-            symbol="AAPL",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100
+            symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
         )
 
-        with pytest.raises(IBAsyncOrderError, match="Cannot place order in readonly mode"):
+        with pytest.raises(
+            IBAsyncOrderError, match="Cannot place order in readonly mode"
+        ):
             await connector.place_order(order_request)
 
     @pytest.mark.unit
@@ -225,10 +222,7 @@ class TestIBAsyncExecutionConnector:
         connector._connected = False
 
         order_request = OrderRequest(
-            symbol="AAPL",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100
+            symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
         )
 
         with pytest.raises(IBAsyncConnectionError, match="Not connected to IB"):
@@ -247,15 +241,19 @@ class TestIBAsyncExecutionConnector:
         mock_trade.orderId = "12345"
         mock_trade.orderStatus.return_value = "Submitted"
 
-        with patch.object(connector, '_create_contract', return_value=mock_contract), \
-             patch.object(connector, '_create_order', return_value=mock_order), \
-             patch.object(connector.ib, 'placeOrder', return_value=mock_trade):
+        with patch.object(
+            connector, "_create_contract", return_value=mock_contract
+        ), patch.object(
+            connector, "_create_order", return_value=mock_order
+        ), patch.object(
+            connector.ib, "placeOrder", return_value=mock_trade
+        ):
 
             order_request = OrderRequest(
                 symbol="AAPL",
                 side=OrderSide.BUY,
                 order_type=OrderType.MARKET,
-                quantity=100
+                quantity=100,
             )
 
             result = await connector.place_order(order_request)
@@ -271,15 +269,17 @@ class TestIBAsyncExecutionConnector:
         connector = IBAsyncExecutionConnector(readonly=False)
         connector._connected = True
 
-        with patch.object(connector, '_create_contract', return_value=Mock()), \
-             patch.object(connector, '_create_order', return_value=Mock()), \
-             patch.object(connector.ib, 'placeOrder', side_effect=Exception("IB Error")):
+        with patch.object(
+            connector, "_create_contract", return_value=Mock()
+        ), patch.object(connector, "_create_order", return_value=Mock()), patch.object(
+            connector.ib, "placeOrder", side_effect=Exception("IB Error")
+        ):
 
             order_request = OrderRequest(
                 symbol="AAPL",
                 side=OrderSide.BUY,
                 order_type=OrderType.MARKET,
-                quantity=100
+                quantity=100,
             )
 
             with pytest.raises(IBAsyncOrderError, match="Failed to place order"):
@@ -295,7 +295,9 @@ class TestIBAsyncExecutionConnector:
         mock_trade = Mock()
         connector._orders["12345"] = mock_trade
 
-        with patch.object(connector.ib, 'cancelOrder', new_callable=AsyncMock) as mock_cancel:
+        with patch.object(
+            connector.ib, "cancelOrder", new_callable=AsyncMock
+        ) as mock_cancel:
             await connector.cancel_order("12345")
             mock_cancel.assert_called_once_with(mock_trade)
 
@@ -330,7 +332,9 @@ class TestIBAsyncExecutionConnector:
         mock_account.buyingPower = 200000.0
         mock_account.availableFunds = 120000.0
 
-        with patch.object(connector.ib, 'accountSummary', new_callable=AsyncMock) as mock_summary:
+        with patch.object(
+            connector.ib, "accountSummary", new_callable=AsyncMock
+        ) as mock_summary:
             mock_summary.return_value = [mock_account]
 
             result = await connector.get_account()
@@ -367,7 +371,9 @@ class TestIBAsyncExecutionConnector:
         mock_position2.position = -50
         mock_position2.averageCost = 2500.0
 
-        with patch.object(connector.ib, 'positions', new_callable=AsyncMock) as mock_positions:
+        with patch.object(
+            connector.ib, "positions", new_callable=AsyncMock
+        ) as mock_positions:
             mock_positions.return_value = [mock_position1, mock_position2]
 
             result = await connector.get_positions()
@@ -426,9 +432,13 @@ class TestIBAsyncExecutionConnector:
         mock_contract = Mock()
         mock_df = Mock()
 
-        with patch.object(connector, '_create_contract', return_value=mock_contract), \
-             patch.object(connector.ib, 'reqHistoricalData', new_callable=AsyncMock) as mock_hist_data, \
-             patch('quantchain.connectors.ib_async_execution.DataFrame', return_value=mock_df):
+        with patch.object(
+            connector, "_create_contract", return_value=mock_contract
+        ), patch.object(
+            connector.ib, "reqHistoricalData", new_callable=AsyncMock
+        ) as mock_hist_data, patch(
+            "quantchain.connectors.ib_async_execution.DataFrame", return_value=mock_df
+        ):
 
             mock_hist_data.return_value = mock_df
 
@@ -455,10 +465,12 @@ class TestIBAsyncExecutionConnector:
         connector = IBAsyncExecutionConnector()
 
         contract = connector._create_contract(
-            "AAPL", "OPT", "SMART",
+            "AAPL",
+            "OPT",
+            "SMART",
             last_trade_date_or_contract_month="20240120",
             strike=150.0,
-            right="CALL"
+            right="CALL",
         )
 
         assert contract.symbol == "AAPL"
@@ -473,7 +485,10 @@ class TestIBAsyncExecutionConnector:
         """Test contract creation error."""
         connector = IBAsyncExecutionConnector()
 
-        with patch('quantchain.connectors.ib_async_execution.Contract', side_effect=Exception("Contract error")):
+        with patch(
+            "quantchain.connectors.ib_async_execution.Contract",
+            side_effect=Exception("Contract error"),
+        ):
             with pytest.raises(IBAsyncContractError, match="Failed to create contract"):
                 connector._create_contract("INVALID", "INVALID", "SMART")
 
@@ -483,10 +498,7 @@ class TestIBAsyncExecutionConnector:
         connector = IBAsyncExecutionConnector()
 
         order_request = OrderRequest(
-            symbol="AAPL",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100
+            symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
         )
 
         order = connector._create_order(order_request)
@@ -505,7 +517,7 @@ class TestIBAsyncExecutionConnector:
             side=OrderSide.SELL,
             order_type=OrderType.LIMIT,
             quantity=50,
-            limit_price=150.0
+            limit_price=150.0,
         )
 
         order = connector._create_order(order_request)
@@ -525,7 +537,7 @@ class TestIBAsyncExecutionConnector:
             side=OrderSide.BUY,
             order_type=OrderType.STOP,
             quantity=100,
-            stop_price=155.0
+            stop_price=155.0,
         )
 
         order = connector._create_order(order_request)
@@ -546,7 +558,7 @@ class TestIBAsyncExecutionConnector:
             order_type=OrderType.STOP_LIMIT,
             quantity=75,
             stop_price=155.0,
-            limit_price=154.5
+            limit_price=154.5,
         )
 
         order = connector._create_order(order_request)
@@ -555,7 +567,7 @@ class TestIBAsyncExecutionConnector:
         assert order.orderType == "STPLMT"
         assert order.totalQuantity == 75
         assert order.auxPrice == 155.0  # Stop price
-        assert order.lmtPrice == 154.5   # Limit price
+        assert order.lmtPrice == 154.5  # Limit price
 
     @pytest.mark.unit
     def test_create_order_unsupported_type(self):
@@ -566,7 +578,7 @@ class TestIBAsyncExecutionConnector:
             symbol="AAPL",
             side=OrderSide.BUY,
             order_type=OrderType.TRAILING_STOP,
-            quantity=100
+            quantity=100,
         )
 
         with pytest.raises(IBAsyncOrderError, match="Unsupported order type"):
@@ -579,10 +591,7 @@ class TestIBAsyncExecutionConnector:
 
         # Test BUY side
         buy_order = OrderRequest(
-            symbol="AAPL",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100
+            symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
         )
         order = connector._create_order(buy_order)
         assert order.action == "BUY"
@@ -592,7 +601,7 @@ class TestIBAsyncExecutionConnector:
             symbol="AAPL",
             side=OrderSide.SELL,
             order_type=OrderType.MARKET,
-            quantity=100
+            quantity=100,
         )
         order = connector._create_order(sell_order)
         assert order.action == "SELL"
@@ -607,16 +616,26 @@ class TestIBAsyncExecutionConnector:
         order = connector._create_order(market_order)
         assert order.orderType == "MKT"
 
-        limit_order = OrderRequest("AAPL", OrderSide.BUY, OrderType.LIMIT, 100, limit_price=150.0)
+        limit_order = OrderRequest(
+            "AAPL", OrderSide.BUY, OrderType.LIMIT, 100, limit_price=150.0
+        )
         order = connector._create_order(limit_order)
         assert order.orderType == "LMT"
 
-        stop_order = OrderRequest("AAPL", OrderSide.BUY, OrderType.STOP, 100, stop_price=155.0)
+        stop_order = OrderRequest(
+            "AAPL", OrderSide.BUY, OrderType.STOP, 100, stop_price=155.0
+        )
         order = connector._create_order(stop_order)
         assert order.orderType == "STP"
 
-        stop_limit_order = OrderRequest("AAPL", OrderSide.BUY, OrderType.STOP_LIMIT, 100,
-                                      stop_price=155.0, limit_price=154.5)
+        stop_limit_order = OrderRequest(
+            "AAPL",
+            OrderSide.BUY,
+            OrderType.STOP_LIMIT,
+            100,
+            stop_price=155.0,
+            limit_price=154.5,
+        )
         order = connector._create_order(stop_limit_order)
         assert order.orderType == "STPLMT"
 
@@ -628,7 +647,9 @@ class TestIBAsyncExecutionConnector:
         async def successful_operation():
             return "success"
 
-        result = await connector._handle_ib_errors(successful_operation, "test operation")
+        result = await connector._handle_ib_errors(
+            successful_operation, "test operation"
+        )
         assert result == "success"
 
     @pytest.mark.unit
@@ -648,10 +669,7 @@ class TestIBAsyncExecutionConnector:
         connector = IBAsyncExecutionConnector()
 
         valid_order = OrderRequest(
-            symbol="AAPL",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100
+            symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
         )
 
         # Should not raise exception
@@ -663,10 +681,7 @@ class TestIBAsyncExecutionConnector:
         connector = IBAsyncExecutionConnector()
 
         invalid_order = OrderRequest(
-            symbol="",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=100
+            symbol="", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
         )
 
         with pytest.raises(IBAsyncOrderError, match="Symbol is required"):
@@ -678,10 +693,7 @@ class TestIBAsyncExecutionConnector:
         connector = IBAsyncExecutionConnector()
 
         invalid_order = OrderRequest(
-            symbol="AAPL",
-            side=OrderSide.BUY,
-            order_type=OrderType.MARKET,
-            quantity=0
+            symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=0
         )
 
         with pytest.raises(IBAsyncOrderError, match="Quantity must be positive"):
@@ -696,7 +708,7 @@ class TestIBAsyncExecutionConnector:
             symbol="AAPL",
             side=OrderSide.BUY,
             order_type=OrderType.LIMIT,
-            quantity=100
+            quantity=100,
             # Missing limit_price
         )
 
@@ -712,7 +724,7 @@ class TestIBAsyncExecutionConnector:
             symbol="AAPL",
             side=OrderSide.BUY,
             order_type=OrderType.STOP,
-            quantity=100
+            quantity=100,
             # Missing stop_price
         )
 

@@ -41,7 +41,7 @@ def get_default_secret_manager() -> SecretManager:
     return SecretManager()
 
 
-def create_secret_manager(backend: str, **kwargs) -> SecretManager:
+def create_secret_manager(backend: str, **kwargs: Any) -> SecretManager:
     """Create secret manager with specified backend."""
     return SecretManager()
 
@@ -81,7 +81,7 @@ class APISecurityManager:
     """Manages secure API key storage and validation for QuantChain."""
 
     def __init__(
-        self, env_file: str = ".env", backend: Optional[str] = None, **kwargs
+        self, env_file: str = ".env", backend: Optional[str] = None, **kwargs: Any
     ) -> None:
         """Initialize security manager with optional env file path or backend."""
         self.env_file = env_file
@@ -224,12 +224,12 @@ class APISecurityManager:
                         if service not in self._services:
                             self._services[service] = {}
                         self._services[service]["key"] = key
-                        return key
+                        return str(key)
                 except Exception:
                     pass
             raise CredentialNotFoundError(f"API key for {service} not found")
 
-        return self._services[service]["key"]
+        return str(self._services[service]["key"])
 
     def get_api_secret(self, service: str) -> Optional[str]:
         """Retrieve API secret for a service."""
@@ -243,12 +243,16 @@ class APISecurityManager:
                         if service not in self._services:
                             self._services[service] = {}
                         self._services[service]["secret"] = secret
-                        return secret
+                        return str(secret) if secret else None
                 except Exception:
                     pass
             return None
 
-        return self._services[service]["secret"]
+        return (
+            str(self._services[service]["secret"])
+            if self._services[service]["secret"]
+            else None
+        )
 
     def validate_credentials(
         self, service: str, key: Optional[str] = None, secret: Optional[str] = None

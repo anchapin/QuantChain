@@ -1,13 +1,14 @@
 """Comprehensive tests for chart_reader_agent module."""
 
-import pytest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
+
+import pytest
 
 from quantchain.agents.chart_reader_agent import (
+    ChartImage,
     ChartReaderAgent,
     ChartReaderAgentConfig,
-    ChartImage,
     ChartRenderer,
     OHLCVData,
     PatternAnalysis,
@@ -108,7 +109,9 @@ class TestOHLCVData:
         closes = [101.0]
         volumes = [1000]
 
-        with pytest.raises(ValueError, match="All data arrays must have the same length"):
+        with pytest.raises(
+            ValueError, match="All data arrays must have the same length"
+        ):
             OHLCVData(timestamps, opens, highs, lows, closes, volumes)
 
     @pytest.mark.unit
@@ -124,8 +127,8 @@ class TestOHLCVData:
         ohlcv = OHLCVData(timestamps, opens, highs, lows, closes, volumes)
 
         # Mock pandas availability
-        with patch('quantchain.agents.chart_reader_agent._PANDAS_AVAILABLE', True):
-            with patch('quantchain.agents.chart_reader_agent.pd') as mock_pd:
+        with patch("quantchain.agents.chart_reader_agent._PANDAS_AVAILABLE", True):
+            with patch("quantchain.agents.chart_reader_agent.pd") as mock_pd:
                 mock_df = Mock()
                 mock_pd.DataFrame.return_value = mock_df
 
@@ -145,7 +148,7 @@ class TestOHLCVData:
 
         ohlcv = OHLCVData(timestamps, opens, highs, lows, closes, volumes)
 
-        with patch('quantchain.agents.chart_reader_agent._PANDAS_AVAILABLE', False):
+        with patch("quantchain.agents.chart_reader_agent._PANDAS_AVAILABLE", False):
             result = ohlcv.to_dataframe()
             assert result is None
 
@@ -160,7 +163,7 @@ class TestTechnicalIndicator:
             name="SMA",
             params={"period": 20},
             values=[100.0, 101.0, 102.0],
-            signal="BUY"
+            signal="BUY",
         )
 
         assert indicator.name == "SMA"
@@ -172,9 +175,7 @@ class TestTechnicalIndicator:
     def test_technical_indicator_creation_defaults(self):
         """Test creating technical indicator with defaults."""
         indicator = TechnicalIndicator(
-            name="RSI",
-            params={"period": 14},
-            values=[50.0, 55.0]
+            name="RSI", params={"period": 14}, values=[50.0, 55.0]
         )
 
         assert indicator.name == "RSI"
@@ -282,7 +283,7 @@ class TestPatternAnalysis:
             confluence_score=8.5,
             entry_price=150.0,
             stop_loss=145.0,
-            take_profit=[160.0, 170.0]
+            take_profit=[160.0, 170.0],
         )
 
         assert analysis.symbol == "AAPL"
@@ -306,7 +307,7 @@ class TestPatternAnalysis:
             patterns=[],
             confidence=50.0,
             overall_sentiment="neutral",
-            recommended_action="HOLD"
+            recommended_action="HOLD",
         )
 
         assert analysis.symbol == "BTC"
@@ -337,7 +338,7 @@ class TestChartImage:
             image_data=image_data,
             indicators_applied=["SMA(20)", "RSI(14)"],
             timestamp=timestamp,
-            metadata=metadata
+            metadata=metadata,
         )
 
         assert chart_image.symbol == "AAPL"
@@ -353,10 +354,7 @@ class TestChartImage:
         image_data = b"fake_image_data"
 
         chart_image = ChartImage(
-            symbol="BTC",
-            timeframe="1h",
-            image_data=image_data,
-            indicators_applied=[]
+            symbol="BTC", timeframe="1h", image_data=image_data, indicators_applied=[]
         )
 
         assert chart_image.symbol == "BTC"
@@ -392,9 +390,11 @@ class TestChartRenderer:
         renderer = ChartRenderer()
 
         # Mock missing dependencies
-        with patch('quantchain.agents.chart_reader_agent._MATPLOTLIB_AVAILABLE', False):
-            with patch('quantchain.agents.chart_reader_agent._MPF_AVAILABLE', False):
-                with pytest.raises(ImportError, match="matplotlib and mplfinance are required"):
+        with patch("quantchain.agents.chart_reader_agent._MATPLOTLIB_AVAILABLE", False):
+            with patch("quantchain.agents.chart_reader_agent._MPF_AVAILABLE", False):
+                with pytest.raises(
+                    ImportError, match="matplotlib and mplfinance are required"
+                ):
                     renderer.render_candlestick_chart("AAPL", "1d", Mock())
 
     @pytest.mark.unit
@@ -404,8 +404,8 @@ class TestChartRenderer:
         ohlcv = Mock()
         ohlcv.to_dataframe.return_value = None
 
-        with patch('quantchain.agents.chart_reader_agent._MATPLOTLIB_AVAILABLE', True):
-            with patch('quantchain.agents.chart_reader_agent._MPF_AVAILABLE', True):
+        with patch("quantchain.agents.chart_reader_agent._MATPLOTLIB_AVAILABLE", True):
+            with patch("quantchain.agents.chart_reader_agent._MPF_AVAILABLE", True):
                 with pytest.raises(ImportError, match="pandas is required"):
                     renderer.render_candlestick_chart("AAPL", "1d", ohlcv)
 
@@ -683,7 +683,9 @@ class TestChartReaderAgent:
 
         result = agent._analyze_chart(chart_image, ohlcv, indicators)
 
-        agent.pattern_recognizer.analyze_chart.assert_called_once_with(chart_image, ohlcv, indicators)
+        agent.pattern_recognizer.analyze_chart.assert_called_once_with(
+            chart_image, ohlcv, indicators
+        )
 
     @pytest.mark.unit
     def test_analyze_symbol(self):
@@ -691,10 +693,13 @@ class TestChartReaderAgent:
         agent = ChartReaderAgent()
 
         # Mock dependencies to avoid complex rendering
-        with patch.object(agent, '_get_historical_data') as mock_data, \
-             patch.object(agent, '_calculate_indicators') as mock_indicators, \
-             patch.object(agent.renderer, 'render_candlestick_chart') as mock_render, \
-             patch.object(agent, '_analyze_chart') as mock_analyze:
+        with patch.object(agent, "_get_historical_data") as mock_data, patch.object(
+            agent, "_calculate_indicators"
+        ) as mock_indicators, patch.object(
+            agent.renderer, "render_candlestick_chart"
+        ) as mock_render, patch.object(
+            agent, "_analyze_chart"
+        ) as mock_analyze:
 
             mock_data.return_value = Mock()
             mock_indicators.return_value = [Mock()]
