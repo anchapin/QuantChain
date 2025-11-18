@@ -6,17 +6,36 @@ from pathlib import Path
 
 # List of high-impact modules to create basic tests for
 MODULES_TO_TEST = [
-    ("quantchain.backtesting.performance_metrics", "tests/unit/backtesting/test_performance_metrics.py"),
-    ("quantchain.connectors.alpaca_connector", "tests/unit/connectors/test_alpaca_connector.py"),
-    ("quantchain.backtesting.market_friction", "tests/unit/backtesting/test_market_friction.py"),
-    ("quantchain.backtesting.finrl_adapter", "tests/unit/backtesting/test_finrl_adapter.py"),
-    ("quantchain.backtesting.backtestingpy_engine", "tests/unit/backtesting/test_backtestingpy_engine.py"),
-    ("quantchain.connectors.dexscreener_connector", "tests/unit/connectors/test_dexscreener_connector.py"),
+    (
+        "quantchain.backtesting.performance_metrics",
+        "tests/unit/backtesting/test_performance_metrics.py",
+    ),
+    (
+        "quantchain.connectors.alpaca_connector",
+        "tests/unit/connectors/test_alpaca_connector.py",
+    ),
+    (
+        "quantchain.backtesting.market_friction",
+        "tests/unit/backtesting/test_market_friction.py",
+    ),
+    (
+        "quantchain.backtesting.finrl_adapter",
+        "tests/unit/backtesting/test_finrl_adapter.py",
+    ),
+    (
+        "quantchain.backtesting.backtestingpy_engine",
+        "tests/unit/backtesting/test_backtestingpy_engine.py",
+    ),
+    (
+        "quantchain.connectors.dexscreener_connector",
+        "tests/unit/connectors/test_dexscreener_connector.py",
+    ),
 ]
+
 
 def create_basic_test_content(module_name, class_name):
     """Create basic test content for a module."""
-    module_short_name = module_name.split('.')[-1]
+    module_short_name = module_name.split(".")[-1]
 
     template = f'''"""Basic tests for {module_name}."""
 
@@ -56,9 +75,10 @@ class Test{class_name}Basic:
 '''
     return template
 
+
 def create_basic_test(module_name, test_file_path):
     """Create a basic test file for a module."""
-    class_name = module_name.split('.')[-1].replace('_', '').title()
+    class_name = module_name.split(".")[-1].replace("_", "").title()
 
     test_content = create_basic_test_content(module_name, class_name)
 
@@ -67,10 +87,11 @@ def create_basic_test(module_name, test_file_path):
     test_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Write test file
-    with open(test_path, 'w') as f:
+    with open(test_path, "w") as f:
         f.write(test_content)
 
     print(f"Created basic test for {module_name} at {test_file_path}")
+
 
 def main():
     """Main function to create basic tests."""
@@ -79,6 +100,7 @@ def main():
             create_basic_test(module_name, test_file_path)
         except Exception as e:
             print(f"Error creating test for {module_name}: {e}")
+
 
 if __name__ == "__main__":
     main()

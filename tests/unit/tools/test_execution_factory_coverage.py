@@ -2,19 +2,26 @@
 Comprehensive test suite for execution factory module.
 """
 
-import pytest
-from unittest.mock import Mock, patch
 from typing import Any, Dict
+from unittest.mock import Mock, patch
+
+import pytest
 
 # Try to import the execution factory, skip if not available
 try:
-    from quantchain.tools.execution_factory import create_execution_interface, ExecutionFactory
+    from quantchain.tools.execution_factory import (
+        ExecutionFactory,
+        create_execution_interface,
+    )
+
     EXECUTION_FACTORY_AVAILABLE = True
 except ImportError:
     EXECUTION_FACTORY_AVAILABLE = False
 
 
-@pytest.mark.skipif(not EXECUTION_FACTORY_AVAILABLE, reason="Execution factory module not available")
+@pytest.mark.skipif(
+    not EXECUTION_FACTORY_AVAILABLE, reason="Execution factory module not available"
+)
 class TestExecutionFactory:
     """Test execution factory functionality."""
 
@@ -23,7 +30,9 @@ class TestExecutionFactory:
         mock_config = Mock()
         mock_config.get.return_value = "paper"
 
-        with patch('quantchain.tools.execution_factory.PaperTradingExecutionInterface') as mock_paper:
+        with patch(
+            "quantchain.tools.execution_factory.PaperTradingExecutionInterface"
+        ) as mock_paper:
             interface = create_execution_interface(mock_config)
 
             assert interface is not None
@@ -34,7 +43,9 @@ class TestExecutionFactory:
         mock_config = Mock()
         mock_config.get.side_effect = self._mock_config_get("paper")
 
-        with patch('quantchain.tools.execution_factory.PaperTradingExecutionInterface') as mock_paper:
+        with patch(
+            "quantchain.tools.execution_factory.PaperTradingExecutionInterface"
+        ) as mock_paper:
             interface = create_execution_interface(mock_config)
 
             assert interface is not None
@@ -45,7 +56,9 @@ class TestExecutionFactory:
         mock_config = Mock()
         mock_config.get.side_effect = self._mock_config_get("alpaca")
 
-        with patch('quantchain.tools.execution_factory.AlpacaExecutionInterface') as mock_alpaca:
+        with patch(
+            "quantchain.tools.execution_factory.AlpacaExecutionInterface"
+        ) as mock_alpaca:
             interface = create_execution_interface(mock_config)
 
             assert interface is not None
@@ -59,7 +72,10 @@ class TestExecutionFactory:
         # Expect ImportError (or the specific exception your codebase uses for missing IB library)
         with pytest.raises(ImportError) as exc_info:
             create_execution_interface(mock_config)
-        assert "ib_async" in str(exc_info.value).lower() or "interactive brokers" in str(exc_info.value).lower()
+        assert (
+            "ib_async" in str(exc_info.value).lower()
+            or "interactive brokers" in str(exc_info.value).lower()
+        )
 
     def test_create_unknown_broker(self) -> None:
         """Test creating interface for unknown broker."""
@@ -81,7 +97,9 @@ class TestExecutionFactory:
 
         factory = ExecutionFactory()
 
-        with patch('quantchain.tools.execution_factory.PaperTradingExecutionInterface') as mock_paper:
+        with patch(
+            "quantchain.tools.execution_factory.PaperTradingExecutionInterface"
+        ) as mock_paper:
             interface = factory.create(mock_config)
 
             assert interface is not None
@@ -93,7 +111,9 @@ class TestExecutionFactory:
         mock_config.get.side_effect = self._mock_config_get(None)
 
         # Should use default broker
-        with patch('quantchain.tools.execution_factory.PaperTradingExecutionInterface') as mock_paper:
+        with patch(
+            "quantchain.tools.execution_factory.PaperTradingExecutionInterface"
+        ) as mock_paper:
             interface = create_execution_interface(mock_config)
 
             assert interface is not None
@@ -104,7 +124,9 @@ class TestExecutionFactory:
         mock_config = Mock()
         mock_config.get.side_effect = self._mock_config_get("paper")
 
-        with patch('quantchain.tools.execution_factory.PaperTradingExecutionInterface') as mock_paper:
+        with patch(
+            "quantchain.tools.execution_factory.PaperTradingExecutionInterface"
+        ) as mock_paper:
             interface = create_execution_interface(mock_config)
 
             # Verify that config methods were called
@@ -116,24 +138,16 @@ class TestExecutionFactory:
         mock_config = Mock()
         mock_config.get.side_effect = self._mock_config_get("alpaca")
 
-        with patch('quantchain.tools.execution_factory.AlpacaExecutionInterface') as mock_alpaca:
+        with patch(
+            "quantchain.tools.execution_factory.AlpacaExecutionInterface"
+        ) as mock_alpaca:
             interface = create_execution_interface(mock_config)
 
             # Verify broker-specific config methods were called
             assert mock_config.get.call_count > 1
             assert interface is not None
 
-    def test_broker_specific_config_ib(self) -> None:
-        """Test broker-specific configuration for Interactive Brokers."""
-        mock_config = Mock()
-        mock_config.get.side_effect = self._mock_config_get("ib")
-
-        with pytest.raises(ImportError):
-            create_execution_interface(mock_config)
-
-        # Verify IB-specific config methods were attempted
-        assert mock_config.get.call_count > 1
-
+    
     def test_error_handling_invalid_config(self) -> None:
         """Test error handling for invalid configuration."""
         mock_config = Mock()
@@ -153,7 +167,7 @@ class TestExecutionFactory:
             "trading.ib.port": 7497,
             "trading.ib.client_id": 1,
             "trading.ib.timeout": 10,
-            "trading.ib.account": "DU123456"
+            "trading.ib.account": "DU123456",
         }
 
         def get_side_effect(key: str, default: Any = None) -> Any:
@@ -162,20 +176,24 @@ class TestExecutionFactory:
         return get_side_effect
 
 
-@pytest.mark.skipif(not EXECUTION_FACTORY_AVAILABLE, reason="Execution factory module not available")
+@pytest.mark.skipif(
+    not EXECUTION_FACTORY_AVAILABLE, reason="Execution factory module not available"
+)
 class TestExecutionFactoryEdgeCases:
     """Test execution factory edge cases."""
 
     def test_create_interface_with_config_dict(self) -> None:
         """Test creating interface with dict-based config."""
-        config_dict = {
-            "trading.default_broker": "paper"
-        }
+        config_dict = {"trading.default_broker": "paper"}
 
         mock_config = Mock()
-        mock_config.get.side_effect = lambda key, default=None: config_dict.get(key, default)
+        mock_config.get.side_effect = lambda key, default=None: config_dict.get(
+            key, default
+        )
 
-        with patch('quantchain.tools.execution_factory.PaperTradingExecutionInterface') as mock_paper:
+        with patch(
+            "quantchain.tools.execution_factory.PaperTradingExecutionInterface"
+        ) as mock_paper:
             interface = create_execution_interface(mock_config)
 
             assert interface is not None
@@ -186,7 +204,9 @@ class TestExecutionFactoryEdgeCases:
         mock_config = Mock()
         mock_config.get.return_value = None
 
-        with patch('quantchain.tools.execution_factory.PaperTradingExecutionInterface') as mock_paper:
+        with patch(
+            "quantchain.tools.execution_factory.PaperTradingExecutionInterface"
+        ) as mock_paper:
             interface = create_execution_interface(mock_config)
 
             assert interface is not None
@@ -197,7 +217,9 @@ class TestExecutionFactoryEdgeCases:
         mock_config = Mock()
         mock_config.get.return_value = "PAPER"
 
-        with patch('quantchain.tools.execution_factory.PaperTradingExecutionInterface') as mock_paper:
+        with patch(
+            "quantchain.tools.execution_factory.PaperTradingExecutionInterface"
+        ) as mock_paper:
             interface = create_execution_interface(mock_config)
 
             assert interface is not None

@@ -3,20 +3,23 @@ Comprehensive test suite for CI fixer module.
 """
 
 import os
-import pytest
-import tempfile
 import shutil
-from unittest.mock import Mock, patch, MagicMock
+import tempfile
 from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # Try to import the CI fixer modules, skip if not available
 try:
     from quantchain.tools.ci_fixer import CIFixer, CIFixTool
+
     CI_FIXER_AVAILABLE = True
 except ImportError:
     try:
         # Fallback to check if we have any CI fixing functionality
         import subprocess
+
         CI_FIXER_AVAILABLE = True
     except ImportError:
         CI_FIXER_AVAILABLE = False
@@ -85,19 +88,20 @@ class TestCIFileOperations:
         mock_result.stdout = "https://github.com/owner/repo.git\n"
         mock_result.returncode = 0
 
-        with patch('subprocess.run', return_value=mock_result):
+        with patch("subprocess.run", return_value=mock_result):
             try:
-                if 'CIFixTool' in globals():
+                if "CIFixTool" in globals():
                     fixer = CIFixTool()
                     owner = fixer._get_repo_owner()
                     assert owner == "owner"
                 else:
                     # Fallback test for basic functionality
                     import subprocess
+
                     result = subprocess.run(
                         ["echo", "https://github.com/owner/repo.git"],
                         capture_output=True,
-                        text=True
+                        text=True,
                     )
                     assert "owner" in result.stdout
             except (NameError, AttributeError, ImportError):
@@ -110,9 +114,9 @@ class TestCIFileOperations:
         mock_result.stdout = "git@github.com:owner/repo.git\n"
         mock_result.returncode = 0
 
-        with patch('subprocess.run', return_value=mock_result):
+        with patch("subprocess.run", return_value=mock_result):
             try:
-                if 'CIFixTool' in globals():
+                if "CIFixTool" in globals():
                     fixer = CIFixTool()
                     owner = fixer._get_repo_owner()
                     assert owner == "owner"
@@ -126,9 +130,11 @@ class TestCIFileOperations:
     def test_get_repo_owner_error_handling(self) -> None:
         """Test error handling in repo owner extraction."""
         # Mock subprocess.run to raise an exception
-        with patch('subprocess.run', side_effect=subprocess.CalledProcessError(1, 'git')):
+        with patch(
+            "subprocess.run", side_effect=subprocess.CalledProcessError(1, "git")
+        ):
             try:
-                if 'CIFixTool' in globals():
+                if "CIFixTool" in globals():
                     fixer = CIFixTool()
                     owner = fixer._get_repo_owner()
                     # Should handle error gracefully, possibly returning None or empty string
@@ -146,9 +152,9 @@ class TestCIFileOperations:
         mock_result = Mock()
         mock_result.returncode = 0
 
-        with patch('subprocess.run', return_value=mock_result):
+        with patch("subprocess.run", return_value=mock_result):
             try:
-                if 'CIFixTool' in globals():
+                if "CIFixTool" in globals():
                     fixer = CIFixTool()
                     fixer.fix_formatting()
                     # Should not raise an exception
@@ -157,7 +163,9 @@ class TestCIFileOperations:
                     commands = [["black", "--version"], ["isort", "--version"]]
                     for cmd in commands:
                         try:
-                            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+                            result = subprocess.run(
+                                cmd, capture_output=True, text=True, timeout=10
+                            )
                             # Command should execute without exception
                         except (subprocess.TimeoutExpired, FileNotFoundError):
                             # Commands might not be installed, which is fine for testing
@@ -171,16 +179,21 @@ class TestCIFileOperations:
         mock_result = Mock()
         mock_result.returncode = 0
 
-        with patch('subprocess.run', return_value=mock_result):
+        with patch("subprocess.run", return_value=mock_result):
             try:
-                if 'CIFixTool' in globals():
+                if "CIFixTool" in globals():
                     fixer = CIFixTool()
                     fixer.run_linting()
                     # Should not raise an exception
                 else:
                     # Fallback test for linting commands
                     try:
-                        result = subprocess.run(["python", "--version"], capture_output=True, text=True, timeout=10)
+                        result = subprocess.run(
+                            ["python", "--version"],
+                            capture_output=True,
+                            text=True,
+                            timeout=10,
+                        )
                         assert result.returncode == 0
                     except (subprocess.TimeoutExpired, FileNotFoundError):
                         pass
@@ -193,16 +206,21 @@ class TestCIFileOperations:
         mock_result = Mock()
         mock_result.returncode = 0
 
-        with patch('subprocess.run', return_value=mock_result):
+        with patch("subprocess.run", return_value=mock_result):
             try:
-                if 'CIFixTool' in globals():
+                if "CIFixTool" in globals():
                     fixer = CIFixTool()
                     fixer.run_tests()
                     # Should not raise an exception
                 else:
                     # Fallback test for pytest command
                     try:
-                        result = subprocess.run(["python", "-m", "pytest", "--version"], capture_output=True, text=True, timeout=10)
+                        result = subprocess.run(
+                            ["python", "-m", "pytest", "--version"],
+                            capture_output=True,
+                            text=True,
+                            timeout=10,
+                        )
                         # pytest might not be installed, but command should be valid
                     except (subprocess.TimeoutExpired, FileNotFoundError):
                         pass
@@ -217,11 +235,11 @@ class TestCIIntegration:
     def test_ci_fix_workflow(self) -> None:
         """Test complete CI fix workflow."""
         try:
-            if 'CIFixTool' in globals():
+            if "CIFixTool" in globals():
                 tool = CIFixTool()
 
                 # Mock all subprocess calls
-                with patch('subprocess.run') as mock_run:
+                with patch("subprocess.run") as mock_run:
                     mock_run.return_value = Mock(returncode=0)
 
                     # Run the workflow
@@ -233,15 +251,21 @@ class TestCIIntegration:
                     assert mock_run.call_count > 0
             else:
                 # Fallback test for workflow validation
-                with patch('subprocess.run') as mock_run:
+                with patch("subprocess.run") as mock_run:
                     mock_run.return_value = Mock(returncode=0)
 
                     # Simulate workflow steps
-                    steps = [["black", "--version"], ["isort", "--version"], ["pytest", "--version"]]
+                    steps = [
+                        ["black", "--version"],
+                        ["isort", "--version"],
+                        ["pytest", "--version"],
+                    ]
 
                     for step in steps:
                         try:
-                            subprocess.run(step, capture_output=True, text=True, timeout=10)
+                            subprocess.run(
+                                step, capture_output=True, text=True, timeout=10
+                            )
                         except (subprocess.TimeoutExpired, FileNotFoundError):
                             # Commands might not be installed
                             pass
@@ -252,14 +276,14 @@ class TestCIIntegration:
     def test_error_recovery(self) -> None:
         """Test error recovery in CI operations."""
         try:
-            if 'CIFixTool' in globals():
+            if "CIFixTool" in globals():
                 tool = CIFixTool()
 
                 # Mock subprocess to raise an exception, then succeed
-                with patch('subprocess.run') as mock_run:
+                with patch("subprocess.run") as mock_run:
                     mock_run.side_effect = [
-                        subprocess.CalledProcessError(1, 'black'),  # First call fails
-                        Mock(returncode=0)  # Second call succeeds
+                        subprocess.CalledProcessError(1, "black"),  # First call fails
+                        Mock(returncode=0),  # Second call succeeds
                     ]
 
                     # Should handle the first error gracefully
@@ -272,11 +296,11 @@ class TestCIIntegration:
                     assert mock_run.call_count >= 1
             else:
                 # Fallback test for error handling
-                with patch('subprocess.run') as mock_run:
-                    mock_run.side_effect = subprocess.CalledProcessError(1, 'false')
+                with patch("subprocess.run") as mock_run:
+                    mock_run.side_effect = subprocess.CalledProcessError(1, "false")
 
                     with pytest.raises(subprocess.CalledProcessError):
-                        subprocess.run(['false'], check=True)
+                        subprocess.run(["false"], check=True)
 
         except (NameError, ImportError):
             pytest.skip("CIFixTool not available")
@@ -284,7 +308,7 @@ class TestCIIntegration:
     def test_configuration_validation(self) -> None:
         """Test configuration validation."""
         try:
-            if 'CIFixTool' in globals():
+            if "CIFixTool" in globals():
                 # Test with valid configuration
                 tool = CIFixTool()
                 assert tool is not None
@@ -308,16 +332,13 @@ class TestCICommandBuilder:
 
     def test_build_formatting_commands(self) -> None:
         """Test building formatting commands."""
-        expected_commands = [
-            ["black", "."],
-            ["isort", "."]
-        ]
+        expected_commands = [["black", "."], ["isort", "."]]
 
         try:
-            if 'CIFixTool' in globals():
+            if "CIFixTool" in globals():
                 tool = CIFixTool()
                 # Mock subprocess.run to capture commands
-                with patch('subprocess.run') as mock_run:
+                with patch("subprocess.run") as mock_run:
                     mock_run.return_value = Mock(returncode=0)
 
                     tool.fix_formatting()
@@ -325,7 +346,9 @@ class TestCICommandBuilder:
                     # Verify expected commands were called
                     actual_calls = [call[0][0] for call in mock_run.call_args_list]
                     for expected_cmd in expected_commands:
-                        assert any(expected_cmd[0] in str(call) for call in actual_calls)
+                        assert any(
+                            expected_cmd[0] in str(call) for call in actual_calls
+                        )
             else:
                 # Fallback test for command building
                 for cmd in expected_commands:
@@ -339,10 +362,10 @@ class TestCICommandBuilder:
         expected_patterns = ["flake8", "mypy"]
 
         try:
-            if 'CIFixTool' in globals():
+            if "CIFixTool" in globals():
                 tool = CIFixTool()
                 # Mock subprocess.run to capture commands
-                with patch('subprocess.run') as mock_run:
+                with patch("subprocess.run") as mock_run:
                     mock_run.return_value = Mock(returncode=0)
 
                     tool.run_linting()
