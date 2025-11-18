@@ -105,17 +105,17 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         """Setup event handlers for IB events."""
         try:
             # Use safe event binding - some events may not exist in all versions
-            if hasattr(self.ib, 'errorEvent'):
+            if hasattr(self.ib, "errorEvent"):
                 self.ib.errorEvent += self._on_error
-            if hasattr(self.ib, 'orderStatusEvent'):
+            if hasattr(self.ib, "orderStatusEvent"):
                 self.ib.orderStatusEvent += self._on_order_status
-            if hasattr(self.ib, 'updatePortfolioEvent'):
+            if hasattr(self.ib, "updatePortfolioEvent"):
                 self.ib.updatePortfolioEvent += self._on_portfolio_update
-            if hasattr(self.ib, 'positionEvent'):
+            if hasattr(self.ib, "positionEvent"):
                 self.ib.positionEvent += self._on_position_update
-            if hasattr(self.ib, 'accountValueEvent'):
+            if hasattr(self.ib, "accountValueEvent"):
                 self.ib.accountValueEvent += self._on_account_value
-            if hasattr(self.ib, 'contractDetailsEvent'):
+            if hasattr(self.ib, "contractDetailsEvent"):
                 self.ib.contractDetailsEvent += self._on_contract_details
         except Exception as e:
             logger.warning(f"Could not setup all event handlers: {e}")
@@ -758,7 +758,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
             day_trading_profit_loss=0.0,
             maintenance_margin=0.0,
             day_trades_count=0,
-            leverage=1.0
+            leverage=1.0,
         )
 
     def connect(self) -> None:
@@ -766,6 +766,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         # This is a simplified sync version - in reality, the async version should be used
         try:
             import asyncio
+
             loop = asyncio.get_event_loop()
             if loop.is_running():
                 # If already in an async context, we can't use asyncio.run()
@@ -780,6 +781,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         """Synchronous disconnect method for abstract interface compatibility."""
         try:
             import asyncio
+
             loop = asyncio.get_event_loop()
             if loop.is_running():
                 self._connected = False
@@ -808,7 +810,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
             price=order.price,
             average_price=order.price,
             status=OrderStatus.NEW,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
     def cancel_order(self, order_id: str) -> bool:

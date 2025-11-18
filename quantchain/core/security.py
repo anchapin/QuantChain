@@ -373,7 +373,7 @@ class APISecurityManager:
                 "***" + info["secret"][-4:] if len(info["secret"]) > 4 else "****"
             )
 
-        return info
+        return dict(info)
 
     def refresh_from_env(self) -> None:
         """Refresh credentials from environment and .env file."""

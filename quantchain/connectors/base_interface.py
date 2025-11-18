@@ -1,15 +1,12 @@
 """Base interface classes for QuantChain connectors."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import List
 
 from quantchain.tools.execution import (
     AccountInfo,
     OrderRequest,
     OrderResult,
-    OrderSide,
-    OrderStatus,
-    OrderType,
 )
 from quantchain.tools.execution import Position as QuantChainPosition
 

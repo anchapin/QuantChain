@@ -347,7 +347,7 @@ class TradingExecutionTool:
         # Find the order
         order = None
         for client_order_id, result in self._orders.items():
-            if result.order_id == order_id:
+            if hasattr(result, 'order_id') and result.order_id == order_id:
                 order = result
                 break
 
@@ -376,7 +376,7 @@ class TradingExecutionTool:
         """
         # Find the order
         for client_order_id, result in self._orders.items():
-            if result.order_id == order_id:
+            if hasattr(result, 'order_id') and result.order_id == order_id:
                 return result
 
         raise OrderNotFoundError(f"Order {order_id} not found")

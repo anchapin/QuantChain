@@ -234,7 +234,7 @@ class MonitoringService:
 
     def __init__(self) -> None:
         """Initialize the monitoring service."""
-        self.agents = {}
+        self.agents: dict[str, Any] = {}
 
     def get_agent_status(self, agent_id: str) -> AgentStatus:
         """
@@ -331,7 +331,7 @@ class ConfigurationService:
 
     def __init__(self) -> None:
         """Initialize the configuration service."""
-        self.configs = {}
+        self.configs: dict[str, Any] = {}
 
     def get_agent_config(self, agent_id: str) -> AgentConfig:
         """
