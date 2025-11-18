@@ -23,6 +23,18 @@ class SecretManager:
         """Set secret value."""
         pass
 
+    def get_secret(self, key: str) -> Any:
+        """Get secret value."""
+        return None
+
+    def set_secret(self, key: str, value: Any) -> None:
+        """Set secret value."""
+        pass
+
+    def delete_secret(self, key: str) -> None:
+        """Delete secret value."""
+        pass
+
 
 def get_default_secret_manager() -> SecretManager:
     """Get default secret manager."""

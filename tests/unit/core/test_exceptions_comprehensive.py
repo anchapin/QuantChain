@@ -260,7 +260,7 @@ class TestExceptionEdgeCases:
         # Different types should not be equal even with same message
         other_error = TradingError("same message")
         assert error1.args == other_error.args  # args are the same
-        assert type(error1) != type(other_error)  # but types are different
+        assert type(error1) is not type(other_error)  # but types are different
 
     def test_exception_repr(self) -> None:
         """Test exception representation."""

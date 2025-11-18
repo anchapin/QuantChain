@@ -232,7 +232,7 @@ class DashboardCharts:
 class MonitoringService:
     """Service for monitoring agent status and system health."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the monitoring service."""
         self.agents = {}
 
@@ -329,7 +329,7 @@ class MonitoringService:
 class ConfigurationService:
     """Service for managing agent configurations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the configuration service."""
         self.configs = {}
 
@@ -728,7 +728,7 @@ def calculate_max_drawdown(equity_curve: List[float]) -> float:
 
 
 # Main function for running the dashboard directly
-def main():
+def main() -> None:
     """Main function to run the dashboard directly."""
     # Parse command line arguments
     import argparse

@@ -2,7 +2,7 @@
 Comprehensive test suite for execution factory module.
 """
 
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest
@@ -147,7 +147,6 @@ class TestExecutionFactory:
             assert mock_config.get.call_count > 1
             assert interface is not None
 
-    
     def test_error_handling_invalid_config(self) -> None:
         """Test error handling for invalid configuration."""
         mock_config = Mock()
