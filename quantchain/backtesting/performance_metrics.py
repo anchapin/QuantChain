@@ -89,7 +89,7 @@ class PerformanceMetrics:
         if len(equity_curve) < 1:
             raise InsufficientDataError("Equity curve must have at least 1 point")
 
-        return (equity_curve.iloc[-1] / equity_curve.iloc[0]) - 1
+        return float((equity_curve.iloc[-1] / equity_curve.iloc[0]) - 1)
 
     def calculate_annualized_return(self, equity_curve: pd.Series) -> float:
         """Calculate annualized return."""
@@ -98,18 +98,28 @@ class PerformanceMetrics:
         # Get time period in years
         start_date = equity_curve.index[0]
         end_date = equity_curve.index[-1]
-        years = (end_date - start_date).days / 365.25
+
+        # Handle both datetime and integer indices
+        if hasattr(start_date, 'days') or hasattr(end_date, 'days'):
+            # For timedelta objects
+            years = ((end_date - start_date).days if hasattr(end_date - start_date, 'days') else (end_date - start_date)) / 365.25
+        elif hasattr(start_date, 'day') and hasattr(end_date, 'day'):
+            # For datetime objects
+            years = (end_date - start_date).days / 365.25
+        else:
+            # For integer indices (assuming daily data)
+            years = (end_date - start_date) / 365.25
 
         if years < 0.01:  # Less than about 3.6 days
             return 0.0
 
         # Annualized return = (1 + total_return)^(1/years) - 1
-        return ((1 + total_return) ** (1 / years)) - 1
+        return float(((1 + total_return) ** (1 / years)) - 1)
 
     def calculate_volatility(self, equity_curve: pd.Series) -> float:
         """Calculate volatility (annualized standard deviation of returns)."""
         returns = self.calculate_returns(equity_curve)
-        return returns.std() * np.sqrt(252)  # Annualized (trading days)
+        return float(returns.std() * np.sqrt(252))  # Annualized (trading days)
 
     def calculate_sharpe_ratio(
         self, equity_curve: pd.Series, frequency: str = "1d"
@@ -150,7 +160,7 @@ class PerformanceMetrics:
         if downside_deviation == 0:
             return np.inf  # No downside risk
 
-        return excess_return / downside_deviation
+        return float(excess_return / downside_deviation)
 
     def calculate_max_drawdown(self, equity_curve: pd.Series) -> Dict[str, Any]:
         """Calculate maximum drawdown and duration."""
@@ -228,7 +238,7 @@ class PerformanceMetrics:
         if max_dd == 0:
             return np.inf  # No drawdown
 
-        return annualized_return / max_dd
+        return float(annualized_return / max_dd)
 
     def calculate_win_rate(self, trades: pd.DataFrame) -> float:
         """Calculate win rate from trade log."""
@@ -241,7 +251,7 @@ class PerformanceMetrics:
         if total_trades == 0:
             return 0.0
 
-        return winning_trades / total_trades
+        return float(winning_trades / total_trades)
 
     def calculate_profit_factor(self, trades: pd.DataFrame) -> float:
         """Calculate profit factor (gross profit / gross loss)."""
@@ -254,7 +264,7 @@ class PerformanceMetrics:
         if gross_loss == 0:
             return np.inf if gross_profit > 0 else 0.0
 
-        return gross_profit / gross_loss
+        return float(gross_profit / gross_loss)
 
     def calculate_average_win_loss(self, trades: pd.DataFrame) -> Dict[str, float]:
         """Calculate average win and loss amounts."""
@@ -379,7 +389,7 @@ class PerformanceMetrics:
 
     def calculate_var(self, returns: pd.Series, level: float = 0.05) -> float:
         """Calculate Value at Risk (VaR)."""
-        return np.percentile(returns, level * 100)
+        return float(np.percentile(returns, level * 100))
 
     def generate_tear_sheet(
         self, results: "BacktestResult", save_path: Optional[str] = None
