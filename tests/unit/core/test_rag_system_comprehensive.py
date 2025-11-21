@@ -241,7 +241,7 @@ class TestRAGSystem:
             # Test dot product similarity
             similarities = np.dot(doc_embeddings, query_embedding)
             assert similarities.shape == (5,)
-            assert all(sim >= -1 and sim <= 1 for sim in similarities)  # Normalized range
+            # Dot product is not normalized, so skipping range check
 
             # Test cosine similarity (normalized)
             query_norm = np.linalg.norm(query_embedding)

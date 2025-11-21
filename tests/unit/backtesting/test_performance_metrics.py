@@ -220,7 +220,7 @@ class TestPerformanceMetrics:
         )
 
         total_return = metrics.calculate_total_return(equity_curve)
-        assert total_return == 0.2  # (1200/1000) - 1 = 0.2
+        assert total_return == pytest.approx(0.2)  # (1200/1000) - 1 = 0.2
 
     def test_calculate_annualized_return_less_than_one_year(self) -> None:
         """Test calculate_annualized_return with less than one year."""
@@ -576,9 +576,9 @@ class TestPerformanceMetrics:
         )
 
         result = metrics.calculate_average_trade_duration(trades)
-        assert "avg_duration" in result
-        assert "avg_duration_days" in result
-        assert result["avg_duration_days"] == 1.0
+        assert "avg_trade_duration" in result
+        assert "avg_trade_duration_days" in result
+        assert result["avg_trade_duration_days"] == 1.0
 
     def test_calculate_comprehensive_metrics_with_trades(self) -> None:
         """Test calculate_comprehensive_metrics with trades."""

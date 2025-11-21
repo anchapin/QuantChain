@@ -724,7 +724,7 @@ class TestTechnicalAnalystAgent:
             volumes=[1000000]
         )
 
-        with patch('quantchain.agents.technical_analyst.argrelextrema', side_effect=NameError):
+        with patch('quantchain.agents.technical_analyst.HAS_SCIPY', False):
             result = agent._find_support_resistance(price_data)
 
             assert "support" in result
@@ -874,7 +874,7 @@ class TestTechnicalAnalystAgent:
         }
 
         consistency = agent._analyze_trend_consistency(analyses)
-        assert consistency == 66.67  # 2/3 trends agree (rounded)
+        assert consistency == pytest.approx(66.67, rel=1e-3)  # 2/3 trends agree (rounded)
 
         # Test with empty analyses
         consistency = agent._analyze_trend_consistency({})
