@@ -61,7 +61,8 @@ class TestQuantChainConfig:
         assert config.retry_delay == 1.0
         assert config.log_level == LogLevel.INFO
 
-    def test_init_with_custom_values(self) -> None:
+    @patch("os.makedirs")
+    def test_init_with_custom_values(self, mock_makedirs: Mock) -> None:
         """Test initialization with custom values."""
         config = QuantChainConfig(
             agent_type="custom_agent",
@@ -103,7 +104,8 @@ class TestQuantChainConfig:
         config = QuantChainConfig(agent_type=None)
         assert config.agent_type == "default"
 
-    def test_init_with_custom_paths_and_agent_type(self) -> None:
+    @patch("os.makedirs")
+    def test_init_with_custom_paths_and_agent_type(self, mock_makedirs: Mock) -> None:
         """Test initialization with custom paths and agent type."""
         config = QuantChainConfig(
             agent_type="test_agent",
@@ -467,9 +469,9 @@ class TestQuantChainConfig:
             temperature=0.5,
             enable_rag=True,
             log_level=LogLevel.WARNING,
-            custom_list=[1, 2, 3],
-            custom_dict={"key": "value"},
         )
+        config.custom_list = [1, 2, 3]
+        config.custom_dict = {"key": "value"}
 
         # Add custom attribute
         config.custom_field = "custom_value"

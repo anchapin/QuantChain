@@ -1,3 +1,9 @@
-"""Fixed file - original content had syntax errors"""
+"""Model fine-tuning tools."""
 
-pass
+try:
+    import torch
+    from transformers import Trainer, TrainingArguments
+except ImportError:
+    torch = None
+    Trainer = None
+    TrainingArguments = None
