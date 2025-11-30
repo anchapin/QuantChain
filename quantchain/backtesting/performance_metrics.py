@@ -119,6 +119,8 @@ class PerformanceMetrics:
     def calculate_volatility(self, equity_curve: pd.Series) -> float:
         """Calculate volatility (annualized standard deviation of returns)."""
         returns = self.calculate_returns(equity_curve)
+        if len(returns) < 2:
+            raise InsufficientDataError("Not enough data for volatility")
         return float(returns.std() * np.sqrt(252))  # Annualized (trading days)
 
     def calculate_sharpe_ratio(
@@ -182,6 +184,7 @@ class PerformanceMetrics:
 
         return {
             "max_drawdown": max_dd,
+            "max_drawdown_pct": max_dd,
             "max_drawdown_duration": duration,
             "max_drawdown_start": max_dd_start,
             "max_drawdown_end": max_dd_end,
@@ -245,11 +248,11 @@ class PerformanceMetrics:
         if "pnl" not in trades.columns:
             raise MissingColumnError("Trade log must contain 'pnl' column")
 
+        if len(trades) == 0:
+            raise InsufficientDataError("No trades to calculate win rate")
+
         winning_trades = (trades["pnl"] > 0).sum()
         total_trades = len(trades)
-
-        if total_trades == 0:
-            return 0.0
 
         return float(winning_trades / total_trades)
 
@@ -257,6 +260,9 @@ class PerformanceMetrics:
         """Calculate profit factor (gross profit / gross loss)."""
         if "pnl" not in trades.columns:
             raise MissingColumnError("Trade log must contain 'pnl' column")
+
+        if len(trades) == 0:
+            raise InsufficientDataError("No trades to calculate profit factor")
 
         gross_profit = trades[trades["pnl"] > 0]["pnl"].sum()
         gross_loss = abs(trades[trades["pnl"] < 0]["pnl"].sum())
@@ -271,14 +277,14 @@ class PerformanceMetrics:
         if "pnl" not in trades.columns:
             raise MissingColumnError("Trade log must contain 'pnl' column")
 
+        if len(trades) == 0:
+             raise InsufficientDataError("No trades to calculate average win/loss")
+
         winning_trades = trades[trades["pnl"] > 0]
         losing_trades = trades[trades["pnl"] < 0]
 
         avg_win = winning_trades["pnl"].mean() if len(winning_trades) > 0 else 0.0
         avg_loss = losing_trades["pnl"].mean() if len(losing_trades) > 0 else 0.0
-
-        # Make avg_loss positive for easier interpretation
-        avg_loss = abs(avg_loss) if avg_loss < 0 else avg_loss
 
         return {"avg_win": avg_win, "avg_loss": avg_loss}
 
@@ -288,7 +294,7 @@ class PerformanceMetrics:
             raise MissingColumnError("Trade log must contain 'pnl' column")
 
         if len(trades) == 0:
-            return {"best_trade": 0.0, "worst_trade": 0.0}
+            raise InsufficientDataError("No trades to calculate best/worst trade")
 
         best_trade = trades["pnl"].max()
         worst_trade = trades["pnl"].min()
@@ -305,13 +311,13 @@ class PerformanceMetrics:
             )
 
         if len(trades) == 0:
-            return {"avg_trade_duration": 0.0, "avg_trade_duration_days": 0.0}
+            raise InsufficientDataError("No trades to calculate duration")
 
         # Calculate duration for each trade
         durations = trades["exit_time"] - trades["entry_time"]
 
         # Average duration in seconds
-        avg_duration_seconds = durations.total_seconds().mean()
+        avg_duration_seconds = durations.dt.total_seconds().mean()
 
         # Average duration in days
         avg_duration_days = durations.dt.days.mean()
@@ -339,6 +345,9 @@ class PerformanceMetrics:
 
         except (ImportError, LibraryImportError):
             # quantstats not available, return default values
+            pass
+        except Exception:
+            # Handle other errors from quantstats (e.g. insufficient data)
             pass
 
         return metrics
@@ -389,6 +398,8 @@ class PerformanceMetrics:
 
     def calculate_var(self, returns: pd.Series, level: float = 0.05) -> float:
         """Calculate Value at Risk (VaR)."""
+        if len(returns) == 0:
+            return 0.0
         return float(np.percentile(returns, level * 100))
 
     def generate_tear_sheet(
@@ -401,6 +412,12 @@ class PerformanceMetrics:
             "message": "Tear sheet generation not fully implemented",
             "save_path": save_path,
         }
+
+    def calculate_comprehensive_metrics(self, equity_curve: pd.Series, trades: Optional[pd.DataFrame] = None) -> MetricsResult:
+        """Calculate comprehensive metrics including trades if provided."""
+        if trades is None:
+             trades = pd.DataFrame(columns=["pnl", "entry_time", "exit_time"])
+        return self.calculate_all_metrics(equity_curve, trades)
 
     def calculate_all_metrics(
         self, equity_curve: pd.Series, trades: pd.DataFrame, frequency: str = "1d"
@@ -427,11 +444,22 @@ class PerformanceMetrics:
         calmar_ratio = self.calculate_calmar_ratio(equity_curve)
 
         # Calculate trade metrics
-        win_rate = self.calculate_win_rate(trades)
-        profit_factor = self.calculate_profit_factor(trades)
-        avg_win_loss = self.calculate_average_win_loss(trades)
-        best_worst = self.calculate_best_worst_trade(trades)
-        avg_duration = self.calculate_average_trade_duration(trades)
+        if len(trades) > 0:
+            win_rate = self.calculate_win_rate(trades)
+            profit_factor = self.calculate_profit_factor(trades)
+            avg_win_loss = self.calculate_average_win_loss(trades)
+            best_worst = self.calculate_best_worst_trade(trades)
+            # Need to handle missing time columns gracefully if trades came from source without them
+            if "entry_time" in trades.columns and "exit_time" in trades.columns:
+                avg_duration = self.calculate_average_trade_duration(trades)
+            else:
+                avg_duration = {"avg_trade_duration": 0.0, "avg_trade_duration_days": 0.0}
+        else:
+            win_rate = 0.0
+            profit_factor = 0.0
+            avg_win_loss = {"avg_win": 0.0, "avg_loss": 0.0}
+            best_worst = {"best_trade": 0.0, "worst_trade": 0.0}
+            avg_duration = {"avg_trade_duration": 0.0, "avg_trade_duration_days": 0.0}
 
         # Calculate advanced metrics
         quantstats_metrics = self.calculate_quantstats_metrics(returns)

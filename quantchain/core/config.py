@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
 
-class LogLevel(Enum):
+class LogLevel(str, Enum):
     """Logging levels for the system."""
 
     DEBUG = "debug"

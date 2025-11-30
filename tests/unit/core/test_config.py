@@ -58,7 +58,8 @@ class TestQuantChainConfig:
         assert config.retry_delay == 1.0
         assert config.log_level == LogLevel.INFO
 
-    def test_init_with_custom_values(self) -> None:
+    @patch("os.makedirs")
+    def test_init_with_custom_values(self, mock_makedirs: Mock) -> None:
         """Test initialization with custom values."""
         config = QuantChainConfig(
             agent_type="custom_agent",
@@ -100,7 +101,8 @@ class TestQuantChainConfig:
         config = QuantChainConfig(agent_type=None)
         assert config.agent_type == "default"
 
-    def test_init_with_custom_paths_and_agent_type(self) -> None:
+    @patch("os.makedirs")
+    def test_init_with_custom_paths_and_agent_type(self, mock_makedirs: Mock) -> None:
         """Test initialization with custom paths and agent type."""
         config = QuantChainConfig(
             agent_type="test_agent",

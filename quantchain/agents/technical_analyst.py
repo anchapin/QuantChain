@@ -7,6 +7,12 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 
+try:
+    from scipy.signal import argrelextrema
+    HAS_SCIPY = True
+except ImportError:
+    HAS_SCIPY = False
+
 from .base import (
     AgentAnalysis,
     AgentArgument,
@@ -659,9 +665,7 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
         lows = np.array(price_data.lows)
 
         # Try to use scipy for finding local maxima and minima
-        try:
-            from scipy.signal import argrelextrema
-
+        if HAS_SCIPY:
             # Find local maxima (resistance) and minima (support)
             resistance_indices = argrelextrema(highs, np.greater, order=5)[0]
             support_indices = argrelextrema(lows, np.less, order=5)[0]
@@ -675,7 +679,7 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
                 "support": support_levels,
                 "resistance": resistance_levels,
             }
-        except ImportError:
+        else:
             # Fallback if scipy not available
             current_price = price_data.closes[-1]
             return {
