@@ -4,15 +4,13 @@ Tests ML-specific agent training workflows and reinforcement learning.
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-from typing import Any, Dict, List, Optional
-import asyncio
 
 # Mock the imports that may not be available in CI
 try:
+    import numpy as np
     import torch
     import torch.nn as nn
-    import numpy as np
+
     ML_DEPENDENCIES_AVAILABLE = True
 except ImportError:
     ML_DEPENDENCIES_AVAILABLE = False
@@ -21,9 +19,9 @@ except ImportError:
     np = None
 
 try:
-    import gymnasium as gym
     import stable_baselines3
-    from stable_baselines3 import PPO, A2C, DQN
+    from stable_baselines3 import A2C, DQN, PPO
+
     RL_DEPENDENCIES_AVAILABLE = True
 except ImportError:
     RL_DEPENDENCIES_AVAILABLE = False
@@ -35,6 +33,7 @@ except ImportError:
 
 try:
     import quantchain.tools.agent_training_mode as agent_training
+
     TRAINING_MODULE_AVAILABLE = True
 except ImportError:
     TRAINING_MODULE_AVAILABLE = False
@@ -46,20 +45,24 @@ except ImportError:
 class TestAgentTrainingMode:
     """Test suite for agent training mode functionality."""
 
-    @pytest.mark.skipif(not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available")
+    @pytest.mark.skipif(
+        not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available"
+    )
     def test_torch_nn_import(self):
         """Test that torch.nn can be imported when available."""
         assert torch is not None
         assert nn is not None
-        assert hasattr(nn, 'Module')
-        assert hasattr(nn, 'Linear')
+        assert hasattr(nn, "Module")
+        assert hasattr(nn, "Linear")
 
-    @pytest.mark.skipif(not RL_DEPENDENCIES_AVAILABLE, reason="RL dependencies not available")
+    @pytest.mark.skipif(
+        not RL_DEPENDENCIES_AVAILABLE, reason="RL dependencies not available"
+    )
     def test_rl_library_import(self):
         """Test that reinforcement learning libraries can be imported."""
         assert gym is not None
         assert stable_baselines3 is not None
-        assert hasattr(stable_baselines3, 'PPO')
+        assert hasattr(stable_baselines3, "PPO")
 
     def test_agent_training_module_import(self):
         """Test that the agent training module can be imported."""
@@ -67,12 +70,15 @@ class TestAgentTrainingMode:
             assert agent_training is not None
         else:
             try:
-                import quantchain.tools.agent_training_mode
+                pass
+
                 assert True
             except ImportError:
                 pytest.skip("Agent training module not available")
 
-    @pytest.mark.skipif(not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available")
+    @pytest.mark.skipif(
+        not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available"
+    )
     def test_neural_network_architecture(self):
         """Test neural network architecture for agent training."""
         if nn is not None:
@@ -92,8 +98,8 @@ class TestAgentTrainingMode:
             # Test network creation
             net = TestAgentNet(10, 64, 2)
             assert isinstance(net, nn.Module)
-            assert hasattr(net, 'fc1')
-            assert hasattr(net, 'fc2')
+            assert hasattr(net, "fc1")
+            assert hasattr(net, "fc2")
 
             # Test forward pass
             if torch is not None:
@@ -101,26 +107,30 @@ class TestAgentTrainingMode:
                 output = net(test_input)
                 assert output.shape == (1, 2)
 
-    @pytest.mark.skipif(not RL_DEPENDENCIES_AVAILABLE, reason="RL dependencies not available")
+    @pytest.mark.skipif(
+        not RL_DEPENDENCIES_AVAILABLE, reason="RL dependencies not available"
+    )
     def test_environment_creation(self):
         """Test creation of training environments."""
         if gym is not None:
             # Mock environment configuration
             env_config = {
-                'type': 'CartPole-v1',
-                'max_episode_steps': 500,
-                'render_mode': None
+                "type": "CartPole-v1",
+                "max_episode_steps": 500,
+                "render_mode": None,
             }
 
             # Test environment creation logic
-            assert env_config['type'] == 'CartPole-v1'
-            assert env_config['max_episode_steps'] == 500
-            assert env_config['render_mode'] is None
+            assert env_config["type"] == "CartPole-v1"
+            assert env_config["max_episode_steps"] == 500
+            assert env_config["render_mode"] is None
 
-    @pytest.mark.skipif(not RL_DEPENDENCIES_AVAILABLE, reason="RL dependencies not available")
+    @pytest.mark.skipif(
+        not RL_DEPENDENCIES_AVAILABLE, reason="RL dependencies not available"
+    )
     def test_training_algorithm_selection(self):
         """Test selection of training algorithms."""
-        algorithms = ['PPO', 'A2C', 'DQN', 'SAC']
+        algorithms = ["PPO", "A2C", "DQN", "SAC"]
 
         # Test algorithm selection
         for algo in algorithms:
@@ -129,21 +139,24 @@ class TestAgentTrainingMode:
 
         # Test algorithm configuration
         training_config = {
-            'algorithm': 'PPO',
-            'learning_rate': 3e-4,
-            'n_steps': 2048,
-            'batch_size': 64,
-            'gamma': 0.99
+            "algorithm": "PPO",
+            "learning_rate": 3e-4,
+            "n_steps": 2048,
+            "batch_size": 64,
+            "gamma": 0.99,
         }
 
-        assert training_config['algorithm'] in algorithms
-        assert training_config['learning_rate'] > 0
-        assert training_config['n_steps'] > 0
-        assert 0 <= training_config['gamma'] <= 1
+        assert training_config["algorithm"] in algorithms
+        assert training_config["learning_rate"] > 0
+        assert training_config["n_steps"] > 0
+        assert 0 <= training_config["gamma"] <= 1
 
-    @pytest.mark.skipif(not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available")
+    @pytest.mark.skipif(
+        not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available"
+    )
     def test_experience_replay(self):
         """Test experience replay buffer functionality."""
+
         # Mock experience replay buffer
         class MockReplayBuffer:
             def __init__(self, capacity: int):
@@ -160,6 +173,7 @@ class TestAgentTrainingMode:
 
             def sample(self, batch_size: int):
                 import random
+
                 return random.sample(self.buffer, min(batch_size, len(self.buffer)))
 
         # Test replay buffer
@@ -169,7 +183,7 @@ class TestAgentTrainingMode:
 
         # Add experiences
         for i in range(10):
-            experience = (i, i+1, i+2, False)  # state, action, reward, done
+            experience = (i, i + 1, i + 2, False)  # state, action, reward, done
             replay_buffer.add(experience)
 
         assert len(replay_buffer.buffer) == 10
@@ -178,29 +192,33 @@ class TestAgentTrainingMode:
         samples = replay_buffer.sample(5)
         assert len(samples) <= 5
 
-    @pytest.mark.skipif(not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available")
+    @pytest.mark.skipif(
+        not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available"
+    )
     def test_reward_function_design(self):
         """Test reward function design for agent training."""
         # Mock reward function configuration
         reward_config = {
-            'step_penalty': -0.01,
-            'goal_reward': 10.0,
-            'collision_penalty': -1.0,
-            'time_bonus': 0.1
+            "step_penalty": -0.01,
+            "goal_reward": 10.0,
+            "collision_penalty": -1.0,
+            "time_bonus": 0.1,
         }
 
         # Test reward calculation
-        assert reward_config['step_penalty'] < 0
-        assert reward_config['goal_reward'] > 0
-        assert reward_config['collision_penalty'] < 0
-        assert reward_config['time_bonus'] > 0
+        assert reward_config["step_penalty"] < 0
+        assert reward_config["goal_reward"] > 0
+        assert reward_config["collision_penalty"] < 0
+        assert reward_config["time_bonus"] > 0
 
         # Test cumulative reward calculation
         rewards = [1.0, -0.5, 2.0, 0.8, -0.2]
         cumulative_reward = sum(rewards)
         assert cumulative_reward == 3.1
 
-    @pytest.mark.skipif(not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available")
+    @pytest.mark.skipif(
+        not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available"
+    )
     def test_policy_network_initialization(self):
         """Test policy network initialization for RL agents."""
         if torch is not None and nn is not None:
@@ -214,7 +232,7 @@ class TestAgentTrainingMode:
                         nn.Linear(state_dim, 128),
                         nn.ReLU(),
                         nn.Linear(128, action_dim),
-                        nn.Softmax(dim=-1)
+                        nn.Softmax(dim=-1),
                     )
 
                 def forward(self, state):
@@ -231,59 +249,67 @@ class TestAgentTrainingMode:
             assert action_probs.shape == (1, 4)
             assert torch.allclose(action_probs.sum(dim=1), torch.ones(1))
 
-    @pytest.mark.skipif(not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available")
+    @pytest.mark.skipif(
+        not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available"
+    )
     def test_training_loop_structure(self):
         """Test training loop structure for agent training."""
         # Mock training configuration
         training_config = {
-            'total_timesteps': 100000,
-            'episode_length': 1000,
-            'eval_freq': 5000,
-            'save_freq': 10000,
-            'log_interval': 100
+            "total_timesteps": 100000,
+            "episode_length": 1000,
+            "eval_freq": 5000,
+            "save_freq": 10000,
+            "log_interval": 100,
         }
 
         # Test training parameters
-        assert training_config['total_timesteps'] > 0
-        assert training_config['episode_length'] > 0
-        assert training_config['eval_freq'] > 0
-        assert training_config['save_freq'] > 0
-        assert training_config['log_interval'] > 0
+        assert training_config["total_timesteps"] > 0
+        assert training_config["episode_length"] > 0
+        assert training_config["eval_freq"] > 0
+        assert training_config["save_freq"] > 0
+        assert training_config["log_interval"] > 0
 
         # Test episode tracking
-        episodes = training_config['total_timesteps'] // training_config['episode_length']
+        episodes = (
+            training_config["total_timesteps"] // training_config["episode_length"]
+        )
         assert episodes == 100
 
-    @pytest.mark.skipif(not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available")
+    @pytest.mark.skipif(
+        not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available"
+    )
     def test_evaluation_metrics(self):
         """Test evaluation metrics for agent performance."""
         # Mock evaluation results
         eval_results = {
-            'mean_reward': 150.5,
-            'std_reward': 25.3,
-            'max_reward': 200.0,
-            'min_reward': 75.0,
-            'success_rate': 0.85,
-            'episode_length': 450.2
+            "mean_reward": 150.5,
+            "std_reward": 25.3,
+            "max_reward": 200.0,
+            "min_reward": 75.0,
+            "success_rate": 0.85,
+            "episode_length": 450.2,
         }
 
         # Test evaluation metrics
-        assert eval_results['mean_reward'] > 0
-        assert eval_results['std_reward'] > 0
-        assert eval_results['max_reward'] >= eval_results['mean_reward']
-        assert eval_results['min_reward'] <= eval_results['mean_reward']
-        assert 0 <= eval_results['success_rate'] <= 1
-        assert eval_results['episode_length'] > 0
+        assert eval_results["mean_reward"] > 0
+        assert eval_results["std_reward"] > 0
+        assert eval_results["max_reward"] >= eval_results["mean_reward"]
+        assert eval_results["min_reward"] <= eval_results["mean_reward"]
+        assert 0 <= eval_results["success_rate"] <= 1
+        assert eval_results["episode_length"] > 0
 
-    @pytest.mark.skipif(not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available")
+    @pytest.mark.skipif(
+        not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available"
+    )
     def test_hyperparameter_optimization(self):
         """Test hyperparameter optimization for agent training."""
         # Mock hyperparameter grid
         hyperparameter_grid = {
-            'learning_rate': [1e-4, 3e-4, 1e-3],
-            'batch_size': [32, 64, 128],
-            'gamma': [0.95, 0.99, 0.995],
-            'n_steps': [1024, 2048, 4096]
+            "learning_rate": [1e-4, 3e-4, 1e-3],
+            "batch_size": [32, 64, 128],
+            "gamma": [0.95, 0.99, 0.995],
+            "n_steps": [1024, 2048, 4096],
         }
 
         # Test hyperparameter combinations
@@ -294,72 +320,73 @@ class TestAgentTrainingMode:
         assert total_combinations == 3 * 3 * 3 * 3  # 81 combinations
 
         # Test validation of parameter ranges
-        for lr in hyperparameter_grid['learning_rate']:
+        for lr in hyperparameter_grid["learning_rate"]:
             assert lr > 0 and lr < 1
 
-        for bs in hyperparameter_grid['batch_size']:
+        for bs in hyperparameter_grid["batch_size"]:
             assert bs > 0 and bs % 2 == 0  # Power of 2
 
-        for gamma in hyperparameter_grid['gamma']:
+        for gamma in hyperparameter_grid["gamma"]:
             assert 0 <= gamma <= 1
 
     def test_error_handling_missing_dependencies(self):
         """Test graceful handling of missing RL dependencies."""
         if not RL_DEPENDENCIES_AVAILABLE:
             with pytest.raises((ImportError, ModuleNotFoundError)):
-                import gymnasium
-                gym.make('CartPole-v1')
 
-    @pytest.mark.skipif(not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available")
+                gym.make("CartPole-v1")
+
+    @pytest.mark.skipif(
+        not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available"
+    )
     def test_model_checkpointing(self):
         """Test model checkpointing during training."""
         # Mock checkpoint structure
         checkpoint_data = {
-            'model_state_dict': {'param1': [1.0, 2.0], 'param2': [3.0, 4.0]},
-            'optimizer_state_dict': {'state': {}},
-            'training_step': 5000,
-            'episode': 25,
-            'reward': 125.5,
-            'hyperparameters': {
-                'learning_rate': 3e-4,
-                'gamma': 0.99
-            }
+            "model_state_dict": {"param1": [1.0, 2.0], "param2": [3.0, 4.0]},
+            "optimizer_state_dict": {"state": {}},
+            "training_step": 5000,
+            "episode": 25,
+            "reward": 125.5,
+            "hyperparameters": {"learning_rate": 3e-4, "gamma": 0.99},
         }
 
         # Test checkpoint structure
-        assert 'model_state_dict' in checkpoint_data
-        assert 'optimizer_state_dict' in checkpoint_data
-        assert 'training_step' in checkpoint_data
-        assert 'episode' in checkpoint_data
-        assert 'reward' in checkpoint_data
-        assert 'hyperparameters' in checkpoint_data
+        assert "model_state_dict" in checkpoint_data
+        assert "optimizer_state_dict" in checkpoint_data
+        assert "training_step" in checkpoint_data
+        assert "episode" in checkpoint_data
+        assert "reward" in checkpoint_data
+        assert "hyperparameters" in checkpoint_data
 
         # Test checkpoint data validity
-        assert checkpoint_data['training_step'] > 0
-        assert checkpoint_data['episode'] > 0
-        assert checkpoint_data['reward'] > 0
+        assert checkpoint_data["training_step"] > 0
+        assert checkpoint_data["episode"] > 0
+        assert checkpoint_data["reward"] > 0
 
-    @pytest.mark.skipif(not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available")
+    @pytest.mark.skipif(
+        not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available"
+    )
     def test_multi_agent_coordination(self):
         """Test multi-agent training coordination."""
         # Mock multi-agent configuration
         multi_agent_config = {
-            'num_agents': 4,
-            'agent_types': ['trader', 'risk_manager', 'analyst', 'portfolio_optimizer'],
-            'coordination_strategy': 'centralized',
-            'communication_freq': 10,
-            'shared_reward_shaping': True
+            "num_agents": 4,
+            "agent_types": ["trader", "risk_manager", "analyst", "portfolio_optimizer"],
+            "coordination_strategy": "centralized",
+            "communication_freq": 10,
+            "shared_reward_shaping": True,
         }
 
         # Test multi-agent setup
-        assert multi_agent_config['num_agents'] == 4
-        assert len(multi_agent_config['agent_types']) == 4
-        assert multi_agent_config['coordination_strategy'] == 'centralized'
-        assert multi_agent_config['communication_freq'] > 0
-        assert multi_agent_config['shared_reward_shaping'] is True
+        assert multi_agent_config["num_agents"] == 4
+        assert len(multi_agent_config["agent_types"]) == 4
+        assert multi_agent_config["coordination_strategy"] == "centralized"
+        assert multi_agent_config["communication_freq"] > 0
+        assert multi_agent_config["shared_reward_shaping"] is True
 
         # Test agent roles
-        for agent_type in multi_agent_config['agent_types']:
+        for agent_type in multi_agent_config["agent_types"]:
             assert isinstance(agent_type, str)
             assert len(agent_type) > 0
 

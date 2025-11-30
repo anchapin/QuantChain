@@ -1,6 +1,5 @@
 """Comprehensive tests for performance metrics calculation."""
 
-import numpy as np
 import pandas as pd
 import pytest
 

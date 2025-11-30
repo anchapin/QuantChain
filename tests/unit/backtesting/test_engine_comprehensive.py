@@ -3,18 +3,10 @@ Comprehensive tests for the backtesting engine module.
 """
 
 from datetime import datetime
-from unittest.mock import Mock, patch
 
-import numpy as np
-import pandas as pd
 import pytest
 
-from quantchain.backtesting.engine import (
-    BacktestConfig,
-    BacktestEngine,
-    BacktestExecutionError,
-    MetricsResult,
-)
+from quantchain.backtesting.engine import BacktestConfig, BacktestEngine, MetricsResult
 
 
 @pytest.mark.unit

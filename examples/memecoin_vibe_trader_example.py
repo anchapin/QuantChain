@@ -18,9 +18,6 @@ import os
 import sys
 from pathlib import Path
 
-# Add project root to path for imports
-sys.path.append(str(Path(__file__).parent.parent))
-
 from quantchain.agents.memecoin_vibe_trader import (
     MemecoinVibeTrader,
     MemecoinVibeTraderConfig,
@@ -34,6 +31,9 @@ from quantchain.core.llm_providers import (
 )
 from quantchain.tools.execution import AlpacaExecutionTool
 from quantchain.tools.social_media_scraper import SocialMediaScraper
+
+# Add project root to path for imports
+sys.path.append(str(Path(__file__).parent.parent))
 
 
 def load_configuration() -> "QuantChainConfig":

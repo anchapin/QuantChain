@@ -8,14 +8,14 @@ how to migrate from development (.env) to production secret management.
 import sys
 from pathlib import Path
 
-# Add project root to path for imports
-sys.path.append(str(Path(__file__).parent.parent))
-
 from quantchain.core.security import (
     APISecurityManager,
     create_secret_manager,
     list_secret_managers,
 )
+
+# Add project root to path for imports
+sys.path.append(str(Path(__file__).parent.parent))
 
 # Example 1: Using default secret manager (from environment)
 print("=== Example 1: Default Secret Manager ===")

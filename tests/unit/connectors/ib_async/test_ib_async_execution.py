@@ -28,7 +28,6 @@ def test_ib_async_execution_basic_imports():
             IBAsyncConnectionError,
             IBAsyncContractError,
             IBAsyncDataError,
-            IBAsyncExecutionConnector,
             IBAsyncExecutionError,
             IBAsyncOrderError,
         )

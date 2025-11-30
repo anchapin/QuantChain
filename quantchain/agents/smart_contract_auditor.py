@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 
 class AuditStatus(Enum):
@@ -144,7 +144,7 @@ class ContractRetriever:
             config: Configuration for the retriever
         """
         self.config = config
-        self._cache = {}
+        self._cache: dict[str, Any] = {}
 
     def get_contract_source(
         self, address: str, network: str
@@ -166,7 +166,7 @@ class ContractRetriever:
             # Check if cache is still valid
             time_diff = (datetime.now() - cached_item["timestamp"]).total_seconds()
             if time_diff < self.config.cache_expiry_seconds:
-                return cached_item["source"]
+                return cast(Optional[ContractSource], cached_item["source"])
 
         # Get API key for network
         api_key = self.config.api_keys.get(network)
@@ -292,7 +292,7 @@ class VulnerabilityScanner:
             config: Configuration for the scanner
         """
         self.config = config
-        self._vulnerability_patterns = [
+        self._vulnerability_patterns: List[Dict[str, Any]] = [
             {
                 "id": "reentrancy",
                 "title": "Reentrancy Vulnerability",
@@ -340,13 +340,13 @@ class VulnerabilityScanner:
         for pattern_info in self._vulnerability_patterns:
             for i, line in enumerate(source_lines):
                 # Simple pattern matching
-                for pattern in pattern_info["patterns"]:
+                for pattern in cast(List[str], pattern_info["patterns"]):
                     if pattern in line:
                         # Found potential vulnerability
                         vulnerability = Vulnerability(
-                            id=pattern_info["id"],
-                            title=pattern_info["title"],
-                            description=pattern_info["description"],
+                            id=str(pattern_info["id"]),
+                            title=str(pattern_info["title"]),
+                            description=str(pattern_info["description"]),
                             severity=pattern_info["severity"],
                             line_number=i + 1,
                             code_snippet=line.strip(),

@@ -2,7 +2,7 @@
 
 import asyncio
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -23,7 +23,6 @@ from quantchain.tools.execution import (
     OrderStatus,
     OrderType,
 )
-from quantchain.tools.execution import Position as QuantChainPosition
 
 
 class TestIBAsyncExecutionErrors:
@@ -67,6 +66,43 @@ class TestIBAsyncExecutionErrors:
 
 class TestIBAsyncExecutionConnector:
     """Test IBAsyncExecutionConnector functionality."""
+
+    @pytest.fixture(autouse=True)
+    def setup_ib_mock(self):
+        """Setup IB mock for all tests."""
+        with patch("quantchain.connectors.ib_async_execution.IB") as mock_ib_class:
+            self.mock_ib_class = mock_ib_class
+            self.mock_ib_instance = mock_ib_class.return_value
+
+            # Default mock behavior
+            self.mock_ib_instance.connectAsync = AsyncMock(return_value=True)
+            self.mock_ib_instance.isConnected = Mock(return_value=True)
+
+            # Mock account summary
+            account_mock = Mock()
+            account_mock.account = "DU123456"
+            self.mock_ib_instance.ibkrAccountSummaryAsync = AsyncMock(
+                return_value=[account_mock]
+            )
+
+            # Mock other common methods
+            self.mock_ib_instance.qualifyContractsAsync = AsyncMock(
+                return_value=[Mock()]
+            )
+            self.mock_ib_instance.placeOrderAsync = AsyncMock(
+                return_value=Mock(
+                    order=Mock(permId="12345"),
+                    orderStatus=Mock(status="Submitted", filled=0, avgFillPrice=0),
+                )
+            )
+            self.mock_ib_instance.reqMktDataAsync = AsyncMock(
+                return_value=Mock(
+                    last=150.0, bid=149.0, ask=151.0, close=148.0, volume=1000
+                )
+            )
+            self.mock_ib_instance.positionsAsync = AsyncMock(return_value=[])
+
+            yield
 
     @pytest.mark.unit
     def test_connector_init_default(self):
@@ -114,7 +150,8 @@ class TestIBAsyncExecutionConnector:
 
         repr_str = repr(connector)
         assert "IBAsyncExecutionConnector" in repr_str
-        assert "192.168.1.100:7496" in repr_str
+        assert "host=192.168.1.100" in repr_str
+        assert "port=7496" in repr_str
         assert "client_id=2" in repr_str
 
     @pytest.mark.unit
@@ -135,17 +172,21 @@ class TestIBAsyncExecutionConnector:
         """Test successful connection to IB."""
         mock_ib_instance = Mock()
         mock_ib.return_value = mock_ib_instance
-        mock_ib_instance.connect = AsyncMock(return_value=True)
+        mock_ib_instance.connectAsync = AsyncMock(return_value=True)
+        mock_ib_instance.ibkrAccountSummaryAsync = AsyncMock(
+            return_value=[Mock(account="DU123456")]
+        )
+        mock_ib_instance.isConnected.return_value = True
 
         connector = IBAsyncExecutionConnector()
 
         async def test_connect():
-            result = await connector.connect()
+            result = await connector._connect_async()
             assert result is True
             assert connector._connected is True
 
         asyncio.run(test_connect())
-        mock_ib_instance.connect.assert_called_once_with(
+        mock_ib_instance.connectAsync.assert_called_once_with(
             host="127.0.0.1", port=7497, clientId=1, timeout=10
         )
 
@@ -155,13 +196,15 @@ class TestIBAsyncExecutionConnector:
         """Test failed connection to IB."""
         mock_ib_instance = Mock()
         mock_ib.return_value = mock_ib_instance
-        mock_ib_instance.connect = AsyncMock(side_effect=Exception("Connection failed"))
+        mock_ib_instance.connectAsync = AsyncMock(
+            side_effect=Exception("Connection failed")
+        )
 
         connector = IBAsyncExecutionConnector()
 
         async def test_connect():
             with pytest.raises(IBAsyncConnectionError, match="Failed to connect to IB"):
-                await connector.connect()
+                await connector._connect_async()
 
         asyncio.run(test_connect())
 
@@ -173,9 +216,9 @@ class TestIBAsyncExecutionConnector:
 
         async def test_disconnect():
             with patch.object(
-                connector.ib, "disconnect", new_callable=AsyncMock
+                connector.ib, "disconnect", new_callable=Mock
             ) as mock_disconnect:
-                await connector.disconnect()
+                await connector._disconnect_async()
                 mock_disconnect.assert_called_once()
                 assert connector._connected is False
 
@@ -193,15 +236,16 @@ class TestIBAsyncExecutionConnector:
         connector._connected = True
         assert connector.is_connected()
 
-        # Test using ib.connected property
-        connector.ib.connected = False
+        # Test using ib.isConnected method
+        connector.ib.isConnected.return_value = False
         connector._connected = True
         assert not connector.is_connected()
 
-        connector.ib.connected = True
+        connector.ib.isConnected.return_value = True
         assert connector.is_connected()
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_place_order_readonly_mode(self):
         """Test placing order in readonly mode."""
         connector = IBAsyncExecutionConnector(readonly=True)
@@ -213,22 +257,26 @@ class TestIBAsyncExecutionConnector:
         with pytest.raises(
             IBAsyncOrderError, match="Cannot place order in readonly mode"
         ):
-            await connector.place_order(order_request)
+            await connector.place_order_async(order_request)
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_place_order_not_connected(self):
         """Test placing order when not connected."""
         connector = IBAsyncExecutionConnector(readonly=False)
         connector._connected = False
+        # Make connect fail
+        connector.ib.connectAsync.side_effect = Exception("Connection failed")
 
         order_request = OrderRequest(
             symbol="AAPL", side=OrderSide.BUY, order_type=OrderType.MARKET, quantity=100
         )
 
-        with pytest.raises(IBAsyncConnectionError, match="Not connected to IB"):
-            await connector.place_order(order_request)
+        with pytest.raises(IBAsyncConnectionError, match="Failed to connect to IB"):
+            await connector.place_order_async(order_request)
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_place_order_success(self):
         """Test successful order placement."""
         connector = IBAsyncExecutionConnector(readonly=False)
@@ -239,14 +287,22 @@ class TestIBAsyncExecutionConnector:
         mock_order = Mock()
         mock_trade = Mock()
         mock_trade.orderId = "12345"
-        mock_trade.orderStatus.return_value = "Submitted"
+        mock_trade.order.permId = "12345"
+        mock_trade.orderStatus = Mock()
+        mock_trade.orderStatus.status = "Submitted"
+        mock_trade.orderStatus.filled = 0.0
+        mock_trade.orderStatus.avgFillPrice = 0.0
+        mock_trade.orderStatus.time = datetime.now()
+        mock_trade.order.totalQuantity = 100.0
+        mock_trade.order.lmtPrice = None
+        mock_trade.order.auxPrice = None
 
         with patch.object(
             connector, "_create_contract", return_value=mock_contract
         ), patch.object(
             connector, "_create_order", return_value=mock_order
         ), patch.object(
-            connector.ib, "placeOrder", return_value=mock_trade
+            connector.ib, "placeOrderAsync", return_value=mock_trade
         ):
 
             order_request = OrderRequest(
@@ -256,7 +312,7 @@ class TestIBAsyncExecutionConnector:
                 quantity=100,
             )
 
-            result = await connector.place_order(order_request)
+            result = await connector.place_order_async(order_request)
 
             assert isinstance(result, OrderResult)
             assert result.order_id == "12345"
@@ -264,6 +320,7 @@ class TestIBAsyncExecutionConnector:
             assert connector._orders["12345"] == mock_trade
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_place_order_ib_error(self):
         """Test order placement with IB error."""
         connector = IBAsyncExecutionConnector(readonly=False)
@@ -272,7 +329,7 @@ class TestIBAsyncExecutionConnector:
         with patch.object(
             connector, "_create_contract", return_value=Mock()
         ), patch.object(connector, "_create_order", return_value=Mock()), patch.object(
-            connector.ib, "placeOrder", side_effect=Exception("IB Error")
+            connector.ib, "placeOrderAsync", side_effect=Exception("IB Error")
         ):
 
             order_request = OrderRequest(
@@ -283,9 +340,10 @@ class TestIBAsyncExecutionConnector:
             )
 
             with pytest.raises(IBAsyncOrderError, match="Failed to place order"):
-                await connector.place_order(order_request)
+                await connector.place_order_async(order_request)
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_cancel_order_success(self):
         """Test successful order cancellation."""
         connector = IBAsyncExecutionConnector()
@@ -293,68 +351,75 @@ class TestIBAsyncExecutionConnector:
 
         # Mock existing order
         mock_trade = Mock()
+        mock_trade.order.permId = "12345"
         connector._orders["12345"] = mock_trade
 
         with patch.object(
-            connector.ib, "cancelOrder", new_callable=AsyncMock
+            connector.ib, "cancelOrderAsync", new_callable=AsyncMock
         ) as mock_cancel:
-            await connector.cancel_order("12345")
-            mock_cancel.assert_called_once_with(mock_trade)
+            await connector.cancel_order_async("12345")
+            mock_cancel.assert_called_once_with(mock_trade.order)
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_cancel_order_not_found(self):
         """Test cancelling non-existent order."""
         connector = IBAsyncExecutionConnector()
         connector._connected = True
 
         with pytest.raises(IBAsyncOrderError, match="Order 12345 not found"):
-            await connector.cancel_order("12345")
+            await connector.cancel_order_async("12345")
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_cancel_order_not_connected(self):
         """Test cancelling order when not connected."""
         connector = IBAsyncExecutionConnector()
         connector._connected = False
+        # Make connect fail
+        connector.ib.connectAsync.side_effect = Exception("Connection failed")
 
-        with pytest.raises(IBAsyncConnectionError, match="Not connected to IB"):
-            await connector.cancel_order("12345")
+        with pytest.raises(IBAsyncConnectionError, match="Failed to connect to IB"):
+            await connector.cancel_order_async("12345")
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_get_account_success(self):
         """Test successful account info retrieval."""
         connector = IBAsyncExecutionConnector()
         connector._connected = True
 
         # Mock account info
-        mock_account = Mock()
-        mock_account.totalCash = 100000.0
-        mock_account.netLiquidation = 150000.0
-        mock_account.buyingPower = 200000.0
-        mock_account.availableFunds = 120000.0
+        mock_cash = Mock(tag="TotalCashValue", value="100000.0")
+        mock_net_liq = Mock(tag="NetLiquidation", value="150000.0")
+        mock_buying_power = Mock(tag="BuyingPower", value="200000.0")
 
         with patch.object(
-            connector.ib, "accountSummary", new_callable=AsyncMock
+            connector.ib, "accountSummaryAsync", new_callable=AsyncMock
         ) as mock_summary:
-            mock_summary.return_value = [mock_account]
+            mock_summary.return_value = [mock_cash, mock_net_liq, mock_buying_power]
 
-            result = await connector.get_account()
+            result = await connector.get_account_info()
 
             assert isinstance(result, AccountInfo)
-            assert result.cash_balance == 100000.0
-            assert result.total_value == 150000.0
+            assert result.cash == 100000.0
+            assert result.portfolio_value == 150000.0
             assert result.buying_power == 200000.0
-            assert result.available_funds == 120000.0
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_get_account_not_connected(self):
         """Test account info retrieval when not connected."""
         connector = IBAsyncExecutionConnector()
         connector._connected = False
+        # Make connect fail
+        connector.ib.connectAsync.side_effect = Exception("Connection failed")
 
-        with pytest.raises(IBAsyncConnectionError, match="Not connected to IB"):
-            await connector.get_account()
+        with pytest.raises(IBAsyncConnectionError, match="Failed to connect to IB"):
+            await connector.get_account_info()
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_get_positions_success(self):
         """Test successful positions retrieval."""
         connector = IBAsyncExecutionConnector()
@@ -364,88 +429,88 @@ class TestIBAsyncExecutionConnector:
         mock_position1 = Mock()
         mock_position1.contract.symbol = "AAPL"
         mock_position1.position = 100
-        mock_position1.averageCost = 150.0
+        mock_position1.avgCost = 150.0
 
         mock_position2 = Mock()
         mock_position2.contract.symbol = "GOOGL"
         mock_position2.position = -50
-        mock_position2.averageCost = 2500.0
+        mock_position2.avgCost = 2500.0
 
         with patch.object(
-            connector.ib, "positions", new_callable=AsyncMock
+            connector.ib, "positionsAsync", new_callable=AsyncMock
         ) as mock_positions:
             mock_positions.return_value = [mock_position1, mock_position2]
 
-            result = await connector.get_positions()
+            result = await connector.get_positions_async()
 
             assert len(result) == 2
 
             # Check AAPL position
             aapl_position = next(p for p in result if p.symbol == "AAPL")
             assert aapl_position.quantity == 100
-            assert aapl_position.average_price == 150.0
+            assert aapl_position.cost_basis == 15000.0
 
             # Check GOOGL position
             googl_position = next(p for p in result if p.symbol == "GOOGL")
-            assert googl_position.quantity == -50
-            assert googl_position.average_price == 2500.0
+            assert (
+                googl_position.quantity == 50
+            )  # Quantity is absolute in Position object?
+            # Wait, Position object quantity is float.
+            # In ib_async_execution.py: quantity=float(abs(pos.position))
+            assert googl_position.quantity == 50.0
+            assert (
+                googl_position.cost_basis == -125000.0
+            )  # pos.position * pos.avgCost = -50 * 2500.0
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_get_positions_not_connected(self):
         """Test positions retrieval when not connected."""
         connector = IBAsyncExecutionConnector()
         connector._connected = False
+        # Make connect fail
+        connector.ib.connectAsync.side_effect = Exception("Connection failed")
 
-        with pytest.raises(IBAsyncConnectionError, match="Not connected to IB"):
-            await connector.get_positions()
-
-    @pytest.mark.unit
-    async def test_get_market_data_cached(self):
-        """Test market data retrieval from cache."""
-        connector = IBAsyncExecutionConnector()
-        connector._connected = True
-
-        # Mock cached data
-        mock_df = Mock()
-        connector._market_data_cache["AAPL"] = mock_df
-
-        result = await connector.get_market_data("AAPL", "SMART", "1D", 30)
-
-        assert result == mock_df
+        with pytest.raises(IBAsyncConnectionError, match="Failed to connect to IB"):
+            await connector.get_positions_async()
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_get_market_data_not_connected(self):
         """Test market data retrieval when not connected."""
         connector = IBAsyncExecutionConnector()
         connector._connected = False
+        # Make connect fail
+        connector.ib.connectAsync.side_effect = Exception("Connection failed")
 
-        with pytest.raises(IBAsyncConnectionError, match="Not connected to IB"):
-            await connector.get_market_data("AAPL", "SMART", "1D", 30)
+        with pytest.raises(IBAsyncConnectionError, match="Failed to connect to IB"):
+            await connector.get_market_data("AAPL")
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_get_market_data_success(self):
         """Test successful market data retrieval."""
         connector = IBAsyncExecutionConnector()
         connector._connected = True
 
-        # Mock contract and data
-        mock_contract = Mock()
-        mock_df = Mock()
+        # Mock ticker data
+        mock_ticker = Mock()
+        mock_ticker.last = 150.0
+        mock_ticker.bid = 149.0
+        mock_ticker.ask = 151.0
+        mock_ticker.midpoint.return_value = 150.0
+        mock_ticker.close = 148.0
+        mock_ticker.volume = 1000
 
-        with patch.object(
-            connector, "_create_contract", return_value=mock_contract
-        ), patch.object(
-            connector.ib, "reqHistoricalData", new_callable=AsyncMock
-        ) as mock_hist_data, patch(
-            "quantchain.connectors.ib_async_execution.DataFrame", return_value=mock_df
-        ):
+        # Configure mock
+        connector.ib.reqMktDataAsync = AsyncMock(return_value=mock_ticker)
 
-            mock_hist_data.return_value = mock_df
+        result = await connector.get_market_data("AAPL")
 
-            result = await connector.get_market_data("AAPL", "SMART", "1D", 30)
-
-            assert result == mock_df
-            assert connector._market_data_cache["AAPL"] == mock_df
+        assert result["mid"] == 150.0
+        # last/bid/ask are not returned for default "mid" type
+        assert result["close"] == 148.0
+        assert result["volume"] == 1000
 
     @pytest.mark.unit
     def test_create_contract_stock(self):
@@ -468,7 +533,7 @@ class TestIBAsyncExecutionConnector:
             "AAPL",
             "OPT",
             "SMART",
-            last_trade_date_or_contract_month="20240120",
+            lastTradeDateOrContractMonth="20240120",
             strike=150.0,
             right="CALL",
         )
@@ -505,7 +570,7 @@ class TestIBAsyncExecutionConnector:
 
         assert order.action == "BUY"
         assert order.orderType == "MKT"
-        assert order.totalQuantity == 100
+        assert order.totalQuantity == 100.0
 
     @pytest.mark.unit
     def test_create_order_limit(self):
@@ -517,14 +582,16 @@ class TestIBAsyncExecutionConnector:
             side=OrderSide.SELL,
             order_type=OrderType.LIMIT,
             quantity=50,
-            limit_price=150.0,
+            price=150.0,
         )
 
         order = connector._create_order(order_request)
 
         assert order.action == "SELL"
         assert order.orderType == "LMT"
-        assert order.totalQuantity == 50
+        assert order.action == "SELL"
+        assert order.orderType == "LMT"
+        assert order.totalQuantity == 50.0
         assert order.lmtPrice == 150.0
 
     @pytest.mark.unit
@@ -544,7 +611,9 @@ class TestIBAsyncExecutionConnector:
 
         assert order.action == "BUY"
         assert order.orderType == "STP"
-        assert order.totalQuantity == 100
+        assert order.action == "BUY"
+        assert order.orderType == "STP"
+        assert order.totalQuantity == 100.0
         assert order.auxPrice == 155.0
 
     @pytest.mark.unit
@@ -558,14 +627,16 @@ class TestIBAsyncExecutionConnector:
             order_type=OrderType.STOP_LIMIT,
             quantity=75,
             stop_price=155.0,
-            limit_price=154.5,
+            price=154.5,
         )
 
         order = connector._create_order(order_request)
 
         assert order.action == "SELL"
         assert order.orderType == "STPLMT"
-        assert order.totalQuantity == 75
+        assert order.action == "SELL"
+        assert order.orderType == "STPLMT"
+        assert order.totalQuantity == 75.0
         assert order.auxPrice == 155.0  # Stop price
         assert order.lmtPrice == 154.5  # Limit price
 
@@ -617,7 +688,7 @@ class TestIBAsyncExecutionConnector:
         assert order.orderType == "MKT"
 
         limit_order = OrderRequest(
-            "AAPL", OrderSide.BUY, OrderType.LIMIT, 100, limit_price=150.0
+            "AAPL", OrderSide.BUY, OrderType.LIMIT, 100, price=150.0
         )
         order = connector._create_order(limit_order)
         assert order.orderType == "LMT"
@@ -634,12 +705,13 @@ class TestIBAsyncExecutionConnector:
             OrderType.STOP_LIMIT,
             100,
             stop_price=155.0,
-            limit_price=154.5,
+            price=154.5,
         )
         order = connector._create_order(stop_limit_order)
         assert order.orderType == "STPLMT"
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_error_handling_wrapper_success(self):
         """Test error handling wrapper with successful operation."""
         connector = IBAsyncExecutionConnector()
@@ -653,6 +725,7 @@ class TestIBAsyncExecutionConnector:
         assert result == "success"
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_error_handling_wrapper_ib_error(self):
         """Test error handling wrapper with IB error."""
         connector = IBAsyncExecutionConnector()
@@ -664,6 +737,7 @@ class TestIBAsyncExecutionConnector:
             await connector._handle_ib_errors(failing_operation, "test operation")
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_validate_order_request_valid(self):
         """Test validation of valid order request."""
         connector = IBAsyncExecutionConnector()
@@ -707,10 +781,11 @@ class TestIBAsyncExecutionConnector:
         invalid_order = OrderRequest(
             symbol="AAPL",
             side=OrderSide.BUY,
-            order_type=OrderType.LIMIT,
+            order_type=OrderType.MARKET,  # Start as MARKET to pass init validation
             quantity=100,
-            # Missing limit_price
         )
+        # Change to LIMIT to trigger connector validation
+        invalid_order.order_type = OrderType.LIMIT
 
         with pytest.raises(IBAsyncOrderError, match="Limit price is required"):
             connector._validate_order_request(invalid_order)
@@ -723,10 +798,11 @@ class TestIBAsyncExecutionConnector:
         invalid_order = OrderRequest(
             symbol="AAPL",
             side=OrderSide.BUY,
-            order_type=OrderType.STOP,
+            order_type=OrderType.MARKET,  # Start as MARKET to pass init validation
             quantity=100,
-            # Missing stop_price
         )
+        # Change to STOP to trigger connector validation
+        invalid_order.order_type = OrderType.STOP
 
         with pytest.raises(IBAsyncOrderError, match="Stop price is required"):
             connector._validate_order_request(invalid_order)
@@ -738,10 +814,12 @@ class TestIBAsyncExecutionConnector:
         connector._connected = True
 
         # Mock IB connection status
-        connector.ib.connected = True
+        connector.ib = Mock()
+        connector.ib.isConnected.return_value = True
+        connector.ib.positions.return_value = []
         assert connector.is_market_open() is True
 
-        connector.ib.connected = False
+        connector.ib.isConnected.return_value = False
         assert connector.is_market_open() is False
 
     @pytest.mark.unit
@@ -761,6 +839,7 @@ class TestIBAsyncExecutionConnector:
         assert len(connector._market_data_cache) == 0
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_get_order_status_existing(self):
         """Test getting status of existing order."""
         connector = IBAsyncExecutionConnector()
@@ -768,16 +847,21 @@ class TestIBAsyncExecutionConnector:
 
         # Mock existing order
         mock_trade = Mock()
+        mock_trade.order.permId = "12345"
+        mock_trade.order.totalQuantity = 100.0
         mock_trade.orderStatus.status = "Filled"
+        mock_trade.orderStatus.filled = 100.0
+        mock_trade.orderStatus.avgFillPrice = 150.0
         connector._orders["12345"] = mock_trade
 
-        status = await connector.get_order_status("12345")
+        status = await connector.get_order_status_async("12345")
         assert status == OrderStatus.FILLED
 
     @pytest.mark.unit
+    @pytest.mark.asyncio
     async def test_get_order_status_not_found(self):
         """Test getting status of non-existent order."""
         connector = IBAsyncExecutionConnector()
 
         with pytest.raises(IBAsyncOrderError, match="Order 12345 not found"):
-            await connector.get_order_status("12345")
+            await connector.get_order_status_async("12345")

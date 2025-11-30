@@ -195,8 +195,11 @@ class APISecurityManager:
 
         if secret:
             # Validate secret format if applicable
-            if service in API_KEY_PATTERNS and "secret_pattern" in patterns:
-                if not re.match(patterns["secret_pattern"], secret):
+            if (
+                service in API_KEY_PATTERNS
+                and "secret_pattern" in API_KEY_PATTERNS[service]
+            ):
+                if not re.match(API_KEY_PATTERNS[service]["secret_pattern"], secret):
                     raise InvalidCredentialFormatError(
                         f"API secret format for {service} is invalid"
                     )

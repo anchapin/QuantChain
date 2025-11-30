@@ -114,7 +114,7 @@ class RiskManagerAgent(BaseSpecializedAgent):
             ),
         )
 
-    def analyze(self, symbol: str, **kwargs) -> AgentAnalysis:
+    def analyze(self, symbol: str, **kwargs: Any) -> AgentAnalysis:
         """Perform risk analysis for a given symbol.
 
         Args:

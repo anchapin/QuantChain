@@ -14,6 +14,12 @@ class LogLevel(Enum):
     ERROR = "error"
     CRITICAL = "critical"
 
+    def __eq__(self, other: object) -> bool:
+        """Enable comparison with string values."""
+        if isinstance(other, str):
+            return self.value == other
+        return super().__eq__(other)
+
 
 class QuantChainConfig:
     """Main configuration class for QuantChain."""

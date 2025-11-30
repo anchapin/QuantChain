@@ -4,9 +4,7 @@ QuantChain Installation Script
 Comprehensive quantitative trading framework
 """
 
-import os
 import sys
-from pathlib import Path
 
 # Try to use setuptools, fallback to distutils
 try:

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Quick script to boost test coverage by replacing placeholder tests with basic import tests."""
 
-import os
 from pathlib import Path
 
 # List of high-impact modules to create basic tests for

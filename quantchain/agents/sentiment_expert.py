@@ -96,7 +96,7 @@ class SentimentExpertAgent(BaseSpecializedAgent):
             "influencer_min_followers", 10000
         )
 
-    def analyze(self, symbol: str, **kwargs) -> AgentAnalysis:
+    def analyze(self, symbol: str, **kwargs: Any) -> AgentAnalysis:
         """Perform sentiment analysis for a given symbol.
 
         Args:
@@ -347,19 +347,31 @@ class SentimentExpertAgent(BaseSpecializedAgent):
             and post.followers_count >= self.influencer_min_followers
         ]
         if influencer_posts:
-            total_weight = sum(post.followers_count for post in influencer_posts)
-            influencer_sentiment = (
+            # Filter posts with valid data and cast to proper types
+            valid_posts = [
+                post
+                for post in influencer_posts
+                if post.followers_count is not None and post.sentiment_score is not None
+            ]
+            total_weight = sum(
+                int(post.followers_count)
+                for post in valid_posts
+                if post.followers_count is not None
+            )
+            influencer_sentiment = float(
                 sum(
-                    (post.sentiment_score * post.followers_count) / total_weight
-                    for post in influencer_posts
-                    if post.sentiment_score
+                    (float(post.sentiment_score) * int(post.followers_count))
+                    / total_weight
+                    for post in valid_posts
+                    if post.sentiment_score is not None
+                    and post.followers_count is not None
                 )
                 * 100
-                if total_weight > 0
+                if total_weight > 0 and valid_posts
                 else 0
             )
         else:
-            influencer_sentiment = social_sentiment
+            influencer_sentiment = float(social_sentiment)
 
         # Calculate overall sentiment (weighted: news 60%, social 40%)
         if news_sentiments and social_sentiments:

@@ -4,7 +4,7 @@ import random
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 
@@ -34,9 +34,9 @@ class MarketFrictionConfig:
     commission_model: "CommissionModel"
     slippage_model: "SlippageModel"
     latency_model: "LatencyModel"
-    asset_specific: Dict[str, Dict[str, Any]] = None
+    asset_specific: Optional[Dict[str, Dict[str, Any]]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.asset_specific is None:
             self.asset_specific = {}
 
@@ -49,7 +49,7 @@ class CommissionModel(ABC):
 
     @abstractmethod
     def calculate(
-        self, trade_value: float, side: str, symbol: str = None, **kwargs
+        self, trade_value: float, side: str, symbol: Optional[str] = None, **kwargs: Any
     ) -> float:
         """Calculate commission amount."""
         raise NotImplementedError
@@ -70,7 +70,7 @@ class FlatCommission(CommissionModel):
         self.min_fee = min_fee
 
     def calculate(
-        self, trade_value: float, side: str, symbol: str = None, **kwargs
+        self, trade_value: float, side: str, symbol: Optional[str] = None, **kwargs: Any
     ) -> float:
         """Calculate flat commission."""
         # Original implementation had an issue with multiplying trade_value by fee_per_contract
@@ -92,7 +92,7 @@ class PercentageCommission(CommissionModel):
         self.max_fee = max_fee
 
     def calculate(
-        self, trade_value: float, side: str, symbol: str = None, **kwargs
+        self, trade_value: float, side: str, symbol: Optional[str] = None, **kwargs: Any
     ) -> float:
         """Calculate percentage commission."""
         commission = abs(trade_value) * self.rate
@@ -104,21 +104,21 @@ class TieredCommission(CommissionModel):
 
     def __init__(
         self,
-        tiers: List[Tuple[float, float]] = None,
+        tiers: Optional[List[Tuple[float, float]]] = None,
         base_rate: float = 0.001,
         volume_window: str = "1M",
     ):
         super().__init__("tiered")
         self.base_rate = base_rate
         self.volume_window = volume_window
-        self.volume_tracker = {}  # Track volume per symbol
+        self.volume_tracker: Dict[str, float] = {}  # Track volume per symbol
 
         if tiers is None:
             self.tiers = [
-                (0, 0.003),  # >0 trades: 0.3%
-                (100, 0.002),  # >100 trades: 0.2%
-                (1000, 0.001),  # >1000 trades: 0.1%
-                (10000, 0.0005),  # >10000 trades: 0.05%
+                (0.0, 0.003),  # >0 trades: 0.3%
+                (100.0, 0.002),  # >100 trades: 0.2%
+                (1000.0, 0.001),  # >1000 trades: 0.1%
+                (10000.0, 0.0005),  # >10000 trades: 0.05%
             ]
         else:
             self.tiers = tiers
@@ -127,9 +127,9 @@ class TieredCommission(CommissionModel):
         self,
         trade_value: float,
         side: str,
-        symbol: str = None,
+        symbol: Optional[str] = None,
         monthly_volume: float = 0,
-        **kwargs,
+        **kwargs: Any,
     ) -> float:
         """Calculate tiered commission based on volume."""
         # Determine applicable rate based on volume
@@ -155,8 +155,8 @@ class SlippageModel(ABC):
         price: float,
         quantity: int,
         side: str,
-        market_depth: Dict[str, float] = None,
-        symbol: str = None,
+        market_depth: Optional[Dict[str, float]] = None,
+        symbol: Optional[str] = None,
     ) -> float:
         """Calculate slippage amount."""
         raise NotImplementedError
@@ -174,8 +174,8 @@ class FixedSlippage(SlippageModel):
         price: float,
         quantity: int,
         side: str,
-        market_depth: Dict[str, float] = None,
-        symbol: str = None,
+        market_depth: Optional[Dict[str, float]] = None,
+        symbol: Optional[str] = None,
     ) -> float:
         """Calculate fixed slippage."""
         # Positive for buy (price increases), negative for sell (price decreases)
@@ -195,8 +195,8 @@ class VolumeImpactSlippage(SlippageModel):
         price: float,
         quantity: int,
         side: str,
-        market_depth: Dict[str, float] = None,
-        symbol: str = None,
+        market_depth: Optional[Dict[str, float]] = None,
+        symbol: Optional[str] = None,
     ) -> float:
         """Calculate volume-based slippage."""
         # Calculate slippage as a percentage of price based on quantity
@@ -220,8 +220,8 @@ class BidAskSpreadSlippage(SlippageModel):
         price: float,
         quantity: int,
         side: str,
-        market_depth: Dict[str, float] = None,
-        symbol: str = None,
+        market_depth: Optional[Dict[str, float]] = None,
+        symbol: Optional[str] = None,
     ) -> float:
         """Calculate bid-ask spread slippage."""
         # Half the spread is the slippage
@@ -243,7 +243,7 @@ class LatencyModel(ABC):
         self.model_type = model_type
 
     @abstractmethod
-    def apply(self, timestamp: datetime, symbol: str = None) -> datetime:
+    def apply(self, timestamp: datetime, symbol: Optional[str] = None) -> datetime:
         """Apply execution latency to timestamp."""
         raise NotImplementedError
 
@@ -255,7 +255,7 @@ class FixedLatency(LatencyModel):
         super().__init__("fixed")
         self.latency_ms = latency_ms
 
-    def apply(self, timestamp: datetime, symbol: str = None) -> datetime:
+    def apply(self, timestamp: datetime, symbol: Optional[str] = None) -> datetime:
         """Apply fixed latency."""
         return timestamp + timedelta(milliseconds=self.latency_ms)
 
@@ -268,7 +268,7 @@ class UniformRandomLatency(LatencyModel):
         self.min_ms = min_ms
         self.max_ms = max_ms
 
-    def apply(self, timestamp: datetime, symbol: str = None) -> datetime:
+    def apply(self, timestamp: datetime, symbol: Optional[str] = None) -> datetime:
         """Apply uniform random latency."""
         latency_ms = random.randint(self.min_ms, self.max_ms)
         return timestamp + timedelta(milliseconds=latency_ms)
@@ -282,7 +282,7 @@ class NormalRandomLatency(LatencyModel):
         self.mean_ms = mean_ms
         self.std_ms = std_ms
 
-    def apply(self, timestamp: datetime, symbol: str = None) -> datetime:
+    def apply(self, timestamp: datetime, symbol: Optional[str] = None) -> datetime:
         """Apply normal random latency."""
         # Ensure latency is positive
         latency_ms = max(0, int(np.random.normal(self.mean_ms, self.std_ms)))
@@ -292,7 +292,7 @@ class NormalRandomLatency(LatencyModel):
 class MarketFrictionSimulator:
     """Simulates market friction effects in backtesting."""
 
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
         """Initialize with friction configuration."""
         # Default configuration
         default_config = {
@@ -316,7 +316,7 @@ class MarketFrictionSimulator:
         self.asset_specific = config.get("asset_specific", {})
 
     def apply_commission(
-        self, trade_value: float, side: str, symbol: str = None, **kwargs
+        self, trade_value: float, side: str, symbol: Optional[str] = None, **kwargs: Any
     ) -> float:
         """Calculate commission for a trade."""
         # Check if symbol has specific commission model
@@ -325,18 +325,20 @@ class MarketFrictionSimulator:
             and symbol in self.asset_specific
             and "commission" in self.asset_specific[symbol]
         ):
-            model = self.asset_specific[symbol]["commission"]
-            return model.calculate(trade_value, side, symbol, **kwargs)
+            model = cast(CommissionModel, self.asset_specific[symbol]["commission"])
+            return cast(float, model.calculate(trade_value, side, symbol, **kwargs))
 
-        return self.commission_model.calculate(trade_value, side, symbol, **kwargs)
+        return cast(
+            float, self.commission_model.calculate(trade_value, side, symbol, **kwargs)
+        )
 
     def apply_slippage(
         self,
         price: float,
         quantity: int,
         side: str,
-        market_depth: Dict[str, float] = None,
-        symbol: str = None,
+        market_depth: Optional[Dict[str, float]] = None,
+        symbol: Optional[str] = None,
     ) -> float:
         """Apply slippage to execution price."""
         # Check if symbol has specific slippage model
@@ -345,14 +347,19 @@ class MarketFrictionSimulator:
             and symbol in self.asset_specific
             and "slippage" in self.asset_specific[symbol]
         ):
-            model = self.asset_specific[symbol]["slippage"]
-            return model.calculate(price, quantity, side, market_depth, symbol)
+            model = cast(SlippageModel, self.asset_specific[symbol]["slippage"])
+            return cast(
+                float, model.calculate(price, quantity, side, market_depth, symbol)
+            )
 
-        return self.slippage_model.calculate(
-            price, quantity, side, market_depth, symbol
+        return cast(
+            float,
+            self.slippage_model.calculate(price, quantity, side, market_depth, symbol),
         )
 
-    def apply_latency(self, timestamp: datetime, symbol: str = None) -> datetime:
+    def apply_latency(
+        self, timestamp: datetime, symbol: Optional[str] = None
+    ) -> datetime:
         """Apply execution latency to timestamp."""
         # Check if symbol has specific latency model
         if (
@@ -360,21 +367,21 @@ class MarketFrictionSimulator:
             and symbol in self.asset_specific
             and "latency" in self.asset_specific[symbol]
         ):
-            model = self.asset_specific[symbol]["latency"]
-            return model.apply(timestamp, symbol)
+            model = cast(LatencyModel, self.asset_specific[symbol]["latency"])
+            return cast(datetime, model.apply(timestamp, symbol))
 
-        return self.latency_model.apply(timestamp, symbol)
+        return cast(datetime, self.latency_model.apply(timestamp, symbol))
 
     def get_total_cost(
         self,
         price: float,
         quantity: int,
         side: str,
-        symbol: str = None,
-        market_depth: Dict[str, float] = None,
-        timestamp: datetime = None,
-        **kwargs,
-    ) -> Dict[str, float]:
+        symbol: Optional[str] = None,
+        market_depth: Optional[Dict[str, float]] = None,
+        timestamp: Optional[datetime] = None,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
         """Calculate total friction costs for a trade."""
         # Calculate trade value
         trade_value = price * quantity

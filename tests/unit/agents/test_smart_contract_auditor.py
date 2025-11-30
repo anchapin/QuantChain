@@ -1,453 +1,301 @@
 """
-Placeholder tests for the smart_contract_auditor module.
-
-These tests maintain test count while avoiding API mismatches.
-The comprehensive test implementation can be revisited once CI is stable
-and the 80% coverage requirement is met.
+Unit tests for SmartContractAuditor agent.
 """
+
+import unittest
+from unittest.mock import patch
 
 import pytest
 
-
-@pytest.mark.unit
-class TestSmartContractAuditorPlaceholder:
-    """Placeholder test class to maintain test count and ensure imports work."""
-
-    def test_placeholder_import(self) -> None:
-        """Test that the smart_contract_auditor module can be imported."""
-        from quantchain.agents.smart_contract_auditor import (
-            AuditStatus,
-            ContractRetriever,
-            ContractSource,
-            FinancialAnalyzer,
-            ProtocolAnalysis,
-            SmartContractAuditorAgent,
-            SmartContractAuditorConfig,
-            TokenomicsAnalysis,
-            Vulnerability,
-            VulnerabilityReport,
-            VulnerabilityScanner,
-            VulnerabilitySeverity,
-        )
-
-        # Verify enums have expected values
-        assert AuditStatus.SECURE.value == "secure"
-        assert AuditStatus.VULNERABLE.value == "vulnerable"
-        assert VulnerabilitySeverity.CRITICAL.value == "critical"
-        assert VulnerabilitySeverity.HIGH.value == "high"
-        assert VulnerabilitySeverity.MEDIUM.value == "medium"
-        assert VulnerabilitySeverity.LOW.value == "low"
-
-    def test_placeholder_enum_completeness(self) -> None:
-        """Test that enums are properly defined."""
-        from quantchain.agents.smart_contract_auditor import (
-            AuditStatus,
-            VulnerabilitySeverity,
-        )
-
-        # Verify audit status values
-        status_values = [status.value for status in AuditStatus]
-        expected_statuses = [
-            "secure",
-            "vulnerable",
-            "requires_review",
-            "insufficient_data",
-        ]
-        for expected in expected_statuses:
-            assert expected in status_values
-
-        # Verify severity values
-        severity_values = [severity.value for severity in VulnerabilitySeverity]
-        expected_severities = ["critical", "high", "medium", "low"]
-        for expected in expected_severities:
-            assert expected in severity_values
-
-    def test_placeholder_config_creation(self) -> None:
-        """Test that SmartContractAuditorConfig can be created."""
-        from quantchain.agents.smart_contract_auditor import SmartContractAuditorConfig
-
-        config = SmartContractAuditorConfig()
-        assert config is not None
-
-    def test_placeholder_agent_structure(self) -> None:
-        """Test that SmartContractAuditorAgent has expected structure."""
-        from quantchain.agents.smart_contract_auditor import (
-            SmartContractAuditorAgent,
-            SmartContractAuditorConfig,
-        )
-
-        config = SmartContractAuditorConfig()
-        agent = SmartContractAuditorAgent(config)
-
-        # Verify agent exists and has basic attributes
-        assert agent is not None
-        assert hasattr(agent, "config")
-
-    def test_placeholder_vulnerability_creation(self) -> None:
-        """Test that Vulnerability can be created with correct signature."""
-        from quantchain.agents.smart_contract_auditor import (
-            Vulnerability,
-            VulnerabilitySeverity,
-        )
-
-        # Test with minimal required arguments (adjust based on actual signature)
-        try:
-            vuln = Vulnerability(
-                vulnerability_type="test",
-                severity=VulnerabilitySeverity.LOW,
-                description="Test vulnerability",
-            )
-            assert vuln is not None
-        except Exception:
-            # If signature differs, just verify class exists
-            assert Vulnerability is not None
-
-    def test_placeholder_contract_source_creation(self) -> None:
-        """Test that ContractSource can be created."""
-        from quantchain.agents.smart_contract_auditor import ContractSource
-
-        # Test with appropriate arguments based on actual signature
-        try:
-            source = ContractSource(
-                source_code="test code", constructor_arguments=[], network="ethereum"
-            )
-            assert source is not None
-        except Exception:
-            # If signature differs, just verify class exists
-            assert ContractSource is not None
-
-    def test_placeholder_vulnerability_report_creation(self) -> None:
-        """Test that VulnerabilityReport can be created."""
-        from quantchain.agents.smart_contract_auditor import VulnerabilityReport
-
-        try:
-            report = VulnerabilityReport(
-                vulnerabilities=[], security_score=1.0, audit_status="secure"
-            )
-            assert report is not None
-        except Exception:
-            assert VulnerabilityReport is not None
-
-    def test_placeholder_tokenomics_analysis_creation(self) -> None:
-        """Test that TokenomicsAnalysis can be created."""
-        from quantchain.agents.smart_contract_auditor import TokenomicsAnalysis
-
-        try:
-            analysis = TokenomicsAnalysis(
-                total_supply=1000000, circulating_supply=500000
-            )
-            assert analysis is not None
-        except Exception:
-            assert TokenomicsAnalysis is not None
-
-    def test_placeholder_protocol_analysis_creation(self) -> None:
-        """Test that ProtocolAnalysis can be created."""
-        from quantchain.agents.smart_contract_auditor import ProtocolAnalysis
-
-        try:
-            analysis = ProtocolAnalysis(tvl=1000000, apy=5.0)
-            assert analysis is not None
-        except Exception:
-            assert ProtocolAnalysis is not None
-
-    def test_placeholder_module_functionality(self) -> None:
-        """Placeholder test to verify module functionality works."""
-        # This test ensures the module imports and basic functionality exists
-        from quantchain.agents import smart_contract_auditor
-
-        assert smart_contract_auditor is not None
-        assert hasattr(smart_contract_auditor, "SmartContractAuditorAgent")
+from quantchain.agents.smart_contract_auditor import (
+    AuditStatus,
+    ContractRetriever,
+    ContractSource,
+    FinancialAnalyzer,
+    ProtocolAnalysis,
+    SmartContractAuditorAgent,
+    SmartContractAuditorConfig,
+    TokenomicsAnalysis,
+    VulnerabilityReport,
+    VulnerabilityScanner,
+)
 
 
 @pytest.mark.unit
-class TestSmartContractAuditorComprehensive:
-    """Comprehensive tests for smart contract auditor functionality."""
+class TestSmartContractAuditor(unittest.TestCase):
+    """Test cases for SmartContractAuditorAgent and components."""
 
-    def test_vulnerability_dataclass_with_real_api(self) -> None:
-        """Test Vulnerability dataclass functionality with correct API."""
-        from quantchain.agents.smart_contract_auditor import (
-            Vulnerability,
-            VulnerabilitySeverity,
+    def setUp(self):
+        """Set up test fixtures."""
+        self.config = SmartContractAuditorConfig(
+            api_keys={"ethereum": "test_key"},
+            cache_expiry_seconds=3600,
+        )
+        self.agent = SmartContractAuditorAgent(self.config)
+
+    def test_config_initialization(self):
+        """Test configuration initialization."""
+        self.assertEqual(self.config.api_keys["ethereum"], "test_key")
+        self.assertEqual(self.config.cache_expiry_seconds, 3600)
+
+    @patch(
+        "quantchain.agents.smart_contract_auditor.ContractRetriever.get_contract_source"
+    )
+    def test_audit_contract_success(self, mock_get_source):
+        """Test successful contract audit."""
+        # Mock contract source
+        mock_source = ContractSource(
+            address="0x123",
+            source_code="contract Test { }",
+            abi="[]",
+            contract_name="Test",
+            compiler_version="0.8.0",
+            optimization_enabled=True,
+            constructor_arguments="",
+            network="ethereum",
+        )
+        mock_get_source.return_value = mock_source
+
+        # Run audit
+        result = self.agent.audit_contract("0x123", "ethereum")
+
+        # Verify results
+        self.assertEqual(result["address"], "0x123")
+        self.assertEqual(result["network"], "ethereum")
+        self.assertIn("vulnerability_report", result)
+        self.assertIn("recommendation", result)
+
+    @patch(
+        "quantchain.agents.smart_contract_auditor.ContractRetriever.get_contract_source"
+    )
+    def test_audit_contract_not_found(self, mock_get_source):
+        """Test audit when contract is not found."""
+        mock_get_source.return_value = None
+
+        result = self.agent.audit_contract("0x123", "ethereum")
+
+        self.assertIn("error", result)
+        self.assertEqual(result["error"], "Could not retrieve contract source")
+
+    def test_vulnerability_scanner(self):
+        """Test vulnerability scanning logic."""
+        scanner = VulnerabilityScanner(self.config)
+
+        # Test contract with potential reentrancy
+        source_code = """
+        contract Vulnerable {
+            function withdraw() public {
+                msg.sender.call.value(amount)("");
+                balances[msg.sender] = 0;
+            }
+        }
+        """
+        source = ContractSource(
+            address="0x123",
+            source_code=source_code,
+            abi="[]",
+            contract_name="Vulnerable",
+            compiler_version="0.8.0",
+            optimization_enabled=True,
+            constructor_arguments="",
+            network="ethereum",
         )
 
-        # Test creation with correct arguments
-        try:
-            vuln = Vulnerability(
-                "reentrancy",
-                VulnerabilitySeverity.HIGH,
-                "Reentrancy vulnerability detected",
-                "Function withdraw()",
-                "Add reentrancy protection",
-            )
-            assert vuln is not None
-        except TypeError:
-            # Fallback: test that class exists
-            assert Vulnerability is not None
+        report = scanner.scan_vulnerabilities(source)
 
-    def test_contract_source_dataclass_with_real_api(self) -> None:
-        """Test ContractSource dataclass functionality with correct API."""
-        from quantchain.agents.smart_contract_auditor import ContractSource
+        # Should detect reentrancy
+        self.assertTrue(any(v.id == "reentrancy" for v in report.vulnerabilities))
+        self.assertLess(report.security_score, 10.0)
 
-        try:
-            source = ContractSource(
-                "Example",
-                "0.8.0",
-                True,
-                "contract Example { uint public value; }",
-                ["_initialValue"],
-                "ethereum",
-                "0x1234567890123456789012345678901234567890",
-                '{"name": "Example", "type": "contract"}',
-            )
-            # The field mapping is different than expected
-            assert source is not None
-        except TypeError:
-            # Fallback: test that class exists
-            assert ContractSource is not None
+    def test_access_control_check(self):
+        """Test access control vulnerability check."""
+        scanner = VulnerabilityScanner(self.config)
 
-    def test_vulnerability_report_dataclass_with_real_api(self) -> None:
-        """Test VulnerabilityReport dataclass functionality with correct API."""
-        from quantchain.agents.smart_contract_auditor import (
-            AuditStatus,
-            Vulnerability,
-            VulnerabilityReport,
-            VulnerabilitySeverity,
+        source_code = """
+        contract Insecure {
+            function sensitiveAction() public {
+                // No access control
+            }
+        }
+        """
+        source = ContractSource(
+            address="0x123",
+            source_code=source_code,
+            abi="[]",
+            contract_name="Insecure",
+            compiler_version="0.8.0",
+            optimization_enabled=True,
+            constructor_arguments="",
+            network="ethereum",
         )
 
-        try:
-            vuln = Vulnerability(
-                "overflow",
-                VulnerabilitySeverity.MEDIUM,
-                "Potential overflow",
-                "line 42",
-                "Check bounds",
-            )
+        vulns = scanner.check_access_control(source)
+        self.assertTrue(len(vulns) > 0)
+        self.assertEqual(vulns[0].id, "access_control")
 
-            report = VulnerabilityReport(
-                [vuln], 0.7, AuditStatus.VULNERABLE, 5, 100, "Test report"
-            )
+    def test_financial_analyzer_tokenomics(self):
+        """Test tokenomics analysis."""
+        analyzer = FinancialAnalyzer(self.config)
 
-            assert len(report.vulnerabilities) == 1
-            assert report.security_score == 0.7
-        except TypeError:
-            # Fallback: test that class exists
-            assert VulnerabilityReport is not None
-
-    def test_tokenomics_analysis_dataclass_with_real_api(self) -> None:
-        """Test TokenomicsAnalysis dataclass functionality with correct API."""
-        from quantchain.agents.smart_contract_auditor import TokenomicsAnalysis
-
-        try:
-            analysis = TokenomicsAnalysis(1000000, 750000)
-            # The API is different than expected, just verify creation works
-            assert analysis is not None
-        except TypeError:
-            # Fallback: test that class exists
-            assert TokenomicsAnalysis is not None
-
-    def test_protocol_analysis_dataclass_with_real_api(self) -> None:
-        """Test ProtocolAnalysis dataclass functionality with correct API."""
-        from quantchain.agents.smart_contract_auditor import ProtocolAnalysis
-
-        try:
-            analysis = ProtocolAnalysis(10000000, 8.5)
-            assert analysis.tvl == 10000000
-        except TypeError:
-            # Fallback: test that class exists
-            assert ProtocolAnalysis is not None
-
-    def test_smart_contract_auditor_config_with_real_api(self) -> None:
-        """Test SmartContractAuditorConfig with correct API."""
-        from quantchain.agents.smart_contract_auditor import SmartContractAuditorConfig
-
-        try:
-            config = SmartContractAuditorConfig(max_contracts=10, timeout_seconds=300)
-            assert config is not None
-        except TypeError:
-            # Fallback: test that class exists
-            assert SmartContractAuditorConfig is not None
-
-    def test_contract_retriever_class_with_real_api(self) -> None:
-        """Test ContractRetriever class structure with correct API."""
-        from quantchain.agents.smart_contract_auditor import (
-            ContractRetriever,
-            SmartContractAuditorConfig,
+        source_code = """
+        contract Token {
+            uint256 public totalSupply = 1000000;
+            function burn(uint256 amount) public { }
+            function mint(address to, uint256 amount) public { }
+        }
+        """
+        source = ContractSource(
+            address="0x123",
+            source_code=source_code,
+            abi="[]",
+            contract_name="Token",
+            compiler_version="0.8.0",
+            optimization_enabled=True,
+            constructor_arguments="",
+            network="ethereum",
         )
 
-        try:
-            config = SmartContractAuditorConfig()
-            retriever = ContractRetriever(config)
-            assert retriever is not None
+        analysis = analyzer.analyze_tokenomics(source)
 
-            # Test expected methods exist
-            expected_methods = ["get_contract", "get_abi", "get_source"]
-            for method in expected_methods:
-                assert hasattr(retriever, method), f"Missing method: {method}"
-        except Exception:
-            # Fallback: test that class exists
-            assert ContractRetriever is not None
+        self.assertTrue(analysis.burn_mechanism)
+        self.assertTrue(analysis.minting_allowed)
 
-    def test_vulnerability_scanner_class_with_real_api(self) -> None:
-        """Test VulnerabilityScanner class structure with correct API."""
-        from quantchain.agents.smart_contract_auditor import (
-            SmartContractAuditorConfig,
-            VulnerabilityScanner,
+    def test_financial_analyzer_defi(self):
+        """Test DeFi protocol analysis."""
+        analyzer = FinancialAnalyzer(self.config)
+
+        source_code = """
+        contract DEX {
+            function swap() public { }
+            function addLiquidity() public { }
+        }
+        """
+        source = ContractSource(
+            address="0x123",
+            source_code=source_code,
+            abi="[]",
+            contract_name="DEX",
+            compiler_version="0.8.0",
+            optimization_enabled=True,
+            constructor_arguments="",
+            network="ethereum",
         )
 
-        try:
-            config = SmartContractAuditorConfig()
-            scanner = VulnerabilityScanner(config)
-            assert scanner is not None
+        analysis = analyzer.analyze_defi_protocol(source)
 
-            expected_methods = [
-                "scan_contract",
-                "analyze_function",
-                "check_common_patterns",
-            ]
-            for method in expected_methods:
-                assert hasattr(scanner, method), f"Missing method: {method}"
-        except Exception:
-            # Fallback: test that class exists
-            assert VulnerabilityScanner is not None
+        self.assertEqual(analysis.protocol_type, "dex")
 
-    def test_financial_analyzer_class_with_real_api(self) -> None:
-        """Test FinancialAnalyzer class structure with correct API."""
-        from quantchain.agents.smart_contract_auditor import (
-            FinancialAnalyzer,
-            SmartContractAuditorConfig,
+    def test_investment_recommendation(self):
+        """Test investment recommendation generation."""
+        # Create mock report and analysis
+        vuln_report = VulnerabilityReport(
+            address="0x123",
+            network="ethereum",
+            vulnerabilities=[],
+            security_score=9.0,
+            audit_status=AuditStatus.SECURE,
         )
 
-        try:
-            config = SmartContractAuditorConfig()
-            analyzer = FinancialAnalyzer(config)
-            assert analyzer is not None
-
-            expected_methods = ["analyze_tokenomics", "calculate_yield", "assess_risk"]
-            for method in expected_methods:
-                assert hasattr(analyzer, method), f"Missing method: {method}"
-        except Exception:
-            # Fallback: test that class exists
-            assert FinancialAnalyzer is not None
-
-    def test_smart_contract_auditor_agent_methods_with_real_api(self) -> None:
-        """Test SmartContractAuditorAgent has expected methods with correct API."""
-        from quantchain.agents.smart_contract_auditor import (
-            SmartContractAuditorAgent,
-            SmartContractAuditorConfig,
+        tokenomics = TokenomicsAnalysis(
+            address="0x123", network="ethereum", burn_mechanism=True, holders_count=2000
         )
 
-        try:
-            config = SmartContractAuditorConfig()
-            agent = SmartContractAuditorAgent(config)
-
-            # Test expected methods exist (adjust based on actual API)
-            expected_methods = [
-                "audit_contract",
-                "generate_report",
-                "get_audit_summary",
-            ]
-
-            for method in expected_methods:
-                assert hasattr(agent, method), f"Missing method: {method}"
-        except Exception:
-            # Fallback: test that class exists
-            assert SmartContractAuditorAgent is not None
-
-    def test_enums_comprehensive(self) -> None:
-        """Test enum functionality comprehensively."""
-        from quantchain.agents.smart_contract_auditor import (
-            AuditStatus,
-            VulnerabilitySeverity,
+        protocol = ProtocolAnalysis(
+            address="0x123", network="ethereum", protocol_type="dex", apy=15.0
         )
 
-        # Test AuditStatus enum
-        status_values = [status.value for status in AuditStatus]
-        expected_statuses = [
-            "secure",
-            "vulnerable",
-            "requires_review",
-            "insufficient_data",
-        ]
-        for expected in expected_statuses:
-            assert expected in status_values
-
-        # Test VulnerabilitySeverity enum
-        severity_values = [severity.value for severity in VulnerabilitySeverity]
-        expected_severities = ["critical", "high", "medium", "low"]
-        for expected in expected_severities:
-            assert expected in severity_values
-
-        # Test enum comparisons
-        assert AuditStatus.SECURE == AuditStatus.SECURE
-        assert AuditStatus.SECURE != AuditStatus.VULNERABLE
-        assert VulnerabilitySeverity.CRITICAL != VulnerabilitySeverity.LOW
-
-    def test_dataclass_creation_patterns(self) -> None:
-        """Test various dataclass creation patterns."""
-        from quantchain.agents.smart_contract_auditor import (
-            AuditStatus,
-            SmartContractAuditorConfig,
-            Vulnerability,
-            VulnerabilitySeverity,
+        recommendation = self.agent.generate_investment_recommendation(
+            ContractSource("0x123", "", "", "", "", True, "", "ethereum"),
+            vuln_report,
+            tokenomics,
+            protocol,
         )
 
-        # Test multiple vulnerability creation patterns
-        severities = [
-            VulnerabilitySeverity.CRITICAL,
-            VulnerabilitySeverity.HIGH,
-            VulnerabilitySeverity.MEDIUM,
-            VulnerabilitySeverity.LOW,
-        ]
+        self.assertEqual(recommendation.recommendation, "caution")
+        self.assertEqual(recommendation.confidence, 0.7)
+        self.assertTrue(any("burn mechanism" in r for r in recommendation.reasons))
 
-        vulns = []
-        for i, severity in enumerate(severities):
-            try:
-                vuln = Vulnerability(
-                    f"test_vuln_{i}",
-                    severity,
-                    f"Test vulnerability {i}",
-                    f"location_{i}",
-                    f"fix_{i}",
-                )
-                vulns.append(vuln)
-                assert vuln is not None
-            except TypeError:
-                # If API differs, just verify class exists
-                assert Vulnerability is not None
+    def test_contract_retriever_caching(self):
+        """Test contract retriever caching mechanism."""
+        retriever = ContractRetriever(self.config)
 
-        # Test different audit statuses
-        statuses = list(AuditStatus)
-        for status in statuses:
-            assert hasattr(status, "value")
-            assert isinstance(status.value, str)
+        # Mock API call
+        with patch.object(retriever, "_cache", {}) as mock_cache:
+            # First call - should hit "API" (mocked in this case by the method logic)
+            source1 = retriever.get_contract_source("0x123", "ethereum")
 
-    def test_import_completeness(self) -> None:
-        """Test that all expected classes can be imported."""
-        from quantchain.agents.smart_contract_auditor import (
-            AuditStatus,
-            ContractRetriever,
-            ContractSource,
-            FinancialAnalyzer,
-            ProtocolAnalysis,
-            SmartContractAuditorAgent,
-            SmartContractAuditorConfig,
-            TokenomicsAnalysis,
-            Vulnerability,
-            VulnerabilityReport,
-            VulnerabilityScanner,
-            VulnerabilitySeverity,
+            # Verify it's in cache
+            cache_key = "ethereum:0x123"
+            self.assertIn(cache_key, retriever._cache)
+
+            # Second call - should return same object
+            source2 = retriever.get_contract_source("0x123", "ethereum")
+            self.assertEqual(source1, source2)
+
+    def test_detect_contract_type(self):
+        """Test contract type detection."""
+        retriever = ContractRetriever(self.config)
+
+        source = ContractSource(
+            address="0x123",
+            source_code="interface IERC20 { }",
+            abi="[]",
+            contract_name="Token",
+            compiler_version="0.8.0",
+            optimization_enabled=True,
+            constructor_arguments="",
+            network="ethereum",
         )
 
-        # Verify all imports worked
-        assert AuditStatus is not None
-        assert ContractRetriever is not None
-        assert ContractSource is not None
-        assert FinancialAnalyzer is not None
-        assert ProtocolAnalysis is not None
-        assert SmartContractAuditorAgent is not None
-        assert SmartContractAuditorConfig is not None
-        assert TokenomicsAnalysis is not None
-        assert Vulnerability is not None
-        assert VulnerabilityReport is not None
-        assert VulnerabilityScanner is not None
-        assert VulnerabilitySeverity is not None
+        contract_type = retriever.detect_contract_type(source)
+        self.assertEqual(contract_type, "ERC20")
+
+    def test_extract_imports(self):
+        """Test import extraction."""
+        retriever = ContractRetriever(self.config)
+
+        source_code = """
+        import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+        import "./interfaces/IUniswap.sol";
+
+        contract Test {}
+        """
+        source = ContractSource(
+            address="0x123",
+            source_code=source_code,
+            abi="[]",
+            contract_name="Test",
+            compiler_version="0.8.0",
+            optimization_enabled=True,
+            constructor_arguments="",
+            network="ethereum",
+        )
+
+        imports = retriever.extract_imports(source)
+        self.assertEqual(len(imports), 2)
+        self.assertIn(
+            'import "@openzeppelin/contracts/token/ERC20/ERC20.sol";', imports
+        )
+
+    def test_extract_inheritance(self):
+        """Test inheritance extraction."""
+        retriever = ContractRetriever(self.config)
+
+        source_code = """
+        contract MyToken is ERC20, Ownable {
+        }
+        """
+        source = ContractSource(
+            address="0x123",
+            source_code=source_code,
+            abi="[]",
+            contract_name="MyToken",
+            compiler_version="0.8.0",
+            optimization_enabled=True,
+            constructor_arguments="",
+            network="ethereum",
+        )
+
+        parents = retriever.extract_inheritance(source)
+        self.assertIn("ERC20", parents)
+        self.assertIn("Ownable", parents)

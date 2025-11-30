@@ -3,8 +3,6 @@
 Script to fix TimeFrame imports in test files.
 """
 
-import os
-import re
 from pathlib import Path
 
 

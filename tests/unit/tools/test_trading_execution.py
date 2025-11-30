@@ -2,11 +2,6 @@
 Comprehensive tests for trading execution module.
 """
 
-import asyncio
-from datetime import datetime
-from decimal import Decimal
-from unittest.mock import AsyncMock, patch
-
 import pytest
 
 from quantchain.tools.trading_execution import (

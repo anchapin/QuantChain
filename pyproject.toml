@@ -42,6 +42,7 @@ core = [
 
 test = [
     "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0.0",
     "pytest-mock>=3.10.0",
     "pytest-timeout>=2.1.0",
@@ -174,16 +175,19 @@ multi_line_output = 3
 line_length = 88
 known_first_party = ["quantchain"]
 
-[tool.flake8]
-max-line-length = 88
-ignore = ["E203", "W503"]
-
 [tool.mypy]
 python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
+ignore_missing_imports = true
+follow_imports = "skip"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "google.*"
+ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"

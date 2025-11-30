@@ -95,7 +95,7 @@ class PortfolioCommitteeAgent(BaseSpecializedAgent):
             ),
         )
 
-    def analyze(self, symbol: str, **kwargs) -> AgentAnalysis:
+    def analyze(self, symbol: str, **kwargs: Any) -> AgentAnalysis:
         """Coordinate multi-agent analysis and debate for a symbol.
 
         Args:
@@ -180,7 +180,7 @@ class PortfolioCommitteeAgent(BaseSpecializedAgent):
         )
 
     def _gather_agent_analyses(
-        self, symbol: str, **kwargs
+        self, symbol: str, **kwargs: Any
     ) -> Dict[AgentRole, AgentAnalysis]:
         """Gather analyses from all specialized agents.
 
@@ -211,7 +211,10 @@ class PortfolioCommitteeAgent(BaseSpecializedAgent):
         return analyses
 
     def _conduct_debate(
-        self, symbol: str, initial_analyses: Dict[AgentRole, AgentAnalysis], **kwargs
+        self,
+        symbol: str,
+        initial_analyses: Dict[AgentRole, AgentAnalysis],
+        **kwargs: Any,
     ) -> DebateSession:
         """Conduct structured debate between agents.
 
@@ -313,9 +316,7 @@ class PortfolioCommitteeAgent(BaseSpecializedAgent):
 
         for role, analysis in analyses.items():
             # Get voting weight for this agent role
-            weight = self.committee_config.voting_weights.get(
-                role.value, self.committee_config.voting_weights.get(role, 0.25)
-            )
+            weight = self.committee_config.voting_weights.get(role, 0.25)
 
             # Adjust weight by confidence score
             adjusted_weight = weight * (analysis.confidence_score / 100.0)
@@ -325,7 +326,7 @@ class PortfolioCommitteeAgent(BaseSpecializedAgent):
             votes[analysis.recommendation] += adjusted_weight
 
         # Determine final recommendation
-        final_recommendation = max(votes, key=votes.get)
+        final_recommendation = max(votes.keys(), key=lambda k: votes[k])
         total_weight = sum(votes.values())
 
         # Calculate consensus score (percentage of total weight for winning recommendation)

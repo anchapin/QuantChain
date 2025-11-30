@@ -101,7 +101,11 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         # Setup event handlers
         self._setup_event_handlers()
 
-    def _setup_event_handlers(self):
+    def __repr__(self) -> str:
+        """Return string representation of the connector."""
+        return f"IBAsyncExecutionConnector(host={self.host}, port={self.port}, client_id={self.client_id})"
+
+    def _setup_event_handlers(self) -> None:
         """Setup event handlers for IB events."""
         try:
             # Use safe event binding - some events may not exist in all versions
@@ -167,46 +171,79 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         """Check if connected to IB."""
         return self._connected and self.ib.isConnected()
 
-    async def place_order(self, order_request: OrderRequest) -> OrderResult:
+    async def place_order_async(self, order_request: OrderRequest) -> OrderResult:
         """
-        Place an order with IB.
+        Place an order asynchronously.
 
         Args:
-            order_request: Order request containing order details
+            order_request: Order request to place
 
         Returns:
-            OrderResult with execution details
+            OrderResult with order details
+
+        Raises:
+            IBAsyncConnectionError: If not connected to IB
+            IBAsyncOrderError: If order placement fails
         """
-        if not await self.is_connected():
-            await self.connect()
+        if not await self._is_connected_async():
+            await self._connect_async()
 
         if self.readonly:
             raise IBAsyncOrderError("Cannot place order in readonly mode")
 
         try:
-            # Get or create contract
+            # Get contract
             contract = await self._get_contract(order_request)
 
-            # Create IB order
+            # Create order
             order = self._create_ib_order(order_request)
 
             # Place order
             trade = await self.ib.placeOrderAsync(contract, order)
 
             # Store trade
-            self._orders[trade.order.permId] = trade
+            order_id = str(trade.order.permId)
+            self._orders[order_id] = trade
 
-            # Convert to OrderResult
+            # Convert to result
             result = self._convert_trade_to_result(trade)
 
-            logger.info(f"Placed order {result.order_id} for {order_request.symbol}")
+            logger.info(f"Placed order {order_id} for {order_request.symbol}")
             return result
 
         except Exception as e:
             logger.error(f"Failed to place order: {e}")
             raise IBAsyncOrderError(f"Failed to place order: {e}")
 
-    async def cancel_order(self, order_id: str) -> bool:
+    async def get_order_status_async(self, order_id: str) -> OrderStatus:
+        """
+        Get order status asynchronously.
+
+        Args:
+            order_id: Order ID to check
+
+        Returns:
+            OrderStatus of the order
+
+        Raises:
+            IBAsyncOrderError: If order not found
+        """
+        if not await self._is_connected_async():
+            await self._connect_async()
+
+        # Find trade by order ID
+        trade = None
+        for t in self._orders.values():
+            if str(t.order.permId) == order_id:
+                trade = t
+                break
+
+        if not trade:
+            raise IBAsyncOrderError(f"Order {order_id} not found")
+
+        return self._map_order_status(trade.orderStatus.status)
+
+    async def cancel_order_async(self, order_id: str) -> bool:
         """
         Cancel an existing order.
 
@@ -216,8 +253,8 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         Returns:
             True if cancellation successful, False otherwise
         """
-        if not await self.is_connected():
-            await self.connect()
+        if not await self._is_connected_async():
+            await self._connect_async()
 
         if self.readonly:
             raise IBAsyncOrderError("Cannot cancel order in readonly mode")
@@ -231,8 +268,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
                     break
 
             if not trade:
-                logger.error(f"Order {order_id} not found")
-                return False
+                raise IBAsyncOrderError(f"Order {order_id} not found")
 
             # Cancel order
             await self.ib.cancelOrderAsync(trade.order)
@@ -242,7 +278,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
 
         except Exception as e:
             logger.error(f"Failed to cancel order {order_id}: {e}")
-            return False
+            raise IBAsyncOrderError(f"Failed to cancel order {order_id}: {e}")
 
     async def get_order(self, order_id: str) -> Optional[OrderResult]:
         """
@@ -254,8 +290,8 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         Returns:
             OrderResult with order details, or None if not found
         """
-        if not await self.is_connected():
-            await self.connect()
+        if not await self._is_connected_async():
+            await self._connect_async()
 
         try:
             # Find trade by order ID
@@ -281,8 +317,8 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         Returns:
             List of OrderResult objects
         """
-        if not await self.is_connected():
-            await self.connect()
+        if not await self._is_connected_async():
+            await self._connect_async()
 
         try:
             # Get all open trades
@@ -304,15 +340,15 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
             logger.error(f"Failed to get orders: {e}")
             return []
 
-    async def get_positions(self) -> List[QuantChainPosition]:
+    async def get_positions_async(self) -> List[QuantChainPosition]:
         """
-        Get current positions.
+        Get current positions asynchronously.
 
         Returns:
             List of QuantChain position objects
         """
-        if not await self.is_connected():
-            await self.connect()
+        if not await self._is_connected_async():
+            await self._connect_async()
 
         try:
             # Get all positions
@@ -329,11 +365,19 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
                     # Create QuantChain position
                     position = QuantChainPosition(
                         symbol=self._get_symbol_from_contract(contract),
-                        quantity=pos.position,
-                        price=price,
+                        quantity=float(abs(pos.position)),
+                        side=OrderSide.BUY if pos.position > 0 else OrderSide.SELL,
                         market_value=pos.position * price if price else 0.0,
-                        unrealized_pnl=(
-                            pos.position * (price - pos.avgCost) if price else 0.0
+                        cost_basis=pos.position * pos.avgCost if pos.avgCost else 0.0,
+                        unrealized_pl=(
+                            pos.position * (price - pos.avgCost)
+                            if price and pos.avgCost
+                            else 0.0
+                        ),
+                        unrealized_pl_pct=(
+                            ((price - pos.avgCost) / pos.avgCost * 100)
+                            if price and pos.avgCost and pos.avgCost != 0
+                            else 0.0
                         ),
                     )
                     positions.append(position)
@@ -342,7 +386,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
 
         except Exception as e:
             logger.error(f"Failed to get positions: {e}")
-            return []
+            raise IBAsyncDataError(f"Failed to get positions: {e}")
 
     async def get_account_info(self) -> AccountInfo:
         """
@@ -351,8 +395,8 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         Returns:
             AccountInfo object with account details
         """
-        if not await self.is_connected():
-            await self.connect()
+        if not await self._is_connected_async():
+            await self._connect_async()
 
         try:
             # Get account summary
@@ -372,21 +416,27 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
                     buying_power = float(item.value)
 
             return AccountInfo(
-                account_id=self.account,
+                account_id=self.account or "unknown",
+                buying_power=buying_power,
                 cash=total_cash,
                 portfolio_value=portfolio_value,
-                buying_power=buying_power,
-                total_equity=portfolio_value,
+                day_trading_profit_loss=0.0,
+                maintenance_margin=0.0,
+                day_trades_count=0,
+                leverage=1.0,
             )
 
         except Exception as e:
             logger.error(f"Failed to get account info: {e}")
             return AccountInfo(
-                account_id=self.account,
+                account_id=self.account or "unknown",
+                buying_power=0.0,
                 cash=0.0,
                 portfolio_value=0.0,
-                buying_power=0.0,
-                total_equity=0.0,
+                day_trading_profit_loss=0.0,
+                maintenance_margin=0.0,
+                day_trades_count=0,
+                leverage=1.0,
             )
 
     async def get_historical_data(
@@ -412,8 +462,8 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         Returns:
             DataFrame with historical data
         """
-        if not await self.is_connected():
-            await self.connect()
+        if not await self._is_connected_async():
+            await self._connect_async()
 
         try:
             # Create contract
@@ -466,8 +516,8 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         Returns:
             Dictionary with market data
         """
-        if not await self.is_connected():
-            await self.connect()
+        if not await self._is_connected_async():
+            await self._connect_async()
 
         try:
             # Create contract
@@ -509,8 +559,8 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         Returns:
             Dictionary with contract details
         """
-        if not await self.is_connected():
-            await self.connect()
+        if not await self._is_connected_async():
+            await self._connect_async()
 
         try:
             # Create contract
@@ -544,9 +594,9 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
     async def _get_contract(self, order_request: OrderRequest) -> Contract:
         """Get or create contract for order."""
         symbol = order_request.symbol
-        sec_type = order_request.security_type or "STK"
-        currency = order_request.currency or "USD"
-        exchange = order_request.exchange or "SMART"
+        sec_type = "STK"
+        currency = "USD"
+        exchange = "SMART"
 
         # Check cache first
         contract_key = f"{symbol}_{sec_type}_{currency}_{exchange}"
@@ -576,6 +626,69 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
             symbol=symbol, secType=sec_type, currency="USD", exchange="SMART"
         )
 
+    def _create_contract(
+        self,
+        symbol: str,
+        sec_type: str = "STK",
+        exchange: str = "SMART",
+        currency: str = "USD",
+        **kwargs,
+    ) -> Contract:
+        """Create IB contract from parameters."""
+        try:
+            contract = Contract(
+                symbol=symbol,
+                secType=sec_type,
+                exchange=exchange,
+                currency=currency,
+                **kwargs,
+            )
+            return contract
+        except Exception as e:
+            raise IBAsyncContractError(f"Failed to create contract: {e}")
+
+    def _create_order(self, order_request: OrderRequest) -> Order:
+        """Create IB order from order request."""
+        return self._create_ib_order(order_request)
+
+    def _validate_order_request(self, order_request: OrderRequest) -> None:
+        """Validate order request."""
+        if not order_request.symbol:
+            raise IBAsyncOrderError("Symbol is required")
+        if order_request.quantity <= 0:
+            raise IBAsyncOrderError("Quantity must be positive")
+
+        # Check for limit price (support both price and limit_price attributes)
+        limit_price = getattr(order_request, "price", None) or getattr(
+            order_request, "limit_price", None
+        )
+        if order_request.order_type == OrderType.LIMIT and not limit_price:
+            raise IBAsyncOrderError("Limit price is required for limit orders")
+
+        if (
+            order_request.order_type in [OrderType.STOP, OrderType.STOP_LIMIT]
+            and not order_request.stop_price
+        ):
+            raise IBAsyncOrderError("Stop price is required for stop orders")
+
+    async def _handle_ib_errors(self, operation, operation_name: str):
+        """Handle IB operations with error wrapping."""
+        try:
+            return await operation()
+        except Exception as e:
+            raise IBAsyncExecutionError(f"{operation_name} failed: {e}")
+
+    def get_order_status(self, order_id: str) -> OrderStatus:
+        """Get order status synchronously."""
+        trade = self._orders.get(order_id)
+        if not trade:
+            raise IBAsyncOrderError(f"Order {order_id} not found")
+        return self._map_order_status(trade.orderStatus.status)
+
+    def clear_market_data_cache(self) -> None:
+        """Clear market data cache."""
+        self._market_data_cache.clear()
+
     def _create_ib_order(self, order_request: OrderRequest) -> Order:
         """Create IB order from order request."""
         # Map order type
@@ -591,9 +704,12 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
             totalQuantity=abs(order_request.quantity),
         )
 
-        # Set price for limit orders
-        if order_request.order_type == OrderType.LIMIT and order_request.price:
-            order.lmtPrice = order_request.price
+        # Set price for limit orders (support both price and limit_price attributes)
+        limit_price = getattr(order_request, "price", None) or getattr(
+            order_request, "limit_price", None
+        )
+        if order_request.order_type == OrderType.LIMIT and limit_price:
+            order.lmtPrice = limit_price
 
         # Set stop price for stop orders
         if (
@@ -602,9 +718,12 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         ):
             order.auxPrice = order_request.stop_price
 
-        # Set limit price for stop limit orders
-        if order_request.order_type == OrderType.STOP_LIMIT and order_request.price:
-            order.lmtPrice = order_request.price
+        # Set limit price for stop limit orders (support both price and limit_price attributes)
+        limit_price = getattr(order_request, "price", None) or getattr(
+            order_request, "limit_price", None
+        )
+        if order_request.order_type == OrderType.STOP_LIMIT and limit_price:
+            order.lmtPrice = limit_price
 
         # Set time in force
         order.tif = "DAY"  # Default to day order
@@ -613,8 +732,11 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         order.account = self.account
 
         # Set order ID from request if provided
-        if order_request.order_id:
-            order.clientId = int(order_request.order_id)
+        if order_request.client_order_id:
+            try:
+                order.clientId = int(order_request.client_order_id)
+            except (ValueError, TypeError):
+                pass
 
         return order
 
@@ -624,14 +746,31 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
             OrderType.MARKET: "MKT",
             OrderType.LIMIT: "LMT",
             OrderType.STOP: "STP",
-            OrderType.STOP_LIMIT: "STP LMT",
+            OrderType.STOP_LIMIT: "STPLMT",
         }
-        return mapping.get(order_type, "MKT")
+        if order_type not in mapping:
+            raise IBAsyncOrderError(f"Unsupported order type: {order_type}")
+        return mapping[order_type]
 
     def _convert_trade_to_result(self, trade: Trade) -> OrderResult:
         """Convert IB trade to OrderResult."""
         # Map order status
         status = self._map_order_status(trade.orderStatus.status)
+
+        print(
+            f"DEBUG: totalQuantity={trade.order.totalQuantity} type={type(trade.order.totalQuantity)}"
+        )
+        print(
+            f"DEBUG: filled={trade.orderStatus.filled} type={type(trade.orderStatus.filled)}"
+        )
+        if hasattr(trade.order, "lmtPrice"):
+            print(
+                f"DEBUG: lmtPrice={trade.order.lmtPrice} type={type(trade.order.lmtPrice)}"
+            )
+        if hasattr(trade.order, "auxPrice"):
+            print(
+                f"DEBUG: auxPrice={trade.order.auxPrice} type={type(trade.order.auxPrice)}"
+            )
 
         # Calculate execution price
         price = 0.0
@@ -642,30 +781,29 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
 
         return OrderResult(
             order_id=str(trade.order.permId),
-            client_order_id=str(trade.order.clientId) if trade.order.clientId else None,
             symbol=self._get_symbol_from_contract(trade.contract),
             side=OrderSide.BUY if trade.order.action == "BUY" else OrderSide.SELL,
             order_type=self._map_ib_order_type(trade.order.orderType),
-            quantity=trade.order.totalQuantity,
-            filled_quantity=trade.orderStatus.filled,
+            quantity=float(trade.order.totalQuantity),
+            filled_quantity=float(trade.orderStatus.filled),
             price=price,
+            average_price=price,
             status=status,
+            timestamp=(
+                trade.orderStatus.time if trade.orderStatus.time else datetime.now()
+            ),
             time_in_force=trade.order.tif,
             stop_price=(
                 trade.order.auxPrice if hasattr(trade.order, "auxPrice") else None
-            ),
-            create_time=trade.log[0].time if trade.log else datetime.now(),
-            update_time=(
-                trade.orderStatus.time if trade.orderStatus.time else datetime.now()
             ),
         )
 
     def _map_order_status(self, ib_status: str) -> OrderStatus:
         """Map IB order status to QuantChain order status."""
         mapping = {
-            "PendingSubmit": OrderStatus.PENDING,
-            "PendingCancel": OrderStatus.PENDING_CANCEL,
-            "PreSubmitted": OrderStatus.PENDING,
+            "PendingSubmit": OrderStatus.NEW,
+            "PendingCancel": OrderStatus.CANCELLED,
+            "PreSubmitted": OrderStatus.NEW,
             "Submitted": OrderStatus.SUBMITTED,
             "ApiPending": OrderStatus.SUBMITTED,
             "ApiCancelled": OrderStatus.CANCELLED,
@@ -674,7 +812,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
             "Partial": OrderStatus.PARTIALLY_FILLED,
             "Inactive": OrderStatus.REJECTED,
         }
-        return mapping.get(ib_status, OrderStatus.UNKNOWN)
+        return mapping.get(ib_status, OrderStatus.NEW)
 
     def _map_ib_order_type(self, ib_type: str) -> OrderType:
         """Map IB order type to QuantChain order type."""
@@ -682,48 +820,58 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
             "MKT": OrderType.MARKET,
             "LMT": OrderType.LIMIT,
             "STP": OrderType.STOP,
-            "STP LMT": OrderType.STOP_LIMIT,
+            "STPLMT": OrderType.STOP_LIMIT,
         }
         return mapping.get(ib_type, OrderType.MARKET)
 
     def _get_symbol_from_contract(self, contract: Contract) -> str:
         """Extract symbol from contract."""
-        return contract.symbol
+        return str(contract.symbol)
 
     async def _get_current_price(self, contract: Contract) -> Optional[float]:
         """Get current price for a contract."""
         try:
             ticker = await self.ib.reqMktDataAsync(contract, snapshot=True)
-            return ticker.last or ticker.midpoint() or ticker.close
+            return (
+                float(ticker.last)
+                if ticker.last is not None
+                else (
+                    float(ticker.midpoint())
+                    if ticker.midpoint() is not None
+                    else (float(ticker.close) if ticker.close is not None else None)
+                )
+            )
         except Exception:
             return None
 
     # Event handlers
-    def _on_error(self, reqId, errorCode, errorString, contract):
+    def _on_error(
+        self, reqId: int, errorCode: int, errorString: str, contract: Any
+    ) -> None:
         """Handle IB error events."""
         logger.error(f"IB Error {errorCode}: {errorString}")
 
-    def _on_order_status(self, trade: Trade):
+    def _on_order_status(self, trade: Trade) -> None:
         """Handle order status updates."""
         logger.debug(
             f"Order status update: {trade.order.permId} - {trade.orderStatus.status}"
         )
 
-    def _on_portfolio_update(self, item: PortfolioItem):
+    def _on_portfolio_update(self, item: PortfolioItem) -> None:
         """Handle portfolio updates."""
         logger.debug(f"Portfolio update: {item.contract.symbol} - {item.position}")
 
-    def _on_position_update(self, position: Position):
+    def _on_position_update(self, position: Position) -> None:
         """Handle position updates."""
         logger.debug(
             f"Position update: {position.contract.symbol} - {position.position}"
         )
 
-    def _on_account_value(self, value):
+    def _on_account_value(self, value: Any) -> None:
         """Handle account value updates."""
         logger.debug(f"Account value update: {value.tag} - {value.value}")
 
-    def _on_contract_details(self, reqId, details):
+    def _on_contract_details(self, reqId: int, details: Any) -> None:
         """Handle contract details."""
         logger.debug(f"Contract details received for reqId: {reqId}")
 
@@ -792,7 +940,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
 
     def is_connected(self) -> bool:
         """Synchronous is_connected method for abstract interface compatibility."""
-        return self._connected
+        return self._connected and self.ib.isConnected()
 
     def place_order(self, order: OrderRequest) -> OrderResult:
         """Synchronous place_order method for abstract interface compatibility."""
@@ -801,7 +949,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
 
         # Return a basic result for the abstract method requirement
         return OrderResult(
-            order_id=order.id,
+            order_id=order.client_order_id or "unknown",
             symbol=order.symbol,
             side=order.side,
             order_type=order.order_type,

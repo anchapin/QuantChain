@@ -196,11 +196,11 @@ class BacktestingPyEngine:
             }
 
         # Calculate metrics
-        volatility = returns.std() * np.sqrt(252)  # Annualized volatility
-        var_95 = np.percentile(returns, 5)
-        var_99 = np.percentile(returns, 1)
-        skewness = returns.skew()
-        kurtosis = returns.kurtosis()
+        volatility = float(returns.std() * np.sqrt(252))  # Annualized volatility
+        var_95 = float(np.percentile(returns, 5))
+        var_99 = float(np.percentile(returns, 1))
+        skewness = float(returns.skew())
+        kurtosis = float(returns.kurtosis())
 
         return {
             "volatility": volatility,

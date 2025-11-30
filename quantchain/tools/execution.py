@@ -28,6 +28,7 @@ class OrderType(Enum):
     LIMIT = "limit"
     STOP = "stop"
     STOP_LIMIT = "stop_limit"
+    TRAILING_STOP = "trailing_stop"
 
 
 class OrderStatus(Enum):
@@ -430,10 +431,31 @@ class AlpacaExecutionTool:
         """
         # Find the order
         order = None
+        order_key = None
         for client_order_id, result in self._orders.items():
-            if result.order_id == order_id:
+            if isinstance(result, OrderResult) and result.order_id == order_id:
                 order = result
+                order_key = client_order_id
                 break
+            elif (
+                isinstance(result, OrderRequest) and result.client_order_id == order_id
+            ):
+                # For OrderRequest, convert to OrderResult with CANCELLED status
+                cancelled_order = OrderResult(
+                    order_id=result.id,
+                    symbol=result.symbol,
+                    side=result.side,
+                    order_type=result.order_type,
+                    quantity=result.quantity,
+                    filled_quantity=0.0,
+                    price=result.price,
+                    average_price=None,
+                    status=OrderStatus.CANCELLED,
+                    timestamp=datetime.now(),
+                    stop_price=result.stop_price,
+                )
+                self._orders[client_order_id] = cancelled_order
+                return True
 
         if not order:
             raise OrderNotFoundError(f"Order {order_id} not found")
@@ -445,6 +467,8 @@ class AlpacaExecutionTool:
         # Update status
         order.status = OrderStatus.CANCELLED
         order.timestamp = datetime.now()
+        if order_key is not None:
+            self._orders[order_key] = order
 
         return True
 
@@ -460,8 +484,26 @@ class AlpacaExecutionTool:
         """
         # Find the order
         for client_order_id, result in self._orders.items():
-            if result.order_id == order_id:
+            if isinstance(result, OrderResult) and result.order_id == order_id:
                 return result
+            elif (
+                isinstance(result, OrderRequest) and result.client_order_id == order_id
+            ):
+                # Convert OrderRequest to OrderResult with SUBMITTED status
+                order_result = OrderResult(
+                    order_id=result.id,
+                    symbol=result.symbol,
+                    side=result.side,
+                    order_type=result.order_type,
+                    quantity=result.quantity,
+                    filled_quantity=0.0,
+                    price=result.price,
+                    average_price=None,
+                    status=OrderStatus.SUBMITTED,
+                    timestamp=result.created_at,
+                    stop_price=result.stop_price,
+                )
+                return order_result
 
         raise OrderNotFoundError(f"Order {order_id} not found")
 
@@ -523,17 +565,38 @@ class AlpacaExecutionTool:
         Returns:
             List of order results
         """
-        orders = list(self._orders.values())
+        order_results = []
+
+        # Convert all orders to OrderResult format
+        for order in self._orders.values():
+            if isinstance(order, OrderResult):
+                order_results.append(order)
+            elif isinstance(order, OrderRequest):
+                # Convert OrderRequest to OrderResult
+                order_result = OrderResult(
+                    order_id=order.id,
+                    symbol=order.symbol,
+                    side=order.side,
+                    order_type=order.order_type,
+                    quantity=order.quantity,
+                    filled_quantity=0.0,
+                    price=order.price,
+                    average_price=None,
+                    status=OrderStatus.SUBMITTED,
+                    timestamp=order.created_at,
+                    stop_price=order.stop_price,
+                )
+                order_results.append(order_result)
 
         # Filter by symbol if provided
         if symbol:
-            orders = [order for order in orders if order.symbol == symbol]
+            order_results = [order for order in order_results if order.symbol == symbol]
 
         # Sort by timestamp (newest first)
-        orders.sort(key=lambda x: x.timestamp, reverse=True)
+        order_results.sort(key=lambda x: x.timestamp, reverse=True)
 
         # Apply limit
-        return orders[:limit]
+        return order_results[:limit]
 
     def get_account_balance(self) -> Dict[str, float]:
         """

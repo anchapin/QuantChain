@@ -41,7 +41,7 @@ class FinRLConfig:
         min_cost_pct: float = 0.001,
     ):
         self.initial_cash = initial_cash
-        self.initial_position = initial_position or {}
+        self.initial_position = (initial_position or {}).copy()
         self.buy_cost_pct = buy_cost_pct
         self.sell_cost_pct = sell_cost_pct
         self.min_cost_pct = min_cost_pct

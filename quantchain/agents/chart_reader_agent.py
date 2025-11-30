@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import numpy as np
 
@@ -140,7 +140,7 @@ class TechnicalIndicator:
         self,
         name: str,
         params: Dict[str, Any],
-        values: List[float],
+        values: List[Optional[float]],
         signal: Optional[str] = None,
     ):
         self.name = name
@@ -156,7 +156,7 @@ class TechnicalIndicatorCalculator:
     def calculate_sma(ohlcv: OHLCVData, period: int = 20) -> TechnicalIndicator:
         """Calculate Simple Moving Average (SMA)."""
         closes = np.array(ohlcv.closes)
-        sma_values = []
+        sma_values: List[Optional[float]] = []
 
         for i in range(len(closes)):
             if i < period - 1:
@@ -178,13 +178,17 @@ class TechnicalIndicatorCalculator:
         # First EMA value is the SMA
         if len(closes) >= period:
             first_ema = np.mean(closes[:period])
-            ema_values = [None] * (period - 1) + [first_ema]
+            ema_values = [None] * (period - 1) + [float(first_ema)]
 
             # Calculate subsequent EMA values
             multiplier = 2 / (period + 1)
             for i in range(period, len(closes)):
-                ema = closes[i] * multiplier + ema_values[-1] * (1 - multiplier)
-                ema_values.append(float(ema))
+                prev_ema = ema_values[-1]
+                if prev_ema is not None:
+                    ema = closes[i] * multiplier + prev_ema * (1 - multiplier)
+                    ema_values.append(ema)
+                else:
+                    ema_values.append(None)
         else:
             ema_values = [None] * len(closes)
 
@@ -202,9 +206,9 @@ class TechnicalIndicatorCalculator:
         losses = np.where(deltas < 0, -deltas, 0)
 
         # Initialize arrays with None values
-        avg_gain = [None] * len(closes)
-        avg_loss = [None] * len(closes)
-        rsi_values = [None] * len(closes)
+        avg_gain: List[Optional[float]] = [None] * len(closes)
+        avg_loss: List[Optional[float]] = [None] * len(closes)
+        rsi_values: List[Optional[float]] = [None] * len(closes)
 
         for i in range(len(closes)):
             if i < period:
@@ -212,26 +216,38 @@ class TechnicalIndicatorCalculator:
                 continue
             elif i == period:
                 # First RSI value uses simple average
-                avg_gain[i] = np.mean(gains[:period])
-                avg_loss[i] = np.mean(losses[:period])
+                avg_gain[i] = float(np.mean(gains[:period]))
+                avg_loss[i] = float(np.mean(losses[:period]))
             else:
                 # Subsequent values use Wilder's smoothing
                 prev_avg_gain = avg_gain[i - 1]
                 prev_avg_loss = avg_loss[i - 1]
 
-                # gains[i-1] because gains array is one shorter than closes
-                current_gain = gains[i - 1] if i - 1 < len(gains) else 0
-                current_loss = losses[i - 1] if i - 1 < len(losses) else 0
+                if prev_avg_gain is not None and prev_avg_loss is not None:
+                    # gains[i-1] because gains array is one shorter than closes
+                    current_gain = gains[i - 1] if i - 1 < len(gains) else 0
+                    current_loss = losses[i - 1] if i - 1 < len(losses) else 0
 
-                avg_gain[i] = (prev_avg_gain * (period - 1) + current_gain) / period
-                avg_loss[i] = (prev_avg_loss * (period - 1) + current_loss) / period
+                    avg_gain[i] = (
+                        ((prev_avg_gain * (period - 1) + current_gain) / period)
+                        if prev_avg_gain is not None
+                        else None
+                    )
+                    avg_loss[i] = (
+                        ((prev_avg_loss * (period - 1) + current_loss) / period)
+                        if prev_avg_loss is not None
+                        else None
+                    )
+                else:
+                    avg_gain[i] = None
+                    avg_loss[i] = None
 
             # Calculate RSI
             if avg_gain[i] is not None and avg_loss[i] is not None:
                 if avg_loss[i] == 0:
                     rs = float("inf")
                 else:
-                    rs = avg_gain[i] / avg_loss[i]
+                    rs = cast(float, avg_gain[i]) / cast(float, avg_loss[i])
 
                 rsi = 100 - (100 / (1 + rs))
                 rsi_values[i] = rsi

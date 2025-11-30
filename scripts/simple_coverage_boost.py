@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Simple script to boost test coverage with basic import tests."""
 
-import os
 from pathlib import Path
 
 # List of high-impact modules to create basic tests for

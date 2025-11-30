@@ -9,10 +9,7 @@ from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
-from quantchain.core.config import (
-    LogLevel,
-    QuantChainConfig,
-)
+from quantchain.core.config import LogLevel, QuantChainConfig
 
 
 @pytest.mark.unit
@@ -467,9 +464,10 @@ class TestQuantChainConfig:
             temperature=0.5,
             enable_rag=True,
             log_level=LogLevel.WARNING,
-            custom_list=[1, 2, 3],
-            custom_dict={"key": "value"},
         )
+        # Add custom attributes directly
+        config.custom_list = [1, 2, 3]
+        config.custom_dict = {"key": "value"}
 
         # Add custom attribute
         config.custom_field = "custom_value"

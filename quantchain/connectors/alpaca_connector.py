@@ -3,7 +3,7 @@
 import os
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 try:
     import pandas as pd
@@ -101,7 +101,7 @@ class AlpacaDataConnector:
         # Convert "-" to "/"
         return symbol.replace("-", "/")
 
-    def _convert_timeframe(self, timeframe: str) -> str:
+    def _convert_timeframe(self, timeframe: str) -> TimeFrame:
         """Convert timeframe string to Alpaca TimeFrame."""
         timeframe_map = {
             "1Min": TimeFrame.Minute,
@@ -155,7 +155,7 @@ class AlpacaDataConnector:
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
         limit: Optional[int] = None,
-    ):
+    ) -> pd.DataFrame:
         """
         Get historical OHLCV data for a symbol.
 
@@ -206,10 +206,14 @@ class AlpacaDataConnector:
         for attempt in range(self.retry_count):
             try:
                 if is_crypto:
+                    if self.crypto_client is None:
+                        raise DataSourceError("Crypto client not initialized")
                     bars = self.crypto_client.get_crypto_bars(
                         symbol, tf, start=start, end=end, limit=limit
                     )
                 else:
+                    if self.stock_client is None:
+                        raise DataSourceError("Stock client not initialized")
                     bars = self.stock_client.get_stock_bars(
                         symbol, tf, start=start, end=end, limit=limit
                     )
@@ -230,7 +234,10 @@ class AlpacaDataConnector:
 
                 time.sleep(self.retry_delay)
 
-    def get_real_time_data(self, symbol: str) -> Optional[pd.DataFrame]:
+        # Return empty DataFrame if all retries fail
+        return pd.DataFrame()
+
+    def get_real_time_data(self, symbol: str) -> Optional[Dict[str, Any]]:
         """
         Get real-time quote data for a symbol.
 
@@ -260,8 +267,12 @@ class AlpacaDataConnector:
         for attempt in range(self.retry_count):
             try:
                 if is_crypto:
+                    if self.crypto_client is None:
+                        raise DataSourceError("Crypto client not initialized")
                     quotes = self.crypto_client.get_crypto_latest_quote(symbol)
                 else:
+                    if self.stock_client is None:
+                        raise DataSourceError("Stock client not initialized")
                     quotes = self.stock_client.get_stock_latest_quote(symbol)
 
                 if not quotes or symbol not in quotes:
@@ -291,6 +302,9 @@ class AlpacaDataConnector:
 
                 time.sleep(self.retry_delay)
 
+        # Return None if all retries fail
+        return None
+
     def get_quote(self, symbol: str) -> Optional[Dict[str, Any]]:
         """
         Get detailed quote information for a symbol.
@@ -303,6 +317,8 @@ class AlpacaDataConnector:
         """
         # Get real-time data
         data = self.get_real_time_data(symbol)
+        if data is None:
+            return None
 
         # Add additional fields
         data.update(
@@ -317,7 +333,7 @@ class AlpacaDataConnector:
 
     def get_available_symbols(
         self, market: Optional[str] = None, limit: Optional[int] = None
-    ):
+    ) -> List[str]:
         """
         Get list of available trading symbols.
 
@@ -367,7 +383,7 @@ class AlpacaDataConnector:
             raise SymbolNotFoundError(f"Symbol {symbol} not found")
 
         # Get basic info from cache
-        info = self._symbol_cache[symbol]
+        info = self._symbol_cache[symbol].copy() if symbol in self._symbol_cache else {}
 
         # Add symbol itself
         info["symbol"] = symbol

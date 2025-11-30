@@ -10,9 +10,8 @@ This script fixes critical syntax errors in Python files, specifically:
 """
 
 import os
-import re
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import List
 
 # Base directory for the project
 BASE_DIR = Path(__file__).parent.parent
@@ -170,9 +169,9 @@ def fix_missing_classes(file_path: str, class_names: List[str]) -> None:
                     break
 
             lines.insert(last_line, "")
-            lines.insert(last_line + 1, f"@dataclass")
+            lines.insert(last_line + 1, "@dataclass")
             lines.insert(last_line + 2, f"class {class_name}:")
-            lines.insert(last_line + 3, f"    pass")
+            lines.insert(last_line + 3, "    pass")
 
             print(f"Added class {class_name} to {file_path}")
 

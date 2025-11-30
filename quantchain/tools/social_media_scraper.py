@@ -66,7 +66,7 @@ class VibeAssessment:
     sentiment: SentimentScore
     confidence: float  # 0.0 to 1.0
     reasons: List[str] = field(default_factory=list)
-    social_metrics: SocialMediaMetrics = None
+    social_metrics: Optional[SocialMediaMetrics] = None
     timestamp: datetime = field(default_factory=datetime.now)
 
 
@@ -76,7 +76,7 @@ class SocialMediaScraper:
     def __init__(
         self,
         config: Optional[QuantChainConfig] = None,
-        api_keys: Dict[str, str] = None,
+        api_keys: Optional[Dict[str, str]] = None,
         request_delay: float = 1.0,
         max_retries: int = 3,
         timeout: int = 10,
@@ -222,7 +222,7 @@ class SocialMediaScraper:
             )
 
         # Calculate top hashtags
-        hashtag_counts = {}
+        hashtag_counts: Dict[str, int] = {}
         for post in posts:
             for tag in post.hashtags:
                 hashtag_counts[tag.lower()] = hashtag_counts.get(tag.lower(), 0) + 1
@@ -232,7 +232,7 @@ class SocialMediaScraper:
         ]
 
         # Calculate top mentions
-        mention_counts = {}
+        mention_counts: Dict[str, int] = {}
         for post in posts:
             for mention in post.mentions:
                 mention_counts[mention.lower()] = (
@@ -262,7 +262,10 @@ class SocialMediaScraper:
         )
 
     def assess_vibe(
-        self, symbol: str, platforms: List[str] = None, time_period: str = "24h"
+        self,
+        symbol: str,
+        platforms: Optional[List[str]] = None,
+        time_period: str = "24h",
     ) -> List[VibeAssessment]:
         """
         Assess the overall vibe for a symbol across platforms.
@@ -355,12 +358,12 @@ class SocialMediaScraper:
                     SentimentScore.POSITIVE,
                     SentimentScore.VERY_POSITIVE,
                 ]:
-                    vibe_score += min(10, metrics.engagement_rate / 10)
+                    vibe_score += int(min(10, metrics.engagement_rate / 10))
                 elif overall_sentiment in [
                     SentimentScore.NEGATIVE,
                     SentimentScore.VERY_NEGATIVE,
                 ]:
-                    vibe_score -= min(10, metrics.engagement_rate / 10)
+                    vibe_score -= int(min(10, metrics.engagement_rate / 10))
 
             # Ensure score is within bounds
             vibe_score = max(0, min(100, vibe_score))
@@ -415,7 +418,10 @@ class SocialMediaScraper:
         return assessments
 
     def assess_overall_vibe(
-        self, symbol: str, platforms: List[str] = None, time_period: str = "24h"
+        self,
+        symbol: str,
+        platforms: Optional[List[str]] = None,
+        time_period: str = "24h",
     ) -> VibeAssessment:
         """
         Assess the overall vibe for a symbol across all platforms.
@@ -457,14 +463,17 @@ class SocialMediaScraper:
             )
 
         # Determine overall sentiment (simple majority)
-        sentiment_counts = {}
+        sentiment_counts: Dict[str, int] = {}
         for a in platform_assessments:
-            sentiment_counts[a.sentiment] = sentiment_counts.get(a.sentiment, 0) + 1
+            sentiment_key = a.sentiment.value  # Use .value to get the string value
+            sentiment_counts[sentiment_key] = sentiment_counts.get(sentiment_key, 0) + 1
 
         if sentiment_counts:
-            overall_sentiment = max(
+            overall_sentiment_str = max(
                 sentiment_counts.keys(), key=lambda s: sentiment_counts[s]
             )
+            # Convert string back to SentimentScore enum
+            overall_sentiment = SentimentScore(overall_sentiment_str)
         else:
             overall_sentiment = SentimentScore.NEUTRAL
 

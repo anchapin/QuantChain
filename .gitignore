@@ -93,3 +93,6 @@ faiss_index/
 
 # MCP todo list
 .mcp-todos.json
+
+# Local utility scripts
+ubs_install.sh

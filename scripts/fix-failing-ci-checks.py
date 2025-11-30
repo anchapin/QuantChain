@@ -8,48 +8,78 @@ including formatting, linting, and test coverage problems.
 
 import argparse
 import os
-import shlex
 import subprocess
 import sys
-from pathlib import Path
+
+
+def _is_valid_char(char: str) -> bool:
+    """Check if a character is allowed in command arguments."""
+    return char.isalnum() or char in "-._/"
+
+
+def _validate_argument(arg: str) -> str:
+    """Validate a single command argument."""
+    if not isinstance(arg, str):
+        raise ValueError(f"Command argument must be a string, got {type(arg)}")
+
+    # Only allow alphanumeric characters, hyphens, underscores, dots, and forward slashes
+    # This is a restrictive allowlist approach - exclude colons and other dangerous chars
+    if not all(_is_valid_char(c) for c in arg):
+        raise ValueError(f"Invalid characters in command argument: {arg}")
+
+    return arg
+
+
+def _validate_command(cmd: list[str]) -> list[str]:
+    """Validate and sanitize command arguments."""
+    if not isinstance(cmd, list) or not cmd:
+        raise ValueError("Command must be a non-empty list")
+
+    return [_validate_argument(arg) for arg in cmd]
+
+
+def _run_subprocess(
+    sanitized_cmd: list[str], capture: bool
+) -> subprocess.CompletedProcess:
+    """Execute the subprocess with the given parameters."""
+    if capture:
+        return subprocess.run(
+            sanitized_cmd, capture_output=True, text=True, check=True, timeout=300
+        )
+    else:
+        return subprocess.run(sanitized_cmd, check=True, timeout=300)
+
+
+def _handle_command_error(
+    error: Exception, sanitized_cmd: list[str], capture: bool
+) -> None:
+    """Handle command execution errors."""
+    cmd_str = " ".join(sanitized_cmd)
+
+    if isinstance(error, subprocess.TimeoutExpired):
+        print(f"Command timed out: {cmd_str}")
+    elif isinstance(error, subprocess.CalledProcessError):
+        print(f"Command failed: {cmd_str}")
+        print(f"Error: {error}")
+        if capture and hasattr(error, "stdout") and error.stdout:
+            print(f"Output: {error.stdout}")
+        if capture and hasattr(error, "stderr") and error.stderr:
+            print(f"Stderr: {error.stderr}")
+    else:
+        print(f"Unexpected error running command: {cmd_str}")
+        print(f"Error: {error}")
+
+    sys.exit(1)
 
 
 def run_command(cmd: list[str], capture: bool = True) -> subprocess.CompletedProcess:
     """Run a command safely with proper error handling and input validation."""
-    # Validate command arguments to prevent command injection
-    if not isinstance(cmd, list) or not cmd:
-        raise ValueError("Command must be a non-empty list")
-
-    # Sanitize each command argument
-    sanitized_cmd = []
-    for arg in cmd:
-        if not isinstance(arg, str):
-            raise ValueError(f"Command argument must be a string, got {type(arg)}")
-        # Only allow alphanumeric characters, hyphens, underscores, dots, and forward slashes
-        # This is a restrictive allowlist approach - exclude colons and other dangerous chars
-        if not all(c.isalnum() or c in "-._/" for c in arg):
-            raise ValueError(f"Invalid characters in command argument: {arg}")
-        sanitized_cmd.append(arg)
+    sanitized_cmd = _validate_command(cmd)
 
     try:
-        if capture:
-            result = subprocess.run(
-                sanitized_cmd, capture_output=True, text=True, check=True, timeout=300
-            )
-        else:
-            result = subprocess.run(sanitized_cmd, check=True, timeout=300)
-        return result
-    except subprocess.TimeoutExpired:
-        print(f"Command timed out: {' '.join(sanitized_cmd)}")
-        sys.exit(1)
-    except subprocess.CalledProcessError as e:
-        print(f"Command failed: {' '.join(sanitized_cmd)}")
-        print(f"Error: {e}")
-        if capture and e.stdout:
-            print(f"Output: {e.stdout}")
-        if capture and e.stderr:
-            print(f"Stderr: {e.stderr}")
-        sys.exit(1)
+        return _run_subprocess(sanitized_cmd, capture)
+    except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as error:
+        _handle_command_error(error, sanitized_cmd, capture)
 
 
 def fix_formatting(repo_path: str) -> None:

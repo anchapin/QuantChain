@@ -438,10 +438,8 @@ class TestMultiAgentIntegration:
         """Test consensus building between agents."""
         # This would test the consensus logic more thoroughly
         # For now, just verify that consensus can be generated
-        pass
 
     def test_dispute_resolution(self):
         """Test dispute resolution mechanisms."""
         # This would test how disagreements are resolved
         # For now, just verify the structure is in place
-        pass

@@ -249,7 +249,7 @@ class MonitoringService:
         # In a real implementation, this would query the actual agent
         # For now, return mock data
         if agent_id in self.agents:
-            return self.agents[agent_id]
+            return self.agents[agent_id]  # type: ignore
 
         return AgentStatus(
             agent_id=agent_id,
@@ -346,7 +346,7 @@ class ConfigurationService:
         # In a real implementation, this would query the actual config
         # For now, return mock data
         if agent_id in self.configs:
-            return self.configs[agent_id]
+            return self.configs[agent_id]  # type: ignore
 
         return AgentConfig(
             agent_id=agent_id,
@@ -626,7 +626,7 @@ class WebDashboardApp:
 
 
 # Create and export a function to run the dashboard
-def create_dashboard_app(config: DashboardConfig = None) -> WebDashboardApp:
+def create_dashboard_app(config: Optional[DashboardConfig] = None) -> WebDashboardApp:
     """
     Create a dashboard application instance.
 

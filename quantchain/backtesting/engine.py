@@ -2,7 +2,7 @@
 
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -199,10 +199,10 @@ class BacktestEngine:
     def _reset_state(self) -> None:
         """Reset the engine state for a new backtest."""
         self.current_capital = self.config.initial_capital
-        self.open_positions = {}
-        self.closed_trades = []
+        self.open_positions: Dict[str, Dict[str, Any]] = {}
+        self.closed_trades: List[Dict[str, Any]] = []
         self.current_datetime = None
-        self.equity_curve = []
+        self.equity_curve: List[Dict[str, Any]] = []
 
     def _calculate_position_value(self, symbol: str, price: float) -> float:
         """Calculate the current value of a position."""
@@ -210,7 +210,7 @@ class BacktestEngine:
             return 0.0
 
         position = self.open_positions[symbol]
-        return position["quantity"] * price
+        return float(position["quantity"]) * price
 
     def _get_total_portfolio_value(self, prices: Dict[str, float]) -> float:
         """Calculate total portfolio value including cash and open positions."""
@@ -529,13 +529,13 @@ class BacktestEngine:
         # Maximum drawdown
         running_max = np.maximum.accumulate(portfolio_values)
         drawdown = (portfolio_values - running_max) / running_max
-        max_drawdown = np.min(drawdown)
+        max_drawdown = float(np.min(drawdown))
         max_drawdown_pct = max_drawdown * 100
 
         # Maximum drawdown duration
         drawdown_end = np.where(drawdown < 0)[0]
-        max_drawdown_duration = 0
-        current_duration = 0
+        max_drawdown_duration: int = 0
+        current_duration: int = 0
 
         for i in range(len(drawdown)):
             if drawdown[i] < 0:
@@ -603,15 +603,15 @@ class BacktestEngine:
 
         # Risk metrics
         if len(returns) > 0:
-            skewness = pd.Series(returns).skew()
-            kurtosis = pd.Series(returns).kurtosis()
-            var_95 = np.percentile(returns, 5)
-            var_99 = np.percentile(returns, 1)
+            skewness = cast(float, pd.Series(returns).skew())
+            kurtosis = cast(float, pd.Series(returns).kurtosis())
+            var_95 = cast(float, np.percentile(returns, 5))
+            var_99 = cast(float, np.percentile(returns, 1))
         else:
-            skewness = 0
-            kurtosis = 0
-            var_95 = 0
-            var_99 = 0
+            skewness = 0.0
+            kurtosis = 0.0
+            var_95 = 0.0
+            var_99 = 0.0
 
         return MetricsResult(
             total_return=total_return,
@@ -628,27 +628,27 @@ class BacktestEngine:
             profit_factor=profit_factor,
             recovery_factor=recovery_factor,
             total_trades=len(self.closed_trades),
-            avg_trade=(
+            avg_trade=float(
                 np.mean([t.get("realized_pnl", 0) for t in self.closed_trades])
                 if self.closed_trades
                 else 0
             ),
-            avg_win_pct=avg_win_pct,
-            avg_loss_pct=avg_loss_pct,
+            avg_win_pct=float(avg_win_pct),
+            avg_loss_pct=float(avg_loss_pct),
             largest_win=largest_win,
             largest_loss=largest_loss,
-            avg_drawdown=(
+            avg_drawdown=float(
                 np.mean([draw for draw in drawdown if draw < 0])
                 if any(draw < 0 for draw in drawdown)
                 else 0
             ),
-            avg_drawdown_pct=(
+            avg_drawdown_pct=float(
                 np.mean([draw * 100 for draw in drawdown if draw < 0])
                 if any(draw < 0 for draw in drawdown)
                 else 0
             ),
-            var_95=var_95,
-            var_99=var_99,
+            var_95=float(var_95),
+            var_99=float(var_99),
             skewness=skewness,
             kurtosis=kurtosis,
         )

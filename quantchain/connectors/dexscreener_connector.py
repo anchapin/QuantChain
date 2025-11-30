@@ -1,7 +1,7 @@
 """Dexscreener data connector for QuantChain."""
 
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import requests
 
@@ -35,7 +35,7 @@ class DexscreenerDataConnector:
             try:
                 response = requests.get(url, params=params)
                 response.raise_for_status()
-                return response.json()
+                return cast(Dict[str, Any], response.json())
             except Exception as e:
                 if attempt == self.retry_count - 1:
                     raise DataSourceError(
@@ -87,7 +87,8 @@ class DexscreenerDataConnector:
         Returns:
             List of matching tokens
         """
-        return self._make_request("tokens/search", {"q": query, "limit": limit})
+        result = self._make_request("tokens/search", {"q": query, "limit": limit})
+        return cast(List[Dict[str, Any]], result.get("results", []))
 
     def get_pairs_for_token(
         self, address: str, chain_id: str = "ethereum"
@@ -107,7 +108,7 @@ class DexscreenerDataConnector:
             params["chainId"] = chain_id
 
         result = self._make_request("pairs", params)
-        return result.get("pairs", [])
+        return cast(List[Dict[str, Any]], result.get("pairs", []))
 
     def get_pair_info(
         self, chain_id: str, base_token_address: str, quote_token_address: str
@@ -162,7 +163,7 @@ class DexscreenerDataConnector:
         }
 
         result = self._make_request("candles", params)
-        return result.get("candles", [])
+        return cast(List[Dict[str, Any]], result.get("candles", []))
 
     def get_new_token_pairs(
         self,
@@ -195,7 +196,7 @@ class DexscreenerDataConnector:
             params["minVolume24h"] = min_volume
 
         result = self._make_request("tokens/new", params)
-        return result.get("tokens", [])
+        return cast(List[Dict[str, Any]], result.get("tokens", []))
 
     def get_trending_pairs(
         self,
@@ -215,4 +216,4 @@ class DexscreenerDataConnector:
         params = {"chainId": chain_id, "limit": limit}
 
         result = self._make_request("trending/pairs", params)
-        return result.get("pairs", [])
+        return cast(List[Dict[str, Any]], result.get("pairs", []))

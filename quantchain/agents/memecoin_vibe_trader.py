@@ -115,16 +115,16 @@ class MockLLM:
     def __init__(self, model: str = "test-model"):
         self.model = model
 
-    def generate(self, prompt: str):
+    def generate(self, prompt: str) -> Any:
         """Generate a mock response."""
 
         class MockResponse:
-            def __init__(self, text, model):
+            def __init__(self, text: str, model: str) -> None:
                 self.text = text
                 self.model = model
 
             class MockUsage:
-                def __init__(self):
+                def __init__(self) -> None:
                     self.prompt_tokens = len(prompt.split()) * 2
                     # Get the text from the parent class
                     parent_text = f"Mock response for: {prompt}"
@@ -132,7 +132,7 @@ class MockLLM:
                     self.total_tokens = self.prompt_tokens + self.completion_tokens
 
             @property
-            def usage(self):
+            def usage(self) -> Any:
                 return self.MockUsage()
 
         return MockResponse(f"Mock response for: {prompt}", self.model)

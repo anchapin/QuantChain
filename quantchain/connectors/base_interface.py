@@ -3,11 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from quantchain.tools.execution import (
-    AccountInfo,
-    OrderRequest,
-    OrderResult,
-)
+from quantchain.tools.execution import AccountInfo, OrderRequest, OrderResult
 from quantchain.tools.execution import Position as QuantChainPosition
 
 

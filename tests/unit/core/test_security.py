@@ -93,24 +93,29 @@ class TestAPISecurityManager:
     @patch.dict(
         os.environ,
         {
-            "ALPACA_API_KEY": "test_alpaca_key",
-            "ALPACA_API_SECRET": "test_alpaca_secret",
-            "POLYGON_API_KEY": "test_polygon_key",
-            "ALPHA_VANTAGE_API_KEY": "test_alpha_key",
-            "ANTHROPIC_API_KEY": "test_anthropic_key",
-            "OPENAI_API_KEY": "test_openai_key",
+            "ALPACA_API_KEY": "ABCDEFGHIJKLMNOP",
+            "ALPACA_API_SECRET": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
+            "POLYGON_API_KEY": "test_polygon_key_12345",
+            "ALPHA_VANTAGE_API_KEY": "ABCDEFGHIJKLMNOP",
+            "ANTHROPIC_API_KEY": "sk-ant-api03-" + "A" * 95,
+            "OPENAI_API_KEY": "sk-" + "A" * 48,
         },
+        clear=True,
     )
     def test_load_from_environment(self) -> None:
         """Test loading credentials from environment variables."""
-        manager = APISecurityManager()
+        # Ensure we don't load from a real .env file
+        manager = APISecurityManager(env_file="nonexistent_env_file")
 
-        assert manager._services["alpaca"]["key"] == "test_alpaca_key"
-        assert manager._services["alpaca"]["secret"] == "test_alpaca_secret"
-        assert manager._services["polygon"]["key"] == "test_polygon_key"
-        assert manager._services["alpha_vantage"]["key"] == "test_alpha_key"
-        assert manager._services["anthropic"]["key"] == "test_anthropic_key"
-        assert manager._services["openai"]["key"] == "test_openai_key"
+        assert manager._services["alpaca"]["key"] == "ABCDEFGHIJKLMNOP"
+        assert (
+            manager._services["alpaca"]["secret"]
+            == "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        )
+        assert manager._services["polygon"]["key"] == "test_polygon_key_12345"
+        assert manager._services["alpha_vantage"]["key"] == "ABCDEFGHIJKLMNOP"
+        assert manager._services["anthropic"]["key"] == "sk-ant-api03-" + "A" * 95
+        assert manager._services["openai"]["key"] == "sk-" + "A" * 48
 
     def test_load_from_env_file(self) -> None:
         """Test loading credentials from .env file."""
@@ -156,7 +161,7 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
     def test_set_api_key_valid_format(self) -> None:
         """Test setting API key with valid format."""
         manager = APISecurityManager()
-        valid_key = "ABCDEFGHIJKLMNOP"
+        valid_key = "ABCDEFGHIJKLMNOP"  # Valid 16-char alphanumeric key
         manager.set_api_key("alpaca", valid_key)
         assert manager._services["alpaca"]["key"] == valid_key
 
@@ -306,11 +311,15 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
         result = manager.validate_credentials("nonexistent_service")
         assert result is False
 
+    @patch.dict(os.environ, {}, clear=True)
     def test_list_services(self) -> None:
         """Test listing all configured services."""
-        manager = APISecurityManager()
+        # Ensure we don't load from a real .env file
+        manager = APISecurityManager(env_file="nonexistent_env_file")
         manager.set_api_key("alpaca", "ABCDEFGHIJKLMNOP")
-        manager.set_api_key("polygon", "test_polygon_key")
+        manager.set_api_key(
+            "polygon", "test_polygon_key_12345"
+        )  # Valid polygon key pattern
 
         services = manager.list_services()
         assert "alpaca" in services
@@ -358,8 +367,12 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
 
         try:
             manager = APISecurityManager(env_file=temp_path)
-            manager.set_api_key("alpaca", "test_alpaca_key", "test_alpaca_secret")
-            manager.set_api_key("polygon", "test_polygon_key")
+            manager.set_api_key(
+                "alpaca",
+                "ABCDEFGHIJKLMNOP",
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
+            )
+            manager.set_api_key("polygon", "test_polygon_key_12345")
 
             manager.save_to_env_file()
 
@@ -367,9 +380,12 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
             with open(temp_path, "r") as f:
                 content = f.read()
 
-            assert "ALPACA_API_KEY=test_alpaca_key" in content
-            assert "ALPACA_API_SECRET=test_alpaca_secret" in content
-            assert "POLYGON_API_KEY=test_polygon_key" in content
+            assert "ALPACA_API_KEY=ABCDEFGHIJKLMNOP" in content
+            assert (
+                "ALPACA_API_SECRET=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+                in content
+            )
+            assert "POLYGON_API_KEY=test_polygon_key_12345" in content
         finally:
             os.unlink(temp_path)
 
@@ -385,7 +401,7 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
 
         try:
             manager = APISecurityManager(env_file=temp_path)
-            manager.set_api_key("alpaca", "test_alpaca_key")
+            manager.set_api_key("alpaca", "ABCDEFGHIJKLMNOP")
 
             manager.save_to_env_file()
 
@@ -396,18 +412,24 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
             assert "# This is a comment" in content
             assert "OTHER_VAR=value" in content
             assert "ANOTHER_VAR=another_value" in content
-            assert "ALPACA_API_KEY=test_alpaca_key" in content
+            assert "ALPACA_API_KEY=ABCDEFGHIJKLMNOP" in content
         finally:
             os.unlink(temp_path)
 
     def test_get_service_info(self) -> None:
         """Test getting service information."""
         manager = APISecurityManager()
-        manager.set_api_key("alpaca", "test_alpaca_key", "test_alpaca_secret")
+        manager.set_api_key(
+            "alpaca",
+            "ABCDEFGHIJKLMNOP",
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
+        )
 
         info = manager.get_service_info("alpaca")
-        assert info["key"] == "***y_key"  # Should mask the key
-        assert info["secret"] == "***t_secret"  # Should mask the secret
+        assert info["key"] == "***MNOP"  # Should mask the key (last 4 chars)
+        assert (
+            info["secret"] == "***89+/"
+        )  # Should mask the secret (last 4 chars: 89+/)
 
     def test_get_service_info_short_key(self) -> None:
         """Test getting service info with short key."""
@@ -423,14 +445,15 @@ ALPHA_VANTAGE_API_KEY=test_alpha_from_file
         info = manager.get_service_info("nonexistent_service")
         assert info == {}
 
+    @patch.dict(os.environ, {}, clear=True)  # Clear all existing env vars first
     def test_refresh_from_env(self) -> None:
         """Test refreshing credentials from environment."""
         manager = APISecurityManager()
-        manager.set_api_key("alpaca", "old_key")
+        manager.set_api_key("alpaca", "OLDKEY1234567890")  # Valid 16-char key
 
-        with patch.dict(os.environ, {"ALPACA_API_KEY": "new_key"}):
+        with patch.dict(os.environ, {"ALPACA_API_KEY": "NEWKEY1234567890"}):
             manager.refresh_from_env()
-            assert manager._services["alpaca"]["key"] == "new_key"
+            assert manager._services["alpaca"]["key"] == "NEWKEY1234567890"
 
     @patch.dict(os.environ, {"ALPACA_API_KEY": "env_key"})
     @patch("os.path.exists")
