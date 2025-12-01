@@ -47,7 +47,7 @@ class TestEnums:
 
     def test_order_status_values(self):
         """Test OrderStatus enum values."""
-        assert OrderStatus.PENDING is not None
+        assert OrderStatus.NEW is not None
         assert OrderStatus.FILLED is not None
         assert OrderStatus.CANCELLED is not None
         assert OrderStatus.REJECTED is not None
@@ -97,20 +97,20 @@ class TestOrderRequest:
         assert order.price == 160.0
         assert order.stop_price == 155.0
 
-    def test_order_request_creation_with_timeframe(self):
-        """Test creating order with timeframe parameter."""
+    def test_order_request_creation_with_time_in_force(self):
+        """Test creating order with time_in_force parameter."""
         order = OrderRequest(
             symbol="AAPL",
             side=OrderSide.BUY,
             quantity=100,
             order_type=OrderType.MARKET,
-            timeframe="1Day",
+            time_in_force="DAY",
         )
 
-        assert order.timeframe == "1Day"
+        assert order.time_in_force == "DAY"
 
-    def test_order_request_to_dict(self):
-        """Test converting order request to dictionary."""
+    def test_order_request_attributes(self):
+        """Test order request attributes."""
         order = OrderRequest(
             symbol="AAPL",
             side=OrderSide.BUY,
@@ -119,25 +119,23 @@ class TestOrderRequest:
             price=150.25,
         )
 
-        order_dict = order.to_dict()
+        # Test attributes directly
+        assert order.symbol == "AAPL"
+        assert order.side == OrderSide.BUY
+        assert order.quantity == 100
+        assert order.order_type == OrderType.LIMIT
+        assert order.price == 150.25
 
-        assert isinstance(order_dict, dict)
-        assert "symbol" in order_dict
-        assert "side" in order_dict
-        assert "quantity" in order_dict
-        assert "order_type" in order_dict
-        assert "price" in order_dict
-
-    def test_order_request_str_representation(self):
-        """Test string representation of order request."""
+    def test_order_request_client_order_id(self):
+        """Test order request with client_order_id."""
         order = OrderRequest(
-            symbol="AAPL", side=OrderSide.BUY, quantity=100, order_type=OrderType.MARKET
+            symbol="AAPL", side=OrderSide.BUY, quantity=100, order_type=OrderType.MARKET,
+            client_order_id="custom_id_123"
         )
 
-        str_repr = str(order)
-        assert "AAPL" in str_repr
-        assert "BUY" in str_repr
-        assert "100" in str_repr
+        assert order.client_order_id == "custom_id_123"
+        assert order.symbol == "AAPL"
+        assert order.quantity == 100
 
 
 @pytest.mark.skipif(not EXECUTION_AVAILABLE, reason="Execution module not available")
@@ -148,12 +146,14 @@ class TestOrderResult:
         """Test creating filled order result."""
         result = OrderResult(
             order_id="12345",
-            status=OrderStatus.FILLED,
             symbol="AAPL",
             side=OrderSide.BUY,
+            order_type=OrderType.MARKET,
             quantity=100,
             filled_quantity=100,
-            filled_price=150.25,
+            price=None,
+            average_price=150.25,
+            status=OrderStatus.FILLED,
             timestamp=datetime.now(timezone.utc),
         )
 
@@ -162,18 +162,20 @@ class TestOrderResult:
         assert result.symbol == "AAPL"
         assert result.quantity == 100
         assert result.filled_quantity == 100
-        assert result.filled_price == 150.25
+        assert result.average_price == 150.25
 
     def test_order_result_creation_partial(self):
         """Test creating partially filled order result."""
         result = OrderResult(
             order_id="12346",
-            status=OrderStatus.PARTIALLY_FILLED,
             symbol="AAPL",
             side=OrderSide.BUY,
+            order_type=OrderType.MARKET,
             quantity=200,
             filled_quantity=100,
-            filled_price=150.30,
+            price=None,
+            average_price=150.30,
+            status=OrderStatus.PARTIALLY_FILLED,
             timestamp=datetime.now(timezone.utc),
         )
 
@@ -185,65 +187,72 @@ class TestOrderResult:
         """Test creating cancelled order result."""
         result = OrderResult(
             order_id="12347",
-            status=OrderStatus.CANCELLED,
             symbol="AAPL",
             side=OrderSide.BUY,
+            order_type=OrderType.MARKET,
             quantity=100,
             filled_quantity=0,
-            filled_price=0.0,
+            price=None,
+            average_price=None,
+            status=OrderStatus.CANCELLED,
             timestamp=datetime.now(timezone.utc),
         )
 
         assert result.status == OrderStatus.CANCELLED
         assert result.filled_quantity == 0
 
-    def test_order_result_is_success(self):
-        """Test checking if order result indicates success."""
-        # Filled order should be successful
+    def test_order_result_status_check(self):
+        """Test checking order result status."""
+        # Filled order
         filled_result = OrderResult(
-            "123",
-            OrderStatus.FILLED,
-            "AAPL",
-            OrderSide.BUY,
-            100,
-            100,
-            150.0,
-            datetime.now(),
-        )
-        assert filled_result.is_success() is True
-
-        # Cancelled order should not be successful
-        cancelled_result = OrderResult(
-            "124",
-            OrderStatus.CANCELLED,
-            "AAPL",
-            OrderSide.BUY,
-            100,
-            0,
-            0.0,
-            datetime.now(),
-        )
-        assert cancelled_result.is_success() is False
-
-    def test_order_result_to_dict(self):
-        """Test converting order result to dictionary."""
-        result = OrderResult(
-            order_id="12345",
-            status=OrderStatus.FILLED,
+            order_id="123",
             symbol="AAPL",
             side=OrderSide.BUY,
+            order_type=OrderType.MARKET,
             quantity=100,
             filled_quantity=100,
-            filled_price=150.25,
+            price=None,
+            average_price=150.0,
+            status=OrderStatus.FILLED,
+            timestamp=datetime.now(),
+        )
+        assert filled_result.status == OrderStatus.FILLED
+
+        # Cancelled order
+        cancelled_result = OrderResult(
+            order_id="124",
+            symbol="AAPL",
+            side=OrderSide.BUY,
+            order_type=OrderType.MARKET,
+            quantity=100,
+            filled_quantity=0,
+            price=None,
+            average_price=None,
+            status=OrderStatus.CANCELLED,
+            timestamp=datetime.now(),
+        )
+        assert cancelled_result.status == OrderStatus.CANCELLED
+
+    def test_order_result_attributes(self):
+        """Test order result attributes."""
+        result = OrderResult(
+            order_id="12345",
+            symbol="AAPL",
+            side=OrderSide.BUY,
+            order_type=OrderType.MARKET,
+            quantity=100,
+            filled_quantity=100,
+            price=None,
+            average_price=150.25,
+            status=OrderStatus.FILLED,
             timestamp=datetime.now(timezone.utc),
         )
 
-        result_dict = result.to_dict()
-
-        assert isinstance(result_dict, dict)
-        assert "order_id" in result_dict
-        assert "status" in result_dict
-        assert "symbol" in result_dict
+        # Test attributes directly
+        assert result.order_id == "12345"
+        assert result.status == OrderStatus.FILLED
+        assert result.symbol == "AAPL"
+        assert result.average_price == 150.25
 
 
 @pytest.mark.skipif(not EXECUTION_AVAILABLE, reason="Execution module not available")
@@ -254,13 +263,13 @@ class TestAccountInfo:
         """Test creating account information."""
         account = AccountInfo(
             account_id="ACC12345",
+            buying_power=50000.0,
             cash=10000.0,
             portfolio_value=25000.0,
-            buying_power=50000.0,
-            equity=25000.0,
-            last_equity=24000.0,
-            multiplier=2,
-            updated_at=datetime.now(timezone.utc),
+            day_trading_profit_loss=500.0,
+            maintenance_margin=5000.0,
+            day_trades_count=2,
+            leverage=2.0,
         )
 
         assert account.account_id == "ACC12345"
@@ -268,24 +277,24 @@ class TestAccountInfo:
         assert account.portfolio_value == 25000.0
         assert account.buying_power == 50000.0
 
-    def test_account_info_to_dict(self):
-        """Test converting account info to dictionary."""
+    def test_account_info_attributes(self):
+        """Test account info attributes."""
         account = AccountInfo(
             account_id="ACC12345",
+            buying_power=50000.0,
             cash=10000.0,
             portfolio_value=25000.0,
-            buying_power=50000.0,
-            equity=25000.0,
-            last_equity=24000.0,
-            multiplier=2,
-            updated_at=datetime.now(timezone.utc),
+            day_trading_profit_loss=500.0,
+            maintenance_margin=5000.0,
+            day_trades_count=2,
+            leverage=2.0,
         )
 
-        account_dict = account.to_dict()
-
-        assert isinstance(account_dict, dict)
-        assert "account_id" in account_dict
-        assert "cash" in account_dict
+        # Test attributes directly
+        assert account.account_id == "ACC12345"
+        assert account.cash == 10000.0
+        assert account.day_trades_count == 2
+        assert account.leverage == 2.0
 
 
 @pytest.mark.skipif(not EXECUTION_AVAILABLE, reason="Execution module not available")
@@ -301,10 +310,7 @@ class TestPosition:
             market_value=15000.0,
             cost_basis=14000.0,
             unrealized_pl=1000.0,
-            unrealized_plpc=0.0714,
-            current_price=150.0,
-            lastday_price=148.0,
-            change_today=1.0135,
+            unrealized_pl_pct=0.0714,
         )
 
         assert position.symbol == "AAPL"
@@ -312,6 +318,8 @@ class TestPosition:
         assert position.side == OrderSide.BUY
         assert position.market_value == 15000.0
         assert position.cost_basis == 14000.0
+        assert position.unrealized_pl == 1000.0
+        assert position.unrealized_pl_pct == 0.0714
 
     def test_position_creation_short(self):
         """Test creating short position."""
@@ -322,17 +330,16 @@ class TestPosition:
             market_value=-7500.0,
             cost_basis=-7200.0,
             unrealized_pl=-300.0,
-            unrealized_plpc=-0.0417,
-            current_price=150.0,
-            lastday_price=148.0,
-            change_today=1.0135,
+            unrealized_pl_pct=-0.0417,
         )
 
         assert position.quantity == -50
         assert position.side == OrderSide.SELL
+        assert position.unrealized_pl == -300.0
+        assert position.unrealized_pl_pct == -0.0417
 
-    def test_position_to_dict(self):
-        """Test converting position to dictionary."""
+    def test_position_attributes(self):
+        """Test position attributes."""
         position = Position(
             symbol="AAPL",
             quantity=100,
@@ -340,17 +347,14 @@ class TestPosition:
             market_value=15000.0,
             cost_basis=14000.0,
             unrealized_pl=1000.0,
-            unrealized_plpc=0.0714,
-            current_price=150.0,
-            lastday_price=148.0,
-            change_today=1.0135,
+            unrealized_pl_pct=0.0714,
         )
 
-        position_dict = position.to_dict()
-
-        assert isinstance(position_dict, dict)
-        assert "symbol" in position_dict
-        assert "quantity" in position_dict
+        # Test attributes directly
+        assert position.symbol == "AAPL"
+        assert position.quantity == 100
+        assert position.market_value == 15000.0
+        assert position.unrealized_pl_pct == 0.0714
 
 
 @pytest.mark.skipif(not EXECUTION_AVAILABLE, reason="Execution module not available")
@@ -364,7 +368,7 @@ class TestAlpacaExecutionTool:
         assert tool.api_key is None
         assert tool.api_secret is None
         assert tool.base_url is not None
-        assert tool.data_url is not None
+        assert tool.paper is True
 
     def test_alpaca_execution_tool_init_with_credentials(self):
         """Test AlpacaExecutionTool initialization with credentials."""
@@ -377,24 +381,23 @@ class TestAlpacaExecutionTool:
         assert tool.paper is True
 
     def test_alpaca_execution_tool_from_credentials(self):
-        """Test creating tool from credentials dictionary."""
-        credentials = {
-            "api_key": "test_key",
-            "api_secret": "test_secret",
-            "paper": True,
-        }
-
-        tool = AlpacaExecutionTool.from_credentials(credentials)
+        """Test creating tool from credentials."""
+        tool = AlpacaExecutionTool.from_credentials(
+            api_key="test_key",
+            api_secret="test_secret",
+            paper=True
+        )
 
         assert tool.api_key == "test_key"
         assert tool.api_secret == "test_secret"
         assert tool.paper is True
 
-    def test_alpaca_execution_tool_from_credentials_missing(self):
-        """Test creating tool with missing credentials."""
-        credentials = {}  # Empty credentials
-
-        tool = AlpacaExecutionTool.from_credentials(credentials)
+    def test_alpaca_execution_tool_from_credentials_defaults(self):
+        """Test creating tool with default credentials."""
+        tool = AlpacaExecutionTool.from_credentials(
+            api_key=None,
+            api_secret=None
+        )
 
         assert tool.api_key is None
         assert tool.api_secret is None
@@ -559,18 +562,20 @@ class TestExecutionEdgeCases:
             # Validation might reject zero quantities
             pass
 
-    def test_order_result_invalid_fill_amount(self):
-        """Test order result with invalid fill amount."""
+    def test_order_result_overfill(self):
+        """Test order result with overfill amount."""
         # This might create invalid result or be handled gracefully
         try:
             result = OrderResult(
                 order_id="123",
-                status=OrderStatus.FILLED,
                 symbol="AAPL",
                 side=OrderSide.BUY,
+                order_type=OrderType.MARKET,
                 quantity=100,
                 filled_quantity=150,  # More than ordered
-                filled_price=150.0,
+                price=None,
+                average_price=150.0,
+                status=OrderStatus.FILLED,
                 timestamp=datetime.now(),
             )
             assert result.filled_quantity == 150

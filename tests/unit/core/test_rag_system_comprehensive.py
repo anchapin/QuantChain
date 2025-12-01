@@ -214,6 +214,12 @@ class TestRAGSystem:
                 "score": 0.92,
             },
             {
+                "id": "doc_007",
+                "content": "iPhone sales drive Apple revenue growth in latest quarter",
+                "metadata": {"ticker": "AAPL", "document_type": "product_analysis"},
+                "score": 0.88,
+            },
+            {
                 "id": "doc_003",
                 "content": "Tech sector rally driven by AI optimism and strong earnings",
                 "metadata": {
@@ -221,12 +227,6 @@ class TestRAGSystem:
                     "document_type": "market_commentary",
                 },
                 "score": 0.85,
-            },
-            {
-                "id": "doc_007",
-                "content": "iPhone sales drive Apple revenue growth in latest quarter",
-                "metadata": {"ticker": "AAPL", "document_type": "product_analysis"},
-                "score": 0.88,
             },
         ]
 

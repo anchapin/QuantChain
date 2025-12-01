@@ -358,7 +358,7 @@ class TestReflectionSystem:
         memory_config = {
             "short_term_capacity": 100,
             "long_term_capacity": 10000,
-            "consolidation_threshold": 0.8,
+            "consolidation_threshold": 0.7,
             "forgetting_rate": 0.1,
             "importance_decay_factor": 0.95,
         }

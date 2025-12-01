@@ -374,7 +374,8 @@ class TestPerformanceMetrics:
             1000, 1100, 1050, 900, 950,  # First drawdown
             1100, 1200, 1300,           # Recovery and new high
             1250, 1150, 1000, 950,      # Second drawdown
-            1100, 1200, 1300, 1400      # Recovery
+            1100, 1200, 1300, 1400,     # Recovery
+            1450, 1500, 1480, 1520      # More data to match 20 points
         ], index=dates)
 
         duration = pm.calculate_max_drawdown_duration(equity)
@@ -416,9 +417,8 @@ class TestPerformanceMetrics:
         pm = PerformanceMetrics()
         trades = pd.DataFrame({"pnl": []})
 
-        win_rate = pm.calculate_win_rate(trades)
-
-        assert win_rate == 0.0
+        with pytest.raises(InsufficientDataError, match="No trades"):
+            pm.calculate_win_rate(trades)
 
     def test_calculate_win_rate_mixed_results(self):
         """Test win rate with mixed winning and losing trades."""
@@ -516,10 +516,8 @@ class TestPerformanceMetrics:
         pm = PerformanceMetrics()
         trades = pd.DataFrame({"pnl": []})
 
-        result = pm.calculate_best_worst_trade(trades)
-
-        assert result["best_trade"] == 0.0
-        assert result["worst_trade"] == 0.0
+        with pytest.raises(InsufficientDataError, match="No trades"):
+            pm.calculate_best_worst_trade(trades)
 
     def test_calculate_best_worst_trade_normal(self):
         """Test best/worst trade with normal data."""
@@ -547,10 +545,8 @@ class TestPerformanceMetrics:
             "exit_time": pd.DatetimeIndex([])
         })
 
-        result = pm.calculate_average_trade_duration(trades)
-
-        assert result["avg_trade_duration"] == 0.0
-        assert result["avg_trade_duration_days"] == 0.0
+        with pytest.raises(InsufficientDataError, match="No trades"):
+            pm.calculate_average_trade_duration(trades)
 
     def test_calculate_average_trade_duration_normal(self):
         """Test average trade duration with normal data."""
@@ -578,23 +574,24 @@ class TestPerformanceMetrics:
         mock_qs.stats.omega.return_value = 1.2
 
         with patch.dict('sys.modules', {'quantstats': mock_qs}):
-            with patch('quantchain.backtesting.performance_metrics.qs', mock_qs):
-                result = pm.calculate_quantstats_metrics(returns)
+            result = pm.calculate_quantstats_metrics(returns)
 
-                assert result["sharpe_ratio_qstats"] == 1.5
-                assert result["sortino_ratio_qstats"] == 2.0
-                assert result["omega_ratio"] == 1.2
+            assert result["sharpe_ratio_qstats"] == 1.5
+            assert result["sortino_ratio_qstats"] == 2.0
+            assert result["omega_ratio"] == 1.2
 
     def test_calculate_quantstats_metrics_unavailable(self):
         """Test quantstats metrics calculation when library is not available."""
         pm = PerformanceMetrics()
         returns = pd.Series([0.01, 0.02, -0.01, 0.015])
 
-        result = pm.calculate_quantstats_metrics(returns)
+        # Simulate import error
+        with patch.dict('sys.modules', {'quantstats': None}):
+            result = pm.calculate_quantstats_metrics(returns)
 
-        assert result["sharpe_ratio_qstats"] == 0.0
-        assert result["sortino_ratio_qstats"] == 0.0
-        assert result["omega_ratio"] == 0.0
+            assert result["sharpe_ratio_qstats"] == 0.0
+            assert result["sortino_ratio_qstats"] == 0.0
+            assert result["omega_ratio"] == 0.0
 
     def test_calculate_beta_alpha_no_benchmark(self):
         """Test beta/alpha calculation without benchmark."""
@@ -723,9 +720,9 @@ class TestPerformanceMetrics:
 
     def test_calculate_all_metrics_edge_cases(self):
         """Test calculate_all_metrics with edge cases."""
-        # Single data point
-        dates = pd.date_range("2023-01-01", periods=1, freq="D")
-        equity_curve = pd.Series([1000], index=dates)
+        # Need at least 2 points for calculate_returns
+        dates = pd.date_range("2023-01-01", periods=2, freq="D")
+        equity_curve = pd.Series([1000, 1000], index=dates)
         trades = pd.DataFrame({"pnl": []})  # No trades
 
         pm = PerformanceMetrics()

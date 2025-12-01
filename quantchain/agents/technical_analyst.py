@@ -632,10 +632,10 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
 
         # Simple linear regression to determine trend
         x = np.arange(len(closes))
-        slope, _ = np.polyfit(x, closes, 1)
+        slope, intercept = np.polyfit(x, closes, 1)
 
         # Calculate trend strength based on R-squared
-        y_pred = slope * x + np.mean(closes)
+        y_pred = slope * x + intercept
         ss_res = float(np.sum((closes - y_pred) ** 2))
         ss_tot = float(np.sum((closes - np.mean(closes)) ** 2))
         r_squared = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0

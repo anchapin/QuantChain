@@ -1,4 +1,12 @@
 import pytest
+import pandas as pd
+from quantchain.backtesting.performance_metrics import (
+    PerformanceMetrics,
+    MetricsResult,
+    InsufficientDataError,
+    LibraryImportError,
+    MissingColumnError,
+)
 
 
 @pytest.mark.unit

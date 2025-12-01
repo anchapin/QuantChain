@@ -130,8 +130,8 @@ class TestModelFineTuning:
     @pytest.mark.skipif(
         not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available"
     )
-    @patch("quantchain.tools.model_fine_tuning.transformers")
-    def test_trainer_initialization(self, mock_transformers):
+    @patch("quantchain.tools.model_fine_tuning.Trainer")
+    def test_trainer_initialization(self, mock_trainer_class):
         """Test trainer initialization for model fine-tuning."""
         # Mock trainer components
         mock_trainer = Mock()
@@ -140,17 +140,17 @@ class TestModelFineTuning:
         mock_train_dataset = Mock()
         mock_eval_dataset = Mock()
 
-        mock_transformers.Trainer.return_value = mock_trainer
+        mock_trainer_class.return_value = mock_trainer
 
         # Test trainer creation
-        trainer = mock_transformers.Trainer(
+        trainer = mock_trainer_class(
             model=mock_model,
             args=mock_training_args,
             train_dataset=mock_train_dataset,
             eval_dataset=mock_eval_dataset,
         )
 
-        mock_transformers.Trainer.assert_called_once_with(
+        mock_trainer_class.assert_called_once_with(
             model=mock_model,
             args=mock_training_args,
             train_dataset=mock_train_dataset,

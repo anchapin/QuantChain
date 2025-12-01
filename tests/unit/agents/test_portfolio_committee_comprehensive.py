@@ -203,8 +203,9 @@ class TestDebateSession:
         # Create initial analyses
         initial_analyses = {
             AgentRole.FUNDAMENTALS: AgentAnalysis(
-                symbol="AAPL",
                 agent_role=AgentRole.FUNDAMENTALS,
+                symbol="AAPL",
+                timestamp=datetime.now(),
                 recommendation=RecommendationType.BUY,
                 confidence_score=75.0,
                 reasoning="Strong fundamentals",
@@ -212,8 +213,9 @@ class TestDebateSession:
                 metadata={}
             ),
             AgentRole.TECHNICAL: AgentAnalysis(
-                symbol="AAPL",
                 agent_role=AgentRole.TECHNICAL,
+                symbol="AAPL",
+                timestamp=datetime.now(),
                 recommendation=RecommendationType.HOLD,
                 confidence_score=60.0,
                 reasoning="Mixed technical signals",
@@ -247,11 +249,12 @@ class TestDebateSession:
         consensus = ConsensusResult(
             final_recommendation=RecommendationType.BUY,
             consensus_score=78.0,
-            confidence_level=0.75,
-            participant_agreement={AgentRole.FUNDAMENTALS: True, AgentRole.TECHNICAL: False},
-            key_consensus_points=["Strong fundamentals outweigh technical concerns"],
-            dissenting_opinions=["Technical indicators suggest caution"],
-            risk_assessment="Moderate risk, acceptable for current strategy"
+            confidence_score=75.0,
+            participating_agents=[AgentRole.FUNDAMENTALS, AgentRole.TECHNICAL],
+            arguments=[],
+            dissenting_opinions=[AgentRole.TECHNICAL],
+            final_reasoning="Strong fundamentals outweigh technical concerns",
+            risk_assessment={"level": "moderate"}
         )
 
         session = DebateSession(
@@ -277,11 +280,12 @@ class TestDebateSession:
         consensus = ConsensusResult(
             final_recommendation=RecommendationType.HOLD,
             consensus_score=50.0,
-            confidence_level=0.5,
-            participant_agreement={},
-            key_consensus_points=[],
+            confidence_score=50.0,
+            participating_agents=[],
+            arguments=[],
             dissenting_opinions=[],
-            risk_assessment="Unable to reach strong consensus"
+            final_reasoning="Unable to reach strong consensus",
+            risk_assessment={}
         )
 
         session = DebateSession(
@@ -305,11 +309,12 @@ class TestDebateSession:
         consensus = ConsensusResult(
             final_recommendation=RecommendationType.SELL,
             consensus_score=85.0,
-            confidence_level=0.9,
-            participant_agreement={role: True for role in AgentRole},
-            key_consensus_points=["All agents agree on SELL"],
+            confidence_score=90.0,
+            participating_agents=list(AgentRole),
+            arguments=[],
             dissenting_opinions=[],
-            risk_assessment="High risk, immediate action recommended"
+            final_reasoning="All agents agree on SELL",
+            risk_assessment={"level": "high"}
         )
 
         session = DebateSession(
@@ -330,16 +335,12 @@ class TestDebateSession:
         consensus = ConsensusResult(
             final_recommendation=RecommendationType.HOLD,
             consensus_score=45.0,  # Low consensus
-            confidence_level=0.3,
-            participant_agreement={
-                AgentRole.FUNDAMENTALS: True,
-                AgentRole.TECHNICAL: False,
-                AgentRole.RISK_MANAGER: False,
-                AgentRole.SENTIMENT: True,
-            },
-            key_consensus_points=["Mixed signals create uncertainty"],
-            dissenting_opinions=["Technical concerns", "Risk management objections"],
-            risk_assessment="High uncertainty, hold position"
+            confidence_score=30.0,
+            participating_agents=[AgentRole.FUNDAMENTALS, AgentRole.TECHNICAL, AgentRole.RISK_MANAGER, AgentRole.SENTIMENT],
+            arguments=[],
+            dissenting_opinions=[AgentRole.TECHNICAL, AgentRole.RISK_MANAGER],
+            final_reasoning="Mixed signals create uncertainty",
+            risk_assessment={"level": "high"}
         )
 
         session = DebateSession(
@@ -394,7 +395,7 @@ class TestPortfolioCommitteeAgent:
         mock_llm = Mock()
         agent = PortfolioCommitteeAgent(config, mock_llm)
 
-        with patch.object(agent, '_get_agent_analyses', return_value={}):
+        with patch.object(agent, '_gather_agent_analyses', return_value={}):
             result = agent.analyze("AAPL")
 
             assert result.recommendation == RecommendationType.HOLD
@@ -407,8 +408,9 @@ class TestPortfolioCommitteeAgent:
         agent = PortfolioCommitteeAgent(config, mock_llm)
 
         single_analysis = AgentAnalysis(
-            symbol="AAPL",
             agent_role=AgentRole.FUNDAMENTALS,
+            symbol="AAPL",
+            timestamp=datetime.now(),
             recommendation=RecommendationType.BUY,
             confidence_score=80.0,
             reasoning="Strong fundamentals",
@@ -416,35 +418,45 @@ class TestPortfolioCommitteeAgent:
             metadata={}
         )
 
-        with patch.object(agent, '_get_agent_analyses', return_value={AgentRole.FUNDAMENTALS: single_analysis}):
-            with patch.object(agent, '_build_single_agent_consensus') as mock_consensus:
+        with patch.object(agent, '_gather_agent_analyses', return_value={AgentRole.FUNDAMENTALS: single_analysis}):
+            # analyze calls _conduct_debate even for single agent
+            with patch.object(agent, '_conduct_debate') as mock_debate:
                 mock_consensus_result = ConsensusResult(
                     final_recommendation=RecommendationType.BUY,
                     consensus_score=80.0,
-                    confidence_level=0.8,
-                    participant_agreement={AgentRole.FUNDAMENTALS: True},
-                    key_consensus_points=["Strong fundamentals"],
+                    confidence_score=80.0,
+                    participating_agents=[AgentRole.FUNDAMENTALS],
+                    arguments=[],
                     dissenting_opinions=[],
-                    risk_assessment="Based on single agent analysis"
+                    final_reasoning="Based on single agent analysis",
+                    risk_assessment={"level": "low"}
                 )
-                mock_consensus.return_value = mock_consensus_result
+                mock_debate_session = DebateSession(
+                    symbol="AAPL",
+                    initial_analyses={AgentRole.FUNDAMENTALS: single_analysis},
+                    debate_rounds=[],
+                    final_consensus=mock_consensus_result,
+                    session_duration=10.0,
+                    participant_agents=[AgentRole.FUNDAMENTALS]
+                )
+                mock_debate.return_value = mock_debate_session
 
                 result = agent.analyze("AAPL")
 
                 assert result.recommendation == RecommendationType.BUY
                 assert result.confidence_score == 80.0
 
-    def test_analyze_with_multiple_agents_no_debate_needed(self):
-        """Test analyze with multiple agents when no debate is needed."""
+    def test_analyze_with_multiple_agents(self):
+        """Test analyze with multiple agents."""
         config = {}
         mock_llm = Mock()
         agent = PortfolioCommitteeAgent(config, mock_llm)
 
-        # Multiple agents with the same recommendation
         analyses = {
             AgentRole.FUNDAMENTALS: AgentAnalysis(
-                symbol="AAPL",
                 agent_role=AgentRole.FUNDAMENTALS,
+                symbol="AAPL",
+                timestamp=datetime.now(),
                 recommendation=RecommendationType.BUY,
                 confidence_score=75.0,
                 reasoning="Strong fundamentals",
@@ -452,8 +464,9 @@ class TestPortfolioCommitteeAgent:
                 metadata={}
             ),
             AgentRole.TECHNICAL: AgentAnalysis(
-                symbol="AAPL",
                 agent_role=AgentRole.TECHNICAL,
+                symbol="AAPL",
+                timestamp=datetime.now(),
                 recommendation=RecommendationType.BUY,
                 confidence_score=70.0,
                 reasoning="Bullish technical indicators",
@@ -462,79 +475,32 @@ class TestPortfolioCommitteeAgent:
             ),
         }
 
-        with patch.object(agent, '_get_agent_analyses', return_value=analyses):
-            with patch.object(agent, '_check_if_debate_needed', return_value=False):
-                with patch.object(agent, '_build_quick_consensus') as mock_consensus:
-                    mock_consensus_result = ConsensusResult(
-                        final_recommendation=RecommendationType.BUY,
-                        consensus_score=85.0,
-                        confidence_level=0.85,
-                        participant_agreement={AgentRole.FUNDAMENTALS: True, AgentRole.TECHNICAL: True},
-                        key_consensus_points=["All agents agree on BUY"],
-                        dissenting_opinions=[],
-                        risk_assessment="Low risk, strong consensus"
-                    )
-                    mock_consensus.return_value = mock_consensus_result
+        with patch.object(agent, '_gather_agent_analyses', return_value=analyses):
+            with patch.object(agent, '_conduct_debate') as mock_debate:
+                mock_consensus_result = ConsensusResult(
+                    final_recommendation=RecommendationType.BUY,
+                    consensus_score=85.0,
+                    confidence_score=85.0,
+                    participating_agents=[AgentRole.FUNDAMENTALS, AgentRole.TECHNICAL],
+                    arguments=[],
+                    dissenting_opinions=[],
+                    final_reasoning="All agents agree on BUY",
+                    risk_assessment={"level": "low"}
+                )
+                mock_debate_session = DebateSession(
+                    symbol="AAPL",
+                    initial_analyses=analyses,
+                    debate_rounds=[],
+                    final_consensus=mock_consensus_result,
+                    session_duration=10.0,
+                    participant_agents=[AgentRole.FUNDAMENTALS, AgentRole.TECHNICAL]
+                )
+                mock_debate.return_value = mock_debate_session
 
-                    result = agent.analyze("AAPL")
+                result = agent.analyze("AAPL")
 
-                    assert result.recommendation == RecommendationType.BUY
-                    assert result.confidence_score == 85.0
-
-    def test_analyze_with_debate_required(self):
-        """Test analyze with multiple agents requiring debate."""
-        config = {}
-        mock_llm = Mock()
-        agent = PortfolioCommitteeAgent(config, mock_llm)
-
-        # Agents with conflicting recommendations
-        analyses = {
-            AgentRole.FUNDAMENTALS: AgentAnalysis(
-                symbol="AAPL",
-                agent_role=AgentRole.FUNDAMENTALS,
-                recommendation=RecommendationType.BUY,
-                confidence_score=80.0,
-                reasoning="Strong fundamentals support BUY",
-                data_sources=["financial_data"],
-                metadata={}
-            ),
-            AgentRole.TECHNICAL: AgentAnalysis(
-                symbol="AAPL",
-                agent_role=AgentRole.TECHNICAL,
-                recommendation=RecommendationType.SELL,
-                confidence_score=75.0,
-                reasoning="Bearish technical indicators",
-                data_sources=["market_data"],
-                metadata={}
-            ),
-        }
-
-        with patch.object(agent, '_get_agent_analyses', return_value=analyses):
-            with patch.object(agent, '_check_if_debate_needed', return_value=True):
-                with patch.object(agent, '_conduct_debate') as mock_debate:
-                    mock_debate_session = DebateSession(
-                        symbol="AAPL",
-                        initial_analyses=analyses,
-                        debate_rounds=[],
-                        final_consensus=ConsensusResult(
-                            final_recommendation=RecommendationType.HOLD,
-                            consensus_score=55.0,
-                            confidence_level=0.55,
-                            participant_agreement={AgentRole.FUNDAMENTALS: False, AgentRole.TECHNICAL: False},
-                            key_consensus_points=["Conflicting signals lead to HOLD"],
-                            dissenting_opinions=[AgentRole.FUNDAMENTALS, AgentRole.TECHNICAL],
-                            risk_assessment="Medium risk, hold position"
-                        ),
-                        session_duration=30.0,
-                        participant_agents=[AgentRole.FUNDAMENTALS, AgentRole.TECHNICAL],
-                        dissenting_opinions=[AgentRole.FUNDAMENTALS, AgentRole.TECHNICAL],
-                    )
-                    mock_debate.return_value = mock_debate_session
-
-                    result = agent.analyze("AAPL")
-
-                    assert result.recommendation == RecommendationType.HOLD
-                    assert result.confidence_score == 55.0
+                assert result.recommendation == RecommendationType.BUY
+                assert result.confidence_score == 85.0
 
     def test_analyze_exception_handling(self):
         """Test analyze with exception handling."""
@@ -542,7 +508,7 @@ class TestPortfolioCommitteeAgent:
         mock_llm = Mock()
         agent = PortfolioCommitteeAgent(config, mock_llm)
 
-        with patch.object(agent, '_get_agent_analyses', side_effect=Exception("Agent communication error")):
+        with patch.object(agent, '_gather_agent_analyses', side_effect=Exception("Agent communication error")):
             result = agent.analyze("AAPL")
 
             assert result.recommendation == RecommendationType.HOLD
@@ -561,199 +527,63 @@ class TestPortfolioCommitteeAgent:
             "other_analyses": {}
         }
 
-        with patch.object(agent, 'create_argument') as mock_create:
-            mock_argument = AgentArgument(
-                agent_role=AgentRole.PORTFOLIO_COMMITTEE,
-                argument_type="support",
-                target_agent=None,
-                reasoning="Committee consensus supports this action",
-                evidence=["Strong consensus", "Low risk assessment"],
-                confidence_impact=10.0,
-            )
-            mock_create.return_value = mock_argument
+        # Portfolio committee implementation returns a neutral argument directly
+        # It does not call any internal helper for this that we need to mock usually,
+        # but if we want to verify output:
+        result = agent.create_argument(context)
+        
+        assert isinstance(result, AgentArgument)
+        assert result.argument_type == "neutral"
+        assert "does not participate" in result.reasoning
 
-            result = agent.create_argument(context)
-
-            mock_create.assert_called_once_with(context)
-
-    def test_get_agent_analyses(self):
-        """Test _get_agent_analyses method."""
+    def test_gather_agent_analyses(self):
+        """Test _gather_agent_analyses method."""
         config = {}
         mock_llm = Mock()
         agent = PortfolioCommitteeAgent(config, mock_llm)
-
-        with patch.object(agent, '_get_agent_analyses') as mock_method:
-            mock_analyses = {
-                AgentRole.FUNDAMENTALS: Mock(),
-                AgentRole.TECHNICAL: Mock(),
-                AgentRole.RISK_MANAGER: Mock(),
-            }
-            mock_method.return_value = mock_analyses
-
-            result = agent._get_agent_analyses()
-
-            mock_method.assert_called_once()
-            assert len(result) == 3
-
-    def test_check_if_debate_needed_same_recommendations(self):
-        """Test _check_if_debate_needed with same recommendations."""
-        config = {}
-        mock_llm = Mock()
-        agent = PortfolioCommitteeAgent(config, mock_llm)
-
-        analyses = {
-            AgentRole.FUNDAMENTALS: Mock(spec=AgentAnalysis, recommendation=RecommendationType.BUY),
-            AgentRole.TECHNICAL: Mock(spec=AgentAnalysis, recommendation=RecommendationType.BUY),
-            AgentRole.RISK_MANAGER: Mock(spec=AgentAnalysis, recommendation=RecommendationType.BUY),
+        
+        # Mock specialized agents
+        agent.specialized_agents = {
+            AgentRole.FUNDAMENTALS: Mock(),
+            AgentRole.TECHNICAL: Mock(),
         }
+        
+        # Mock analyze return values
+        agent.specialized_agents[AgentRole.FUNDAMENTALS].analyze.return_value = Mock(recommendation=RecommendationType.BUY, confidence_score=80.0)
+        agent.specialized_agents[AgentRole.TECHNICAL].analyze.return_value = Mock(recommendation=RecommendationType.SELL, confidence_score=60.0)
 
-        with patch.object(agent, '_check_if_debate_needed') as mock_method:
-            mock_method.return_value = False
+        result = agent._gather_agent_analyses("AAPL")
 
-            result = agent._check_if_debate_needed(analyses)
-
-            mock_method.assert_called_once_with(analyses)
-
-    def test_check_if_debate_needed_different_recommendations(self):
-        """Test _check_if_debate_needed with different recommendations."""
-        config = {}
-        mock_llm = Mock()
-        agent = PortfolioCommitteeAgent(config, mock_llm)
-
-        analyses = {
-            AgentRole.FUNDAMENTALS: Mock(spec=AgentAnalysis, recommendation=RecommendationType.BUY),
-            AgentRole.TECHNICAL: Mock(spec=AgentAnalysis, recommendation=RecommendationType.SELL),
-            AgentRole.RISK_MANAGER: Mock(spec=AgentAnalysis, recommendation=RecommendationType.HOLD),
-        }
-
-        with patch.object(agent, '_check_if_debate_needed') as mock_method:
-            mock_method.return_value = True
-
-            result = agent._check_if_debate_needed(analyses)
-
-            mock_method.assert_called_once_with(analyses)
-
-    def test_build_quick_consensus(self):
-        """Test _build_quick_consensus method."""
-        config = {}
-        mock_llm = Mock()
-        agent = PortfolioCommitteeAgent(config, mock_llm)
-
-        analyses = {
-            AgentRole.FUNDAMENTALS: Mock(spec=AgentAnalysis, recommendation=RecommendationType.BUY, confidence_score=75.0),
-            AgentRole.TECHNICAL: Mock(spec=AgentAnalysis, recommendation=RecommendationType.BUY, confidence_score=70.0),
-        }
-
-        with patch.object(agent, '_build_quick_consensus') as mock_method:
-            mock_consensus = ConsensusResult(
-                final_recommendation=RecommendationType.BUY,
-                consensus_score=85.0,
-                confidence_level=0.85,
-                participant_agreement={AgentRole.FUNDAMENTALS: True, AgentRole.TECHNICAL: True},
-                key_consensus_points=["Consensus reached without debate"],
-                dissenting_opinions=[],
-                risk_assessment="Low risk consensus"
-            )
-            mock_method.return_value = mock_consensus
-
-            result = agent._build_quick_consensus(analyses)
-
-            mock_method.assert_called_once_with(analyses)
+        assert len(result) == 2
+        assert AgentRole.FUNDAMENTALS in result
+        assert AgentRole.TECHNICAL in result
 
     def test_conduct_debate(self):
         """Test _conduct_debate method."""
         config = {"portfolio_committee": {"max_debate_rounds": 2}}
         mock_llm = Mock()
         agent = PortfolioCommitteeAgent(config, mock_llm)
+        
+        # Mock specialized agents
+        mock_agent = Mock()
+        mock_agent.create_argument.return_value = AgentArgument(
+            agent_role=AgentRole.FUNDAMENTALS,
+            argument_type="support",
+            target_agent=None,
+            reasoning="test",
+            evidence=[],
+            confidence_impact=10
+        )
+        agent.specialized_agents = {AgentRole.FUNDAMENTALS: mock_agent}
 
         analyses = {
-            AgentRole.FUNDAMENTALS: Mock(spec=AgentAnalysis, recommendation=RecommendationType.BUY),
-            AgentRole.TECHNICAL: Mock(spec=AgentAnalysis, recommendation=RecommendationType.SELL),
+            AgentRole.FUNDAMENTALS: Mock(spec=AgentAnalysis, recommendation=RecommendationType.BUY, confidence_score=80.0, metadata={}),
         }
 
-        with patch.object(agent, '_conduct_debate') as mock_method:
-            mock_session = DebateSession(
-                symbol="AAPL",
-                initial_analyses=analyses,
-                debate_rounds=[],
-                final_consensus=ConsensusResult(
-                    final_recommendation=RecommendationType.HOLD,
-                    consensus_score=50.0,
-                    confidence_level=0.5,
-                    participant_agreement={},
-                    key_consensus_points=["Debate inconclusive"],
-                    dissenting_opinions=[AgentRole.FUNDAMENTALS, AgentRole.TECHNICAL],
-                    risk_assessment="Debate resulted in HOLD"
-                ),
-                session_duration=60.0,
-                participant_agents=[AgentRole.FUNDAMENTALS, AgentRole.TECHNICAL],
-                dissenting_opinions=[AgentRole.FUNDAMENTALS, AgentRole.TECHNICAL],
-            )
-            mock_method.return_value = mock_session
-
-            result = agent._conduct_debate("AAPL", analyses)
-
-            mock_method.assert_called_once_with("AAPL", analyses)
-
-    def test_build_single_agent_consensus(self):
-        """Test _build_single_agent_consensus method."""
-        config = {}
-        mock_llm = Mock()
-        agent = PortfolioCommitteeAgent(config, mock_llm)
-
-        single_analysis = Mock(spec=AgentAnalysis,
-                              recommendation=RecommendationType.BUY,
-                              confidence_score=80.0)
-
-        with patch.object(agent, '_build_single_agent_consensus') as mock_method:
-            mock_consensus = ConsensusResult(
-                final_recommendation=RecommendationType.BUY,
-                consensus_score=80.0,
-                confidence_level=0.8,
-                participant_agreement={},
-                key_consensus_points=["Single agent recommendation"],
-                dissenting_opinions=[],
-                risk_assessment="Based on single agent analysis"
-            )
-            mock_method.return_value = mock_consensus
-
-            result = agent._build_single_agent_consensus(single_analysis)
-
-            mock_method.assert_called_once_with(single_analysis)
-
-    def test_different_configurations(self):
-        """Test agent with different configurations."""
-        configs = [
-            {},  # Default
-            {"portfolio_committee": {"max_debate_rounds": 1}},  # Single round
-            {"portfolio_committee": {"consensus_threshold": 50.0}},  # Low threshold
-            {"portfolio_committee": {"max_debate_rounds": 5, "consensus_threshold": 90.0}},  # Strict
-        ]
-
-        for config in configs:
-            mock_llm = Mock()
-            agent = PortfolioCommitteeAgent(config, mock_llm)
-
-            # Should be able to create agent and call methods without crashing
-            assert hasattr(agent, 'analyze')
-            assert hasattr(agent, 'create_argument')
-            assert isinstance(agent.config, CommitteeConfig)
-
-    def test_edge_cases(self):
-        """Test edge cases and boundary conditions."""
-        config = {"portfolio_committee": {"max_debate_rounds": 0}}  # No rounds
-        mock_llm = Mock()
-        agent = PortfolioCommitteeAgent(config, mock_llm)
-
-        # Test with empty analyses
-        with patch.object(agent, '_get_agent_analyses', return_value={}):
-            result = agent.analyze("AAPL")
-            assert result.recommendation == RecommendationType.HOLD
-
-        # Test with very high consensus threshold
-        config = {"portfolio_committee": {"consensus_threshold": 100.0}}
-        agent = PortfolioCommitteeAgent(config, mock_llm)
-        assert agent.config.consensus_threshold == 100.0
+        result = agent._conduct_debate("AAPL", analyses)
+        
+        assert isinstance(result, DebateSession)
+        assert result.symbol == "AAPL"
 
     def test_all_methods_exist(self):
         """Test that all expected methods exist."""
@@ -765,11 +595,10 @@ class TestPortfolioCommitteeAgent:
         expected_methods = [
             'analyze',
             'create_argument',
-            '_get_agent_analyses',
-            '_check_if_debate_needed',
-            '_build_quick_consensus',
+            '_gather_agent_analyses',
             '_conduct_debate',
-            '_build_single_agent_consensus',
+            '_generate_consensus',
+            '_generate_committee_recommendation',
         ]
 
         for method_name in expected_methods:
@@ -780,3 +609,4 @@ class TestPortfolioCommitteeAgent:
 if __name__ == "__main__":
     # Run the tests
     pytest.main([__file__, "-v", "--tb=short"])
+

@@ -121,7 +121,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         except Exception as e:
             logger.warning(f"Could not setup all event handlers: {e}")
 
-    async def connect(self) -> bool:
+    async def connect_async(self) -> bool:
         """
         Connect to IB gateway/TWS.
 
@@ -157,7 +157,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
             logger.error(f"Failed to connect to IB: {e}")
             raise IBAsyncConnectionError(f"Failed to connect to IB: {e}")
 
-    async def disconnect(self) -> None:
+    async def disconnect_async(self) -> None:
         """Disconnect from IB gateway/TWS."""
         if self._connected:
             self.ib.disconnect()
@@ -182,8 +182,8 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
             IBAsyncConnectionError: If not connected to IB
             IBAsyncOrderError: If order placement fails
         """
-        if not await self._is_connected_async():
-            await self._connect_async()
+        if not self.is_connected():
+            await self.connect_async()
 
         if self.readonly:
             raise IBAsyncOrderError("Cannot place order in readonly mode")
@@ -227,8 +227,8 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         Raises:
             IBAsyncOrderError: If order not found
         """
-        if not await self._is_connected_async():
-            await self._connect_async()
+        if not self.is_connected():
+            await self.connect_async()
 
         # Find trade by order ID
         trade = None
@@ -252,8 +252,8 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         Returns:
             True if cancellation successful, False otherwise
         """
-        if not await self._is_connected_async():
-            await self._connect_async()
+        if not self.is_connected():
+            await self.connect_async()
 
         if self.readonly:
             raise IBAsyncOrderError("Cannot cancel order in readonly mode")
@@ -288,8 +288,8 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         Returns:
             OrderResult with order details, or None if not found
         """
-        if not await self._is_connected_async():
-            await self._connect_async()
+        if not self.is_connected():
+            await self.connect_async()
 
         try:
             trade = self._orders.get(order_id)
@@ -331,8 +331,8 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         Returns:
             List of OrderResult objects
         """
-        if not await self._is_connected_async():
-            await self._connect_async()
+        if not self.is_connected():
+            await self.connect_async()
 
         try:
             # Get all open trades
@@ -362,8 +362,8 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         Returns:
             List of QuantChain position objects
         """
-        if not await self._is_connected_async():
-            await self._connect_async()
+        if not self.is_connected():
+            await self.connect_async()
 
         try:
             # Get all positions
@@ -394,7 +394,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
                             if price and pos.avgCost and pos.avgCost != 0
                             else 0.0
                         ),
-                        unrealized_pl_pct=0.0 # Calculate if needed
+
                     )
                     positions.append(position)
 
@@ -404,15 +404,15 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
             logger.error(f"Failed to get positions: {e}")
             raise IBAsyncDataError(f"Failed to get positions: {e}")
 
-    async def get_account(self) -> AccountInfo:
+    async def get_account_async(self) -> AccountInfo:
         """
         Get account information.
 
         Returns:
             AccountInfo object with account details
         """
-        if not await self._is_connected_async():
-            await self._connect_async()
+        if not self.is_connected():
+            await self.connect_async()
 
         try:
             # Get account summary
@@ -481,8 +481,8 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         Returns:
             DataFrame with historical data
         """
-        if not await self._is_connected_async():
-            await self._connect_async()
+        if not self.is_connected():
+            await self.connect_async()
 
         try:
             # Create contract
@@ -533,8 +533,8 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
 
         I will adapt this method to match test expectation, or provide default args.
         """
-        if not await self._is_connected_async():
-            await self._connect_async()
+        if not self.is_connected():
+            await self.connect_async()
 
         try:
             # For the purpose of the test, it seems to expect historical data DataFrame
@@ -623,8 +623,8 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
         Returns:
             Dictionary with contract details
         """
-        if not await self._is_connected_async():
-            await self._connect_async()
+        if not self.is_connected():
+            await self.connect_async()
 
         try:
             # Create contract
@@ -833,7 +833,7 @@ class IBAsyncExecutionConnector(BaseExecutionConnector):
             OrderType.MARKET: "MKT",
             OrderType.LIMIT: "LMT",
             OrderType.STOP: "STP",
-            OrderType.STOP_LIMIT: "STPLMT",
+            OrderType.STOP_LIMIT: "STP LMT",
         }
         if order_type not in mapping:
             raise IBAsyncOrderError(f"Unsupported order type: {order_type}")

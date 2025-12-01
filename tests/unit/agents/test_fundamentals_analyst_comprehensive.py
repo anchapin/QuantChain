@@ -178,7 +178,7 @@ class TestFundamentalsAnalystAgent:
 
         agent = FundamentalsAnalystAgent(config, mock_llm)
 
-        assert agent.role.value == "FUNDAMENTALS"
+        assert agent.role.value == "fundamentals_analyst"
         assert agent.min_data_quality_score == 70.0  # Default
         assert agent.pe_ratio_thresholds == {"overvalued": 30, "undervalued": 10}  # Default
         assert agent.debt_to_equity_limit == 2.0  # Default
@@ -187,11 +187,13 @@ class TestFundamentalsAnalystAgent:
     def test_agent_initialization_custom_config(self):
         """Test agent initialization with custom configuration."""
         config = {
-            "fundamentals_analyst": {
-                "min_data_quality_score": 80.0,
-                "pe_ratio_thresholds": {"overvalued": 25, "undervalued": 12},
-                "debt_to_equity_limit": 1.5,
-                "roe_threshold": 18.0,
+            "agents": {
+                "fundamentals_analyst": {
+                    "min_data_quality_score": 80.0,
+                    "pe_ratio_thresholds": {"overvalued": 25, "undervalued": 12},
+                    "debt_to_equity_limit": 1.5,
+                    "roe_threshold": 18.0,
+                }
             }
         }
         mock_llm = Mock()
@@ -205,7 +207,7 @@ class TestFundamentalsAnalystAgent:
 
     def test_analyze_insufficient_data_quality(self):
         """Test analyze with insufficient data quality."""
-        config = {"fundamentals_analyst": {"min_data_quality_score": 80.0}}
+        config = {"agents": {"fundamentals_analyst": {"min_data_quality_score": 80.0}}}
         mock_llm = Mock()
         agent = FundamentalsAnalystAgent(config, mock_llm)
 
@@ -442,8 +444,8 @@ class TestFundamentalsAnalystAgent:
         mock_connector = Mock()
         agent = FundamentalsAnalystAgent(config, mock_llm, mock_connector)
 
-        # Mock the internal method to raise exception
-        with patch.object(agent, '_get_financial_metrics', side_effect=Exception("API error")):
+        # Mock logger.info to raise exception since it's called inside the try block
+        with patch.object(agent.logger, 'info', side_effect=Exception("API error")):
             result = agent._get_financial_metrics("AAPL")
 
             # Should return empty metrics on error
@@ -484,8 +486,8 @@ class TestFundamentalsAnalystAgent:
         mock_connector = Mock()
         agent = FundamentalsAnalystAgent(config, mock_llm, mock_connector)
 
-        # Mock the method to raise exception
-        with patch.object(agent, '_get_earnings_data', side_effect=Exception("API error")):
+        # Mock logger.info to raise exception since it's called inside the try block
+        with patch.object(agent.logger, 'info', side_effect=Exception("API error")):
             result = agent._get_earnings_data("AAPL")
 
             # Should return empty list on error

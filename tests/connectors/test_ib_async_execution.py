@@ -25,12 +25,12 @@ class TestIBAsyncExecutionConnector:
             connector.ib, "connectAsync", new_callable=AsyncMock
         ) as mock_connect:
             with patch.object(
-                connector.ib, "ibkrAccountSummaryAsync", new_callable=AsyncMock
+                connector.ib, "accountSummaryAsync", new_callable=AsyncMock
             ) as mock_accounts:
                 mock_accounts.return_value = [MagicMock(account="DU12345")]
 
                 # Test connect
-                result = await connector._connect_async()
+                result = await connector.connect_async()
                 assert result is True
                 assert connector._connected is True
                 assert connector.account == "DU12345"
@@ -38,7 +38,7 @@ class TestIBAsyncExecutionConnector:
 
                 # Test disconnect
                 with patch.object(connector.ib, "disconnect") as mock_disconnect:
-                    await connector._disconnect_async()
+                    await connector.disconnect_async()
                     assert connector._connected is False
                     mock_disconnect.assert_called_once()
 
@@ -148,7 +148,7 @@ class TestIBAsyncExecutionConnector:
             mock_power = MagicMock(tag="BuyingPower", value="40000.0")
             mock_summary.return_value = [mock_cash, mock_value, mock_power]
 
-            info = await connector.get_account_info()
+            info = await connector.get_account_async()
 
             assert info.cash == 10000.0
             assert info.portfolio_value == 20000.0
@@ -158,31 +158,36 @@ class TestIBAsyncExecutionConnector:
         """Test retrieving market data."""
         connector = IBAsyncExecutionConnector(account="DU12345")
         connector._connected = True
+        connector.ib.isConnected = MagicMock(return_value=True)
 
         with patch.object(
-            connector.ib, "reqMktDataAsync", new_callable=AsyncMock
-        ) as mock_mkt:
-            # Mock ticker
-            mock_ticker = MagicMock()
-            mock_ticker.bid = 149.0
-            mock_ticker.ask = 151.0
-            mock_ticker.last = 150.0
-            mock_ticker.close = 148.0
-            mock_ticker.volume = 1000000
-            mock_ticker.midpoint.return_value = 150.0
-            mock_mkt.return_value = mock_ticker
+            connector.ib, "reqHistoricalDataAsync", new_callable=AsyncMock
+        ) as mock_hist:
+            # Mock bars
+            mock_bar = MagicMock()
+            mock_bar.date = "2023-01-01"
+            mock_bar.open = 149.0
+            mock_bar.high = 151.0
+            mock_bar.low = 149.0
+            mock_bar.close = 150.0
+            mock_bar.volume = 1000000
+            mock_hist.return_value = [mock_bar]
 
-            # Test bid
-            data_bid = await connector.get_market_data("AAPL", tick_type="bid")
-            assert data_bid["bid"] == 149.0
+            # Force manual conversion
+            with patch("quantchain.connectors.ib_async_execution.DataFrame") as mock_df_cls:
+                mock_df = MagicMock()
+                mock_df.iloc = MagicMock()
+                mock_df.iloc[-1] = {"close": 150.0, "volume": 1000000}
+                # Allow item access on the series
+                mock_df.iloc.__getitem__ = MagicMock(return_value={"close": 150.0})
+                
+                mock_df_cls.return_value = mock_df
 
-            # Test ask
-            data_ask = await connector.get_market_data("AAPL", tick_type="ask")
-            assert data_ask["ask"] == 151.0
-
-            # Test mid
-            data_mid = await connector.get_market_data("AAPL", tick_type="mid")
-            assert data_mid["mid"] == 150.0
+            # Test get_market_data
+            data = await connector.get_market_data("AAPL")
+            # It returns a DataFrame.
+            # We check the last row.
+            assert data["close"].iloc[-1] == 150.0
 
     async def test_get_historical_data(self):
         """Test retrieving historical data."""

@@ -24,7 +24,7 @@ except ImportError:
     MemorySaver = None
 
 try:
-
+    import quantchain.core.agent_engine as agent_engine
     AGENT_ENGINE_AVAILABLE = True
 except ImportError:
     AGENT_ENGINE_AVAILABLE = False

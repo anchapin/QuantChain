@@ -157,18 +157,20 @@ class TestTechnicalAnalystAgent:
     def test_agent_initialization(self):
         """Test agent initialization with default config."""
         config = {
-            "technical_analyst": {
-                "timeframes": ["1h", "4h"],
-                "indicators": {"RSI": {"period": 14}},
-                "patterns": ["head_and_shoulders"],
-                "min_data_points": 100
+            "agents": {
+                "technical_analyst": {
+                    "timeframes": ["1h", "4h"],
+                    "indicators": {"RSI": {"period": 14}},
+                    "patterns": ["head_and_shoulders"],
+                    "min_data_points": 100
+                }
             }
         }
         mock_llm = Mock()
 
         agent = TechnicalAnalystAgent(config, mock_llm)
 
-        assert agent.role.value == "TECHNICAL"
+        assert agent.role.value == "technical_analyst"
         assert agent.timeframes == ["1h", "4h"]
         assert agent.min_data_points == 100
         assert "RSI" in agent.indicators_enabled
@@ -352,7 +354,7 @@ class TestTechnicalAnalystAgent:
         price_data = agent._generate_mock_price_data("AAPL", "1h")
 
         assert price_data.symbol == "AAPL"
-        assert len(price_data.closes) == 100  # Default for 1h
+        assert len(price_data.closes) == 99  # Default for 1h (100 - 1 for shift)
         assert len(price_data.opens) == len(price_data.closes)
         assert len(price_data.highs) == len(price_data.closes)
         assert len(price_data.lows) == len(price_data.closes)
@@ -441,10 +443,12 @@ class TestTechnicalAnalystAgent:
     def test_calculate_indicators_insufficient_data(self):
         """Test _calculate_indicators with insufficient data."""
         config = {
-            "technical_analyst": {
-                "indicators": {
-                    "SMA": {"periods": [200]},  # Requires 200 data points
-                    "RSI": {"period": 50}  # Requires 50 data points
+            "agents": {
+                "technical_analyst": {
+                    "indicators": {
+                        "SMA": {"periods": [200]},  # Requires 200 data points
+                        "RSI": {"period": 50}  # Requires 50 data points
+                    }
                 }
             }
         }
@@ -482,7 +486,7 @@ class TestTechnicalAnalystAgent:
         assert len(sma) == len(prices) - period + 1
         assert sma[0] == 101.0  # (100+101+102)/3
         assert sma[1] == 102.0  # (101+102+103)/3
-        assert sma[2] == 103.0  # (102+103+104)/3
+        assert sma[2] == pytest.approx(103.0)  # (102+103+104)/3
 
     def test_calculate_rsi(self):
         """Test RSI calculation."""

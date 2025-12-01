@@ -147,6 +147,9 @@ class PerformanceMetrics:
         """Calculate Sortino ratio (downside deviation)."""
         returns = self.calculate_returns(equity_curve)
 
+        if len(returns) < 2:
+            raise InsufficientDataError("Not enough data for Sortino ratio")
+
         # Calculate downside deviation (standard deviation of negative returns)
         negative_returns = returns[returns < 0]
 
@@ -166,6 +169,9 @@ class PerformanceMetrics:
 
     def calculate_max_drawdown(self, equity_curve: pd.Series) -> Dict[str, Any]:
         """Calculate maximum drawdown and duration."""
+        if len(equity_curve) < 2:
+            raise InsufficientDataError("Equity curve must have at least 2 points")
+
         # Calculate running maximum
         running_max = equity_curve.expanding().max()
 
@@ -192,6 +198,9 @@ class PerformanceMetrics:
 
     def calculate_max_drawdown_duration(self, equity_curve: pd.Series) -> int:
         """Calculate maximum drawdown duration in days."""
+        if len(equity_curve) < 2:
+            raise InsufficientDataError("Equity curve must have at least 2 points")
+
         # Calculate running maximum
         running_max = equity_curve.expanding().max()
 
@@ -284,7 +293,7 @@ class PerformanceMetrics:
         losing_trades = trades[trades["pnl"] < 0]
 
         avg_win = winning_trades["pnl"].mean() if len(winning_trades) > 0 else 0.0
-        avg_loss = losing_trades["pnl"].mean() if len(losing_trades) > 0 else 0.0
+        avg_loss = abs(losing_trades["pnl"].mean()) if len(losing_trades) > 0 else 0.0
 
         return {"avg_win": avg_win, "avg_loss": avg_loss}
 

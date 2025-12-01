@@ -129,6 +129,7 @@ class TestAPISecurityManager:
             mock_create.assert_called_once_with("test_backend", test_param="test_value")
             assert manager._secret_manager == mock_secret_manager
 
+    @patch("quantchain.core.security.load_dotenv")
     @patch.dict(
         os.environ,
         {
@@ -138,7 +139,7 @@ class TestAPISecurityManager:
             "OPENAI_API_KEY": "sk-1234567890abcdef1234567890abcdef1234567890abcdef",
         },
     )
-    def test_load_from_environment(self) -> None:
+    def test_load_from_environment(self, mock_load_dotenv) -> None:
         """Test loading credentials from environment variables."""
         manager = APISecurityManager()
 
@@ -170,20 +171,22 @@ ANTHROPIC_API_KEY=test_anthropic_key_from_file
 
         with patch("builtins.open", mock_open(read_data=env_content)):
             with patch("os.path.exists", return_value=True):
-                manager = APISecurityManager()
+                # Mock load_dotenv to prevent interference
+                with patch("quantchain.core.security.load_dotenv"):
+                    manager = APISecurityManager()
 
-                assert manager._services["alpaca"]["key"] == "test_alpaca_key_from_file"
-                assert (
-                    manager._services["alpaca"]["secret"]
-                    == "test_alpaca_secret_from_file"
-                )
-                assert (
-                    manager._services["polygon"]["key"] == "test_polygon_key_from_file"
-                )
-                assert (
-                    manager._services["anthropic"]["key"]
-                    == "test_anthropic_key_from_file"
-                )
+                    assert manager._services["alpaca"]["key"] == "test_alpaca_key_from_file"
+                    assert (
+                        manager._services["alpaca"]["secret"]
+                        == "test_alpaca_secret_from_file"
+                    )
+                    assert (
+                        manager._services["polygon"]["key"] == "test_polygon_key_from_file"
+                    )
+                    assert (
+                        manager._services["anthropic"]["key"]
+                        == "test_anthropic_key_from_file"
+                    )
 
     def test_load_from_env_file_error_handling(self) -> None:
         """Test error handling when loading .env file."""
@@ -576,13 +579,14 @@ class TestEdgeCases:
         """Test manager initialization with edge cases."""
         # Create manager with no environment variables
         with patch.dict(os.environ, {}, clear=True):
-            manager = APISecurityManager()
+            with patch("quantchain.core.security.load_dotenv"):
+                manager = APISecurityManager()
 
-            # Initially should have empty services dict
-            assert manager._services == {}
+                # Initially should have empty services dict
+                assert manager._services == {}
 
-            # List services on empty manager
-            assert manager.list_services() == []
+                # List services on empty manager
+                assert manager.list_services() == []
 
     def test_variable_patterns_in_set_api_key(self) -> None:
         """Test variable patterns in set_api_key method."""

@@ -332,9 +332,13 @@ class TestAgentTrainingMode:
     def test_error_handling_missing_dependencies(self):
         """Test graceful handling of missing RL dependencies."""
         if not RL_DEPENDENCIES_AVAILABLE:
+            # If dependencies are not available, gym should be None
+            assert gym is None
+            
+            # Attempting to import should raise ImportError
             with pytest.raises((ImportError, ModuleNotFoundError)):
+                import stable_baselines3
 
-                gym.make("CartPole-v1")
 
     @pytest.mark.skipif(
         not ML_DEPENDENCIES_AVAILABLE, reason="ML dependencies not available"

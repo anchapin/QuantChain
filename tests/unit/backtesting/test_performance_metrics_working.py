@@ -73,7 +73,18 @@ class TestMetricsResult:
             winning_trades=65,
             losing_trades=35,
             avg_win=200.0,
-            avg_loss=-120.0,
+            avg_loss=120.0,
+            best_trade=500.0,
+            worst_trade=-200.0,
+            avg_trade_duration=3600.0,
+            avg_trade_duration_days=0.04,
+            sharpe_ratio_qstats=1.4,
+            sortino_ratio_qstats=1.9,
+            omega_ratio=1.2,
+            alpha=0.05,
+            beta=1.1,
+            information_ratio=0.8,
+            var_95=-0.02,
         )
 
         assert result.total_return == 0.15
@@ -104,6 +115,17 @@ class TestMetricsResult:
             losing_trades=0,
             avg_win=0.0,
             avg_loss=0.0,
+            best_trade=0.0,
+            worst_trade=0.0,
+            avg_trade_duration=0.0,
+            avg_trade_duration_days=0.0,
+            sharpe_ratio_qstats=0.0,
+            sortino_ratio_qstats=0.0,
+            omega_ratio=0.0,
+            alpha=0.0,
+            beta=0.0,
+            information_ratio=0.0,
+            var_95=0.0,
         )
 
         assert result.total_return == 0.0
