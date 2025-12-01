@@ -5,12 +5,17 @@ This example demonstrates how to use different secret managers and
 how to migrate from development (.env) to production secret management.
 """
 
-import os
-from quantchain.core.security import APISecurityManager
-from quantchain.core.secret_managers import (
+import sys
+from pathlib import Path
+
+from quantchain.core.security import (
+    APISecurityManager,
     create_secret_manager,
     list_secret_managers,
 )
+
+# Add project root to path for imports
+sys.path.append(str(Path(__file__).parent.parent))
 
 # Example 1: Using default secret manager (from environment)
 print("=== Example 1: Default Secret Manager ===")
@@ -21,86 +26,77 @@ try:
     try:
         api_key = manager.get_api_key("alpaca")
         api_secret = manager.get_api_secret("alpaca")
-        print(
-            f"Alpaca credentials found (key: {api_key[:8] if api_key else 'None'}...)"
-        )
+        print("✓ Retrieved Alpaca credentials")
     except Exception as e:
-        print(f"No Alpaca credentials: {e}")
+        print(f"✗ Failed to retrieve Alpaca credentials: {e}")
 
-except Exception as e:
-    print(f"Error initializing security manager: {e}")
-
-# Example 2: Explicitly using environment variables
-print("\n=== Example 2: Environment Variables ===")
-manager = APISecurityManager(backend="env")
-print("Using environment variables for secrets")
-# Check if credentials are available
-if manager.validate_service("alpaca"):
-    key = manager.get_api_key("alpaca")
-    print(f"Alpaca key found: {key[:8] if key else 'None'}...")
-else:
-    print("No Alpaca credentials in environment")
-
-# Example 3: Using Vault (production)
-print("\n=== Example 3: HashiCorp Vault ===")
-try:
-    # This will show how to configure Vault, but will fail without actual Vault
-    vault_manager = create_secret_manager(
-        backend="vault",
-        url="https://vault.example.com",
-        token="your-vault-token",
-        namespace="quantchain",
-    )
-    print("Vault secret manager configured successfully")
-except Exception as e:
-    print(f"Vault not available: {e}")
-
-# Example 4: Using AWS Secrets Manager (production)
-print("\n=== Example 4: AWS Secrets Manager ===")
-try:
-    aws_manager = create_secret_manager(
-        backend="aws", region_name="us-east-1", profile_name="quantchain"
-    )
-    print("AWS Secrets Manager configured successfully")
-except Exception as e:
-    print(f"AWS Secrets Manager not available: {e}")
-
-# Example 5: Using GCP Secret Manager (production)
-print("\n=== Example 5: GCP Secret Manager ===")
-try:
-    gcp_manager = create_secret_manager(
-        backend="gcp",
-        project_id="your-project-id",
-        credentials_path="/path/to/service-account.json",
-    )
-    print("GCP Secret Manager configured successfully")
-except Exception as e:
-    print(f"GCP Secret Manager not available: {e}")
-
-# Example 6: List available backends
-print("\n=== Example 6: Available Backends ===")
-backends = list_secret_managers()
-print(f"Available secret managers: {backends}")
-
-# Example 7: Service validation
-print("\n=== Example 7: Service Validation ===")
-services = ["alpaca", "polygon", "alpha_vantage", "openai", "anthropic"]
-for service in services:
-    valid = manager.validate_service(service)
     try:
-        has_key = manager.get_api_key(service) is not None
-    except:
-        has_key = False
-    try:
-        has_secret = manager.get_api_secret(service) is not None
-    except:
-        has_secret = False
-    print(
-        f"{service:15} | Valid: {valid} | Has Key: {has_key} | Has Secret: {has_secret}"
-    )
+        api_key = manager.get_api_key("openai")
+        print("✓ Retrieved OpenAI key")
+    except Exception as e:
+        print(f"✗ Failed to retrieve OpenAI key: {e}")
 
-# Example 8: Production configuration guide
-print("\n=== Example 8: Production Setup Guide ===")
+except Exception as e:
+    print(f"✗ Failed to initialize manager: {e}")
+
+# Example 2: List available secret managers
+print("\n=== Example 2: Available Secret Managers ===")
+try:
+    managers = list_secret_managers()
+    print(f"Available secret managers: {managers}")
+except Exception as e:
+    print(f"✗ Failed to list managers: {e}")
+
+# Example 3: Create a specific secret manager
+print("\n=== Example 3: Creating Custom Manager ===")
+try:
+    # Create an environment-based manager
+    env_manager = create_secret_manager("env")
+    print("✓ Created environment manager")
+
+    # Create a file-based manager
+    file_manager = create_secret_manager("file", file_path=".secrets.json")
+    print("✓ Created file manager")
+
+    # Try to create a vault manager (will fail without proper setup)
+    try:
+        vault_manager = create_secret_manager(
+            "vault", url="http://localhost:8200", token="test"
+        )
+        print("✓ Created vault manager")
+    except Exception:
+        print("! Vault manager requires proper configuration")
+
+except Exception as e:
+    print(f"✗ Failed to create custom manager: {e}")
+
+# Example 4: Service status check
+print("\n=== Example 4: Service Status ===")
+try:
+    manager = APISecurityManager()
+    services = ["alpaca", "openai", "anthropic", "polygon", "ibkr"]
+
+    for service in services:
+        try:
+            valid = manager.validate_service_credentials(service)
+            has_key = manager.get_api_key(service) is not None
+            has_secret = manager.get_api_secret(service) is not None
+        except Exception:
+            valid = False
+            has_key = False
+            has_secret = False
+
+        status_line = (
+            f"{service:15} | Valid: {valid} | Has Key: {has_key} "
+            f"| Has Secret: {has_secret}"
+        )
+        print(status_line)
+
+except Exception as e:
+    print(f"✗ Failed to check service status: {e}")
+
+# Example 5: Production configuration guide
+print("\n=== Example 5: Production Setup Guide ===")
 print(
     """
 For production deployment, configure your environment:
@@ -128,8 +124,8 @@ For production deployment, configure your environment:
 """
 )
 
-# Example 9: Migration from .env to production
-print("\n=== Example 9: Migration Guide ===")
+# Example 6: Migration from .env to production
+print("\n=== Example 6: Migration Guide ===")
 print(
     """
 To migrate from .env files to production secret management:
@@ -137,11 +133,13 @@ To migrate from .env files to production secret management:
 1. Install required packages:
    pip install hvac boto3 google-cloud-secret-manager
 
-2. Set up your production secret manager (see Example 8)
+2. Set up your production secret manager (see Example 5)
 
 3. Add secrets to your secret manager using their CLI/tools:
-   vault kv put secret/data/services/alpaca key="your-key" secret="your-secret"
-   
+    vault kv put secret/data/services/alpaca key="your-key" secret="your-secret"
+    aws secretsmanager create-secret --name quantchain/alpaca \
+        --secret-string '{"key":"your-key","secret":"your-secret"}'
+
 4. Update your deployment configuration to use production backend
 
 5. Remove .env files from production systems

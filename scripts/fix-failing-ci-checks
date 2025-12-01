@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Fix Failing CI Checks Command Wrapper
+# This script provides the droid command interface for the CI fix tool
+
+set -e
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Check if Python is available
+if ! command -v python3 &> /dev/null; then
+    echo "Error: Python 3 is required but not installed"
+    exit 1
+fi
+
+# Check if GitHub CLI is available
+if ! command -v gh &> /dev/null; then
+    echo "Error: GitHub CLI (gh) is required but not installed"
+    echo "Please install it from: https://cli.github.com/"
+    exit 1
+fi
+
+# Run the Python script
+python3 "$SCRIPT_DIR/fix-failing-ci-checks.py" --repo-path "$PROJECT_ROOT" "$@"

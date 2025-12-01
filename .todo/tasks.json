@@ -1,0 +1,44 @@
+[
+  {
+    "id": "fix-syntax-errors",
+    "content": "Fix syntax errors in core modules (indentation, invalid syntax)",
+    "status": "completed",
+    "priority": "high"
+  },
+  {
+    "id": "fix-import-structure",
+    "content": "Fix module level import not at top of file (E402 errors)",
+    "status": "completed",
+    "priority": "high"
+  },
+  {
+    "id": "fix-blank-lines",
+    "content": "Fix too many/expected blank lines (E303/E302 errors)",
+    "status": "completed",
+    "priority": "medium"
+  },
+  {
+    "id": "fix-identity-checks",
+    "content": "Fix test for object identity (E714 errors)",
+    "status": "completed",
+    "priority": "low"
+  },
+  {
+    "id": "run-black-formatter",
+    "content": "Run black code formatter on all fixed files",
+    "status": "completed",
+    "priority": "medium"
+  },
+  {
+    "id": "verify-linting-passes",
+    "content": "Run full linting suite to verify all issues are resolved",
+    "status": "completed",
+    "priority": "high"
+  },
+  {
+    "id": "remaining-issues",
+    "content": "Address remaining flake8 F401 (unused imports) and mypy type issues",
+    "status": "pending",
+    "priority": "low"
+  }
+]

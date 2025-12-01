@@ -1,151 +1,56 @@
-"""Base interface for data feed connectors."""
+"""Base interface classes for QuantChain connectors."""
 
 from abc import ABC, abstractmethod
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import List
 
-import pandas as pd
+from quantchain.tools.execution import AccountInfo, OrderRequest, OrderResult
+from quantchain.tools.execution import Position as QuantChainPosition
 
 
-class DataFeedInterface(ABC):
-    """Abstract base class for all data feed connectors."""
+class BaseExecutionConnector(ABC):
+    """
+    Base class for execution connectors.
 
-    @abstractmethod
-    def __init__(
-        self, api_key: str, api_secret: Optional[str] = None, **kwargs: Any
-    ) -> None:
-        """Initialize the data feed connector.
-
-        Args:
-            api_key: API key for authentication
-            api_secret: Optional API secret for authentication
-            **kwargs: Additional provider-specific configuration
-        """
-        # Store the parameters to avoid empty abstract method body
-        self._api_key = api_key
-        self._api_secret = api_secret
-        self._kwargs = kwargs
+    This abstract base class defines the interface that all execution connectors
+    must implement to be compatible with the QuantChain framework.
+    """
 
     @abstractmethod
-    def get_historical_data(
-        self,
-        symbol: str,
-        timeframe: str,
-        start_date: datetime,
-        end_date: Optional[datetime] = None,
-        limit: Optional[int] = None,
-    ) -> pd.DataFrame:
-        """Fetch historical price data for a symbol.
-
-        Args:
-            symbol: Trading symbol (e.g., 'AAPL', 'BTC-USD', 'ETH/USDT')
-            timeframe: Timeframe string (e.g., '1Min', '5Min', '1H', '1D')
-            start_date: Start date for data retrieval
-            end_date: End date for data retrieval (defaults to now)
-            limit: Maximum number of records to return
-
-        Returns:
-            DataFrame with columns: timestamp, open, high, low, close, volume
-
-        Raises:
-            DataSourceError: If data cannot be fetched
-            ValueError: If parameters are invalid
-        """
+    def connect(self) -> None:
+        """Connect to the execution service."""
         pass
 
     @abstractmethod
-    def get_real_time_data(self, symbol: str) -> Dict[str, Any]:
-        """Fetch real-time price data for a symbol.
-
-        Args:
-            symbol: Trading symbol
-
-        Returns:
-            Dict containing current price data with keys:
-            - timestamp: Current timestamp
-            - price: Current price
-            - bid: Best bid price (if available)
-            - ask: Best ask price (if available)
-            - volume: Recent volume
-
-        Raises:
-            DataSourceError: If data cannot be fetched
-        """
+    def disconnect(self) -> None:
+        """Disconnect from the execution service."""
         pass
 
     @abstractmethod
-    def get_quote(self, symbol: str) -> Dict[str, Any]:
-        """Get current quote for a symbol.
-
-        Args:
-            symbol: Trading symbol
-
-        Returns:
-            Dict containing quote data with keys:
-            - symbol: Trading symbol
-            - timestamp: Quote timestamp
-            - bid_price: Bid price
-            - ask_price: Ask price
-            - bid_size: Bid size
-            - ask_size: Ask size
-            - last_price: Last traded price
-            - last_size: Last traded size
-
-        Raises:
-            DataSourceError: If quote cannot be fetched
-        """
+    def is_connected(self) -> bool:
+        """Check if connected to the execution service."""
         pass
 
     @abstractmethod
-    def get_available_symbols(self, market: Optional[str] = None) -> List[str]:
-        """Get list of available symbols for trading.
-
-        Args:
-            market: Optional market filter (e.g., 'equity', 'crypto', 'forex')
-
-        Returns:
-            List of available trading symbols
-
-        Raises:
-            DataSourceError: If symbols cannot be fetched
-        """
+    def place_order(self, order: OrderRequest) -> OrderResult:
+        """Place an order."""
         pass
 
     @abstractmethod
-    def get_symbol_info(self, symbol: str) -> Dict[str, Any]:
-        """Get detailed information about a symbol.
-
-        Args:
-            symbol: Trading symbol
-
-        Returns:
-            Dict containing symbol information with keys:
-            - symbol: Trading symbol
-            - name: Full name/description
-            - market: Market type (equity, crypto, forex, etc.)
-            - currency: Base currency
-            - min_order_size: Minimum order size
-            - max_order_size: Maximum order size
-            - price_precision: Number of decimal places for price
-            - size_precision: Number of decimal places for size
-
-        Raises:
-            DataSourceError: If symbol info cannot be fetched
-            ValueError: If symbol is not found
-        """
+    def cancel_order(self, order_id: str) -> bool:
+        """Cancel an order."""
         pass
 
     @abstractmethod
-    def is_market_open(self, market: Optional[str] = None) -> bool:
-        """Check if the market is currently open for trading.
+    def get_account(self) -> AccountInfo:
+        """Get account information."""
+        pass
 
-        Args:
-            market: Optional specific market to check
+    @abstractmethod
+    def get_positions(self) -> List[QuantChainPosition]:
+        """Get current positions."""
+        pass
 
-        Returns:
-            True if market is open, False otherwise
-
-        Raises:
-            DataSourceError: If market status cannot be determined
-        """
+    @abstractmethod
+    def is_market_open(self) -> bool:
+        """Check if the market is open."""
         pass

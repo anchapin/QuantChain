@@ -11,6 +11,7 @@ from .base import (
 )
 from .chart_reader_agent import ChartReaderAgent, ChartReaderAgentConfig
 from .fundamentals_analyst import FundamentalsAnalystAgent
+from .memecoin_vibe_trader import MemecoinVibeTrader, MemecoinVibeTraderConfig
 from .portfolio_committee import PortfolioCommitteeAgent
 from .risk_manager import RiskManagerAgent
 from .sentiment_expert import SentimentExpertAgent
@@ -32,6 +33,8 @@ __all__ = [
     # Individual agents
     "ChartReaderAgent",
     "ChartReaderAgentConfig",
+    "MemecoinVibeTrader",
+    "MemecoinVibeTraderConfig",
     "FundamentalsAnalystAgent",
     "PortfolioCommitteeAgent",
     "RiskManagerAgent",

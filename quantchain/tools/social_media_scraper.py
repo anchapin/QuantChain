@@ -1,367 +1,523 @@
-"""Social media scraper tool for gathering token community metrics."""
+"""Social media scraper for QuantChain."""
 
-import logging
-import time
-from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Dict, List, Optional, Tuple
 
-try:
-    import requests
-except ImportError:
-    requests = None  # type: ignore[assignment]
-
-from ..core.exceptions import DataSourceError
-from ..core.retry import RetryHandler
-
-logger = logging.getLogger(__name__)
+from quantchain.core.config import QuantChainConfig
 
 
-def _get_beautiful_soup() -> Any:
-    """Get BeautifulSoup class or None if not available."""
-    try:
-        from bs4 import BeautifulSoup
+class SentimentScore(Enum):
+    """Sentiment score enumeration."""
 
-        return BeautifulSoup
-    except ImportError:
-        return None
-
-
-# Make BeautifulSoup available at module level
-BeautifulSoup = _get_beautiful_soup()
+    VERY_NEGATIVE = "very_negative"
+    NEGATIVE = "negative"
+    NEUTRAL = "neutral"
+    POSITIVE = "positive"
+    VERY_POSITIVE = "very_positive"
 
 
 @dataclass
-class SocialMetrics:
-    """Data structure for social media metrics."""
+class SocialMediaPost:
+    """Represents a social media post."""
 
-    telegram_followers: int = 0
-    twitter_followers: int = 0
-    recent_posts: int = 0
-    engagement_rate: float = 0.0
-    sentiment_score: float = 0.5
+    id: str
+    platform: str  # twitter, reddit, telegram, etc.
+    author: str
+    content: str
+    timestamp: datetime
+    likes: int = 0
+    shares: int = 0
+    comments: int = 0
+    url: Optional[str] = None
+    hashtags: List[str] = field(default_factory=list)
+    mentions: List[str] = field(default_factory=list)
+    sentiment_score: Optional[SentimentScore] = None
+    confidence: float = 1.0  # 0.0 to 1.0
+
+
+@dataclass
+class SocialMediaMetrics:
+    """Aggregated metrics for social media data."""
+
+    platform: str
+    symbol: str
+    post_count: int
+    total_likes: int
+    total_shares: int
+    total_comments: int
+    unique_authors: int
+    sentiment_distribution: Dict[SentimentScore, int] = field(default_factory=dict)
+    top_hashtags: List[Tuple[str, int]] = field(default_factory=list)
+    top_mentions: List[Tuple[str, int]] = field(default_factory=list)
+    engagement_rate: Optional[float] = None
+    time_period: str = "24h"
+    timestamp: datetime = field(default_factory=datetime.now)
+
+
+@dataclass
+class VibeAssessment:
+    """Overall vibe assessment for a token/meme."""
+
+    symbol: str
+    platform: str
+    vibe_score: float  # 0.0 to 100.0
+    sentiment: SentimentScore
+    confidence: float  # 0.0 to 1.0
+    reasons: List[str] = field(default_factory=list)
+    social_metrics: Optional[SocialMediaMetrics] = None
+    timestamp: datetime = field(default_factory=datetime.now)
 
 
 class SocialMediaScraper:
-    """Tool for scraping social media metrics for cryptocurrency tokens.
+    """Scrapes and analyzes social media data for meme coins."""
 
-    This tool gathers community metrics from Telegram and Twitter/X to help
-    assess the "vibe" and social momentum of memecoins and other tokens.
-
-    Features:
-    - Telegram channel/group follower counts
-    - Twitter/X follower counts and recent activity
-    - Basic sentiment analysis from recent posts
-    - Engagement rate calculations
-
-    Limitations:
-    - Rate limited by social media platforms
-    - May require API keys for full access
-    - Web scraping is brittle and may break with site changes
-    """
-
-    def __init__(self, **kwargs: Any) -> None:
-        """Initialize the social media scraper.
+    def __init__(
+        self,
+        config: Optional[QuantChainConfig] = None,
+        api_keys: Optional[Dict[str, str]] = None,
+        request_delay: float = 1.0,
+        max_retries: int = 3,
+        timeout: int = 10,
+    ):
+        """
+        Initialize SocialMediaScraper.
 
         Args:
-            **kwargs: Configuration options
-                - timeout: Request timeout in seconds (default: 10)
-                - max_retries: Maximum retry attempts (default: 3)
-                - twitter_bearer_token: Optional Twitter API bearer token
-                - telegram_api_id: Optional Telegram API ID
-                - telegram_api_hash: Optional Telegram API hash
+            config: QuantChain configuration
+            api_keys: Dictionary of API keys for different platforms
+            request_delay: Delay between requests in seconds
+            max_retries: Maximum number of retries for failed requests
+            timeout: Request timeout in seconds
         """
-        self.timeout = kwargs.get("timeout", 10)
-        self.max_retries = kwargs.get("max_retries", 3)
-        self.twitter_bearer_token = kwargs.get("twitter_bearer_token")
-        self.telegram_api_id = kwargs.get("telegram_api_id")
-        self.telegram_api_hash = kwargs.get("telegram_api_hash")
+        self.config = config or QuantChainConfig()
+        self.api_keys = api_keys or {}
+        self.request_delay = request_delay
+        self.max_retries = max_retries
+        self.timeout = timeout
 
-        self.logger = logging.getLogger(__name__)
-        if requests is None:
-            raise ImportError(
-                "The 'requests' library is required for SocialMediaScraper. "
-                "Please install it."
-            )
-        self.session = requests.Session()
-
-        self._retry_handler = RetryHandler(
-            max_retries=self.max_retries,
-            base_delay=1.0,
-            backoff_factor=2.0,
-            logger=self.logger,
-        )
-
-        # Rate limiting
-        self._last_request_time: float = 0
-        self._min_request_interval = 1.0  # 1 second between requests
-
-    def _aggregate_social_metrics(
-        self, telegram_data: Dict[str, Any], twitter_data: Dict[str, Any]
-    ) -> SocialMetrics:
-        """Aggregate social metrics from different sources.
-
-        Args:
-            telegram_data: Metrics from Telegram scraping
-            twitter_data: Metrics from Twitter scraping
-
-        Returns:
-            Aggregated SocialMetrics object
-        """
-        metrics = SocialMetrics()
-
-        # Get Telegram metrics
-        metrics.telegram_followers = telegram_data.get("followers", 0)
-        metrics.recent_posts = telegram_data.get("recent_posts", 0)
-
-        # Get Twitter metrics
-        metrics.twitter_followers = twitter_data.get("followers", 0)
-        metrics.engagement_rate = twitter_data.get("engagement_rate", 0.0)
-        metrics.sentiment_score = twitter_data.get("sentiment_score", 0.5)
-
-        # Update recent posts from Twitter if more active
-        twitter_posts = twitter_data.get("recent_posts", 0)
-        if twitter_posts > metrics.recent_posts:
-            metrics.recent_posts = twitter_posts
-
-        return metrics
-
-    def get_social_metrics(
-        self, token_symbol: str, token_address: str
-    ) -> SocialMetrics:
-        """Get comprehensive social media metrics for a token.
-
-        Args:
-            token_symbol: Token symbol (e.g., 'PEPE', 'DOGE')
-            token_address: Token contract address
-
-        Returns:
-            SocialMetrics object with gathered data
-
-        Raises:
-            DataSourceError: If scraping fails
-        """
-        if not self.session:
-            raise DataSourceError("requests library not available")
-
-        try:
-            # Get metrics from different sources
-            telegram_data = self._get_telegram_metrics(token_symbol)
-            twitter_data = self._get_twitter_metrics(token_symbol)
-
-            # Aggregate metrics from all sources
-            return self._aggregate_social_metrics(telegram_data, twitter_data)
-
-        except Exception as e:
-            logger.error(f"Failed to scrape metrics for {token_symbol}: {e}")
-            raise DataSourceError(f"Social media scraping failed: {e}") from e
-
-    def _get_telegram_metrics(self, token_symbol: str) -> Dict[str, Any]:
-        """Scrape Telegram metrics for a token.
-
-        Args:
-            token_symbol: Token symbol to search for
-
-        Returns:
-            Dictionary with Telegram metrics
-        """
-        try:
-            # Rate limiting
-            self._rate_limit()
-
-            # Search for Telegram channels/groups
-            # This is a simplified implementation - in production you'd want
-            # Telegram API integration or more robust scraping
-
-            search_terms = [
-                token_symbol.lower(),
-                f"{token_symbol}official",
-                f"{token_symbol}community",
-            ]
-
-            best_channel = None
-            max_followers = 0
-
-            for term in search_terms:
-                try:
-                    # Try to find Telegram channels via web search
-                    # This is a placeholder - real implementation would use Telegram API
-                    channels = self._search_telegram_channels(term)
-
-                    for channel in channels:
-                        followers = channel.get("followers", 0)
-                        if followers > max_followers:
-                            max_followers = followers
-                            best_channel = channel
-
-                except Exception as e:
-                    self.logger.debug(f"Failed to search Telegram for {term}: {str(e)}")
-                    continue
-
-            if best_channel:
-                return {
-                    "followers": best_channel.get("followers", 0),
-                    "recent_posts": best_channel.get("recent_posts", 0),
-                }
-
-            return {"followers": 0, "recent_posts": 0}
-
-        except Exception as e:
-            self.logger.warning(
-                f"Telegram scraping failed for {token_symbol}: {str(e)}"
-            )
-            return {"followers": 0, "recent_posts": 0}
-
-    def _get_twitter_metrics(self, token_symbol: str) -> Dict[str, Any]:
-        """Scrape Twitter/X metrics for a token.
-
-        Args:
-            token_symbol: Token symbol to search for
-
-        Returns:
-            Dictionary with Twitter metrics
-        """
-        try:
-            # Rate limiting
-            self._rate_limit()
-
-            if account_data := self._find_twitter_account(token_symbol):
-                # Get recent tweets and engagement
-                recent_activity = self._get_twitter_recent_activity(
-                    account_data.get("username", "")
-                )
-
-                return {
-                    "followers": account_data.get("followers", 0),
-                    "recent_posts": recent_activity.get("post_count", 0),
-                    "engagement_rate": recent_activity.get("engagement_rate", 0.0),
-                    "sentiment_score": recent_activity.get("sentiment_score", 0.5),
-                }
-
-            return {
-                "followers": 0,
-                "recent_posts": 0,
-                "engagement_rate": 0.0,
-                "sentiment_score": 0.5,
-            }
-
-        except Exception as e:
-            self.logger.warning(f"Twitter scraping failed for {token_symbol}: {str(e)}")
-            return {
-                "followers": 0,
-                "recent_posts": 0,
-                "engagement_rate": 0.0,
-                "sentiment_score": 0.5,
-            }
-
-    def _search_telegram_channels(self, search_term: str) -> list:
-        """
-        Search for Telegram channels related to the search term.
-
-        Placeholder implementation:
-        - Returns a hardcoded example if search term matches a common crypto keyword.
-        - Otherwise returns an empty list.
-
-        To extend:
-        - Integrate with Telegram API or web scraping.
-        - Use web search APIs for more accurate results.
-        """
-        # Minimal stub: return a sample channel for common crypto keywords
-        crypto_keywords = {
-            "bitcoin",
-            "eth",
-            "ethereum",
-            "crypto",
-            "blockchain",
-            "btc",
-            "doge",
-            "shib",
-            "pepe",
-        }
-        if search_term.lower() in crypto_keywords:
-            return [
-                {
-                    "name": f"{search_term.capitalize()} Official",
-                    "url": f"https://t.me/{search_term.lower()}official",
-                    "members": 10000 + hash(search_term) % 50000,  # 10k-60k
-                    "description": (
-                        f"Official {search_term.capitalize()} Telegram channel "
-                        "(stub data)."
+        # Mock data for testing
+        self._mock_data = {
+            "twitter": {
+                "posts": [
+                    SocialMediaPost(
+                        id="1234567890",
+                        platform="twitter",
+                        author="crypto_enthusiast",
+                        content="Just bought $MEME coin! 🚀 Going to the moon! #memecoin #crypto",
+                        timestamp=datetime.now() - timedelta(hours=3),
+                        likes=42,
+                        shares=5,
+                        comments=8,
+                        url="https://twitter.com/crypto_enthusiast/status/1234567890",
+                        hashtags=["memecoin", "crypto"],
+                        sentiment_score=SentimentScore.POSITIVE,
                     ),
-                }
-            ]
-        # No match: return empty list
+                    SocialMediaPost(
+                        id="1234567891",
+                        platform="twitter",
+                        author="skeptic_trader",
+                        content="Beware of the pump and dump on $MEME. Looks like it's crashing soon. #cryptowarning",
+                        timestamp=datetime.now() - timedelta(hours=5),
+                        likes=18,
+                        shares=2,
+                        comments=12,
+                        url="https://twitter.com/skeptic_trader/status/1234567891",
+                        hashtags=["cryptowarning"],
+                        sentiment_score=SentimentScore.NEGATIVE,
+                    ),
+                ]
+            },
+            "reddit": {
+                "posts": [
+                    SocialMediaPost(
+                        id="abc123",
+                        platform="reddit",
+                        author="diamond_hands",
+                        content="HODL $MEME to the moon! 💎🙌 Not selling until it hits $1!",
+                        timestamp=datetime.now() - timedelta(hours=2),
+                        likes=156,
+                        shares=0,  # Reddit doesn't have shares
+                        comments=43,
+                        url="https://reddit.com/r/cryptocurrency/comments/abc123",
+                        sentiment_score=SentimentScore.VERY_POSITIVE,
+                    ),
+                    SocialMediaPost(
+                        id="def456",
+                        platform="reddit",
+                        author="rational_investor",
+                        content="Can someone explain the fundamentals of $MEME? I don't see any utility here.",
+                        timestamp=datetime.now() - timedelta(hours=8),
+                        likes=23,
+                        shares=0,
+                        comments=67,
+                        url="https://reddit.com/r/cryptocurrency/comments/def456",
+                        sentiment_score=SentimentScore.NEUTRAL,
+                    ),
+                ]
+            },
+        }
+
+    def fetch_posts(
+        self, symbol: str, platform: str, max_posts: int = 100, time_period: str = "24h"
+    ) -> List[SocialMediaPost]:
+        """
+        Fetch posts mentioning a symbol from a specific platform.
+
+        Args:
+            symbol: Trading symbol (e.g., "DOGE", "SHIB")
+            platform: Platform name (twitter, reddit, telegram)
+            max_posts: Maximum number of posts to fetch
+            time_period: Time period to search (e.g., "24h", "7d")
+
+        Returns:
+            List of SocialMediaPost objects
+        """
+        # In a real implementation, this would make API calls to the platform
+        # For testing purposes, return mock data
+
+        if platform.lower() in self._mock_data:
+            return self._mock_data[platform.lower()]["posts"][:max_posts]
+
         return []
 
-    def _find_twitter_account(self, token_symbol: str) -> Optional[Dict[str, Any]]:
-        """Find Twitter account for a token (simplified implementation)."""
-        try:
-            # Rate limiting
-            self._rate_limit()
+    def calculate_metrics(
+        self, posts: List[SocialMediaPost], symbol: str, platform: str
+    ) -> SocialMediaMetrics:
+        """
+        Calculate aggregated metrics from social media posts.
 
-            # Try common username patterns
-            usernames = [
-                token_symbol.lower(),
-                f"{token_symbol}token",
-                f"{token_symbol}_token",
-                f"real{token_symbol}",
-                f"{token_symbol}erc",
-            ]
+        Args:
+            posts: List of social media posts
+            symbol: Symbol being analyzed
+            platform: Platform name
 
-            for username in usernames:
-                try:
-                    account_info = self._get_twitter_account_info(username)
-                    if account_info and account_info.get("followers", 0) > 0:
-                        return account_info
-                except Exception:
-                    continue
-
-            return None
-
-        except Exception as e:
-            self.logger.debug(
-                f"Failed to find Twitter account for {token_symbol}: {str(e)}"
+        Returns:
+            SocialMediaMetrics object
+        """
+        if not posts:
+            return SocialMediaMetrics(
+                platform=platform,
+                symbol=symbol,
+                post_count=0,
+                total_likes=0,
+                total_shares=0,
+                total_comments=0,
+                unique_authors=0,
             )
-            return None
 
-    def _get_twitter_account_info(self, username: str) -> Optional[Dict[str, Any]]:
-        """Get Twitter account information (simplified implementation)."""
-        # This is a placeholder - real implementation would use Twitter API v2
-        # For now, return None to avoid rate limiting issues
-        return None
+        # Calculate basic metrics
+        post_count = len(posts)
+        total_likes = sum(post.likes for post in posts)
+        total_shares = sum(post.shares for post in posts)
+        total_comments = sum(post.comments for post in posts)
+        unique_authors = len(set(post.author for post in posts))
 
-    def _get_twitter_recent_activity(self, username: str) -> Dict[str, Any]:
-        """Get recent Twitter activity (simplified implementation)."""
-        # Placeholder implementation
-        return {
-            "post_count": 0,
-            "engagement_rate": 0.0,
-            "sentiment_score": 0.5,
-        }
+        # Calculate sentiment distribution
+        sentiment_distribution = {}
+        for sentiment in SentimentScore:
+            sentiment_distribution[sentiment] = sum(
+                1 for post in posts if post.sentiment_score == sentiment
+            )
 
-    def _rate_limit(self) -> None:
-        """Implement basic rate limiting."""
-        current_time = time.time()
-        time_since_last = current_time - self._last_request_time
+        # Calculate top hashtags
+        hashtag_counts: Dict[str, int] = {}
+        for post in posts:
+            for tag in post.hashtags:
+                hashtag_counts[tag.lower()] = hashtag_counts.get(tag.lower(), 0) + 1
 
-        if time_since_last < self._min_request_interval:
-            sleep_time = self._min_request_interval - time_since_last
-            time.sleep(sleep_time)
+        top_hashtags = sorted(hashtag_counts.items(), key=lambda x: x[1], reverse=True)[
+            :5
+        ]
 
-        self._last_request_time = time.time()
+        # Calculate top mentions
+        mention_counts: Dict[str, int] = {}
+        for post in posts:
+            for mention in post.mentions:
+                mention_counts[mention.lower()] = (
+                    mention_counts.get(mention.lower(), 0) + 1
+                )
 
-    def _make_request(self, url: str, **kwargs: Any) -> Any:
-        """Make HTTP request with retry logic."""
+        top_mentions = sorted(mention_counts.items(), key=lambda x: x[1], reverse=True)[
+            :5
+        ]
 
-        def _request() -> Any:
-            if self.session:
-                response = self.session.get(url, timeout=self.timeout, **kwargs)
-                response.raise_for_status()
-                return response.json()
-            return {}
+        # Calculate engagement rate (likes + comments + shares) / post_count
+        total_engagement = total_likes + total_comments + total_shares
+        engagement_rate = total_engagement / post_count if post_count > 0 else 0
 
-        return self._retry_handler.execute(
-            _request,
-            exceptions=(
-                requests.exceptions.RequestException if requests else Exception,
-            ),
+        return SocialMediaMetrics(
+            platform=platform,
+            symbol=symbol,
+            post_count=post_count,
+            total_likes=total_likes,
+            total_shares=total_shares,
+            total_comments=total_comments,
+            unique_authors=unique_authors,
+            sentiment_distribution=sentiment_distribution,
+            top_hashtags=top_hashtags,
+            top_mentions=top_mentions,
+            engagement_rate=engagement_rate,
         )
+
+    def assess_vibe(
+        self,
+        symbol: str,
+        platforms: Optional[List[str]] = None,
+        time_period: str = "24h",
+    ) -> List[VibeAssessment]:
+        """
+        Assess the overall vibe for a symbol across platforms.
+
+        Args:
+            symbol: Symbol to assess
+            platforms: List of platforms to check (default: all)
+            time_period: Time period to analyze
+
+        Returns:
+            List of VibeAssessment objects, one per platform
+        """
+        if platforms is None:
+            platforms = list(self._mock_data.keys())
+
+        assessments = []
+
+        for platform in platforms:
+            # Fetch posts
+            posts = self.fetch_posts(symbol, platform, time_period=time_period)
+
+            if not posts:
+                # Create a neutral assessment if no posts found
+                assessments.append(
+                    VibeAssessment(
+                        symbol=symbol,
+                        platform=platform,
+                        vibe_score=50.0,  # Neutral
+                        sentiment=SentimentScore.NEUTRAL,
+                        confidence=0.1,  # Low confidence due to no data
+                        reasons=["No social media posts found"],
+                    )
+                )
+                continue
+
+            # Calculate metrics
+            metrics = self.calculate_metrics(posts, symbol, platform)
+
+            # Determine overall sentiment
+            total_posts = sum(metrics.sentiment_distribution.values())
+            if total_posts == 0:
+                overall_sentiment = SentimentScore.NEUTRAL
+            else:
+                # Weight sentiments: very_positive=2, positive=1, neutral=0, negative=-1, very_negative=-2
+                sentiment_weights = {
+                    SentimentScore.VERY_POSITIVE: 2,
+                    SentimentScore.POSITIVE: 1,
+                    SentimentScore.NEUTRAL: 0,
+                    SentimentScore.NEGATIVE: -1,
+                    SentimentScore.VERY_NEGATIVE: -2,
+                }
+
+                weighted_score = (
+                    sum(
+                        metrics.sentiment_distribution[sentiment]
+                        * sentiment_weights[sentiment]
+                        for sentiment in SentimentScore
+                    )
+                    / total_posts
+                )
+
+                # Convert weighted score back to sentiment
+                if weighted_score >= 1:
+                    overall_sentiment = SentimentScore.VERY_POSITIVE
+                elif weighted_score >= 0.5:
+                    overall_sentiment = SentimentScore.POSITIVE
+                elif weighted_score > -0.5:
+                    overall_sentiment = SentimentScore.NEUTRAL
+                elif weighted_score > -1:
+                    overall_sentiment = SentimentScore.NEGATIVE
+                else:
+                    overall_sentiment = SentimentScore.VERY_NEGATIVE
+
+            # Calculate vibe score (0-100)
+            # Base score from sentiment
+            base_scores = {
+                SentimentScore.VERY_POSITIVE: 85,
+                SentimentScore.POSITIVE: 70,
+                SentimentScore.NEUTRAL: 50,
+                SentimentScore.NEGATIVE: 30,
+                SentimentScore.VERY_NEGATIVE: 15,
+            }
+            vibe_score = base_scores[overall_sentiment]
+
+            # Adjust based on engagement
+            if metrics.engagement_rate:
+                # Higher engagement increases the score if sentiment is positive
+                # or decreases it if sentiment is negative
+                if overall_sentiment in [
+                    SentimentScore.POSITIVE,
+                    SentimentScore.VERY_POSITIVE,
+                ]:
+                    vibe_score += int(min(10, metrics.engagement_rate / 10))
+                elif overall_sentiment in [
+                    SentimentScore.NEGATIVE,
+                    SentimentScore.VERY_NEGATIVE,
+                ]:
+                    vibe_score -= int(min(10, metrics.engagement_rate / 10))
+
+            # Ensure score is within bounds
+            vibe_score = max(0, min(100, vibe_score))
+
+            # Determine confidence based on data volume
+            if metrics.post_count < 5:
+                confidence = 0.3
+            elif metrics.post_count < 20:
+                confidence = 0.6
+            else:
+                confidence = 0.9
+
+            # Generate reasons for the assessment
+            reasons = []
+            if metrics.post_count:
+                reasons.append(f"Found {metrics.post_count} posts mentioning ${symbol}")
+
+            if metrics.engagement_rate and metrics.engagement_rate > 10:
+                reasons.append("High engagement rate indicates strong interest")
+            elif metrics.engagement_rate and metrics.engagement_rate < 2:
+                reasons.append("Low engagement rate might indicate lack of interest")
+
+            if overall_sentiment in [
+                SentimentScore.POSITIVE,
+                SentimentScore.VERY_POSITIVE,
+            ]:
+                reasons.append("Overall sentiment is positive")
+            elif overall_sentiment in [
+                SentimentScore.NEGATIVE,
+                SentimentScore.VERY_NEGATIVE,
+            ]:
+                reasons.append("Overall sentiment is negative")
+
+            if metrics.unique_authors > 50:
+                reasons.append("Wide distribution of posters indicates broad appeal")
+            elif metrics.unique_authors < 10:
+                reasons.append("Few unique authors might indicate coordinated posting")
+
+            # Create assessment
+            assessment = VibeAssessment(
+                symbol=symbol,
+                platform=platform,
+                vibe_score=vibe_score,
+                sentiment=overall_sentiment,
+                confidence=confidence,
+                reasons=reasons,
+                social_metrics=metrics,
+            )
+
+            assessments.append(assessment)
+
+        return assessments
+
+    def assess_overall_vibe(
+        self,
+        symbol: str,
+        platforms: Optional[List[str]] = None,
+        time_period: str = "24h",
+    ) -> VibeAssessment:
+        """
+        Assess the overall vibe for a symbol across all platforms.
+
+        Args:
+            symbol: Symbol to assess
+            platforms: List of platforms to check (default: all)
+            time_period: Time period to analyze
+
+        Returns:
+            Single VibeAssessment object representing overall vibe
+        """
+        platform_assessments = self.assess_vibe(symbol, platforms, time_period)
+
+        if not platform_assessments:
+            return VibeAssessment(
+                symbol=symbol,
+                platform="all",
+                vibe_score=50.0,  # Neutral
+                sentiment=SentimentScore.NEUTRAL,
+                confidence=0.1,  # Low confidence due to no data
+                reasons=["No social media posts found on any platform"],
+            )
+
+        # Calculate weighted average vibe score based on confidence
+        total_weight = sum(a.confidence for a in platform_assessments)
+        if total_weight == 0:
+            weighted_vibe_score = 50.0
+            overall_confidence = 0.1
+        else:
+            weighted_vibe_score = (
+                sum(a.vibe_score * a.confidence for a in platform_assessments)
+                / total_weight
+            )
+            overall_confidence = min(
+                0.9,
+                sum(a.confidence for a in platform_assessments)
+                / len(platform_assessments),
+            )
+
+        # Determine overall sentiment (simple majority)
+        sentiment_counts: Dict[str, int] = {}
+        for a in platform_assessments:
+            sentiment_key = a.sentiment.value  # Use .value to get the string value
+            sentiment_counts[sentiment_key] = sentiment_counts.get(sentiment_key, 0) + 1
+
+        if sentiment_counts:
+            overall_sentiment_str = max(
+                sentiment_counts.keys(), key=lambda s: sentiment_counts[s]
+            )
+            # Convert string back to SentimentScore enum
+            overall_sentiment = SentimentScore(overall_sentiment_str)
+        else:
+            overall_sentiment = SentimentScore.NEUTRAL
+
+        # Aggregate reasons from all platforms
+        all_reasons = []
+        for a in platform_assessments:
+            all_reasons.extend(a.reasons)
+
+        return VibeAssessment(
+            symbol=symbol,
+            platform="all",
+            vibe_score=weighted_vibe_score,
+            sentiment=overall_sentiment,
+            confidence=overall_confidence,
+            reasons=all_reasons,
+        )
+
+    def get_metrics(self, symbol: str) -> SocialMediaMetrics:
+        """
+        Get social metrics for a symbol.
+
+        Args:
+            symbol: Symbol to get metrics for
+
+        Returns:
+            SocialMediaMetrics object
+        """
+        # In a real implementation, this would aggregate data from multiple platforms
+        # For testing purposes, return mock data
+
+        # Fetch posts from Twitter
+        twitter_posts = self.fetch_posts(symbol, "twitter", max_posts=50)
+
+        # Calculate metrics
+        if twitter_posts:
+            return self.calculate_metrics(twitter_posts, symbol, "twitter")
+        else:
+            # Return empty metrics if no posts found
+            return SocialMediaMetrics(
+                platform="twitter",
+                symbol=symbol,
+                post_count=0,
+                total_likes=0,
+                total_shares=0,
+                total_comments=0,
+                unique_authors=0,
+            )

@@ -1,0 +1,12 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.3, pytest-8.3.5, pluggy-1.6.0
+rootdir: C:\Users\ancha\Documents\projects\QuantChain
+configfile: pytest.ini
+plugins: anyio-4.9.0, hypothesis-6.131.31, langsmith-0.4.41, libtmux-0.39.0, asyncio-1.0.0, cov-7.0.0, mock-3.14.1, timeout-2.4.0, xdist-3.7.0
+asyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 2218 items / 1 error
+
+=========================== short test summary info ===========================
+ERROR tests/unit/backtesting/test_finrl_adapter_enhanced.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+======================== 1 warning, 1 error in 14.22s =========================

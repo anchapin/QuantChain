@@ -47,12 +47,10 @@ class LLMProvider(ABC):
     @abstractmethod
     def generate(self, prompt: str, **kwargs: Any) -> LLMResponse:
         """Generate response from LLM."""
-        pass
 
     @abstractmethod
     def get_model_name(self) -> str:
         """Get the model name."""
-        pass
 
 
 class OpenAIProvider(LLMProvider):
@@ -146,13 +144,13 @@ class VLLMProvider(LLMProvider):
         if LLM is None:
             raise ImportError("vLLM package not installed")
         self.model_name = model
+        self.host = host
         # For simplicity, assume vLLM is running as a server
         # In practice, might need to connect via HTTP client
-        raise NotImplementedError("vLLM provider not yet implemented")
 
     def generate(self, prompt: str, **kwargs: Any) -> LLMResponse:
         # Implement HTTP client to vLLM server
-        raise NotImplementedError
+        raise NotImplementedError("vLLM provider not yet implemented")
 
     def get_model_name(self) -> str:
         return self.model_name

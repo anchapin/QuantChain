@@ -13,24 +13,26 @@ Requirements:
 - Additional dependencies: pip install pandas matplotlib mplfinance
 """
 
+import argparse
+import importlib.util
+import json
 import logging
 import os
 import sys
-import json
-import argparse
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any
-
-# Add project root to path for imports
-sys.path.append(str(Path(__file__).parent.parent))
+from typing import Any, Dict
 
 from quantchain.agents.chart_reader_agent import (
     ChartReaderAgent,
     ChartReaderAgentConfig,
 )
 from quantchain.connectors.alpaca_connector import AlpacaDataConnector
-from quantchain.core.config import get_config, QuantChainConfig
-from quantchain.core.llm_providers import OpenAIProvider, AnthropicProvider
+from quantchain.core.config import QuantChainConfig, get_config
+from quantchain.core.llm_providers import AnthropicProvider, OpenAIProvider
+
+# Add project root to path for imports
+sys.path.append(str(Path(__file__).parent.parent))
 
 
 def check_dependencies() -> bool:
@@ -41,19 +43,16 @@ def check_dependencies() -> bool:
     """
     missing_deps = []
 
-    try:
-        import pandas
-    except ImportError:
+    # Check if pandas is available
+    if not importlib.util.find_spec("pandas"):
         missing_deps.append("pandas")
 
-    try:
-        import matplotlib
-    except ImportError:
+    # Check if matplotlib is available
+    if not importlib.util.find_spec("matplotlib"):
         missing_deps.append("matplotlib")
 
-    try:
-        import mplfinance
-    except ImportError:
+    # Check if mplfinance is available
+    if not importlib.util.find_spec("mplfinance"):
         missing_deps.append("mplfinance")
 
     if missing_deps:
@@ -78,7 +77,7 @@ def load_configuration() -> "QuantChainConfig":
     try:
         config = get_config()
     except Exception as e:
-        raise ValueError(f"Failed to load configuration: {e}")
+        raise ValueError(f"Failed to load configuration: {e}") from e
 
     # Validate Alpaca API keys (required for data)
     if not os.getenv("ALPACA_API_KEY") or not os.getenv("ALPACA_API_SECRET"):
@@ -188,7 +187,7 @@ def initialize_agent(config: "QuantChainConfig") -> ChartReaderAgent:
         return agent
 
     except Exception as e:
-        raise ValueError(f"Failed to initialize agent: {e}")
+        raise ValueError(f"Failed to initialize agent: {e}") from e
 
 
 def analyze_symbol(
@@ -212,55 +211,77 @@ def analyze_symbol(
         results = agent.generate_trading_recommendation(symbol)
 
         # Display summary
-        print(f"Symbol: {symbol}")
-        print(f"Recommendation: {results['recommendation']}")
-        print(f"Confidence: {results['confidence']:.1f}%")
-
-        if "entry_price" in results:
-            print(f"Entry Price: ${results['entry_price']:.2f}")
-        if "stop_loss" in results:
-            print(f"Stop Loss: ${results['stop_loss']:.2f}")
-        if "take_profit" in results:
-            print(f"Take Profit: ${results['take_profit']:.2f}")
+        _display_summary(symbol, results)
 
         # Display analysis by timeframe
-        if "timeframe_analysis" in results:
-            print("\nTimeframe Analysis:")
-            for timeframe, analysis in results["timeframe_analysis"].items():
-                print(f"\n{timeframe}:")
-                print(f"  Signal: {analysis.get('signal', 'N/A')}")
-                print(f"  Confidence: {analysis.get('confidence', 0):.1f}%")
-
-                if "patterns_found" in analysis and analysis["patterns_found"]:
-                    print("  Patterns:")
-                    for pattern in analysis["patterns_found"]:
-                        print(
-                            f"    - {pattern['name']} ({pattern['confidence']:.1f}% confidence)"
-                        )
+        _display_timeframe_analysis(results)
 
         # Display technical indicators summary
-        if "indicator_summary" in results:
-            print("\nTechnical Indicators:")
-            for indicator, signal in results["indicator_summary"].items():
-                print(f"  {indicator}: {signal}")
+        _display_technical_indicators(results)
 
-        # Save detailed results if requested
+        # Save results if requested
         if save_output:
-            output_file = f"{symbol}_analysis_{results['timestamp']}.json"
-            with open(output_file, "w") as f:
-                json.dump(results, f, indent=2, default=str)
-            print(f"\nDetailed analysis saved to: {output_file}")
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"{symbol}_analysis_{timestamp}.json"
+            with open(filename, "w") as f:
+                json.dump(results, f, indent=2)
+            print(f"\nResults saved to {filename}")
 
-        return results  # type: ignore[no-any-return]
+        return results
 
     except Exception as e:
-        print(f"Error analyzing {symbol}: {str(e)}")
+        print(f"Error analyzing {symbol}: {e}")
         return {}
+
+
+def _display_summary(symbol: str, results: Dict[str, Any]) -> None:
+    """Display the summary of analysis results."""
+    print(f"Symbol: {symbol}")
+    print(f"Recommendation: {results['recommendation']}")
+    print(f"Confidence: {results['confidence']:.1f}%")
+
+    if "entry_price" in results:
+        print(f"Entry Price: ${results['entry_price']:.2f}")
+    if "stop_loss" in results:
+        print(f"Stop Loss: ${results['stop_loss']:.2f}")
+    if "take_profit" in results:
+        print(f"Take Profit: ${results['take_profit']:.2f}")
+
+
+def _display_timeframe_analysis(results: Dict[str, Any]) -> None:
+    """Display analysis by timeframe."""
+    if "timeframe_analysis" not in results:
+        return
+
+    print("\nTimeframe Analysis:")
+    for timeframe, analysis in results["timeframe_analysis"].items():
+        print(f"\n{timeframe}:")
+        print(f"  Signal: {analysis.get('signal', 'N/A')}")
+        print(f"  Confidence: {analysis.get('confidence', 0):.1f}%")
+
+        if "patterns_found" in analysis and analysis["patterns_found"]:
+            print("  Patterns:")
+            for pattern in analysis["patterns_found"]:
+                print(
+                    f"    - {pattern['name']} "
+                    f"({pattern['confidence']:.1f}% confidence)"
+                )
+
+
+def _display_technical_indicators(results: Dict[str, Any]) -> None:
+    """Display technical indicators summary."""
+    if "indicator_summary" not in results:
+        return
+
+    print("\nTechnical Indicators:")
+    for indicator, signal in results["indicator_summary"].items():
+        print(f"  {indicator}: {signal}")
 
 
 def main() -> None:
     """Main execution function for the Chart Reader Agent example."""
     # Parse command line arguments
+
     parser = argparse.ArgumentParser(description="Chart Reader Agent Example")
     parser.add_argument(
         "symbol", nargs="?", default="AAPL", help="Symbol to analyze (default: AAPL)"

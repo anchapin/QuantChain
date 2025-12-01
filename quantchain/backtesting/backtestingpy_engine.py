@@ -1,85 +1,51 @@
-"""
-Integration with Backtesting.py library for vectorized backtesting.
-"""
+"""Backtesting.py Engine adapter for QuantChain."""
 
-from dataclasses import dataclass
-from typing import Any, Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
 
+import numpy as np
 import pandas as pd
 
 try:
     from backtesting import Backtest, Strategy
+
+    _BACKTESTING_AVAILABLE = True
 except ImportError:
-    Backtest = None
-    Strategy = None
+    _BACKTESTING_AVAILABLE = False
 
-from quantchain.backtesting.engine import (
-    BacktestConfig,
-    BacktestEngine,
-    BacktestResult,
-    MetricsResult,
-)
+from quantchain.backtesting.engine import BacktestConfig, BacktestResult, MetricsResult
 
 
-class BacktestingPyError(Exception):
-    """Base exception for backtesting.py engine errors."""
-
-    pass
-
-
-class ConversionError(BacktestingPyError):
-    """Exception raised when data conversion fails."""
-
-    pass
-
-
-if Strategy is not None:
-
-    class StrategyAdapter(Strategy):
-        """
-        Adapter to convert quantchain strategies
-        to Backtesting.py Strategy format.
-        """
-
-        def init(self) -> None:
-            """Initialize the strategy."""
-            self.position_size = 0.1  # Default 10% position size
-
-        def next(self) -> None:
-            """Called for each bar of data."""
-            # This would be implemented based on the quantchain strategy
-            pass
-
-else:
-    StrategyAdapter = None  # type: ignore
-
-
-@dataclass
-class BacktestingPyConfig:
-    """Configuration specific to Backtesting.py engine."""
-
-    cash: float = 10000.0
-    commission: float = 0.002
-    exclusive_orders: bool = True
-
-
-class BacktestingPyEngine(BacktestEngine):
-    """Backtesting engine using Backtesting.py library."""
+class BacktestingPyEngine:
+    """Adapter for the Backtesting.py library."""
 
     def __init__(self, config: Optional[BacktestConfig] = None):
-        """Initialize the backtesting engine."""
-        self.config = config or BacktestConfig()
-        self._backtest = None
-        self._results: Optional[BacktestResult] = None
-        self._equity_curve_data = None
+        """Initialize the backtesting engine.
 
-        if Backtest is None or StrategyAdapter is None:
+        Args:
+            config: Configuration for backtesting
+        """
+        if not _BACKTESTING_AVAILABLE:
             raise ImportError(
-                "backtesting library not installed. "
-                "Install with: pip install backtesting"
+                "backtesting.py library not installed. Install with: pip install backtesting"
             )
 
-        # Initialize Backtest with dummy data as required by test
+        self.config = config or BacktestConfig()
+        self._backtest = None
+        self._results = None
+        self._equity_curve_data = None
+
+        # Initialize the backtesting.py engine
+        self._initialize_backtest()
+
+    def _initialize_backtest(self) -> None:
+        """Initialize the backtesting.py engine with the configuration."""
+
+        # Create a temporary strategy for initialization
+        class TempStrategy(Strategy):
+            pass
+
+        # Create a dummy DataFrame to initialize Backtest
         dummy_data = pd.DataFrame(
             {
                 "Open": [100.0],
@@ -89,151 +55,232 @@ class BacktestingPyEngine(BacktestEngine):
                 "Volume": [1000.0],
             }
         )
-        self._backtest = Backtest(
-            dummy_data,
-            StrategyAdapter,
-            cash=self.config.initial_cash or 10000.0,
-            commission=self.config.commission_rate or 0.002,
-            exclusive_orders=True,
+
+        try:
+            self._backtest = Backtest(
+                dummy_data,
+                TempStrategy,
+                cash=self.config.initial_capital,
+                commission=self.config.commission,
+                exclusive_orders=True,
+            )
+        except Exception as e:
+            raise ImportError(f"Failed to initialize backtesting.py engine: {str(e)}")
+
+    def _convert_data_format(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Convert data to the format expected by backtesting.py.
+
+        Args:
+            data: Input data in various possible formats
+
+        Returns:
+            DataFrame with correct column names for backtesting.py
+        """
+        # Make a copy to avoid modifying the original
+        data = data.copy()
+
+        # Check for required columns
+        required_columns = ["open", "high", "low", "close", "volume"]
+
+        # Convert to lowercase for case-insensitive comparison
+        data.columns = [col.lower() for col in data.columns]
+
+        # Check if all required columns exist
+        missing_columns = [col for col in required_columns if col not in data.columns]
+        if missing_columns:
+            raise ValueError(f"Missing required columns: {missing_columns}")
+
+        # Convert to proper case for backtesting.py
+        column_mapping = {
+            "open": "Open",
+            "high": "High",
+            "low": "Low",
+            "close": "Close",
+            "volume": "Volume",
+        }
+
+        data = data.rename(columns=column_mapping)
+
+        # Ensure datetime index
+        if not isinstance(data.index, pd.DatetimeIndex):
+            if "timestamp" in data.columns:
+                data.index = pd.to_datetime(data["timestamp"])
+                data = data.drop(columns=["timestamp"])
+            elif "date" in data.columns:
+                data.index = pd.to_datetime(data["date"])
+                data = data.drop(columns=["date"])
+            else:
+                # Create a default date range
+                start_date = datetime.now() - timedelta(days=len(data))
+                dates = pd.date_range(start=start_date, periods=len(data), freq="D")
+                data.index = dates
+
+        return data
+
+    def _get_performance_metrics(self, stats: Dict[str, Any]) -> MetricsResult:
+        """Extract performance metrics from backtesting.py stats.
+
+        Args:
+            stats: Dictionary of statistics from backtesting.py
+
+        Returns:
+            MetricsResult object
+        """
+        # Map backtesting.py stat names to our metrics
+        return MetricsResult(
+            total_return=stats.get("Return [%]", 0) / 100,
+            return_pct=stats.get("Return [%]", 0),
+            annualized_return=stats.get("Return (Ann.) [%]", 0) / 100,
+            sharpe_ratio=stats.get("Sharpe Ratio", 0),
+            sortino_ratio=stats.get("Sortino Ratio", 0),
+            calmar_ratio=stats.get("Calmar Ratio", 0),
+            max_drawdown=stats.get("Max Drawdown [%]", 0) / 100,
+            max_drawdown_pct=stats.get("Max Drawdown [%]", 0),
+            max_drawdown_duration=stats.get("Max Drawdown Duration", 0),
+            win_rate=stats.get("Win Rate [%]", 0) / 100,
+            win_rate_pct=stats.get("Win Rate [%]", 0),
+            profit_factor=stats.get("Profit Factor", 0),
+            recovery_factor=stats.get("Recovery Factor", 0),
+            total_trades=stats.get("# Trades", 0),
+            avg_trade=stats.get("Avg. Trade [%]", 0) / 100,
+            avg_win_pct=stats.get("Avg. Winning Trade [%]", 0),
+            avg_loss_pct=stats.get("Avg. Losing Trade [%]", 0),
+            largest_win=stats.get("Best Trade [%]", 0) / 100,
+            largest_loss=stats.get("Worst Trade [%]", 0) / 100,
+            avg_drawdown=stats.get("Avg. Drawdown [%]", 0) / 100,
+            avg_drawdown_pct=stats.get("Avg. Drawdown [%]", 0),
+            var_95=0.0,  # Not directly provided by backtesting.py
+            var_99=0.0,  # Not directly provided by backtesting.py
+            skewness=0.0,  # Not directly provided by backtesting.py
+            kurtosis=0.0,  # Not directly provided by backtesting.py
         )
 
-    def run(
-        self,
-        strategy: Any,
-        data: pd.DataFrame,
-        config: Optional[BacktestConfig] = None,
-    ) -> BacktestResult:
-        """Run backtest with given strategy, data, and configuration."""
-        if config is None:
-            config = self.config
+    def _analyze_portfolio_composition(
+        self, portfolio: Dict[str, float]
+    ) -> Dict[str, float]:
+        """Analyze portfolio composition.
 
-        # Convert data format if needed
+        Args:
+            portfolio: Dictionary with symbol and quantity
+
+        Returns:
+            Portfolio composition with symbol and percentage
+        """
+        if not portfolio:
+            return {}
+
+        total_value = sum(portfolio.values())
+        return {
+            symbol: (quantity / total_value) * 100
+            for symbol, quantity in portfolio.items()
+        }
+
+    def _calculate_risk_metrics(self, returns: pd.Series) -> Dict[str, float]:
+        """Calculate risk metrics from returns.
+
+        Args:
+            returns: Series of returns
+
+        Returns:
+            Dictionary with risk metrics
+        """
+        returns = returns.dropna()
+
+        if len(returns) == 0:
+            return {
+                "volatility": 0.0,
+                "var_95": 0.0,
+                "var_99": 0.0,
+                "skewness": 0.0,
+                "kurtosis": 0.0,
+            }
+
+        # Calculate metrics
+        volatility = float(returns.std() * np.sqrt(252))  # Annualized volatility
+        var_95 = float(np.percentile(returns, 5))
+        var_99 = float(np.percentile(returns, 1))
+        skewness = float(returns.skew())
+        kurtosis = float(returns.kurtosis())
+
+        return {
+            "volatility": volatility,
+            "var_95": var_95,
+            "var_99": var_99,
+            "skewness": skewness,
+            "kurtosis": kurtosis,
+        }
+
+    def run_backtest(self, data: pd.DataFrame, strategy: Any) -> BacktestResult:
+        """Run a backtest with the provided data and strategy.
+
+        Args:
+            data: OHLCV data for backtesting
+            strategy: Trading strategy to test
+
+        Returns:
+            BacktestResult with performance metrics
+        """
+        # Convert data format
         try:
-            bt_data = self._convert_data_format(data)
+            data = self._convert_data_format(data)
         except Exception as e:
-            raise ConversionError(f"Failed to convert data format: {e}") from e
+            raise ValueError(f"Failed to convert data format: {str(e)}")
 
-        # Create Backtest instance
-        self._backtest = Backtest(
-            bt_data,
-            StrategyAdapter,
-            cash=config.initial_cash or 10000.0,
-            commission=config.commission_rate or 0.002,
-            exclusive_orders=True,
-        )
+        # Check if strategy has required methods
+        required_methods = ["init", "next"]
+        for method in required_methods:
+            if not hasattr(strategy, method):
+                raise AttributeError(f"Strategy must have '{method}' method")
 
-        # Run the backtest
+        # Initialize and run backtest
+        start_time = datetime.now()
+
         try:
-            stats = self._backtest.run()
-            # If stats is a Series (equity curve), store it for get_equity_curve
-            if isinstance(stats, pd.Series):
-                self._equity_curve_data = stats
-            self._results = self._convert_results(stats)
-            return self._results
+            bt = Backtest(
+                data,
+                strategy,
+                cash=self.config.initial_capital,
+                commission=self.config.commission,
+                slippage=self.config.slippage,
+                exclusive_orders=True,
+            )
+
+            stats = bt.run()
+            execution_time = (datetime.now() - start_time).total_seconds()
+
+            # Extract metrics
+            metrics = self._get_performance_metrics(stats)
+
+            # Get equity curve
+            equity_curve = bt._equity_curve
+
+            # Get trade log
+            trade_log = bt._trades
+
+            return BacktestResult(
+                equity_curve=equity_curve,
+                trade_log=trade_log,
+                summary_stats=stats,
+                metrics=metrics,
+                execution_time=execution_time,
+                config=self.config,
+            )
+
         except Exception as e:
-            raise BacktestingPyError(f"Backtest execution failed: {e}") from e
+            raise RuntimeError(f"Backtest execution failed: {str(e)}")
 
     def get_results(self) -> Optional[BacktestResult]:
-        """Get results of the last backtest."""
+        """Get the results of the last backtest run.
+
+        Returns:
+            BacktestResult or None if no backtest has been run
+        """
         return self._results
 
     def get_equity_curve(self) -> Optional[pd.Series]:
-        """Get equity curve from the last backtest."""
-        if self._equity_curve_data is not None:
-            return self._equity_curve_data
-        elif self._backtest is None:
-            return None
+        """Get the equity curve from the last backtest.
 
-        try:
-            # Get equity curve from backtest
-            if hasattr(self._backtest, "_equity_curve"):
-                equity_curve = self._backtest._equity_curve
-                return pd.Series(equity_curve, index=self._backtest.data.index)
-            # Fallback: check if results contain equity curve
-            elif self._results and hasattr(self._results, "equity_curve"):
-                return self._results.equity_curve
-            else:
-                return pd.Series()
-        except Exception:
-            return pd.Series()
-
-    def _convert_data_format(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Convert quantchain data format to Backtesting.py format."""
-        # Ensure we have OHLCV data
-        required_columns = ["open", "high", "low", "close", "volume"]
-        data_columns = data.columns.str.lower()
-
-        if missing_columns := [
-            col for col in required_columns if col not in data_columns
-        ]:
-            raise ConversionError(f"Missing required columns: {missing_columns}")
-
-        # Standardize column names
-        bt_data = data.copy()
-        bt_data.columns = bt_data.columns.str.lower()
-
-        # Backtesting.py expects Open, High, Low, Close (capitalized)
-        bt_data = bt_data.rename(
-            columns={
-                "open": "Open",
-                "high": "High",
-                "low": "Low",
-                "close": "Close",
-                "volume": "Volume",
-            }
-        )
-
-        return bt_data
-
-    def _convert_results(self, backtest_stats: Any) -> BacktestResult:
-        """Convert Backtesting.py results to quantchain BacktestResult format."""
-        try:
-            # Extract stats from backtest results
-            stats_dict = backtest_stats if isinstance(backtest_stats, dict) else {}
-
-            # Create MetricsResult from backtesting.py stats
-            metrics = MetricsResult(
-                total_return=stats_dict.get("Return [%]", 0.0) / 100.0,
-                annualized_return=(
-                    stats_dict.get("Return [%]", 0.0) / 100.0
-                ),  # Same for now
-                sharpe_ratio=stats_dict.get("Sharpe Ratio", 0.0),
-                sortino_ratio=0.0,  # Not available from backtesting.py
-                calmar_ratio=0.0,  # Not available from backtesting.py
-                max_drawdown=abs(stats_dict.get("Max Drawdown [%]", 0.0)) / 100.0,
-                max_drawdown_duration=0,  # Not available from backtesting.py
-                win_rate=stats_dict.get("Win Rate [%]", 0.0) / 100.0,
-                total_trades=int(stats_dict.get("# Trades", 0)),
-            )
-
-            return BacktestResult(
-                equity_curve=self.get_equity_curve() or pd.Series(),
-                trade_log=pd.DataFrame(),  # Empty trade log for now
-                summary_stats=stats_dict,
-                metrics=metrics,
-                execution_time=0.0,  # Not tracked
-                config=self.config,
-            )
-        except Exception:
-            # Fallback to basic result
-            metrics = MetricsResult(
-                total_return=0.0,
-                annualized_return=0.0,
-                sharpe_ratio=0.0,
-                sortino_ratio=0.0,
-                calmar_ratio=0.0,
-                max_drawdown=0.0,
-                max_drawdown_duration=0,
-                win_rate=0.0,
-                total_trades=0,
-            )
-            return BacktestResult(
-                equity_curve=pd.Series(),
-                trade_log=pd.DataFrame(),
-                summary_stats={
-                    "error": 1.0
-                },  # Use float value to match type annotation
-                metrics=metrics,
-                execution_time=0.0,
-                config=self.config,
-            )
+        Returns:
+            Series with equity curve data or None
+        """
+        return self._equity_curve_data

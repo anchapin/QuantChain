@@ -3,9 +3,15 @@
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
+
+try:
+    from scipy.signal import argrelextrema
+    HAS_SCIPY = True
+except ImportError:
+    HAS_SCIPY = False
 
 from .base import (
     AgentAnalysis,
@@ -104,7 +110,7 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
         )
         self.min_data_points = self.agent_config.get("min_data_points", 50)
 
-    def analyze(self, symbol: str, **kwargs) -> AgentAnalysis:
+    def analyze(self, symbol: str, **kwargs: Any) -> AgentAnalysis:
         """Perform technical analysis for a given symbol.
 
         Args:
@@ -349,7 +355,7 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
             "1d": 24,
             "1w": 168,
         }
-        return mapping.get(timeframe, 1)
+        return int(mapping.get(timeframe, 1))
 
     def _perform_technical_analysis(
         self, price_data: PriceData, timeframe: str
@@ -398,11 +404,11 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
             for period in self.indicators_enabled["SMA"]["periods"]:
                 if len(closes) >= period:
                     sma = self._calculate_sma(closes, period)
-                    signal = self._get_ma_signal(closes[-1], sma[-1])
+                    signal = self._get_ma_signal(float(closes[-1]), float(sma[-1]))
                     indicators.append(
                         TechnicalIndicator(
                             name=f"SMA_{period}",
-                            value=sma[-1],
+                            value=float(sma[-1]),
                             signal=signal,
                             confidence=70.0,
                             parameters={"period": period},
@@ -414,11 +420,11 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
             period = self.indicators_enabled["RSI"]["period"]
             if len(closes) >= period:
                 rsi = self._calculate_rsi(closes, period)
-                signal = self._get_rsi_signal(rsi[-1])
+                signal = self._get_rsi_signal(float(rsi[-1]))
                 indicators.append(
                     TechnicalIndicator(
                         name="RSI",
-                        value=rsi[-1],
+                        value=float(rsi[-1]),
                         signal=signal,
                         confidence=75.0,
                         parameters={"period": period},
@@ -435,11 +441,11 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
                     macd_config["slow"],
                     macd_config["signal"],
                 )
-                macd_signal = self._get_macd_signal(histogram[-1])
+                macd_signal = self._get_macd_signal(float(histogram[-1]))
                 indicators.append(
                     TechnicalIndicator(
                         name="MACD",
-                        value=histogram[-1],
+                        value=float(histogram[-1]),
                         signal=macd_signal,
                         confidence=80.0,
                         parameters=macd_config,
@@ -458,7 +464,9 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
         Returns:
             SMA array
         """
-        return np.convolve(prices, np.ones(period) / period, mode="valid")
+        return cast(
+            np.ndarray, np.convolve(prices, np.ones(period) / period, mode="valid")
+        )
 
     def _calculate_rsi(self, prices: np.ndarray, period: int) -> np.ndarray:
         """Calculate Relative Strength Index.
@@ -492,7 +500,7 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
             rs = up / down if down != 0 else 0
             rsi[i] = 100 - (100 / (1 + rs))
 
-        return rsi
+        return cast(np.ndarray, rsi)
 
     def _calculate_macd(
         self, prices: np.ndarray, fast: int, slow: int, signal: int
@@ -544,7 +552,7 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
         for i in range(1, len(prices)):
             ema[i] = (prices[i] * multiplier) + (ema[i - 1] * (1 - multiplier))
 
-        return ema
+        return cast(np.ndarray, ema)
 
     def _get_ma_signal(self, current_price: float, ma_value: float) -> str:
         """Get signal from moving average.
@@ -605,7 +613,7 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
             List of detected patterns
         """
         # Simplified pattern detection
-        patterns = []
+        patterns: List[ChartPattern] = []
 
         # In a real implementation, this would use sophisticated pattern recognition
         # For now, return empty list
@@ -624,12 +632,12 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
 
         # Simple linear regression to determine trend
         x = np.arange(len(closes))
-        slope, _ = np.polyfit(x, closes, 1)
+        slope, intercept = np.polyfit(x, closes, 1)
 
         # Calculate trend strength based on R-squared
-        y_pred = slope * x + np.mean(closes)
-        ss_res = np.sum((closes - y_pred) ** 2)
-        ss_tot = np.sum((closes - np.mean(closes)) ** 2)
+        y_pred = slope * x + intercept
+        ss_res = float(np.sum((closes - y_pred) ** 2))
+        ss_tot = float(np.sum((closes - np.mean(closes)) ** 2))
         r_squared = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0
 
         # Determine trend direction
@@ -657,9 +665,7 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
         lows = np.array(price_data.lows)
 
         # Try to use scipy for finding local maxima and minima
-        try:
-            from scipy.signal import argrelextrema
-
+        if HAS_SCIPY:
             # Find local maxima (resistance) and minima (support)
             resistance_indices = argrelextrema(highs, np.greater, order=5)[0]
             support_indices = argrelextrema(lows, np.less, order=5)[0]
@@ -673,7 +679,7 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
                 "support": support_levels,
                 "resistance": resistance_levels,
             }
-        except ImportError:
+        else:
             # Fallback if scipy not available
             current_price = price_data.closes[-1]
             return {
@@ -722,11 +728,11 @@ class TechnicalAnalystAgent(BaseSpecializedAgent):
 
         for timeframe, analysis in technical_analyses.items():
             # Calculate score for this timeframe
-            score = 0
-            indicator_votes = {"BUY": 0, "SELL": 0, "NEUTRAL": 0}
+            score: float = 0
+            indicator_votes = {"BUY": 0.0, "SELL": 0.0, "NEUTRAL": 0.0}
 
             for indicator in analysis.indicators:
-                indicator_votes[indicator.signal] += indicator.confidence
+                indicator_votes[indicator.signal] += float(indicator.confidence)
 
             # Determine timeframe signal
             if indicator_votes["BUY"] > indicator_votes["SELL"]:

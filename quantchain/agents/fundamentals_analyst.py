@@ -77,7 +77,7 @@ class FundamentalsAnalystAgent(BaseSpecializedAgent):
         self.debt_to_equity_limit = self.agent_config.get("debt_to_equity_limit", 2.0)
         self.roe_threshold = self.agent_config.get("roe_threshold", 15.0)
 
-    def analyze(self, symbol: str, **kwargs) -> AgentAnalysis:
+    def analyze(self, symbol: str, **kwargs: Any) -> AgentAnalysis:
         """Perform fundamental analysis for a given symbol.
 
         Args:

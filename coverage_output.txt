@@ -1,0 +1,78 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.3, pytest-8.3.5, pluggy-1.5.0
+rootdir: C:\Users\ancha\Documents\projects\QuantChain
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.9.0, dash-3.0.4, Faker-37.3.0, hypothesis-6.131.15, langsmith-0.3.45, libtmux-0.39.0, asyncio-1.2.0, cov-7.0.0, docker-3.2.5, mock-3.14.0, timeout-2.4.0, xdist-3.6.1
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 1096 items
+
+tests\backtesting\test_backtestingpy_integration.py .                    [  0%]
+tests\backtesting\test_engine.py .                                       [  0%]
+tests\backtesting\test_finrl_adapter.py .                                [  0%]
+tests\backtesting\test_langgraph_adapter.py .                            [  0%]
+tests\backtesting\test_market_friction.py .                              [  0%]
+tests\backtesting\test_performance_basic.py .                            [  0%]
+tests\backtesting\test_performance_metrics.py .                          [  0%]
+tests\backtesting\test_vector_backtester_advanced.py .                   [  0%]
+tests\backtests\test_memecoin_vibe_trader_backtest.py .                  [  0%]
+tests\connectors\test_ib_async_execution.py ........                     [  1%]
+tests\connectors\test_import_ib.py .                                     [  1%]
+tests\core\secret_managers\test_gcp_fixed.py .                           [  1%]
+tests\deployment\test_docker_setup.py .                                  [  1%]
+tests\integration\test_e2e_workflows.py .                                [  1%]
+tests\integration\test_e2e_workflows_v2.py .                             [  2%]
+tests\integration\test_simple_workflows.py .                             [  2%]
+tests\unit\agents\test_chart_reader_agent.py .                           [  2%]
+tests\unit\agents\test_chart_reader_agent_comprehensive.py ............. [  3%]
+..........................                                               [  5%]
+tests\unit\agents\test_memecoin_vibe_trader.py .............             [  6%]
+tests\unit\agents\test_memecoin_vibe_trader_coverage.py ssssssssssssssss [  8%]
+                                                                         [  8%]
+tests\unit\agents\test_multi_agent_system.py .......................     [ 10%]
+tests\unit\agents\test_smart_contract_auditor.py ............            [ 11%]
+tests\unit\backtesting\additional\test_engine_enhanced.py .              [ 11%]
+tests\unit\backtesting\test_backtestingpy_engine.py .                    [ 11%]
+tests\unit\backtesting\test_engine_comprehensive.py .................... [ 13%]
+..............                                                           [ 14%]
+tests\unit\backtesting\test_engine_fixed.py .                            [ 14%]
+tests\unit\backtesting\test_finrl_adapter.py .                           [ 15%]
+tests\unit\backtesting\test_finrl_adapter_basic.py .                     [ 15%]
+tests\unit\backtesting\test_finrl_adapter_comprehensive.py .             [ 15%]
+tests\unit\backtesting\test_finrl_adapter_comprehensive_coverage.py .    [ 15%]
+tests\unit\backtesting\test_finrl_adapter_coverage.py .                  [ 15%]
+tests\unit\backtesting\test_finrl_adapter_enhanced.py .                  [ 15%]
+tests\unit\backtesting\test_finrl_adapter_extended.py .                  [ 15%]
+tests\unit\backtesting\test_finrl_adapter_simple.py .                    [ 15%]
+tests\unit\backtesting\test_finrl_adapter_smoke.py .                     [ 15%]
+tests\unit\backtesting\test_ib_async_execution.py .                      [ 15%]
+tests\unit\backtesting\test_langgraph_adapter_comprehensive.py ......s.. [ 16%]
+....                                                                     [ 17%]
+tests\unit\backtesting\test_langgraph_adapter_coverage.py .              [ 17%]
+tests\unit\backtesting\test_langgraph_adapter_simple.py .                [ 17%]
+tests\unit\backtesting\test_market_friction.py .                         [ 17%]
+tests\unit\backtesting\test_market_friction_basic.py .                   [ 17%]
+tests\unit\backtesting\test_market_friction_comprehensive.py ........... [ 18%]
+..................................................                       [ 22%]
+tests\unit\backtesting\test_market_friction_coverage.py .                [ 23%]
+tests\unit\backtesting\test_market_friction_smoke.py .                   [ 23%]
+tests\unit\backtesting\test_metrics_result.py .                          [ 23%]
+tests\unit\backtesting\test_performance_metrics.py .                     [ 23%]
+tests\unit\backtesting\test_performance_metrics_basic.py .               [ 23%]
+tests\unit\backtesting\test_performance_metrics_comprehensive.py .....   [ 23%]
+tests\unit\backtesting\test_performance_metrics_corrected.py ........... [ 24%]
+.F
+
+================================== FAILURES ===================================
+________ TestPerformanceMetricsCore.test_calculate_sharpe_ratio_basic _________
+tests\unit\backtesting\test_performance_metrics_corrected.py:175: in test_calculate_sharpe_ratio_basic
+    sharpe = metrics.calculate_sharpe_ratio(equity_curve)
+quantchain\backtesting\performance_metrics.py:121: in calculate_sharpe_ratio
+    annualized_return = self.calculate_annualized_return(equity_curve)
+quantchain\backtesting\performance_metrics.py:101: in calculate_annualized_return
+    years = (end_date - start_date).days / 365.25
+E   AttributeError: 'int' object has no attribute 'days'
+=========================== short test summary info ===========================
+FAILED tests/unit/backtesting/test_performance_metrics_corrected.py::TestPerformanceMetricsCore::test_calculate_sharpe_ratio_basic
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+=========== 1 failed, 257 passed, 17 skipped, 3 warnings in 20.32s ============

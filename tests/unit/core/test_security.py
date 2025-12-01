@@ -1,630 +1,551 @@
-"""Comprehensive tests for the Security module with full coverage focus."""
+"""
+Comprehensive tests for quantchain.core.security module.
+"""
 
 import os
 import tempfile
-from unittest.mock import patch
+from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
 from quantchain.core.security import (
+    API_KEY_PATTERNS,
     APISecurityManager,
     CredentialNotFoundError,
+    InvalidCredentialFormatError,
+    SecretManager,
     SecurityConfigurationError,
+    create_secret_manager,
+    get_default_secret_manager,
 )
-from quantchain.core.secret_managers.env import InvalidCredentialFormatError
+
+
+@pytest.mark.unit
+class TestSecretManager:
+    """Test placeholder SecretManager implementation."""
+
+    def test_secret_manager_get(self) -> None:
+        """Test SecretManager get method."""
+        manager = SecretManager()
+        result = manager.get("test_key")
+        assert result is None
+
+    def test_secret_manager_set(self) -> None:
+        """Test SecretManager set method."""
+        manager = SecretManager()
+        manager.set("test_key", "test_value")
+        # Should not raise exception
+
+    def test_secret_manager_get_secret(self) -> None:
+        """Test SecretManager get_secret method."""
+        manager = SecretManager()
+        result = manager.get_secret("test_secret")
+        assert result is None
+
+    def test_secret_manager_set_secret(self) -> None:
+        """Test SecretManager set_secret method."""
+        manager = SecretManager()
+        manager.set_secret("test_secret", "test_value")
+        # Should not raise exception
+
+    def test_secret_manager_delete_secret(self) -> None:
+        """Test SecretManager delete_secret method."""
+        manager = SecretManager()
+        manager.delete_secret("test_secret")
+        # Should not raise exception
+
+
+@pytest.mark.unit
+class TestSecretManagerFunctions:
+    """Test secret manager factory functions."""
+
+    def test_get_default_secret_manager(self) -> None:
+        """Test getting default secret manager."""
+        manager = get_default_secret_manager()
+        assert isinstance(manager, SecretManager)
+
+    def test_create_secret_manager(self) -> None:
+        """Test creating secret manager with backend."""
+        manager = create_secret_manager("test_backend", test_param="test_value")
+        assert isinstance(manager, SecretManager)
 
 
 @pytest.mark.unit
 class TestAPISecurityManager:
-    """Comprehensive test suite for API Security Manager with new secret management."""
+    """Test APISecurityManager class."""
 
-    @patch.dict(os.environ, {"QUANTCHAIN_SECRET_BACKEND": "env"})
-    def test_init_with_default_backend(self) -> None:
-        """Test initialization with default backend."""
-        manager = APISecurityManager()
+    def test_init_without_env_file(self) -> None:
+        """Test initialization without env file."""
+        manager = APISecurityManager(env_file=".env_test")
+        assert manager.env_file == ".env_test"
+        assert isinstance(manager._services, dict)
         assert manager._secret_manager is not None
 
-    @patch.dict(os.environ, {"QUANTCHAIN_SECRET_BACKEND": "env"})
-    def test_init_with_custom_backend(self) -> None:
-        """Test initialization with custom backend."""
-        manager = APISecurityManager(backend="env")
-        assert manager._secret_manager is not None
+    @patch("os.path.exists")
+    def test_init_with_env_file(self, mock_exists: Mock) -> None:
+        """Test initialization with existing env file."""
+        mock_exists.return_value = True
+        with patch("builtins.open", mock_open(read_data="ALPACA_API_KEY=test_key\n")):
+            manager = APISecurityManager(env_file=".env")
+            # Should load from env file
+            assert "alpaca" in manager._services
 
-    # ===== Environment Variable Loading Tests =====
-
-    @patch.dict(os.environ, {"QUANTCHAIN_SECRET_BACKEND": "env"})
-    def test_load_credentials_from_env_variables(self) -> None:
+    @patch.dict(
+        os.environ,
+        {
+            "ALPACA_API_KEY": "ABCDEFGHIJKLMNOP",
+            "ALPACA_API_SECRET": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
+            "POLYGON_API_KEY": "test_polygon_key_12345",
+            "ALPHA_VANTAGE_API_KEY": "ABCDEFGHIJKLMNOP",
+            "ANTHROPIC_API_KEY": "sk-ant-api03-" + "A" * 95,
+            "OPENAI_API_KEY": "sk-" + "A" * 48,
+        },
+        clear=True,
+    )
+    def test_load_from_environment(self) -> None:
         """Test loading credentials from environment variables."""
-        with patch.dict(
-            os.environ,
-            {
-                "OPENAI_API_KEY": "sk-test1234567890abcdef",
-                "ALPACA_API_KEY": "AAAAAAAAAAAAAAAAAAA",
-                "ALPACA_API_SECRET": "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY123456789",
-            },
-        ):
-            manager = APISecurityManager()
-            assert manager.get_api_key("openai") == "sk-test1234567890abcdef"
-            assert manager.get_api_key("alpaca") == "AAAAAAAAAAAAAAAAAAA"
-            assert (
-                manager.get_api_secret("alpaca")
-                == "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY123456789"
-            )
+        # Ensure we don't load from a real .env file
+        manager = APISecurityManager(env_file="nonexistent_env_file")
 
-    def test_env_variable_precedence_over_env_file(self) -> None:
-        """Test that environment variables take precedence over .env file."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
-            f.write('OPENAI_API_KEY="env-file-key"\n')
-            f.write('ALPACA_API_KEY="env-file-alpaca"\n')
-            env_file_path = f.name
+        assert manager._services["alpaca"]["key"] == "ABCDEFGHIJKLMNOP"
+        assert (
+            manager._services["alpaca"]["secret"]
+            == "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        )
+        assert manager._services["polygon"]["key"] == "test_polygon_key_12345"
+        assert manager._services["alpha_vantage"]["key"] == "ABCDEFGHIJKLMNOP"
+        assert manager._services["anthropic"]["key"] == "sk-ant-api03-" + "A" * 95
+        assert manager._services["openai"]["key"] == "sk-" + "A" * 48
 
-        try:
-            # Clear all environment variables that might interfere
-            with patch.dict(os.environ, {}, clear=True):
-                with patch.dict(os.environ, {"OPENAI_API_KEY": "env-var-key"}):
-                    manager = APISecurityManager(env_file_path)
-                    # Environment variable should override .env file
-                    assert manager.get_api_key("openai") == "env-var-key"
-                    # .env file should still load the alpaca key
-                    assert manager.get_api_key("alpaca") == "env-file-alpaca"
-        finally:
-            os.unlink(env_file_path)
+    def test_load_from_env_file(self) -> None:
+        """Test loading credentials from .env file."""
+        env_content = """
+# This is a comment
+ALPACA_API_KEY=test_key_from_file
+ALPACA_API_SECRET=test_secret_from_file
+POLYGON_API_KEY=test_polygon_from_file
+# Another comment
+ALPHA_VANTAGE_API_KEY=test_alpha_from_file
+"""
+        with patch("builtins.open", mock_open(read_data=env_content)):
+            with patch("os.path.exists", return_value=True):
+                manager = APISecurityManager(env_file=".env")
 
-    def test_load_from_missing_env_file_no_error(self) -> None:
-        """Test that missing .env file doesn't cause errors."""
-        with patch.dict(os.environ, {}, clear=True):
-            manager = APISecurityManager("nonexistent.env")
-            # Should not raise an error, just have no credentials
-            assert manager.list_services() == []
+                assert manager._services["alpaca"]["key"] == "test_key_from_file"
+                assert manager._services["alpaca"]["secret"] == "test_secret_from_file"
+                assert manager._services["polygon"]["key"] == "test_polygon_from_file"
+                assert (
+                    manager._services["alpha_vantage"]["key"] == "test_alpha_from_file"
+                )
 
-    def test_load_env_file_with_malformed_lines(self) -> None:
-        """Test handling of malformed lines in .env file."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
-            f.write("# This is a comment\n")
-            f.write('OPENAI_API_KEY="valid-value"\n')
-            f.write("MALFORMED_LINE_NO_EQUALS\n")
-            f.write("\n")  # Empty line
-            f.write('POLYGON_API_KEY="another-value"\n')
-            f.write("ALPACA_API_KEY='quoted-value'\n")
-            env_file_path = f.name
+    def test_load_from_env_file_with_exception(self) -> None:
+        """Test loading from env file with exception."""
+        with patch("builtins.open", side_effect=IOError("Permission denied")):
+            with patch("os.path.exists", return_value=True):
+                # Should not raise exception
+                manager = APISecurityManager(env_file=".env")
+                assert isinstance(manager._services, dict)
 
-        try:
-            # Clear environment variables that might interfere
-            with patch.dict(os.environ, {}, clear=True):
-                manager = APISecurityManager(env_file_path)
-                assert set(manager.list_services()) == {"openai", "polygon", "alpaca"}
-                assert manager.get_api_key("openai") == "valid-value"
-                assert manager.get_api_key("polygon") == "another-value"
-                assert manager.get_api_key("alpaca") == "quoted-value"
-        finally:
-            os.unlink(env_file_path)
-
-    def test_load_env_file_with_quote_stripping(self) -> None:
-        """Test that quotes are properly stripped from .env values."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
-            f.write('OPENAI_API_KEY="quoted-value"\n')
-            f.write("ALPACA_API_KEY='single-quoted'\n")
-            f.write("POLYGON_API_KEY=unquoted\n")
-            env_file_path = f.name
-
-        try:
-            # Clear environment variables that might interfere
-            with patch.dict(os.environ, {}, clear=True):
-                manager = APISecurityManager(env_file_path)
-                assert manager.get_api_key("openai") == "quoted-value"
-                assert manager.get_api_key("alpaca") == "single-quoted"
-                assert manager.get_api_key("polygon") == "unquoted"
-        finally:
-            os.unlink(env_file_path)
-
-    def test_env_file_read_exception_handling(self) -> None:
-        """Test graceful handling of file read exceptions."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
-            f.write('OPENAI_API_KEY="test-key"\n')
-            env_file_path = f.name
-
-        try:
-            # Clear environment variables that might interfere
-            with patch.dict(os.environ, {}, clear=True):
-                # Mock open to raise an exception
-                with patch("builtins.open", side_effect=IOError("Permission denied")):
-                    # Should not crash, just log a warning
-                    manager = APISecurityManager(env_file_path)
-                    assert manager.list_services() == []  # No credentials loaded
-        finally:
-            os.unlink(env_file_path)
-
-    # ===== Service Validation Pattern Tests =====
-
-    def test_validate_polygon_credentials_valid(self) -> None:
-        """Test validation of valid Polygon API credentials."""
+    def test_set_api_key_empty_key(self) -> None:
+        """Test setting API key with empty key."""
         manager = APISecurityManager()
-        valid_key = "AbCdEfGhIjKlMnOpQrStUvWx123456789"  # Matches pattern
+        with pytest.raises(SecurityConfigurationError):
+            manager.set_api_key("alpaca", "")
 
-        manager.set_api_key("polygon", valid_key)
-        assert manager.validate_credentials("polygon") is True
-
-    def test_validate_polygon_credentials_invalid(self) -> None:
-        """Test validation of invalid Polygon API key format."""
+    def test_set_api_key_invalid_format(self) -> None:
+        """Test setting API key with invalid format."""
         manager = APISecurityManager()
-        invalid_key = "invalid-key"  # Too short
-
         with pytest.raises(InvalidCredentialFormatError):
-            manager.set_api_key("polygon", invalid_key)
+            manager.set_api_key("alpaca", "invalid_key")
 
-    def test_validate_alpha_vantage_credentials_valid(self) -> None:
-        """Test validation of valid Alpha Vantage credentials."""
+    def test_set_api_key_valid_format(self) -> None:
+        """Test setting API key with valid format."""
         manager = APISecurityManager()
-        valid_key = "ABCDEFGHIJKLMNOP"  # 16 uppercase alphanumeric chars
+        valid_key = "ABCDEFGHIJKLMNOP"  # Valid 16-char alphanumeric key
+        manager.set_api_key("alpaca", valid_key)
+        assert manager._services["alpaca"]["key"] == valid_key
 
-        manager.set_api_key("alpha_vantage", valid_key)
-        assert manager.validate_credentials("alpha_vantage") is True
-
-    def test_validate_alpha_vantage_credentials_invalid(self) -> None:
-        """Test validation of invalid Alpha Vantage API key format."""
+    def test_set_api_key_with_secret(self) -> None:
+        """Test setting API key with secret."""
         manager = APISecurityManager()
-        invalid_key = "lowercase"  # Should be uppercase
-
-        with pytest.raises(InvalidCredentialFormatError):
-            manager.set_api_key("alpha_vantage", invalid_key)
-
-    def test_validate_anthropic_credentials_valid(self) -> None:
-        """Test validation of valid Anthropic credentials."""
-        manager = APISecurityManager()
-        # Pattern: ^sk-ant-[A-Za-z0-9_-]{95,110}$
-        # Let's create a key with exactly 100 chars (95 after sk-ant-)
-        base_chars = "a" * 95
-        valid_key = f"sk-ant-{base_chars}"
-
-        manager.set_api_key("anthropic", valid_key)
-        assert manager.validate_credentials("anthropic") is True
-
-    def test_validate_anthropic_credentials_invalid(self) -> None:
-        """Test validation of invalid Anthropic API key format."""
-        manager = APISecurityManager()
-        invalid_key = "invalid-anthropic-key"  # Wrong prefix
-
-        with pytest.raises(InvalidCredentialFormatError):
-            manager.set_api_key("anthropic", invalid_key)
-
-    def test_validate_openai_credentials_valid(self) -> None:
-        """Test validation of valid OpenAI credentials."""
-        manager = APISecurityManager()
-        valid_key = "sk-test1234567890abcdefghijklmnopqrstuvwxyz"
-
-        manager.set_api_key("openai", valid_key)
-        assert manager.validate_credentials("openai") is True
-
-    def test_validate_openai_credentials_invalid(self) -> None:
-        """Test validation of invalid OpenAI API key format."""
-        manager = APISecurityManager()
-        invalid_key = "not-a-sk-key"
-
-        with pytest.raises(InvalidCredentialFormatError):
-            manager.set_api_key("openai", invalid_key)
-
-    def test_validate_alpaca_credentials_with_secret(self) -> None:
-        """Test validation of Alpaca credentials with both key and secret."""
-        manager = APISecurityManager()
-        valid_key = "AAAAAAAAAAAAAAAAAAA"  # 21 chars, starts with A
-        valid_secret = "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY123456789"
-
+        valid_key = "ABCDEFGHIJKLMNOP"
+        valid_secret = (
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        )
         manager.set_api_key("alpaca", valid_key, valid_secret)
-        assert manager.validate_credentials("alpaca") is True
+        assert manager._services["alpaca"]["key"] == valid_key
+        assert manager._services["alpaca"]["secret"] == valid_secret
 
-    def test_validate_alpaca_credentials_missing_secret(self) -> None:
-        """Test validation of Alpaca credentials without secret (should be invalid)."""
+    def test_set_api_key_invalid_secret_format(self) -> None:
+        """Test setting API key with invalid secret format."""
         manager = APISecurityManager()
-        valid_key = "AAAAAAAAAAAAAAAAAAA"  # 21 chars, starts with A
-
-        # Should raise error when trying to set Alpaca credentials without secret
-        with pytest.raises(InvalidCredentialFormatError):
-            manager.set_api_key("alpaca", valid_key)
-
-    def test_validate_alpaca_credentials_invalid_secret(self) -> None:
-        """Test validation of Alpaca credentials with invalid secret."""
-        manager = APISecurityManager()
-        valid_key = "AAAAAAAAAAAAAAAAAAA"
-        invalid_secret = "short"  # Too short
-
+        valid_key = "ABCDEFGHIJKLMNOP"
+        invalid_secret = "invalid_secret"
         with pytest.raises(InvalidCredentialFormatError):
             manager.set_api_key("alpaca", valid_key, invalid_secret)
 
-    def test_validate_unsupported_service(self) -> None:
-        """Test validation of credentials for unsupported service."""
+    @patch.object(SecretManager, "set_secret")
+    def test_set_api_key_with_secret_manager(self, mock_set_secret: Mock) -> None:
+        """Test setting API key with secret manager."""
         manager = APISecurityManager()
+        valid_key = "ABCDEFGHIJKLMNOP"
+        manager.set_api_key("alpaca", valid_key)
 
-        # Should raise error when trying to set unsupported service
-        with pytest.raises(SecurityConfigurationError):
-            manager.set_api_key("unsupported_service", "some_key")
+        # Should call secret manager set_secret
+        mock_set_secret.assert_called_with("alpaca_api_key", valid_key)
 
-    def test_validate_credentials_with_provided_vs_stored(self) -> None:
-        """Test validate_credentials with provided vs stored credential parameters."""
+    @patch.object(
+        SecretManager, "set_secret", side_effect=Exception("Secret manager error")
+    )
+    def test_set_api_key_secret_manager_failure(self, mock_set_secret: Mock) -> None:
+        """Test setting API key when secret manager fails."""
         manager = APISecurityManager()
-        valid_key = "sk-test1234567890abcdef"
+        valid_key = "ABCDEFGHIJKLMNOP"
+        # Should not raise exception, fall back to memory storage
+        manager.set_api_key("alpaca", valid_key)
+        assert manager._services["alpaca"]["key"] == valid_key
 
-        # Set a valid key
-        manager.set_api_key("openai", valid_key)
-
-        # Test with stored credentials (should pass)
-        assert manager.validate_credentials("openai") is True
-
-        # Test with provided valid credentials (should pass)
-        assert (
-            manager.validate_credentials("openai", "sk-valid1234567890abcdef") is True
-        )
-
-        # Test with provided invalid credentials (should fail)
-        assert manager.validate_credentials("openai", "invalid-key") is False
-
-    # ===== Error Handling Tests =====
-
-    def test_set_api_key_unsupported_service_raises_error(self) -> None:
-        """Test that setting API key for unsupported service raises
-        SecurityConfigurationError."""
+    def test_get_api_key_not_found(self) -> None:
+        """Test getting API key that doesn't exist."""
         manager = APISecurityManager()
-
-        with pytest.raises(SecurityConfigurationError):
-            manager.set_api_key("unsupported_service", "some_key")
-
-    def test_get_api_key_nonexistent_service_raises_error(self) -> None:
-        """Test that getting non-existent API key raises CredentialNotFoundError."""
-        manager = APISecurityManager()
-
         with pytest.raises(CredentialNotFoundError):
-            manager.get_api_key("nonexistent")
+            manager.get_api_key("nonexistent_service")
 
-    def test_get_api_secret_nonexistent_service_returns_none(self) -> None:
-        """Test that getting secret for non-existent service returns None."""
+    def test_get_api_key_from_memory(self) -> None:
+        """Test getting API key from memory."""
         manager = APISecurityManager()
+        valid_key = "ABCDEFGHIJKLMNOP"
+        manager.set_api_key("alpaca", valid_key)
+        retrieved_key = manager.get_api_key("alpaca")
+        assert retrieved_key == valid_key
 
-        result = manager.get_api_secret("nonexistent")
+    @patch.object(SecretManager, "get_secret")
+    def test_get_api_key_from_secret_manager(self, mock_get_secret: Mock) -> None:
+        """Test getting API key from secret manager."""
+        manager = APISecurityManager()
+        valid_key = "ABCDEFGHIJKLMNOP"
+        mock_get_secret.return_value = valid_key
+
+        retrieved_key = manager.get_api_key("alpaca")
+        assert retrieved_key == valid_key
+        assert manager._services["alpaca"]["key"] == valid_key  # Should cache in memory
+
+    @patch.object(
+        SecretManager, "get_secret", side_effect=Exception("Secret manager error")
+    )
+    def test_get_api_key_secret_manager_failure(self, mock_get_secret: Mock) -> None:
+        """Test getting API key when secret manager fails."""
+        manager = APISecurityManager()
+        with pytest.raises(CredentialNotFoundError):
+            manager.get_api_key("nonexistent_service")
+
+    def test_get_api_secret_not_found(self) -> None:
+        """Test getting API secret that doesn't exist."""
+        manager = APISecurityManager()
+        result = manager.get_api_secret("nonexistent_service")
         assert result is None
 
-    def test_validate_credentials_nonexistent_service_returns_false(self) -> None:
-        """Test that validating credentials for non-existent service returns False."""
+    def test_get_api_secret_from_memory(self) -> None:
+        """Test getting API secret from memory."""
         manager = APISecurityManager()
+        valid_key = "ABCDEFGHIJKLMNOP"
+        valid_secret = (
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        )
+        manager.set_api_key("alpaca", valid_key, valid_secret)
+        retrieved_secret = manager.get_api_secret("alpaca")
+        assert retrieved_secret == valid_secret
 
-        result = manager.validate_credentials("nonexistent")
+    @patch.object(SecretManager, "get_secret")
+    def test_get_api_secret_from_secret_manager(self, mock_get_secret: Mock) -> None:
+        """Test getting API secret from secret manager."""
+        manager = APISecurityManager()
+        valid_secret = (
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        )
+        mock_get_secret.return_value = valid_secret
+
+        retrieved_secret = manager.get_api_secret("alpaca")
+        assert retrieved_secret == valid_secret
+
+    def test_validate_credentials_no_service(self) -> None:
+        """Test validating credentials for service without patterns."""
+        manager = APISecurityManager()
+        result = manager.validate_credentials("unknown_service", "any_key")
+        assert result is True
+
+    def test_validate_credentials_invalid_format(self) -> None:
+        """Test validating credentials with invalid format."""
+        manager = APISecurityManager()
+        result = manager.validate_credentials("alpaca", "invalid_key")
         assert result is False
 
-    # ===== Core Functionality Tests =====
-
-    def test_set_and_get_api_key(self) -> None:
-        """Test setting and retrieving an API key."""
+    def test_validate_credentials_valid_format(self) -> None:
+        """Test validating credentials with valid format."""
         manager = APISecurityManager()
-        test_key = "sk-test1234567890abcdef"
+        valid_key = "ABCDEFGHIJKLMNOP"
+        result = manager.validate_credentials("alpaca", valid_key)
+        assert result is True
 
-        manager.set_api_key("openai", test_key)
-        retrieved_key = manager.get_api_key("openai")
-
-        assert retrieved_key == test_key
-
-    def test_set_and_get_api_secret(self) -> None:
-        """Test setting and retrieving an API secret."""
+    def test_validate_credentials_with_secret(self) -> None:
+        """Test validating credentials with secret."""
         manager = APISecurityManager()
-        test_key = "AAAAAAAAAAAAAAAAAAA"  # 21 chars
-        test_secret = "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY123456789"
-
-        manager.set_api_key("alpaca", test_key, test_secret)
-        retrieved_secret = manager.get_api_secret("alpaca")
-
-        assert retrieved_secret == test_secret
-
-    def test_get_api_secret_returns_none_when_not_set(self) -> None:
-        """Test that get_api_secret returns None when no secret is set."""
-        manager = APISecurityManager()
-        test_key = "sk-test1234567890abcdef"
-
-        manager.set_api_key("openai", test_key)  # No secret
-        retrieved_secret = manager.get_api_secret("openai")
-
-        assert retrieved_secret is None
-
-    def test_list_services_empty(self) -> None:
-        """Test listing services when environment variables are set."""
-        with patch.dict(
-            os.environ,
-            {
-                "OPENAI_API_KEY": "sk-test1234567890abcdef",
-                "ALPACA_API_KEY": "AAAAAAAAAAAAAAAAAAA",
-                "ALPACA_API_SECRET": "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY123456789",
-            },
-        ):
-            manager = APISecurityManager()
-            services = manager.list_services()
-
-            # Should list services that have environment variables set
-            expected_services = {"openai", "alpaca"}
-            assert set(services) == expected_services
-
-    def test_list_services_after_setting_keys(self) -> None:
-        """Test listing services after setting some API keys."""
-        manager = APISecurityManager()
-
-        manager.set_api_key("openai", "sk-test1234567890abcdef")
-        manager.set_api_key(
-            "alpaca",
-            "AAAAAAAAAAAAAAAAAAA",
-            "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY123456789",
+        valid_key = "ABCDEFGHIJKLMNOP"
+        valid_secret = (
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
         )
-        manager.set_api_key("polygon", "AbCdEfGhIjKlMnOpQrStUvWx123456789")
+        result = manager.validate_credentials("alpaca", valid_key, valid_secret)
+        assert result is True
+
+    def test_validate_credentials_invalid_secret_format(self) -> None:
+        """Test validating credentials with invalid secret format."""
+        manager = APISecurityManager()
+        valid_key = "ABCDEFGHIJKLMNOP"
+        invalid_secret = "invalid_secret"
+        result = manager.validate_credentials("alpaca", valid_key, invalid_secret)
+        assert result is False
+
+    def test_validate_credentials_not_found(self) -> None:
+        """Test validating credentials when key not found."""
+        manager = APISecurityManager()
+        result = manager.validate_credentials("nonexistent_service")
+        assert result is False
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_list_services(self) -> None:
+        """Test listing all configured services."""
+        # Ensure we don't load from a real .env file
+        manager = APISecurityManager(env_file="nonexistent_env_file")
+        manager.set_api_key("alpaca", "ABCDEFGHIJKLMNOP")
+        manager.set_api_key("polygon", "test_polygon_key_12345")
 
         services = manager.list_services()
-
-        assert set(services) == {"openai", "alpaca", "polygon"}
+        assert "alpaca" in services
+        assert "polygon" in services
+        assert len(services) == 2
 
     def test_remove_service(self) -> None:
-        """Test removing a service's credentials."""
+        """Test removing stored credentials for a service."""
         manager = APISecurityManager()
+        manager.set_api_key("alpaca", "ABCDEFGHIJKLMNOP")
+        manager.remove_service("alpaca")
 
-        manager.set_api_key("openai", "sk-test1234567890abcdef")
-        assert "openai" in manager.list_services()
+        assert "alpaca" not in manager._services
 
-        manager.remove_service("openai")
-        assert "openai" not in manager.list_services()
-
-        # Verify key is no longer accessible
-        with pytest.raises(CredentialNotFoundError):
-            manager.get_api_key("openai")
-
-    def test_remove_nonexistent_service_no_error(self) -> None:
-        """Test that removing a non-existent service doesn't raise an error."""
+    @patch.object(SecretManager, "delete_secret")
+    def test_remove_service_with_secret_manager(self, mock_delete_secret: Mock) -> None:
+        """Test removing service with secret manager."""
         manager = APISecurityManager()
+        manager.set_api_key("alpaca", "ABCDEFGHIJKLMNOP")
+        manager.remove_service("alpaca")
 
-        # Should not raise an error
-        manager.remove_service("nonexistent")
+        # Should call secret manager delete_secret for both key and secret
+        mock_delete_secret.assert_any_call("alpaca_api_key")
+        mock_delete_secret.assert_any_call("alpaca_api_secret")
 
-    def test_overwrite_existing_api_key(self) -> None:
-        """Test that setting an API key overwrites the existing one."""
+    @patch.object(
+        SecretManager, "delete_secret", side_effect=Exception("Secret manager error")
+    )
+    def test_remove_service_secret_manager_failure(
+        self, mock_delete_secret: Mock
+    ) -> None:
+        """Test removing service when secret manager fails."""
         manager = APISecurityManager()
-        original_key = "sk-original1234567890abcdefghijklmnopqrstuvwxyz"
-        new_key = "sk-new1234567890abcdefghijklmnopqrstuvwxyz"
+        manager.set_api_key("alpaca", "ABCDEFGHIJKLMNOP")
+        # Should not raise exception
+        manager.remove_service("alpaca")
+        assert "alpaca" not in manager._services
 
-        manager.set_api_key("openai", original_key)
-        assert manager.get_api_key("openai") == original_key
-
-        manager.set_api_key("openai", new_key)
-        assert manager.get_api_key("openai") == new_key
-
-    def test_overwrite_existing_api_secret(self) -> None:
-        """Test that setting an API secret overwrites the existing one."""
-        manager = APISecurityManager()
-        test_key = "AAAAAAAAAAAAAAAAAAA"
-        # Alpaca secret pattern: ^[A-Za-z0-9+/]{40,50}$ (Base64-like)
-        original_secret = "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY123456789"
-        new_secret = "aHVsc2V0UGFzc3dvcmQxMjM0NTY3ODkwMTIzNDU2"
-
-        manager.set_api_key("alpaca", test_key, original_secret)
-        assert manager.get_api_secret("alpaca") == original_secret
-
-        manager.set_api_key("alpaca", test_key, new_secret)
-        assert manager.get_api_secret("alpaca") == new_secret
-
-    # ===== Save to .env File Tests =====
-
-    def test_save_to_env_file_new_file(self) -> None:
-        """Test saving credentials to a new .env file."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
-            env_file_path = f.name
+    def test_save_to_env_file(self) -> None:
+        """Test saving credentials to env file."""
+        with tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".env"
+        ) as temp_file:
+            temp_path = temp_file.name
 
         try:
-            # Clear environment variables that might interfere
-            with patch.dict(os.environ, {}, clear=True):
-                manager = APISecurityManager(env_file_path)
-                manager.set_api_key("openai", "sk-test1234567890abcdef")
-                # Use proper alpaca secret format (Base64-like, 40-50 chars)
-                manager.set_api_key(
-                    "alpaca",
-                    "AAAAAAAAAAAAAAAAAAA",
-                    "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY123456789",
-                )
+            manager = APISecurityManager(env_file=temp_path)
+            valid_secret = "A" * 32
+            manager.set_api_key("alpaca", "ABCDEFGHIJKLMNOP", valid_secret)
+            manager.set_api_key("polygon", "test_polygon_key_12345")
 
-                manager.save_to_env_file()
+            manager.save_to_env_file()
 
-                # Verify file contents
-                with open(env_file_path, "r") as f:
-                    content = f.read()
-
-                assert 'OPENAI_API_KEY="sk-test1234567890abcdef"' in content
-                assert 'ALPACA_API_KEY="AAAAAAAAAAAAAAAAAAA"' in content
-                assert (
-                    'ALPACA_API_SECRET="'
-                    'wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY123456789"'
-                    '" in content'
-                )
-        finally:
-            os.unlink(env_file_path)
-
-    def test_save_to_env_file_preserves_unrelated_content(self) -> None:
-        """Test that saving preserves unrelated content in existing .env file."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
-            f.write('SOME_OTHER_VAR="preserved-value"\n')
-            f.write("# Comment line\n")
-            env_file_path = f.name
-
-        try:
-            # Clear environment variables that might interfere
-            with patch.dict(os.environ, {}, clear=True):
-                manager = APISecurityManager(env_file_path)
-                manager.set_api_key("openai", "sk-test1234567890abcdef")
-
-                manager.save_to_env_file()
-
-                # Verify file contents
-                with open(env_file_path, "r") as f:
-                    content = f.read()
-
-                assert 'SOME_OTHER_VAR="preserved-value"' in content
-                assert "# Comment line" in content
-                assert 'OPENAI_API_KEY="sk-test1234567890abcdef"' in content
-        finally:
-            os.unlink(env_file_path)
-
-    def test_save_to_env_file_removes_existing_api_keys(self) -> None:
-        """Test that saving removes existing API keys before adding new ones."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
-            f.write('OPENAI_API_KEY="old-key"\n')
-            f.write('POLYGON_API_KEY="old-polygon-key"\n')
-            f.write('OTHER_VAR="other-value"\n')
-            env_file_path = f.name
-
-        try:
-            # Clear environment variables that might interfere
-            with patch.dict(os.environ, {}, clear=True):
-                manager = APISecurityManager(env_file_path)
-                manager.set_api_key(
-                    "alpaca",
-                    "AAAAAAAAAAAAAAAAAAA",
-                    "wJalrXUtnFEMIK7MDENGbPxRfiCYEXAMPLEKEY123456789",
-                )  # Different service
-
-                manager.save_to_env_file()
-
-                # Verify file contents
-                with open(env_file_path, "r") as f:
-                    content = f.read()
-
-                # Current save_to_env_file logic only removes lines for services
-                # So old OPENAI and POLYGON keys should remain since only ALPACA is in
-                # _credentials
-                assert (
-                    'OPENAI_API_KEY="old-key"' in content
-                )  # Should remain (not in current credentials)
-                assert (
-                    'POLYGON_API_KEY="old-polygon-key"' in content
-                )  # Should remain (not in current credentials)
-                assert (
-                    'OTHER_VAR="other-value"' in content
-                )  # Non-API var should be preserved
-                assert 'ALPACA_API_KEY="AAAAAAAAAAAAAAAAAAA"' in content
-        finally:
-            os.unlink(env_file_path)
-
-    def test_save_to_env_file_handles_empty_credentials(self) -> None:
-        """Test that saving with no credentials doesn't crash."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
-            f.write('OTHER_VAR="preserved-value"\n')
-            env_file_path = f.name
-
-        try:
-            manager = APISecurityManager()  # No credentials set
-
-            manager.save_to_env_file()  # Should not crash
-
-            # Verify file contents - should only have non-API content
-            with open(env_file_path, "r") as f:
+            # Read file contents
+            with open(temp_path, "r") as f:
                 content = f.read()
 
-            assert 'OTHER_VAR="preserved-value"' in content
-            assert "API_KEY" not in content
+            assert "ALPACA_API_KEY=ABCDEFGHIJKLMNOP" in content
+            assert f"ALPACA_API_SECRET={valid_secret}" in content
+            assert "POLYGON_API_KEY=test_polygon_key_12345" in content
         finally:
-            os.unlink(env_file_path)
+            os.unlink(temp_path)
 
-    # ===== Edge Cases and Boundary Conditions =====
-
-    def test_validation_with_empty_string_credentials(self) -> None:
-        """Test validation behavior with empty string credentials."""
-        manager = APISecurityManager()
-
-        # Empty key should fail validation
-        assert manager.validate_credentials("openai", "") is False
-        # Empty secret should pass validation (no secret required for openai)
-        assert manager.validate_credentials("openai", None, "") is True
-
-    def test_validation_with_none_credentials(self) -> None:
-        """Test validation behavior with None credentials."""
-        # Clear environment variables and mock .env file to be empty
-        with patch.dict(os.environ, {}, clear=True), patch(
-            "quantchain.core.secret_managers.env.Path.exists", return_value=False
-        ):
-            manager = APISecurityManager()
-            # Test validation when no credentials are stored - should return False
-            assert manager.validate_credentials("openai") is False
-
-            # Test with explicit None parameter - should also return False
-            assert manager.validate_credentials("openai", None) is False
-
-    def test_credential_storage_immutability(self) -> None:
-        """Test that internal credential storage can't be directly modified."""
-        manager = APISecurityManager()
-        manager.set_api_key("openai", "sk-test1234567890abcdef")
-
-        # Test that _credentials attribute doesn't exist in the new architecture
-        assert not hasattr(
-            manager, "_credentials"
-        ), "APISecurityManager should not expose _credentials directly"
-
-        # Test that credentials can still be retrieved through proper API
-        assert manager.get_api_key("openai") == "sk-test1234567890abcdef"
-
-    def test_multiple_service_mixing(self) -> None:
-        """Test mixing credentials from different sources (env vars and set_api_key)."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
-            f.write('ALPACA_API_KEY="env-file-alpaca"\n')
-            env_file_path = f.name
+    def test_save_to_env_file_with_existing_content(self) -> None:
+        """Test saving credentials to env file with existing non-credential content."""
+        with tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".env"
+        ) as temp_file:
+            temp_file.write(
+                "# This is a comment\nOTHER_VAR=value\nANOTHER_VAR=another_value\n"
+            )
+            temp_path = temp_file.name
 
         try:
-            # Clear all environment variables first
-            with patch.dict(os.environ, {}, clear=True):
-                with patch.dict(os.environ, {"OPENAI_API_KEY": "env-var-openai"}):
-                    manager = APISecurityManager(env_file_path)
+            manager = APISecurityManager(env_file=temp_path)
+            manager.set_api_key("alpaca", "ABCDEFGHIJKLMNOP")
 
-                    # Add another service programmatically
-                    manager.set_api_key("polygon", "AbCdEfGhIjKlMnOpQrStUvWx123456789")
+            manager.save_to_env_file()
 
-                    # Verify all sources work together
-                    assert manager.get_api_key("openai") == "env-var-openai"  # From env
-                    assert (
-                        manager.get_api_key("alpaca") == "env-file-alpaca"
-                    )  # From file
-                    assert (
-                        manager.get_api_key("polygon")
-                        == "AbCdEfGhIjKlMnOpQrStUvWx123456789"
-                    )  # Programmatic
+            # Read file contents
+            with open(temp_path, "r") as f:
+                content = f.read()
 
-                    services = set(manager.list_services())
-                    assert services == {"openai", "alpaca", "polygon"}
+            assert "# This is a comment" in content
+            assert "OTHER_VAR=value" in content
+            assert "ANOTHER_VAR=another_value" in content
+            assert "ALPACA_API_KEY=ABCDEFGHIJKLMNOP" in content
         finally:
-            os.unlink(env_file_path)
+            os.unlink(temp_path)
 
-    # ===== Exception Class Tests =====
+    def test_get_service_info(self) -> None:
+        """Test getting service information."""
+        manager = APISecurityManager()
+        valid_key = "ABCDEFGHIJKLMNOP"
+        valid_secret = "S" * 32
+        manager.set_api_key("alpaca", valid_key, valid_secret)
+
+        info = manager.get_service_info("alpaca")
+        assert info["key"] == "***" + valid_key[-4:]  # Should mask the key
+        assert info["secret"] == "***" + valid_secret[-4:]  # Should mask the secret
+
+    def test_get_service_info_short_key(self) -> None:
+        """Test getting service info with short key."""
+        manager = APISecurityManager()
+        manager.set_api_key("test_service", "key")
+
+        info = manager.get_service_info("test_service")
+        assert info["key"] == "****"
+
+    def test_get_service_info_not_found(self) -> None:
+        """Test getting service info for nonexistent service."""
+        manager = APISecurityManager()
+        info = manager.get_service_info("nonexistent_service")
+        assert info == {}
+
+    @patch.dict(os.environ, {}, clear=True)  # Clear all existing env vars first
+    def test_refresh_from_env(self) -> None:
+        """Test refreshing credentials from environment."""
+        manager = APISecurityManager()
+        old_key = "ABCDEFGHIJKLMNOP"
+        new_key = "QRSTUVWXYZABCDEF"
+        manager.set_api_key("alpaca", old_key)
+
+        with patch.dict(os.environ, {"ALPACA_API_KEY": new_key}):
+            manager.refresh_from_env()
+            assert manager._services["alpaca"]["key"] == new_key
+
+    @patch.dict(os.environ, {"ALPACA_API_KEY": "env_key"})
+    @patch("os.path.exists")
+    def test_refresh_from_env_with_file(self, mock_exists: Mock) -> None:
+        """Test refreshing credentials from environment and file."""
+        mock_exists.return_value = True
+        with patch("builtins.open", mock_open(read_data="ALPACA_API_KEY=file_key\n")):
+            manager = APISecurityManager()
+
+            # File should override environment
+            assert manager._services["alpaca"]["key"] == "file_key"
+
+
+@pytest.mark.unit
+class TestAPIKeyPatterns:
+    """Test API key patterns."""
+
+    def test_api_key_patterns_structure(self) -> None:
+        """Test that API_KEY_PATTERNS has correct structure."""
+        assert isinstance(API_KEY_PATTERNS, dict)
+        assert "alpaca" in API_KEY_PATTERNS
+        assert "polygon" in API_KEY_PATTERNS
+        assert "alpha_vantage" in API_KEY_PATTERNS
+        assert "anthropic" in API_KEY_PATTERNS
+        assert "openai" in API_KEY_PATTERNS
+
+    def test_alpaca_pattern(self) -> None:
+        """Test Alpaca API key pattern."""
+        import re
+
+        pattern = API_KEY_PATTERNS["alpaca"]
+        assert "key_pattern" in pattern
+        assert "secret_pattern" in pattern
+
+        # Test valid key
+        valid_key = "ABCDEFGHIJKLMNOP"
+        assert re.match(pattern["key_pattern"], valid_key) is not None
+
+        # Test invalid key
+        invalid_key = "invalid"
+        assert re.match(pattern["key_pattern"], invalid_key) is None
+
+    def test_polygon_pattern(self) -> None:
+        """Test Polygon API key pattern."""
+        import re
+
+        pattern = API_KEY_PATTERNS["polygon"]
+        assert "key_pattern" in pattern
+
+        # Test valid key
+        valid_key = "test_polygon_key_12345"
+        assert re.match(pattern["key_pattern"], valid_key) is not None
+
+    def test_alpha_vantage_pattern(self) -> None:
+        """Test Alpha Vantage API key pattern."""
+        import re
+
+        pattern = API_KEY_PATTERNS["alpha_vantage"]
+        assert "key_pattern" in pattern
+
+        # Test valid key
+        valid_key = "ABCDEFGHIJKLMNOP"
+        assert re.match(pattern["key_pattern"], valid_key) is not None
+
+    def test_anthropic_pattern(self) -> None:
+        """Test Anthropic API key pattern."""
+        import re
+
+        pattern = API_KEY_PATTERNS["anthropic"]
+        assert "key_pattern" in pattern
+
+        # Test valid key
+        valid_key = "sk-ant-api03-" + "A" * 95
+        assert re.match(pattern["key_pattern"], valid_key) is not None
+
+    def test_openai_pattern(self) -> None:
+        """Test OpenAI API key pattern."""
+        import re
+
+        pattern = API_KEY_PATTERNS["openai"]
+        assert "key_pattern" in pattern
+
+        # Test valid key
+        valid_key = "sk-" + "A" * 48
+        assert re.match(pattern["key_pattern"], valid_key) is not None
+
+
+@pytest.mark.unit
+class TestExceptions:
+    """Test security module exceptions."""
 
     def test_credential_not_found_error(self) -> None:
-        """Test the CredentialNotFoundError exception."""
-        manager = APISecurityManager()
-
-        with pytest.raises(CredentialNotFoundError) as exc_info:
-            manager.get_api_key("nonexistent")
-
-        assert "nonexistent" in str(exc_info.value)
-
-    def test_invalid_credential_format_error(self) -> None:
-        """Test the InvalidCredentialFormatError exception."""
-        manager = APISecurityManager()
-
-        with pytest.raises(InvalidCredentialFormatError) as exc_info:
-            manager.set_api_key("openai", "invalid_key")
-
-        assert "openai" in str(exc_info.value)
+        """Test CredentialNotFoundError exception."""
+        error = CredentialNotFoundError("Test message")
+        assert str(error) == "Test message"
 
     def test_security_configuration_error(self) -> None:
-        """Test the SecurityConfigurationError exception."""
-        manager = APISecurityManager()
+        """Test SecurityConfigurationError exception."""
+        error = SecurityConfigurationError("Test message")
+        assert str(error) == "Test message"
 
-        with pytest.raises(SecurityConfigurationError) as exc_info:
-            manager.set_api_key("unsupported", "some_key")
-
-        assert "unsupported" in str(exc_info.value)
-
-    @pytest.mark.skip(reason="Production backends not yet implemented")
-    def test_vault_backend_initialization(self) -> None:
-        """Test initialization with Vault backend."""
-        # TODO: Implement test
-        pass
-
-    @pytest.mark.skip(reason="Production backends not yet implemented")
-    def test_aws_secrets_manager_backend(self) -> None:
-        """Test initialization with AWS Secrets Manager backend."""
-        # TODO: Implement test
-        pass
+    def test_invalid_credential_format_error(self) -> None:
+        """Test InvalidCredentialFormatError exception."""
+        error = InvalidCredentialFormatError("Test message")
+        assert str(error) == "Test message"

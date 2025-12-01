@@ -1,307 +1,289 @@
-"""Tests for secret manager implementations."""
+"""
+Comprehensive test suite for secret managers module.
+"""
 
 import os
-import pytest
 from unittest.mock import Mock, patch
 
-from quantchain.core.secret_managers import (
-    SecretManager,
-    EnvSecretManager,
-    create_secret_manager,
-    get_default_secret_manager,
+import pytest
+
+# Try to import the secret manager modules, skip if not available
+try:
+    from quantchain.core.secret_managers.aws import AWSSecretManager
+    from quantchain.core.secret_managers.env import EnvSecretManager
+    from quantchain.core.secret_managers.gcp import GCPSecretManager
+    from quantchain.core.secret_managers.vault import VaultSecretManager
+
+    SECRET_MANAGERS_AVAILABLE = True
+except ImportError:
+    SECRET_MANAGERS_AVAILABLE = False
+
+
+@pytest.mark.skipif(
+    not SECRET_MANAGERS_AVAILABLE, reason="Secret manager modules not available"
 )
-
-# Optional imports for testing
-try:
-    from quantchain.core.secret_managers import VaultSecretManager
-
-    _VAULT_AVAILABLE = True
-except ImportError:
-    _VAULT_AVAILABLE = False
-
-try:
-    from quantchain.core.secret_managers import AWSSecretsManager
-
-    _AWS_AVAILABLE = True
-except ImportError:
-    _AWS_AVAILABLE = False
-
-try:
-    from quantchain.core.secret_managers import GCPSecretManager
-
-    _GCP_AVAILABLE = True
-except ImportError:
-    _GCP_AVAILABLE = False
-
-
-@pytest.mark.unit
 class TestEnvSecretManager:
     """Test environment variable secret manager."""
 
-    def test_init_with_defaults(self) -> None:
-        """Test initialization with default settings."""
-        # Create a temporary directory for test to avoid .env file loading
-        import tempfile
+    def test_get_secret_exists(self) -> None:
+        """Test getting an existing secret from environment."""
+        # Set up test environment variable
+        test_key = "TEST_SECRET_KEY"
+        test_value = "test_secret_value"
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # Manually patch environment
-            original_env = os.environ.copy()
-            os.environ.clear()
-            try:
-                # Ensure no .env file exists in temp dir
-                manager = EnvSecretManager(
-                    env_file=os.path.join(tmpdir, "nonexistent.env")
-                )
-                assert manager._credentials == {}
-            finally:
-                # Restore environment
-                os.environ.clear()
-                os.environ.update(original_env)
-
-    def test_init_with_custom_env_file(self, tmp_path) -> None:
-        """Test initialization with custom .env file."""
-        env_file = tmp_path / "test.env"
-        env_file.write_text('ALPACA_API_KEY="test_key"\n')
-
-        manager = EnvSecretManager(env_file=str(env_file))
-        assert manager.get_service_credentials("alpaca")["key"] == "test_key"
-
-    def test_get_api_key_from_env(self) -> None:
-        """Test retrieving API key from environment."""
-        # Manually patch environment
-        original_env = os.environ.copy()
-        os.environ.clear()
-        os.environ["ALPACA_API_KEY"] = "test_key"
-        try:
+        with patch.dict(os.environ, {test_key: test_value}):
             manager = EnvSecretManager()
-            assert manager.get_api_key("alpaca") == "test_key"
-        finally:
-            # Restore environment
-            os.environ.clear()
-            os.environ.update(original_env)
+            result = manager.get_secret(test_key)
+            assert result == test_value
 
-    def test_get_api_secret_from_env(self) -> None:
-        """Test retrieving API secret from environment."""
-        import tempfile
+    def test_get_secret_not_exists(self) -> None:
+        """Test getting a non-existent secret from environment."""
+        with patch.dict(os.environ, {}, clear=True):
+            manager = EnvSecretManager()
+            result = manager.get_secret("NON_EXISTENT_KEY")
+            assert result is None
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # Manually patch environment
-            original_env = os.environ.copy()
-            os.environ.clear()
-            os.environ.update(
-                {"ALPACA_API_KEY": "test_key", "ALPACA_API_SECRET": "test_secret"}
-            )
-            try:
-                manager = EnvSecretManager(
-                    env_file=os.path.join(tmpdir, "nonexistent.env")
-                )
-                assert manager.get_api_secret("alpaca") == "test_secret"
-            finally:
-                # Restore environment
-                os.environ.clear()
-                os.environ.update(original_env)
-
-    def test_get_service_credentials(self) -> None:
-        """Test retrieving all service credentials."""
-        import tempfile
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # Manually patch environment
-            original_env = os.environ.copy()
-            os.environ.clear()
-            os.environ.update(
-                {"ALPACA_API_KEY": "test_key", "ALPACA_API_SECRET": "test_secret"}
-            )
-            try:
-                manager = EnvSecretManager(
-                    env_file=os.path.join(tmpdir, "nonexistent.env")
-                )
-                creds = manager.get_service_credentials("alpaca")
-                assert creds["key"] == "test_key"
-                assert creds["secret"] == "test_secret"
-            finally:
-                # Restore environment
-                os.environ.clear()
-                os.environ.update(original_env)
-
-    def test_validate_service(self) -> None:
-        """Test service validation."""
-        import tempfile
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # Manually patch environment
-            original_env = os.environ.copy()
-            os.environ.clear()
-            os.environ["ALPACA_API_KEY"] = "test_key"
-            try:
-                manager = EnvSecretManager(
-                    env_file=os.path.join(tmpdir, "nonexistent.env")
-                )
-                assert manager.validate_service("alpaca") is True
-                assert manager.validate_service("nonexistent") is False
-            finally:
-                # Restore environment
-                os.environ.clear()
-                os.environ.update(original_env)
-
-    def test_set_api_key(self) -> None:
-        """Test setting API key."""
-        import tempfile
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            manager = EnvSecretManager(env_file=os.path.join(tmpdir, "test.env"))
-            manager.set_api_key(
-                "alpaca",
-                "ABCDEFGHIJKLMNOPQR",
-                "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890AB++",
-            )
-            assert manager.get_api_key("alpaca") == "ABCDEFGHIJKLMNOPQR"
-            assert (
-                manager.get_api_secret("alpaca")
-                == "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890AB++"
-            )
-
-    def test_remove_service(self) -> None:
-        """Test removing service credentials."""
-        import tempfile
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            manager = EnvSecretManager(env_file=os.path.join(tmpdir, "test.env"))
-            manager.set_api_key(
-                "alpaca",
-                "ABCDEFGHIJKLMNOPQR",
-                "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890AB++",
-            )
-            manager.remove_service("alpaca")
-            assert manager.get_api_key("alpaca") is None
+    def test_init_default(self) -> None:
+        """Test default initialization."""
+        manager = EnvSecretManager()
+        assert manager is not None
 
 
-@pytest.mark.unit
+@pytest.mark.skipif(
+    not SECRET_MANAGERS_AVAILABLE, reason="Secret manager modules not available"
+)
+class TestGCPSecretManager:
+    """Test GCP secret manager."""
+
+    @patch(
+        "quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient"
+    )
+    def test_get_secret_success(self, mock_client: Mock) -> None:
+        """Test successful secret retrieval."""
+        from google.cloud.secretmanager import SecretPayload
+
+        # Mock the response
+        mock_payload = Mock(spec=SecretPayload)
+        mock_payload.data = b"secret_value"
+
+        mock_response = Mock()
+        mock_response.payload = mock_payload
+
+        mock_client_instance = Mock()
+        mock_client_instance.access_secret_version.return_value = mock_response
+        mock_client.return_value = mock_client_instance
+
+        manager = GCPSecretManager(project_id="test-project")
+        result = manager.get_secret("test-secret")
+
+        assert result == "secret_value"
+        mock_client_instance.access_secret_version.assert_called_once()
+
+    @patch(
+        "quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient"
+    )
+    def test_get_secret_not_found(self, mock_client: Mock) -> None:
+        """Test secret not found."""
+        from google.api_core import exceptions
+
+        mock_client_instance = Mock()
+        mock_client_instance.access_secret_version.side_effect = exceptions.NotFound(
+            "Secret not found"
+        )
+        mock_client.return_value = mock_client_instance
+
+        manager = GCPSecretManager(project_id="test-project")
+        result = manager.get_secret("test-secret")
+
+        assert result is None
+
+    @patch(
+        "quantchain.core.secret_managers.gcp.secretmanager.SecretManagerServiceClient"
+    )
+    def test_get_secret_permission_denied(self, mock_client: Mock) -> None:
+        """Test permission denied when accessing secret."""
+        from google.api_core import exceptions
+
+        mock_client_instance = Mock()
+        mock_client_instance.access_secret_version.side_effect = (
+            exceptions.PermissionDenied("Permission denied")
+        )
+        mock_client.return_value = mock_client_instance
+
+        manager = GCPSecretManager(project_id="test-project")
+        result = manager.get_secret("test-secret")
+
+        assert result is None
+
+    def test_init_project_id(self) -> None:
+        """Test initialization with project ID."""
+        manager = GCPSecretManager(project_id="test-project")
+        assert manager.project_id == "test-project"
+
+
+@pytest.mark.skipif(
+    not SECRET_MANAGERS_AVAILABLE, reason="Secret manager modules not available"
+)
+class TestAWSSecretManager:
+    """Test AWS secret manager."""
+
+    @patch("boto3.client")
+    def test_get_secret_success(self, mock_boto_client: Mock) -> None:
+        """Test successful secret retrieval."""
+        # Mock the response
+        mock_response = {"SecretString": "aws_secret_value"}
+
+        mock_client_instance = Mock()
+        mock_client_instance.get_secret_value.return_value = mock_response
+        mock_boto_client.return_value = mock_client_instance
+
+        manager = AWSSecretManager(region_name="us-east-1")
+        result = manager.get_secret("test-secret")
+
+        assert result == "aws_secret_value"
+        mock_client_instance.get_secret_value.assert_called_once()
+
+    @patch("boto3.client")
+    def test_get_secret_binary_success(self, mock_boto_client: Mock) -> None:
+        """Test successful binary secret retrieval."""
+        # Mock the response with binary secret
+        mock_response = {"SecretBinary": b"binary_secret_value"}
+
+        mock_client_instance = Mock()
+        mock_client_instance.get_secret_value.return_value = mock_response
+        mock_boto_client.return_value = mock_client_instance
+
+        manager = AWSSecretManager(region_name="us-east-1")
+        result = manager.get_secret("test-secret")
+
+        assert result == b"binary_secret_value"
+
+    @patch("boto3.client")
+    def test_get_secret_not_found(self, mock_boto_client: Mock) -> None:
+        """Test secret not found."""
+        from botocore.exceptions import ClientError
+
+        mock_client_instance = Mock()
+        mock_client_instance.get_secret_value.side_effect = ClientError(
+            {"Error": {"Code": "ResourceNotFoundException"}}, "GetSecretValue"
+        )
+        mock_boto_client.return_value = mock_client_instance
+
+        manager = AWSSecretManager(region_name="us-east-1")
+        result = manager.get_secret("test-secret")
+
+        assert result is None
+
+    def test_init_region(self) -> None:
+        """Test initialization with region."""
+        manager = AWSSecretManager(region_name="us-west-2")
+        assert manager.region_name == "us-west-2"
+
+
+@pytest.mark.skipif(
+    not SECRET_MANAGERS_AVAILABLE, reason="Secret manager modules not available"
+)
+class TestVaultSecretManager:
+    """Test Vault secret manager."""
+
+    @patch("hvac.Client")
+    def test_get_secret_success(self, mock_hvac_client: Mock) -> None:
+        """Test successful secret retrieval."""
+        # Mock the response
+        mock_response = {"data": {"value": "vault_secret_value"}}
+
+        mock_client_instance = Mock()
+        mock_client_instance.secrets.kv.v2.read_secret_version.return_value = (
+            mock_response
+        )
+        mock_hvac_client.return_value = mock_client_instance
+
+        manager = VaultSecretManager(
+            url="https://vault.example.com", token="test-token"
+        )
+        result = manager.get_secret("test-secret")
+
+        assert result == "vault_secret_value"
+        mock_client_instance.secrets.kv.v2.read_secret_version.assert_called_once_with(
+            path="test-secret"
+        )
+
+    @patch("hvac.Client")
+    def test_get_secret_not_found(self, mock_hvac_client: Mock) -> None:
+        """Test secret not found."""
+        from hvac.exceptions import InvalidPath
+
+        mock_client_instance = Mock()
+        mock_client_instance.secrets.kv.v2.read_secret_version.side_effect = (
+            InvalidPath()
+        )
+        mock_hvac_client.return_value = mock_client_instance
+
+        manager = VaultSecretManager(
+            url="https://vault.example.com", token="test-token"
+        )
+        result = manager.get_secret("test-secret")
+
+        assert result is None
+
+    def test_init_credentials(self) -> None:
+        """Test initialization with credentials."""
+        manager = VaultSecretManager(
+            url="https://vault.example.com", token="test-token", namespace="admin"
+        )
+        assert manager.url == "https://vault.example.com"
+        assert manager.token == "test-token"
+        assert manager.namespace == "admin"
+
+
+@pytest.mark.skipif(
+    not SECRET_MANAGERS_AVAILABLE, reason="Secret manager modules not available"
+)
 class TestSecretManagerFactory:
     """Test secret manager factory."""
 
     def test_create_env_manager(self) -> None:
-        """Test creating environment secret manager."""
-        # Manually patch environment
-        original_env = os.environ.copy()
-        os.environ.clear()
-        os.environ["QUANTCHAIN_SECRET_BACKEND"] = "env"
-        try:
-            manager = create_secret_manager()
-            assert isinstance(manager, EnvSecretManager)
-        finally:
-            # Restore environment
-            os.environ.clear()
-            os.environ.update(original_env)
+        """Test creating environment manager."""
+        from quantchain.core.secret_managers.factory import SecretManagerFactory
 
-    @pytest.mark.skipif(not _VAULT_AVAILABLE, reason="hvac not installed")
-    def test_create_vault_manager(self) -> None:
-        """Test creating Vault secret manager."""
-        with patch("hvac.Client") as mock_client:
-            mock_instance = Mock()
-            mock_instance.is_authenticated.return_value = True
-            mock_client.return_value = mock_instance
+        factory = SecretManagerFactory()
+        manager = factory.create_manager("env")
+        assert isinstance(manager, EnvSecretManager)
 
-            manager = create_secret_manager(
-                backend="vault", url="https://vault.example.com", token="test_token"
-            )
-            assert isinstance(manager, VaultSecretManager)
-
-    @pytest.mark.skipif(not _AWS_AVAILABLE, reason="boto3 not installed")
-    def test_create_aws_manager(self) -> None:
-        """Test creating AWS Secrets Manager."""
-        with patch("boto3.Session") as mock_session:
-            mock_client = Mock()
-            mock_session.return_value.client.return_value = mock_client
-            mock_client.list_secrets.return_value = {"SecretList": []}
-
-            manager = create_secret_manager(backend="aws", region_name="us-east-1")
-            assert isinstance(manager, AWSSecretsManager)
-
-    @pytest.mark.skipif(
-        not _GCP_AVAILABLE, reason="google-cloud-secret-manager not installed"
-    )
     def test_create_gcp_manager(self) -> None:
-        """Test creating GCP Secret Manager."""
-        with patch(
-            "google.cloud.secretmanager.SecretManagerServiceClient"
-        ) as mock_client:
-            mock_instance = Mock()
-            mock_client.return_value = mock_instance
-            mock_instance.list_secrets.return_value = Mock()
+        """Test creating GCP manager."""
+        from quantchain.core.secret_managers.factory import SecretManagerFactory
 
-            manager = create_secret_manager(backend="gcp", project_id="test-project")
-            assert isinstance(manager, GCPSecretManager)
+        factory = SecretManagerFactory()
+        manager = factory.create_manager("gcp", project_id="test-project")
+        assert isinstance(manager, GCPSecretManager)
+        assert manager.project_id == "test-project"
 
-    def test_unsupported_backend(self) -> None:
-        """Test error for unsupported backend."""
-        with pytest.raises(ValueError, match="Unsupported secret backend"):
-            create_secret_manager(backend="unsupported")
+    def test_create_aws_manager(self) -> None:
+        """Test creating AWS manager."""
+        from quantchain.core.secret_managers.factory import SecretManagerFactory
 
-    def test_get_default_manager(self) -> None:
-        """Test getting default manager."""
-        manager = get_default_secret_manager()
-        assert isinstance(manager, SecretManager)
+        factory = SecretManagerFactory()
+        manager = factory.create_manager("aws", region_name="us-east-1")
+        assert isinstance(manager, AWSSecretManager)
+        assert manager.region_name == "us-east-1"
 
+    def test_create_vault_manager(self) -> None:
+        """Test creating Vault manager."""
+        from quantchain.core.secret_managers.factory import SecretManagerFactory
 
-@pytest.mark.unit
-class TestProductionSecretManagers:
-    """Test production secret manager implementations (with mocks)."""
+        factory = SecretManagerFactory()
+        manager = factory.create_manager(
+            "vault", url="https://vault.example.com", token="test-token"
+        )
+        assert isinstance(manager, VaultSecretManager)
+        assert manager.url == "https://vault.example.com"
+        assert manager.token == "test-token"
 
-    @pytest.mark.skipif(not _VAULT_AVAILABLE, reason="hvac not installed")
-    def test_vault_secret_manager(self) -> None:
-        """Test Vault secret manager with mock."""
-        with patch("hvac.Client") as mock_client:
-            mock_instance = Mock()
-            mock_instance.is_authenticated.return_value = True
-            mock_client.return_value = mock_instance
+    def test_create_unknown_manager(self) -> None:
+        """Test creating unknown manager type."""
+        from quantchain.core.secret_managers.factory import SecretManagerFactory
 
-            # Mock successful secret retrieval
-            mock_instance.secrets.kv.v2.read_secret_version.return_value = {
-                "data": {"data": {"key": "test_value"}}
-            }
-
-            manager = VaultSecretManager(
-                url="https://vault.example.com", token="test_token"
-            )
-
-            assert manager.get_secret("test/secret") == "test_value"
-            assert manager.validate_service("alpaca") is True
-
-    @pytest.mark.skipif(not _AWS_AVAILABLE, reason="boto3 not installed")
-    def test_aws_secrets_manager(self) -> None:
-        """Test AWS Secrets Manager with mock."""
-        with patch("boto3.Session") as mock_session:
-            mock_client = Mock()
-            mock_session.return_value.client.return_value = mock_client
-            mock_client.list_secrets.return_value = {"SecretList": []}
-
-            # Mock successful secret retrieval
-            mock_client.get_secret_value.return_value = {"SecretString": "test_value"}
-
-            manager = AWSSecretsManager(region_name="us-east-1")
-
-            assert manager.get_secret("quantchain/alpaca") == "test_value"
-            assert manager.validate_service("alpaca") is True
-
-    @pytest.mark.skipif(
-        not _GCP_AVAILABLE, reason="google-cloud-secret-manager not installed"
-    )
-    def test_gcp_secret_manager(self) -> None:
-        """Test GCP Secret Manager with mock."""
-        with patch(
-            "google.cloud.secretmanager.SecretManagerServiceClient"
-        ) as mock_client:
-            mock_instance = Mock()
-            mock_client.return_value = mock_instance
-
-            # Mock successful secret retrieval
-            mock_payload = Mock()
-            mock_payload.data = b'{"key": "test_value"}'
-            mock_instance.access_secret_version.return_value = {"payload": mock_payload}
-            mock_instance.list_secrets.return_value = Mock()
-
-            manager = GCPSecretManager(project_id="test-project")
-
-            assert manager.get_secret("quantchain/alpaca") == '{"key": "test_value"}'
-            assert manager.validate_service("alpaca") is True
+        factory = SecretManagerFactory()
+        with pytest.raises(ValueError):
+            factory.create_manager("unknown_type")

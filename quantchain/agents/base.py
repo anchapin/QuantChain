@@ -141,7 +141,7 @@ class BaseSpecializedAgent(ABC):
         self.agent_config = config.get("agents", {}).get(role.value, {})
 
     @abstractmethod
-    def analyze(self, symbol: str, **kwargs) -> AgentAnalysis:
+    def analyze(self, symbol: str, **kwargs: Any) -> AgentAnalysis:
         """Perform analysis for a given symbol.
 
         Args:
@@ -183,7 +183,7 @@ class BaseSpecializedAgent(ABC):
         Returns:
             Confidence threshold (0-100)
         """
-        return self.agent_config.get("confidence_threshold", 70.0)
+        return float(self.agent_config.get("confidence_threshold", 70.0))
 
     def _create_base_analysis(
         self,

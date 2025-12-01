@@ -78,6 +78,16 @@ Thumbs.db
 # Logs
 logs/
 ci_logs/
+ci_logs.txt
+coverage_final_report.txt
+coverage_output.txt
+current_coverage.txt
+debug_output.txt
+failing_tests.txt
+output.txt
+test_output.txt
+test_output_*.txt
+test_results.txt
 
 # Docker
 .docker/
@@ -93,3 +103,14 @@ faiss_index/
 
 # MCP todo list
 .mcp-todos.json
+
+# Local utility scripts
+ubs_install.sh
+
+node_modules/
+
+# Temporary / Backup files
+*.tmp
+*.bak
+.python-version.bak
+.env.production

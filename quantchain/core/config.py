@@ -1,250 +1,187 @@
-"""Configuration system for QuantChain."""
+"""Configuration management for QuantChain."""
 
-import copy
-import json
 import os
-from pathlib import Path
-from typing import Any, Dict, Optional
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
-import yaml
+
+class LogLevel(str, Enum):
+    """Logging levels for the system."""
+
+    DEBUG = "debug"
+    INFO = "info"
+    WARNING = "warning"
+    ERROR = "error"
+    CRITICAL = "critical"
+
+    def __eq__(self, other: object) -> bool:
+        """Enable comparison with string values."""
+        if isinstance(other, str):
+            return self.value == other
+        return super().__eq__(other)
 
 
 class QuantChainConfig:
-    """Configuration manager for QuantChain applications."""
+    """Main configuration class for QuantChain."""
 
-    def __init__(self, config_file: Optional[str] = None):
-        """Initialize configuration from environment variables and config file.
+    def __init__(
+        self,
+        agent_type: Optional[str] = None,
+        llm_provider: str = "openai",
+        llm_model: str = "gpt-4",
+        temperature: float = 0.7,
+        max_tokens: int = 2048,
+        enable_rag: bool = False,
+        enable_reflection: bool = False,
+        vector_store_path: Optional[str] = None,
+        db_path: Optional[str] = None,
+        vision_provider: str = "gpt-4-vision-preview",
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
+        log_level: Union[LogLevel, str] = LogLevel.INFO,
+        config_file: Optional[str] = None,
+    ):
+        """
+        Initialize QuantChain configuration.
 
         Args:
-            config_file: Path to configuration file (JSON or YAML)
+            agent_type: Type of agent to use
+            llm_provider: LLM provider to use
+            llm_model: LLM model to use
+            temperature: Temperature for LLM generation
+            max_tokens: Maximum tokens for LLM generation
+            enable_rag: Whether to enable RAG
+            enable_reflection: Whether to enable reflection
+            vector_store_path: Path to vector store
+            db_path: Path to database
+            vision_provider: Vision model provider
+            max_retries: Maximum retries for operations
+            retry_delay: Delay between retries in seconds
+            log_level: Logging level
+            config_file: Path to configuration file
         """
-        self._config = self._load_default_config()
-        self._load_from_env()
-        if config_file:
+        # Load from file if provided
+        if config_file and os.path.exists(config_file):
             self._load_from_file(config_file)
+            return
 
-    def _load_default_config(self) -> Dict[str, Any]:
-        """Load default configuration values."""
-        return {
-            # LLM Configuration
-            "llm": {
-                "provider": "ollama",  # or "vllm"
-                "model": "llama2:7b",
-                "temperature": 0.7,
-                "max_tokens": 1000,
-            },
-            # Data Sources
-            "data": {
-                "default_provider": "alpaca",
-                "cache_enabled": True,
-                "cache_dir": "./data/cache",
-            },
-            # Trading
-            "trading": {
-                "default_broker": "alpaca",
-                "paper_trading": True,
-                "max_position_size": 0.1,  # 10% of portfolio
-                "ib": {
-                    "host": "127.0.0.1",
-                    "port": 7497,  # TWS paper trading port
-                    "client_id": 1,
-                    "timeout": 10,
-                    "account": None,
-                },
-            },
-            # Backtesting
-            "backtesting": {
-                "default_engine": "backtesting.py",
-                "initial_balance": 10000,
-                "commission": 0.001,  # 0.1%
-            },
-            # Agent Configuration
-            "agent": {
-                "max_iterations": 5,
-                "reflection_interval": 10,  # actions
-            },
-            # RAG Configuration
-            "rag": {
-                "vector_store_type": "chromadb",
-                "embedding_model": "all-MiniLM-L6-v2",
-                "persist_directory": "./data/chroma_db",
-                "enabled": False,  # Disabled by default
-            },
-            # Tutorial Mode Configuration
-            "tutorial": {
-                "enabled": False,
-                "session_duration": 3600,  # 1 hour default
-                "learning_objectives": [],
-                "feedback_level": "detailed",  # basic, detailed, comprehensive
-                "track_mistakes": True,
-                "analyze_market_drivers": True,
-                "confidence_threshold": 0.75,
-                "max_mistakes_per_session": 10,
-            },
-            # Logging
-            "logging": {
-                "level": "INFO",
-                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                "file": "./logs/quantchain.log",
-            },
-        }
+        # Set default values
+        self.agent_type = agent_type or "default"
+        self.llm_provider = llm_provider
+        self.llm_model = llm_model
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+        self.enable_rag = enable_rag
+        self.enable_reflection = enable_reflection
+        self.vector_store_path = vector_store_path or "./data/vector_store"
+        self.db_path = db_path or "./data/quantchain.db"
+        self.vision_provider = vision_provider
+        self.max_retries = max_retries
+        self.retry_delay = retry_delay
+        self.log_level = (
+            log_level if isinstance(log_level, LogLevel) else LogLevel(log_level)
+        )
 
-    def _load_from_env(self) -> None:
-        """Load configuration from environment variables."""
-        # LLM settings
-        if "QUANTCHAIN_LLM_PROVIDER" in os.environ:
-            self._config["llm"]["provider"] = os.environ["QUANTCHAIN_LLM_PROVIDER"]
-        if "QUANTCHAIN_LLM_MODEL" in os.environ:
-            self._config["llm"]["model"] = os.environ["QUANTCHAIN_LLM_MODEL"]
-
-        # Data settings
-        if "QUANTCHAIN_DATA_PROVIDER" in os.environ:
-            self._config["data"]["default_provider"] = os.environ[
-                "QUANTCHAIN_DATA_PROVIDER"
-            ]
-
-        # Trading settings
-        if "QUANTCHAIN_PAPER_TRADING" in os.environ:
-            self._config["trading"]["paper_trading"] = (
-                os.environ["QUANTCHAIN_PAPER_TRADING"].lower() == "true"
-            )
-
-        # Interactive Brokers settings
-        if "QUANTCHAIN_IB_HOST" in os.environ:
-            self._config["trading"]["ib"]["host"] = os.environ["QUANTCHAIN_IB_HOST"]
-        if "QUANTCHAIN_IB_PORT" in os.environ:
-            self._config["trading"]["ib"]["port"] = int(
-                os.environ["QUANTCHAIN_IB_PORT"]
-            )
-        if "QUANTCHAIN_IB_CLIENT_ID" in os.environ:
-            self._config["trading"]["ib"]["client_id"] = int(
-                os.environ["QUANTCHAIN_IB_CLIENT_ID"]
-            )
-        if "QUANTCHAIN_IB_TIMEOUT" in os.environ:
-            self._config["trading"]["ib"]["timeout"] = float(
-                os.environ["QUANTCHAIN_IB_TIMEOUT"]
-            )
-        if "QUANTCHAIN_IB_ACCOUNT" in os.environ:
-            self._config["trading"]["ib"]["account"] = os.environ[
-                "QUANTCHAIN_IB_ACCOUNT"
-            ]
-
-        # Tutorial mode settings
-        if "QUANTCHAIN_TUTORIAL_ENABLED" in os.environ:
-            self._config["tutorial"]["enabled"] = (
-                os.environ["QUANTCHAIN_TUTORIAL_ENABLED"].lower() == "true"
-            )
-        if "QUANTCHAIN_TUTORIAL_FEEDBACK_LEVEL" in os.environ:
-            self._config["tutorial"]["feedback_level"] = os.environ[
-                "QUANTCHAIN_TUTORIAL_FEEDBACK_LEVEL"
-            ]
-
-        # API Keys (loaded but not stored in config for security)
-        self._api_keys = {
-            "alpaca_key": os.environ.get("ALPACA_API_KEY"),
-            "alpaca_secret": os.environ.get("ALPACA_API_SECRET"),
-            "alpha_vantage_key": os.environ.get("ALPHA_VANTAGE_API_KEY"),
-        }
+        # Create data directories if they don't exist
+        os.makedirs(os.path.dirname(self.vector_store_path), exist_ok=True)
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
 
     def _load_from_file(self, config_file: str) -> None:
-        """Load configuration from JSON or YAML file."""
-        config_path = Path(config_file)
-        if not config_path.exists():
-            raise FileNotFoundError(f"Configuration file not found: {config_file}")
+        """Load configuration from a file."""
+        try:
+            import json
 
-        with open(config_path, "r") as f:
-            if config_path.suffix.lower() in {".yaml", ".yml"}:
-                try:
-                    file_config = yaml.safe_load(f)
-                except yaml.YAMLError as e:
-                    raise ValueError(
-                        f"Invalid YAML in configuration file {config_file}: {e}"
-                    ) from e
-            else:
-                try:
-                    file_config = json.load(f)
-                except json.JSONDecodeError as e:
-                    raise ValueError(
-                        f"Invalid JSON in configuration file {config_file}: {e}"
-                    ) from e
+            # Set default values first
+            self.agent_type = "default"
+            self.llm_provider = "openai"
+            self.llm_model = "gpt-4"
+            self.temperature = 0.7
+            self.max_tokens = 2048
+            self.enable_rag = False
+            self.enable_reflection = False
+            self.vector_store_path = "./data/vector_store"
+            self.db_path = "./data/quantchain.db"
+            self.vision_provider = "gpt-4-vision-preview"
+            self.max_retries = 3
+            self.retry_delay = 1.0
+            self.log_level = LogLevel.INFO
 
-        # Deep merge file config with default config
-        self._deep_merge(self._config, file_config)
+            with open(config_file, "r") as f:
+                config_data = json.load(f)
 
-    def _deep_merge(self, base: Dict[str, Any], update: Dict[str, Any]) -> None:
-        """Deep merge update dict into base dict."""
-        for key, value in update.items():
-            if key in base and isinstance(base[key], dict) and isinstance(value, dict):
-                self._deep_merge(base[key], value)
-            else:
-                base[key] = value
+            # Override with values from config file
+            for key, value in config_data.items():
+                if key == "log_level" and isinstance(value, str):
+                    setattr(self, key, LogLevel(value))
+                else:
+                    setattr(self, key, value)
+
+            # Create data directories if they don't exist
+            os.makedirs(os.path.dirname(self.vector_store_path), exist_ok=True)
+            os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        except Exception as e:
+            print(f"Error loading config file: {e}")
+
+    def save_to_file(self, config_file: str) -> None:
+        """Save configuration to a file."""
+        try:
+            import json
+
+            config_data = {}
+
+            # Get all serializable attributes
+            for key in dir(self):
+                if not key.startswith("_"):
+                    value = getattr(self, key)
+                    if isinstance(
+                        value, (str, int, float, bool, list, dict, type(None))
+                    ):
+                        config_data[key] = value
+                    elif isinstance(value, Enum):
+                        config_data[key] = value.value
+
+            with open(config_file, "w") as f:
+                json.dump(config_data, f, indent=2)
+        except Exception as e:
+            print(f"Error saving config file: {e}")
 
     def get(self, key: str, default: Any = None) -> Any:
-        """Get configuration value by dot-separated key."""
-        keys = key.split(".")
-        value = self._config
-        try:
-            for k in keys:
-                value = value[k]
-            return value
-        except (KeyError, TypeError):
-            return default
+        """Get a configuration value."""
+        return getattr(self, key, default)
 
-    def get_api_key(self, provider: str) -> Optional[str]:
-        """Get API key for a specific provider."""
-        from .security import APISecurityManager
-
-        try:
-            security_manager = APISecurityManager()
-
-            # Map provider names to service names used in security module
-            service_map = {
-                "alpaca": "alpaca",
-                "alpaca_secret": "alpaca",  # For backward compatibility
-                "alpha_vantage": "alpha_vantage",
-                "anthropic": "anthropic",
-                "openai": "openai",
-                "polygon": "polygon",
-                "ib": "ib_async",
-                "interactive_brokers": "ib_async",
-            }
-
-            service = service_map.get(provider, provider)
-
-            # Handle alpaca_secret specially
-            if provider == "alpaca_secret":
-                return security_manager.get_api_secret(service)
-            else:
-                return security_manager.get_api_key(service)
-        except Exception:
-            # Fallback to old method for backward compatibility
-            key_map = {
-                "alpaca": "alpaca_key",
-                "alpha_vantage": "alpha_vantage_key",
-            }
-            if key_name := key_map.get(provider):
-                return self._api_keys.get(key_name)
-            return None
+    def set(self, key: str, value: Any) -> None:
+        """Set a configuration value."""
+        setattr(self, key, value)
 
     def to_dict(self) -> Dict[str, Any]:
-        """Return configuration as dictionary."""
-        return copy.deepcopy(self._config)
+        """Convert configuration to a dictionary."""
+        config = {}
+        for key in dir(self):
+            if not key.startswith("_"):
+                value = getattr(self, key)
+                if isinstance(value, (str, int, float, bool, list, dict, type(None))):
+                    config[key] = value
+                elif isinstance(value, Enum):
+                    config[key] = value.value
+        return config
 
+    def validate(self) -> List[str]:
+        """Validate the configuration and return any errors."""
+        errors = []
 
-# Global configuration instance
-_config_instance: Optional[QuantChainConfig] = None
+        if not self.llm_provider:
+            errors.append("LLM provider is required")
 
+        if self.temperature < 0 or self.temperature > 2:
+            errors.append("Temperature must be between 0 and 2")
 
-def get_config(config_file: Optional[str] = None) -> QuantChainConfig:
-    """Get the global configuration instance."""
-    global _config_instance
-    if _config_instance is None:
-        _config_instance = QuantChainConfig(config_file)
-    return _config_instance
+        if self.max_tokens <= 0:
+            errors.append("Max tokens must be positive")
 
+        if self.max_retries < 0:
+            errors.append("Max retries must be non-negative")
 
-def reload_config(config_file: Optional[str] = None) -> QuantChainConfig:
-    """Reload the global configuration instance."""
-    global _config_instance
-    _config_instance = QuantChainConfig(config_file)
-    return _config_instance
+        if self.retry_delay < 0:
+            errors.append("Retry delay must be non-negative")
+
+        return errors

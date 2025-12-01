@@ -1,0 +1,35 @@
+{
+  "name": "quantchain",
+  "version": "0.1.0",
+  "description": "A financial framework for building quantitative trading agents",
+  "scripts": {
+    "format:md": "prettier --write '**/*.md'",
+    "lint:md": "markdownlint '**/*.md' --ignore node_modules",
+    "check:md": "prettier --check '**/*.md'",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "husky": "^8.0.0",
+    "lint-staged": "^13.0.0",
+    "markdownlint-cli": "^0.46.0",
+    "prettier": "^3.0.0"
+  },
+  "lint-staged": {
+    "*.md": [
+      "prettier --write",
+      "markdownlint"
+    ]
+  },
+  "prettier": {
+    "proseWrap": "always",
+    "printWidth": 100,
+    "tabWidth": 2,
+    "useTabs": false
+  },
+  "markdownlintConfig": {
+    "MD013": {
+      "line_length": 100
+    },
+    "MD033": false
+  }
+}

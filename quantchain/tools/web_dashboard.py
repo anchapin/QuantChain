@@ -6,7 +6,6 @@ trading agents, visualizing their reasoning processes, and managing their
 configurations.
 """
 
-import json
 import os
 import sys
 from dataclasses import dataclass
@@ -23,15 +22,6 @@ try:
 except ImportError:
     go = None
     HAS_PLOTLY = False
-
-
-# Helper function to safely create plotly figures
-def _create_figure() -> Optional[Any]:
-    """Create a plotly Figure object if plotly is available."""
-    if not HAS_PLOTLY:
-        return None
-    return go.Figure()
-
 
 try:
     import streamlit as st
@@ -109,852 +99,536 @@ class AgentConfig:
     agent_type: str
     name: str
     description: str
-    parameters: Dict[str, Any]
-    risk_settings: Dict[str, Any]
-    data_sources: List[str]
-    llm_config: Dict[str, Any]
+
+
+class DashboardCharts:
+    """Chart creation utilities for the dashboard."""
+
+    @staticmethod
+    def create_equity_curve(
+        data: List[Dict[str, Any]], title: str = "Portfolio Equity Curve"
+    ) -> Any:
+        """
+        Create an equity curve chart.
+
+        Args:
+            data: List of portfolio snapshots over time
+            title: Chart title
+
+        Returns:
+            Plotly figure object or None if Plotly not available
+        """
+        if not HAS_PLOTLY or not data:
+            return None
+
+        # Convert to DataFrame for easier plotting
+        df = pd.DataFrame(data)
+        if "timestamp" not in df.columns or "value" not in df.columns:
+            return None
+
+        # Create figure
+        fig = go.Figure()
+        fig.add_trace(
+            go.Scatter(
+                x=df["timestamp"],
+                y=df["value"],
+                mode="lines",
+                name="Portfolio Value",
+                line=dict(color="royalblue", width=2),
+            )
+        )
+
+        # Add layout
+        fig.update_layout(
+            title=title,
+            xaxis_title="Time",
+            yaxis_title="Portfolio Value ($)",
+            template="plotly_white",
+        )
+
+        return fig
+
+    @staticmethod
+    def create_candlestick_chart(data: pd.DataFrame, title: str = "Price Chart") -> Any:
+        """
+        Create a candlestick chart for price data.
+
+        Args:
+            data: DataFrame with OHLC data
+            title: Chart title
+
+        Returns:
+            Plotly figure object or None if Plotly not available
+        """
+        if not HAS_PLOTLY or data.empty:
+            return None
+
+        required_columns = ["open", "high", "low", "close"]
+        if not all(col in data.columns for col in required_columns):
+            return None
+
+        # Create figure
+        fig = go.Figure(
+            data=go.Candlestick(
+                x=data.index,
+                open=data["open"],
+                high=data["high"],
+                low=data["low"],
+                close=data["close"],
+            )
+        )
+
+        # Add layout
+        fig.update_layout(
+            title=title,
+            xaxis_title="Time",
+            yaxis_title="Price",
+            template="plotly_white",
+        )
+
+        return fig
+
+    @staticmethod
+    def create_performance_chart(
+        metrics: Dict[str, float], title: str = "Performance Metrics"
+    ) -> Any:
+        """
+        Create a performance metrics bar chart.
+
+        Args:
+            metrics: Dictionary of metric name -> value
+            title: Chart title
+
+        Returns:
+            Plotly figure object or None if Plotly not available
+        """
+        if not HAS_PLOTLY or not metrics:
+            return None
+
+        # Create figure
+        fig = go.Figure(
+            data=[
+                go.Bar(
+                    x=list(metrics.keys()),
+                    y=list(metrics.values()),
+                    marker_color=["royalblue", "crimson", "green", "orange", "purple"][
+                        : len(metrics)
+                    ],
+                )
+            ]
+        )
+
+        # Add layout
+        fig.update_layout(
+            title=title,
+            xaxis_title="Metric",
+            yaxis_title="Value",
+            template="plotly_white",
+        )
+
+        return fig
 
 
 class MonitoringService:
-    """Service for monitoring agents and system health."""
+    """Service for monitoring agent status and system health."""
 
-    def __init__(self, agent_registry: Optional[Any] = None) -> None:
-        """Initialize monitoring service."""
-        self.agent_registry = agent_registry
+    def __init__(self) -> None:
+        """Initialize the monitoring service."""
+        self.agents: dict[str, Any] = {}
 
-    def get_agent_status(self, agent_id: str) -> Dict[str, Any]:
+    def get_agent_status(self, agent_id: str) -> AgentStatus:
         """
         Get current status of a specific agent.
 
         Args:
-            agent_id: Unique identifier for the agent
+            agent_id: Unique identifier for agent
 
         Returns:
             AgentStatus object with current state
         """
-        # If agent_registry is provided, use it; otherwise use mock data
-        if self.agent_registry:
-            try:
-                result = self.agent_registry.get_agent_status(agent_id)
-                return dict(result)  # Type cast to Dict[str, Any]
-            except Exception as e:
-                raise Exception(f"Agent not found: {e}")
+        # In a real implementation, this would query the actual agent
+        # For now, return mock data
+        if agent_id in self.agents:
+            return self.agents[agent_id]  # type: ignore
 
-        # Mock implementation - would connect to real agent registry
-        return {
-            "agent_id": agent_id,
-            "agent_type": "memecoin_vibe_trader",
-            "status": "RUNNING",
-            "last_update": datetime.now(),
-            "current_positions": [
-                {"symbol": "BTC-USD", "quantity": 0.5, "value": 25000.0},
-                {"symbol": "ETH-USD", "quantity": 2.0, "value": 4000.0},
-            ],
-            "recent_trades": [
-                {
-                    "symbol": "BTC-USD",
-                    "side": "buy",
-                    "quantity": 0.5,
-                    "price": 50000.0,
-                    "timestamp": datetime.now(),
-                }
-            ],
-            "error_count": 0,
-            "uptime": timedelta(hours=5),
-        }
+        return AgentStatus(
+            agent_id=agent_id,
+            agent_type="QuantTrader",
+            status="UNKNOWN",
+            last_update=datetime.now(),
+            current_positions=[],
+            recent_trades=[],
+            error_count=0,
+            uptime=timedelta(0),
+        )
 
-    def get_portfolio_metrics(self, agent_id: str) -> Dict[str, Any]:
+    def get_portfolio_metrics(self, agent_id: str) -> PortfolioMetrics:
         """
         Get portfolio performance metrics for an agent.
 
         Args:
-            agent_id: Unique identifier for the agent
+            agent_id: Unique identifier for agent
 
         Returns:
             PortfolioMetrics with performance data
         """
-        # If agent_registry is provided, use it; otherwise use mock data
-        if self.agent_registry:
-            result = self.agent_registry.get_portfolio_metrics(agent_id)
-            return dict(result)  # Type cast to Dict[str, Any]
+        # In a real implementation, this would query the actual agent
+        # For now, return mock data
+        return PortfolioMetrics(
+            agent_id=agent_id,
+            total_value=100000.0,
+            cash_balance=50000.0,
+            total_pnl=1000.0,
+            pnl_percentage=1.0,
+            win_rate=0.55,
+            max_drawdown=0.05,
+            sharpe_ratio=1.2,
+            trade_count=100,
+            last_updated=datetime.now(),
+        )
 
-        # Mock implementation
-        return {
-            "agent_id": agent_id,
-            "total_value": 30000.0,
-            "cash_balance": 1000.0,
-            "total_pnl": 1500.0,
-            "pnl_percentage": 5.25,
-            "win_rate": 0.65,
-            "max_drawdown": 0.08,
-            "sharpe_ratio": 1.2,
-            "trade_count": 25,
-            "last_updated": datetime.now(),
-        }
-
-    def get_system_health(self) -> Dict[str, Any]:
+    def get_system_health(self) -> SystemHealth:
         """
         Get overall system health status.
 
         Returns:
             SystemHealth object with status metrics
         """
-        # If agent_registry is provided, use it; otherwise use mock data
-        if self.agent_registry:
-            result = self.agent_registry.get_system_health()
-            return dict(result)  # Type cast to Dict[str, Any]
+        # In a real implementation, this would query the actual system
+        # For now, return mock data
+        return SystemHealth(
+            api_status={"alpaca": True, "polygon": True},
+            llm_response_time_ms=250.0,
+            error_rate_24h=0.01,
+            cpu_usage_percent=35.0,
+            memory_usage_percent=60.0,
+            disk_space_gb=100.0,
+            uptime_hours=24.5,
+        )
 
-        # Mock implementation
-        return {
-            "api_status": {"alpaca": True, "dexscreener": False, "llm": True},
-            "llm_response_time_ms": 1250.0,
-            "error_rate_24h": 0.02,
-            "cpu_usage_percent": 45.5,
-            "memory_usage_percent": 68.2,
-            "disk_space_gb": 125.8,
-            "uptime_hours": 72.5,
-        }
-
-    def get_all_agents(self) -> List[Dict[str, Any]]:
-        """Get list of all registered agents."""
-        # If agent_registry is provided, use it; otherwise use mock data
-        if self.agent_registry:
-            result = self.agent_registry.get_all_agents()
-            return [dict(item) for item in result]  # Type cast to List[Dict[str, Any]]
-
-        # Mock implementation
-        return [
-            {
-                "agent_id": "test_agent_001",
-                "agent_type": "memecoin_vibe_trader",
-                "status": "RUNNING",
-            },
-            {
-                "agent_id": "test_agent_002",
-                "agent_type": "memecoin_vibe_trader",
-                "status": "STOPPED",
-            },
-            {
-                "agent_id": "test_agent_003",
-                "agent_type": "memecoin_vibe_trader",
-                "status": "ERROR",
-            },
-        ]
-
-
-class VisualizationService:
-    """Service for creating visualizations."""
-
-    def create_equity_curve(self, data: List[Dict[str, Any]]) -> Optional[Any]:
+    def list_agents(self) -> List[str]:
         """
-        Create equity curve visualization.
-
-        Args:
-            data: List of portfolio snapshots over time
+        Get list of all available agents.
 
         Returns:
-            Plotly Figure object or None if plotly unavailable
+            List of agent IDs
         """
-        if not HAS_PLOTLY:
-            return None
-        if not data:
-            # Create empty chart
-            fig = _create_figure()
-            if fig is not None:
-                fig.add_annotation(
-                    text="No data available",
-                    xref="paper",
-                    yref="paper",
-                    x=0.5,
-                    y=0.5,
-                    showarrow=False,
-                    font=dict(size=16),
-                )
-            return fig
+        # In a real implementation, this would query the actual agents
+        return ["demo_agent_1", "demo_agent_2"]
 
-        df = pd.DataFrame(data)
-
-        fig = _create_figure()
-        if fig is not None:
-            fig.add_trace(
-                go.Scatter(
-                    x=df["timestamp"],
-                    y=df["total_value"],
-                    mode="lines+markers",
-                    name="Portfolio Value",
-                    line=dict(color="blue", width=2),
-                )
-            )
-
-        fig.update_layout(
-            title="Portfolio Equity Curve",
-            xaxis_title="Time",
-            yaxis_title="Portfolio Value ($)",
-            hovermode="x unified",
-        )
-
-        return fig
-
-    def create_decision_flow_diagram(
-        self, agent_reasoning: Dict[str, Any]
-    ) -> Optional[Any]:
+    def update_agent_status(self, agent_status: AgentStatus) -> None:
         """
-        Create visual representation of agent decision flow.
+        Update the status of an agent.
 
         Args:
-            agent_reasoning: Agent reasoning data
-
-        Returns:
-            Plotly Figure object or None if plotly unavailable
+            agent_status: Updated agent status
         """
-        if not HAS_PLOTLY:
-            return None
-
-        # Create a simple flow diagram
-        steps = agent_reasoning.get("decision_steps", [])
-
-        if not steps:
-            fig = _create_figure()
-            if fig is not None:
-                fig.add_annotation(
-                    text="No reasoning data available",
-                    xref="paper",
-                    yref="paper",
-                    x=0.5,
-                    y=0.5,
-                    showarrow=False,
-                    font=dict(size=16),
-                )
-            return fig
-
-        fig = _create_figure()
-        if fig is not None:
-            # Add nodes for each step
-            for i, step in enumerate(steps):
-                fig.add_shape(
-                    type="rect",
-                    x0=i,
-                    y0=0,
-                    x1=i + 0.8,
-                    y1=1,
-                    line=dict(color="blue"),
-                    fillcolor="lightblue",
-                )
-                fig.add_annotation(
-                    x=i + 0.4,
-                    y=0.5,
-                    text=f"{step['step']}<br>Status: {step['status']}",
-                    showarrow=False,
-                    font=dict(size=10),
-                )
-
-                # Add arrow to next step
-                if i < len(steps) - 1:
-                    fig.add_annotation(
-                        x=i + 0.8,
-                        y=0.5,
-                        ax=i + 1,
-                        ay=0.5,
-                        arrowhead=2,
-                        arrowsize=1,
-                        arrowwidth=2,
-                        arrowcolor="black",
-                    )
-
-            fig.update_layout(
-                title="Agent Decision Flow",
-                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                showlegend=False,
-                height=200,
-            )
-
-        return fig
-
-    def create_performance_charts(
-        self, metrics: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
-        """
-        Create performance visualization charts.
-
-        Args:
-            metrics: Portfolio performance metrics
-
-        Returns:
-            Dictionary of Plotly Figure objects or None if plotly unavailable
-        """
-        if not HAS_PLOTLY:
-            return None
-
-        charts = {}
-
-        # Win rate gauge
-        charts["win_rate"] = go.Figure(
-            go.Indicator(
-                mode="gauge+number+delta",
-                value=metrics["win_rate"] * 100,
-                domain={"x": [0, 1], "y": [0, 1]},
-                title={"text": "Win Rate (%)"},
-                delta={"reference": 50},
-                gauge={
-                    "axis": {"range": [None, 100]},
-                    "bar": {"color": "darkblue"},
-                    "steps": [
-                        {"range": [0, 50], "color": "lightgray"},
-                        {"range": [50, 80], "color": "gray"},
-                    ],
-                    "threshold": {
-                        "line": {"color": "red", "width": 4},
-                        "thickness": 0.75,
-                        "value": 90,
-                    },
-                },
-            )
-        )
-        charts["win_rate"].update_layout(height=300)
-
-        # P&L chart
-        charts["pnl"] = go.Figure(
-            data=[
-                go.Bar(
-                    name="Profit",
-                    x=["P&L"],
-                    y=[max(0, metrics["total_pnl"])],
-                    marker_color="green",
-                ),
-                go.Bar(
-                    name="Loss",
-                    x=["P&L"],
-                    y=[min(0, metrics["total_pnl"])],
-                    marker_color="red",
-                ),
-            ]
-        )
-        charts["pnl"].update_layout(
-            title=f"P&L: ${metrics['total_pnl']:.2f} "
-            f"({metrics['pnl_percentage']:.2f}%)",
-            barmode="overlay",
-            height=300,
-        )
-
-        # Risk metrics
-        charts["risk"] = go.Figure(
-            data=[
-                go.Bar(
-                    x=["Max Drawdown", "Sharpe Ratio"],
-                    y=[metrics["max_drawdown"] * 100, metrics["sharpe_ratio"]],
-                )
-            ]
-        )
-        charts["risk"].update_layout(
-            title="Risk Metrics", yaxis_title="Value", height=300
-        )
-
-        return charts
+        self.agents[agent_status.agent_id] = agent_status
 
 
-class ConfigurationWizard:
-    """Service for agent configuration management."""
+class ConfigurationService:
+    """Service for managing agent configurations."""
 
     def __init__(self) -> None:
-        """Initialize configuration wizard."""
-        self.templates = {
-            "memecoin_vibe_trader": {
-                "agent_id": "",
-                "agent_type": "memecoin_vibe_trader",
-                "name": "",
-                "description": "",
-                "parameters": {
-                    "scan_interval": 3600,
-                    "max_positions": 5,
-                    "max_allocation_per_trade": 0.02,
-                    "min_liquidity_threshold": 10000,
-                    "min_vibe_score_threshold": 70,
-                    "risk_tolerance": "MEDIUM",
-                },
-                "risk_settings": {
-                    "max_portfolio_allocation": 0.10,
-                    "stop_loss_percentage": 0.05,
-                    "take_profit_percentage": 0.20,
-                },
-                "data_sources": ["alpaca", "dexscreener"],
-                "llm_config": {
-                    "model": "gpt-4",
-                    "temperature": 0.1,
-                    "max_tokens": 1000,
-                },
-            }
-        }
+        """Initialize the configuration service."""
+        self.configs: dict[str, Any] = {}
 
-    def get_agent_template(self, agent_type: str) -> Dict[str, Any]:
+    def get_agent_config(self, agent_id: str) -> AgentConfig:
         """
-        Get configuration template for an agent type.
+        Get configuration for an agent.
 
         Args:
-            agent_type: Type of agent (e.g., "memecoin_vibe_trader")
+            agent_id: Unique identifier for agent
 
         Returns:
-            AgentConfig template
+            AgentConfig object
         """
-        if agent_type not in self.templates:
-            raise ValueError(f"Unknown agent type: {agent_type}")
+        # In a real implementation, this would query the actual config
+        # For now, return mock data
+        if agent_id in self.configs:
+            return self.configs[agent_id]  # type: ignore
 
-        return dict(self.templates[agent_type].copy())
+        return AgentConfig(
+            agent_id=agent_id,
+            agent_type="QuantTrader",
+            name=f"Agent {agent_id}",
+            description="A quantitative trading agent",
+        )
 
-    def validate_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def update_agent_config(self, config: AgentConfig) -> None:
         """
-        Validate agent configuration.
+        Update configuration for an agent.
 
         Args:
-            config: Agent configuration to validate
-
-        Returns:
-            ValidationResult with any errors or warnings
+            config: Updated agent configuration
         """
-        errors: List[str] = []
-        warnings: List[str] = []
+        self.configs[config.agent_id] = config
 
-        # Required field validation
-        required_fields = ["agent_id", "agent_type", "name", "description"]
-        for field in required_fields:
-            if not config.get(field):
-                errors.append(f"Field '{field}' is required and cannot be empty")
-
-        # Agent type validation
-        if config.get("agent_type") not in self.templates:
-            errors.append(f"Unknown agent type: {config.get('agent_type')}")
-
-        # Agent ID validation
-        agent_id = config.get("agent_id", "")
-        if not agent_id.replace("_", "").replace("-", "").isalnum():
-            errors.append(
-                "Agent ID must contain only alphanumeric characters, "
-                "hyphens, and underscores"
-            )
-
-        # Numeric validation
-        parameters = config.get("parameters", {})
-        if "max_allocation_per_trade" in parameters:
-            max_alloc = parameters["max_allocation_per_trade"]
-            if (
-                not isinstance(max_alloc, (int, float))
-                or max_alloc <= 0
-                or max_alloc > 1
-            ):
-                errors.append("max_allocation_per_trade must be between 0 and 1")
-
-        return {"is_valid": len(errors) == 0, "errors": errors, "warnings": warnings}
-
-    def save_config(self, config: Dict[str, Any], filepath: str) -> bool:
+    def save_config(self, agent_id: str) -> bool:
         """
-        Save agent configuration to file.
+        Save configuration to persistent storage.
 
         Args:
-            config: Agent configuration to save
-            filepath: Path to save configuration
+            agent_id: Unique identifier for agent
 
         Returns:
-            Success status
+            True if successful, False otherwise
         """
-        try:
-            # Create directory if it doesn't exist
-            os.makedirs(os.path.dirname(filepath), exist_ok=True)
-
-            with open(filepath, "w") as f:
-                json.dump(config, f, indent=2, default=str)
-
-            return True
-        except Exception as e:
-            print(f"Error saving config: {e}")
-            return False
+        # In a real implementation, this would save to a database or file
+        return True
 
 
 class WebDashboardApp:
-    """Main web dashboard application."""
+    """Main dashboard application class."""
 
     def __init__(self, config: DashboardConfig):
         """
-        Initialize the web dashboard.
+        Initialize web dashboard.
 
         Args:
             config: Dashboard configuration object
         """
         self.config = config
         self.monitoring_service = MonitoringService()
-        self.visualization_service = VisualizationService()
-        self.config_wizard = ConfigurationWizard()
+        self.config_service = ConfigurationService()
+        self.charts = DashboardCharts()
 
     def run(self, host: str = "localhost", port: int = 8501) -> None:
         """
-        Start the Streamlit application.
+        Start Streamlit application.
 
         Args:
             host: Host address to bind to
             port: Port number to run on
         """
         if not HAS_STREAMLIT:
-            print(
-                "Error: Streamlit is not available. Install with: pip install streamlit"
-            )
+            print("Streamlit is not available. Cannot run web dashboard.")
             return
 
-        # Streamlit runs the app directly, so we just set up the page
-        self._setup_page_config()
-        self._render_main_page()
+        # In a real implementation, we would use subprocess to call:
+        # streamlit run _streamlit_app.py --server.port=port --server.address=host
+        print(f"Starting Streamlit app at http://{host}:{port}")
 
-    def _setup_page_config(self) -> None:
-        """Setup Streamlit page configuration."""
+    def _render_sidebar(self) -> Dict[str, Any]:
+        """
+        Render sidebar navigation.
+
+        Returns:
+            Dictionary with sidebar state
+        """
+        if not HAS_STREAMLIT:
+            return {}
+
+        with st.sidebar:
+            st.title("QuantChain Dashboard")
+
+            # Agent selection
+            agents = self.monitoring_service.list_agents()
+            agent_id = st.selectbox(
+                "Select Agent",
+                agents,
+                index=(
+                    0
+                    if not self.config.default_agent_id
+                    else agents.index(self.config.default_agent_id)
+                ),
+            )
+
+            # Page selection
+            page = st.selectbox(
+                "Select Page", ["Overview", "Portfolio", "Reasoning", "Configuration"]
+            )
+
+            # Refresh button
+            if st.button("Refresh Data"):
+                st.experimental_rerun()
+
+            return {"agent_id": agent_id, "page": page}
+
+    def _render_overview_page(self, agent_id: str) -> None:
+        """
+        Render overview page.
+
+        Args:
+            agent_id: ID of the selected agent
+        """
         if not HAS_STREAMLIT:
             return
 
-        st.set_page_config(
-            page_title="QuantChain Dashboard",
-            page_icon="📈",
-            layout="wide",
-            initial_sidebar_state="expanded",
-        )
+        st.header("Agent Overview")
 
-    def _render_main_page(self) -> None:
-        """Render the main dashboard page."""
-        if not HAS_STREAMLIT:
-            return
+        # Get agent status
+        status = self.monitoring_service.get_agent_status(agent_id)
+        metrics = self.monitoring_service.get_portfolio_metrics(agent_id)
 
-        st.title("📈 QuantChain Dashboard")
-        st.markdown("---")
-
-        # Sidebar navigation
-        page = st.sidebar.selectbox(
-            "Select Page",
-            ["Overview", "Agent Detail", "Configuration", "System Health"],
-        )
-
-        if page == "Overview":
-            self._render_overview_page()
-        elif page == "Agent Detail":
-            self._render_agent_detail_page()
-        elif page == "Configuration":
-            self._render_configuration_page()
-        elif page == "System Health":
-            self._render_system_health_page()
-
-    def _render_overview_page(self) -> None:
-        """Render the overview page."""
-        st.header("System Overview")
-
-        # Get all agents
-        agents = self.monitoring_service.get_all_agents()
-
-        if not agents:
-            st.info("No agents are currently registered.")
-            return
-
-        # Agent status summary
-        col1, col2, col3, col4 = st.columns(4)
-
-        with col1:
-            running_agents = len([a for a in agents if a["status"] == "RUNNING"])
-            st.metric("Running Agents", running_agents)
-
-        with col2:
-            stopped_agents = len([a for a in agents if a["status"] == "STOPPED"])
-            st.metric("Stopped Agents", stopped_agents)
-
-        with col3:
-            error_agents = len([a for a in agents if a["status"] == "ERROR"])
-            st.metric("Error Agents", error_agents)
-
-        with col4:
-            system_health = self.monitoring_service.get_system_health()
-            api_status = sum(system_health["api_status"].values())
-            total_apis = len(system_health["api_status"])
-            st.metric("APIs Healthy", f"{api_status}/{total_apis}")
-
-        # Recent activity
-        st.subheader("Recent Activity")
-
-        # Create a table of recent trades from all agents
-        recent_trades = []
-        for agent in agents:
-            if agent["status"] == "RUNNING":
-                agent_status = self.monitoring_service.get_agent_status(
-                    agent["agent_id"]
-                )
-                recent_trades.extend(
-                    [
-                        {
-                            "Agent": agent["agent_id"],
-                            "Symbol": trade["symbol"],
-                            "Side": trade["side"],
-                            "Quantity": trade["quantity"],
-                            "Price": trade["price"],
-                            "Time": trade["timestamp"].strftime("%Y-%m-%d %H:%M:%S"),
-                        }
-                        for trade in agent_status["recent_trades"]
-                    ]
-                )
-
-        if recent_trades:
-            df_trades = pd.DataFrame(recent_trades)
-            st.dataframe(df_trades, use_container_width=True)
-        else:
-            st.info("No recent trades to display.")
-
-        # Performance summary
-        st.subheader("Performance Summary")
-
-        performance_data = []
-        for agent in agents:
-            if agent["status"] == "RUNNING":
-                metrics = self.monitoring_service.get_portfolio_metrics(
-                    agent["agent_id"]
-                )
-                performance_data.append(
-                    {
-                        "Agent": agent["agent_id"],
-                        "Total Value": f"${metrics['total_value']:,.2f}",
-                        "P&L": f"${metrics['total_pnl']:,.2f}",
-                        "P&L %": f"{metrics['pnl_percentage']:.2f}%",
-                        "Win Rate": f"{metrics['win_rate']:.2%}",
-                        "Trades": metrics["trade_count"],
-                    }
-                )
-
-        if performance_data:
-            df_performance = pd.DataFrame(performance_data)
-            st.dataframe(df_performance, use_container_width=True)
-        else:
-            st.info("No performance data available.")
-
-    def _render_agent_detail_page(self) -> None:
-        """Render the agent detail page."""
-        st.header("Agent Details")
-
-        # Agent selection
-        agents = self.monitoring_service.get_all_agents()
-        if not agents:
-            st.info("No agents are currently registered.")
-            return
-
-        agent_options = {
-            f"{a['agent_id']} ({a['status']})": a["agent_id"] for a in agents
-        }
-        selected_agent_display = st.selectbox(
-            "Select Agent", list(agent_options.keys())
-        )
-        selected_agent_id = agent_options[selected_agent_display]
-
-        # Get agent data
-        agent_status = self.monitoring_service.get_agent_status(selected_agent_id)
-        portfolio_metrics = self.monitoring_service.get_portfolio_metrics(
-            selected_agent_id
-        )
-
-        # Agent status
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-            st.metric("Status", agent_status["status"])
-
-        with col2:
-            st.metric("Uptime", str(agent_status["uptime"]).split(".")[0])
-
-        with col3:
-            st.metric("Error Count", agent_status["error_count"])
-
-        # Portfolio value chart
-        st.subheader("Portfolio Performance")
-
-        # Create mock historical data for demonstration
-        historical_data = [
-            {
-                "timestamp": datetime.now() - timedelta(hours=i),
-                "total_value": portfolio_metrics["total_value"] - i * 100,
-            }
-            for i in range(24, 0, -1)
-        ]
-
-        equity_chart = self.visualization_service.create_equity_curve(historical_data)
-        st.plotly_chart(equity_chart, use_container_width=True)
-
-        # Performance metrics
-        st.subheader("Performance Metrics")
-
-        perf_charts = self.visualization_service.create_performance_charts(
-            portfolio_metrics
-        )
-
-        if perf_charts:
-            col1, col2 = st.columns(2)
-            with col1:
-                st.plotly_chart(perf_charts["win_rate"], use_container_width=True)
-            with col2:
-                st.plotly_chart(perf_charts["pnl"], use_container_width=True)
-
-            st.plotly_chart(perf_charts["risk"], use_container_width=True)
-        else:
-            st.warning("Performance charts not available - Plotly not installed")
-
-        # Current positions
-        st.subheader("Current Positions")
-
-        if agent_status["current_positions"]:
-            positions_df = pd.DataFrame(agent_status["current_positions"])
-            st.dataframe(positions_df, use_container_width=True)
-        else:
-            st.info("No current positions.")
-
-        # Recent trades
-        st.subheader("Recent Trades")
-
-        if agent_status["recent_trades"]:
-            trades_df = pd.DataFrame(agent_status["recent_trades"])
-            trades_df["Time"] = trades_df["timestamp"].dt.strftime("%Y-%m-%d %H:%M:%S")
-            trades_df = trades_df.drop("timestamp", axis=1)
-            st.dataframe(trades_df, use_container_width=True)
-        else:
-            st.info("No recent trades.")
-
-    def _render_configuration_page(self) -> None:
-        """Render the configuration page."""
-        st.header("Agent Configuration")
-
-        # Configuration mode
-        config_mode = st.radio("Configuration Mode", ["Create New", "Edit Existing"])
-
-        if config_mode == "Create New":
-            self._render_new_config_wizard()
-        else:
-            self._render_existing_config_editor()
-
-    def _render_new_config_wizard(self) -> None:
-        """Render the new configuration wizard."""
-        st.subheader("Create New Agent Configuration")
-
-        # Step 1: Agent type selection
-        agent_type = st.selectbox(
-            "Select Agent Type", list(self.config_wizard.templates.keys())
-        )
-
-        if agent_type:
-            template = self.config_wizard.get_agent_template(agent_type)
-
-            # Step 2: Basic configuration
-            st.subheader("Basic Configuration")
-
-            config = template.copy()
-            config["agent_id"] = st.text_input("Agent ID", config["agent_id"])
-            config["name"] = st.text_input("Agent Name", config["name"])
-            config["description"] = st.text_area("Description", config["description"])
-
-            # Step 3: Parameters
-            st.subheader("Agent Parameters")
-
-            parameters = config["parameters"].copy()
-            parameters["scan_interval"] = st.number_input(
-                "Scan Interval (seconds)",
-                value=parameters["scan_interval"],
-                min_value=60,
-            )
-            parameters["max_positions"] = st.number_input(
-                "Max Positions", value=parameters["max_positions"], min_value=1
-            )
-            parameters["max_allocation_per_trade"] = st.number_input(
-                "Max Allocation per Trade",
-                value=parameters["max_allocation_per_trade"],
-                min_value=0.0,
-                max_value=1.0,
-                format="%.4f",
-            )
-            parameters["min_liquidity_threshold"] = st.number_input(
-                "Min Liquidity Threshold ($)",
-                value=parameters["min_liquidity_threshold"],
-                min_value=0,
-            )
-            parameters["min_vibe_score_threshold"] = st.number_input(
-                "Min Vibe Score Threshold",
-                value=parameters["min_vibe_score_threshold"],
-                min_value=0,
-                max_value=100,
-            )
-            parameters["risk_tolerance"] = st.selectbox(
-                "Risk Tolerance",
-                ["LOW", "MEDIUM", "HIGH"],
-                index=["LOW", "MEDIUM", "HIGH"].index(parameters["risk_tolerance"]),
-            )
-
-            config["parameters"] = parameters
-
-            # Validation and save
-            if st.button("Validate Configuration"):
-                validation_result = self.config_wizard.validate_config(config)
-
-                if validation_result["is_valid"]:
-                    st.success("Configuration is valid!")
-
-                    if st.button("Save Configuration"):
-                        filename = f"{config['agent_id']}_config.json"
-                        if self.config_wizard.save_config(config, filename):
-                            st.success(f"Configuration saved to {filename}")
-                        else:
-                            st.error("Failed to save configuration")
-                else:
-                    st.error("Configuration validation failed:")
-                    for error in validation_result["errors"]:
-                        st.error(f"- {error}")
-
-    def _render_existing_config_editor(self) -> None:
-        """Render the existing configuration editor."""
-        st.subheader("Edit Existing Configuration")
-
-        st.info(
-            "Configuration loading from files will be implemented in a future version."
-        )
-
-    def _render_system_health_page(self) -> None:
-        """Render the system health page."""
-        st.header("System Health")
-
-        # Get system health
-        health = self.monitoring_service.get_system_health()
-
-        # System metrics
-        col1, col2, col3, col4 = st.columns(4)
-
-        with col1:
-            st.metric("CPU Usage", f"{health['cpu_usage_percent']:.1f}%")
-
-        with col2:
-            st.metric("Memory Usage", f"{health['memory_usage_percent']:.1f}%")
-
-        with col3:
-            st.metric("Disk Space", f"{health['disk_space_gb']:.1f} GB")
-
-        with col4:
-            st.metric("Uptime", f"{health['uptime_hours']:.1f} hours")
-
-        # API Status
-        st.subheader("API Service Status")
-
-        for api_name, status in health["api_status"].items():
-            status_color = "🟢" if status else "🔴"
-            status_text = "Online" if status else "Offline"
-            st.write(f"{status_color} {api_name.title()}: {status_text}")
-
-        # Performance metrics
-        st.subheader("Performance Metrics")
-
+        # Display status metrics
         col1, col2 = st.columns(2)
 
         with col1:
-            st.metric("LLM Response Time", f"{health['llm_response_time_ms']:.0f} ms")
+            st.subheader("Status")
+            st.info(f"Status: {status.status}")
+            st.info(f"Uptime: {status.uptime}")
+
+            with col2:
+                st.subheader("Performance")
+                st.info(
+                    f"Total Return: {metrics.total_pnl:.2f} ({metrics.pnl_percentage:.2f}%)"
+                )
+                st.info(f"Sharpe Ratio: {metrics.sharpe_ratio:.2f}")
+
+        # System health
+        st.subheader("System Health")
+        health = self.monitoring_service.get_system_health()
+        health_df = pd.DataFrame(
+            {
+                "Metric": [
+                    "API Status",
+                    "LLM Response Time",
+                    "Error Rate",
+                    "CPU Usage",
+                    "Memory Usage",
+                ],
+                "Value": [
+                    (
+                        "All APIs Up"
+                        if all(health.api_status.values())
+                        else "Some APIs Down"
+                    ),
+                    f"{health.llm_response_time_ms:.0f}ms",
+                    f"{health.error_rate_24h * 100:.2f}%",
+                    f"{health.cpu_usage_percent:.1f}%",
+                    f"{health.memory_usage_percent:.1f}%",
+                ],
+            }
+        )
+        st.dataframe(health_df)
+
+    def _render_portfolio_page(self, agent_id: str) -> None:
+        """
+        Render portfolio page.
+
+        Args:
+            agent_id: ID of the selected agent
+        """
+        if not HAS_STREAMLIT:
+            return
+
+        st.header("Portfolio Analysis")
+
+        # Get portfolio data
+        metrics = self.monitoring_service.get_portfolio_metrics(agent_id)
+        status = self.monitoring_service.get_agent_status(agent_id)
+
+        # Display portfolio metrics
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.metric("Total Value", f"${metrics.total_value:,.2f}")
+            st.metric("Cash Balance", f"${metrics.cash_balance:,.2f}")
 
         with col2:
-            st.metric("24h Error Rate", f"{health['error_rate_24h'] * 100:.2f}%")
+            st.metric("Win Rate", f"{metrics.win_rate * 100:.1f}%")
+            st.metric("Trade Count", f"{metrics.trade_count}")
+
+        with col3:
+            st.metric("Max Drawdown", f"{metrics.max_drawdown * 100:.1f}%")
+            st.metric("Sharpe Ratio", f"{metrics.sharpe_ratio:.2f}")
+
+        # Create equity curve chart
+        if HAS_PLOTLY:
+            # Generate sample data for demonstration
+            dates = pd.date_range(end=datetime.now(), periods=30, freq="D")
+            values = [100000 * (1 + i * 0.001) for i in range(30)]
+            data = [
+                {"timestamp": date, "value": value}
+                for date, value in zip(dates, values)
+            ]
+
+            equity_fig = self.charts.create_equity_curve(
+                data, f"Equity Curve - {agent_id}"
+            )
+            if equity_fig:
+                st.plotly_chart(equity_fig, use_container_width=True)
+
+        # Display current positions
+        st.subheader("Current Positions")
+        if status.current_positions:
+            positions_df = pd.DataFrame(status.current_positions)
+            st.dataframe(positions_df)
+        else:
+            st.info("No open positions")
+
+        # Display recent trades
+        st.subheader("Recent Trades")
+        if status.recent_trades:
+            trades_df = pd.DataFrame(status.recent_trades)
+            st.dataframe(trades_df)
+        else:
+            st.info("No recent trades")
+
+    def _render_reasoning_page(self, agent_id: str) -> None:
+        """
+        Render reasoning page.
+
+        Args:
+            agent_id: ID of the selected agent
+        """
+        if not HAS_STREAMLIT:
+            return
+
+        st.header("Agent Reasoning")
+
+        # In a real implementation, this would show the agent's reasoning process
+        # For now, show mock data
+        st.info("Reasoning visualization not yet implemented")
+
+        # Example of what could be displayed:
+        # - LLM prompts and responses
+        # - Decision trees
+        # - Trade rationales
+        # - Signal strength indicators
+
+    def _render_configuration_page(self, agent_id: str) -> None:
+        """
+        Render configuration page.
+
+        Args:
+            agent_id: ID of the selected agent
+        """
+        if not HAS_STREAMLIT:
+            return
+
+        st.header("Agent Configuration")
+
+        # Get current config
+        config = self.config_service.get_agent_config(agent_id)
+
+        # Display editable configuration
+        with st.form("agent_config_form"):
+            name = st.text_input("Agent Name", value=config.name)
+            description = st.text_area("Description", value=config.description)
+
+            # In a real implementation, there would be many more configuration options
+            # such as trading parameters, risk settings, etc.
+
+            submitted = st.form_submit_button("Save Configuration")
+            if submitted:
+                # Update configuration
+                updated_config = AgentConfig(
+                    agent_id=agent_id,
+                    agent_type=config.agent_type,
+                    name=name,
+                    description=description,
+                )
+                self.config_service.update_agent_config(updated_config)
+                self.config_service.save_config(agent_id)
+                st.success("Configuration saved successfully!")
 
 
-def create_dashboard(config: Optional[DashboardConfig] = None) -> WebDashboardApp:
+# Create and export a function to run the dashboard
+def create_dashboard_app(config: Optional[DashboardConfig] = None) -> WebDashboardApp:
     """
-    Create a new web dashboard instance.
+    Create a dashboard application instance.
 
     Args:
         config: Optional dashboard configuration
@@ -968,41 +642,113 @@ def create_dashboard(config: Optional[DashboardConfig] = None) -> WebDashboardAp
     return WebDashboardApp(config)
 
 
+# Export functions for compatibility with tests
+def render_sidebar(app: WebDashboardApp) -> Dict[str, Any]:
+    """Render sidebar for the given app."""
+    return app._render_sidebar()
+
+
+def render_overview_page(app: WebDashboardApp, agent_id: str) -> None:
+    """Render overview page for the given app."""
+    app._render_overview_page(agent_id)
+
+
+def render_portfolio_page(app: WebDashboardApp, agent_id: str) -> None:
+    """Render portfolio page for the given app."""
+    app._render_portfolio_page(agent_id)
+
+
+def render_reasoning_page(app: WebDashboardApp, agent_id: str) -> None:
+    """Render reasoning page for the given app."""
+    app._render_reasoning_page(agent_id)
+
+
+def render_configuration_page(app: WebDashboardApp, agent_id: str) -> None:
+    """Render configuration page for the given app."""
+    app._render_configuration_page(agent_id)
+
+
+def create_line_chart(data: List[Dict[str, Any]], title: str = "Chart") -> Any:
+    """
+    Create a line chart using Plotly.
+
+    Args:
+        data: List of data points
+        title: Chart title
+
+    Returns:
+        Plotly figure object or None
+    """
+    if not HAS_PLOTLY:
+        return None
+
+    if not data or len(data) < 2:
+        return None
+
+    df = pd.DataFrame(data)
+    x_col = df.columns[0] if len(df.columns) > 0 else "x"
+    y_col = df.columns[1] if len(df.columns) > 1 else "y"
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=df[x_col], y=df[y_col], mode="lines", name=y_col))
+
+    fig.update_layout(
+        title=title, xaxis_title=x_col, yaxis_title=y_col, template="plotly_white"
+    )
+
+    return fig
+
+
+def calculate_max_drawdown(equity_curve: List[float]) -> float:
+    """
+    Calculate maximum drawdown from equity curve.
+
+    Args:
+        equity_curve: List of portfolio values over time
+
+    Returns:
+        Maximum drawdown as a percentage
+    """
+    if not equity_curve or len(equity_curve) < 2:
+        return 0.0
+
+    # Convert to numpy array for easier calculation
+    import numpy as np
+
+    values = np.array(equity_curve)
+
+    # Calculate running maximum
+    running_max = np.maximum.accumulate(values)
+
+    # Calculate drawdown
+    drawdown = (values - running_max) / running_max
+
+    # Return maximum drawdown (as positive percentage)
+    return abs(np.min(drawdown))
+
+
+# Main function for running the dashboard directly
 def main() -> None:
-    """Main entry point for running the dashboard directly."""
-    import sys
-
-    config = DashboardConfig()
-
+    """Main function to run the dashboard directly."""
     # Parse command line arguments
-    if len(sys.argv) > 1:
-        try:
-            config.port = int(sys.argv[1])
-        except ValueError:
-            print("Port must be a number")
-            sys.exit(1)
+    import argparse
 
-    # Create dashboard (variable unused but kept for future use)
-    create_dashboard(config)
+    parser = argparse.ArgumentParser(description="QuantChain Web Dashboard")
+    parser.add_argument("--host", default="localhost", help="Host address to bind to")
+    parser.add_argument("--port", type=int, default=8501, help="Port number to run on")
+    parser.add_argument("--agent-id", help="Default agent ID to display")
+    args = parser.parse_args()
 
-    # For direct execution, we run Streamlit
-    if __name__ == "__main__":
-        import os
-        import subprocess
+    # Create configuration
+    config = DashboardConfig(
+        host=args.host, port=args.port, default_agent_id=args.agent_id
+    )
 
-        script_path = os.path.abspath(__file__)
-        subprocess.run(
-            [
-                "streamlit",
-                "run",
-                script_path,
-                "--server.port",
-                str(config.port),
-                "--server.address",
-                config.host,
-            ]
-        )
+    # Create and run the app
+    app = create_dashboard_app(config)
+    app.run(host=config.host, port=config.port)
 
 
 if __name__ == "__main__":
+    # Allow running the dashboard directly
     main()

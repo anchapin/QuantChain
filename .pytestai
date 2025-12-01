@@ -1,0 +1,15 @@
+# PyTestAI Configuration File
+# This file contains the configuration for PyTestAI test generation
+
+# Z.AI API configuration for test generation
+ZAI_API_KEY=your-zai-api-key-here
+
+# Model configuration
+MODEL=glm-4.6
+BASE_URL=https://api.z.ai/api/coding/paas/v4
+MODEL_DISPLAY_NAME=GLM-4.6 [Z.AI Coding Plan]
+
+# Test generation settings
+INCLUDE_PRIVATE_METHODS=true
+INCLUDE_ERROR_HANDLING=true
+INCLUDE_EDGE_CASES=true

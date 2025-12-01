@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  quantchain-test:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: anchapin/quantchain:test
+    container_name: quantchain-test
+    volumes:
+      - .:/app
+      - test_cache:/root/.cache
+      - test_pip:/root/.local/pip
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONDONTWRITEBYTECODE=1
+      - TEST_MODE=1
+      - COVERAGE_THRESHOLD=80
+      # Use environment variables for testing
+      - TESTING=true
+      - DATABASE_URL=sqlite:///:memory:
+    command: bash -c "
+      pip install -r requirements-test.txt &&
+      pytest tests/unit -v --cov=quantchain --cov-fail-under=80 --cov-report=term-missing"
+    restart: "no"
+    mem_limit: 2g
+    cpus: 2
+
+  # Separate service for ML-heavy tests
+  quantchain-ml-test:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: anchapin/quantchain:ml-test
+    container_name: quantchain-ml-test
+    volumes:
+      - .:/app
+      - ml_cache:/root/.cache
+      - ml_pip:/root/.local/pip
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONDONTWRITEBYTECODE=1
+      - TEST_MODE=1
+      - ML_TESTS=1
+      - TESTING=true
+      - DATABASE_URL=sqlite:///:memory:
+    command: bash -c "
+      pip install -r requirements.txt &&
+      pip install -r requirements-dev.txt &&
+      pytest tests/unit -v -m 'requires_ml' --cov=quantchain --cov-fail-under=80 --cov-report=term-missing"
+    restart: "no"
+    mem_limit: 4g
+    cpus: 4
+    profiles: ["ml"]
+
+volumes:
+  test_cache:
+  test_pip:
+  ml_cache:
+  ml_pip:
